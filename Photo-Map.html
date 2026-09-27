@@ -468,7 +468,7 @@
   .act-pin span{position:relative;background:#3BA55C;color:#fff;border:2px solid #fff;border-radius:7px;font:700 12px 'Roboto Mono',var(--mono);padding:4px 6px;height:fit-content;}
   .act-pin span::after{content:"";position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);border:7px solid transparent;border-top-color:#3BA55C;border-bottom:0;}
   body.mobile .act-pin span{font:700 9px var(--mono);padding:3px 5px;}
-  .num-dot{width:34px;height:34px;border-radius:50%;background:#3BA55C;border:2px solid #27713F;box-sizing:border-box;color:#fff;font:700 12px 'Roboto Mono',var(--mono);letter-spacing:.3px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px #1e1f2255;}
+  .num-dot{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#6cc588,#3BA55C);border:2px solid #fff;box-sizing:border-box;color:#fff;font:700 12px 'Roboto Mono',var(--mono);letter-spacing:.3px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px #3BA55C33,0 2px 8px #1e1f2233;}   /* identical to a numbered cluster bubble */
   body.mobile .num-dot{width:26px;height:26px;font:700 9px var(--mono);}   /* phone sizes were fine as they were */
   .act-hold{display:flex;align-items:center;padding-top:1px;cursor:pointer;margin-left:1px;}
   .act-hold input{background:#E8A33D33;}   /* faint amber: this is the ON-HOLD box */
@@ -1107,12 +1107,12 @@ function renderClusters(){
   for(const c of cl){
     const [lng,lat]=c.geometry.coordinates;
     if(c.properties.cluster){
-      const cnt=c.properties.point_count, size=cnt<10?31:cnt<100?39:cnt<1000?49:60; let fs=cnt<100?17:cnt<1000?16:14;   // bubble hugs the number
+      const cnt=c.properties.point_count; let size=cnt<10?31:cnt<100?39:cnt<1000?49:60, fs=cnt<100?17:cnt<1000?16:14;   // bubble hugs the number
       let label=c.properties.point_count_abbreviated;
       if(_dotNumsOn){   /* Actions-only filter: the bubble wears the ACTION number(s) of its photos, not the photo count */
         try{ const st=new Set();
           for(const f of cluster.getLeaves(c.properties.cluster_id,Infinity)){ const p2=photoById(f.properties.pid); const n2=p2?photoActNum(p2):null; if(n2!=null) st.add(n2); }
-          if(st.size){ const arr=[...st].sort((x,y)=>x-y); label=actNo(arr[0])+(arr.length>1?"\u2026":""); fs=13; }
+          if(st.size){ const arr=[...st].sort((x,y)=>x-y); label=actNo(arr[0])+(arr.length>1?"\u2026":""); size=34; fs=arr.length>1?11:12; }   // same size/font as a single numbered dot
         }catch(err){} }
       const grabbable=(c.properties.sel||0)>0&&selSet.size>0;   // holds selected photos: dragging the bubble moves the whole selection
       const icon=L.divIcon({className:"",html:'<div class="cl-bubble '+(c.properties.asg?'cl-g':'cl-y')+(c.properties.hl?' cl-hl':'')+'" style="width:'+size+'px;height:'+size+'px;font-size:'+fs+'px'+(grabbable?';cursor:move':'')+'">'+label+'</div>',iconSize:[size,size],iconAnchor:[size/2,size/2]});
