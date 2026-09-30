@@ -2247,17 +2247,22 @@ function _gridFor(m,W,H,gap){ let best=null;   // columns/rows that give the big
 function _lx(lng,z){ return (lng+180)/360*256*Math.pow(2,z); }
 function _ly(lat,z){ const s=Math.sin(lat*Math.PI/180); return (0.5-Math.log((1+s)/(1-s))/(4*Math.PI))*256*Math.pow(2,z); }
 /* Google satellite first (what the map shows); if Google won't allow its tiles to be drawn into a
-   copyable image (CORS), Esri World Imagery is used for the whole map instead — never a mix. */
+   copyable image (CORS), Esri World Imagery is used for the whole map instead (a single tile that
+   fails is borrowed from the other source, so the map never has holes). */
 const TILE_SRC={google:(z,x,y)=>"https://mt"+((x+y)%4)+".google.com/vt/lyrs=s&x="+x+"&y="+y+"&z="+z,
   esri:(z,x,y)=>"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/"+z+"/"+y+"/"+x};
 let _tileProv=null;   // decided once per session: "google" if its tiles are CORS-readable, else "esri"
-function _fetchTile(url){ return new Promise(res=>{ const im=new Image(); im.crossOrigin="anonymous"; let done=false; const fin=v=>{ if(!done){ done=true; res(v); } };
-  im.onload=()=>fin(im); im.onerror=()=>fin(null); im.src=url; setTimeout(()=>fin(null),8000); }); }
+/* Fetched fresh (cache:"no-store") in CORS mode: the main map has usually already loaded the SAME tiles
+   without CORS, and reusing that cached copy is what left the card's map blank for the action being
+   looked at. A successful CORS fetch is always drawable into a copyable image. */
+function _fetchTile(url){ const ctl=new AbortController(), t=setTimeout(()=>ctl.abort(),10000);
+  return fetch(url,{mode:"cors",cache:"no-store",credentials:"omit",signal:ctl.signal})
+    .then(r=>r.ok?r.blob():null).then(b=>b&&b.size?createImageBitmap(b):null).catch(()=>null).finally(()=>clearTimeout(t)); }
 async function tileProvider(){ if(_tileProv) return _tileProv;
-  const t=await _fetchTile(TILE_SRC.google(3,6,4)); let ok=false;
-  if(t){ try{ const c=document.createElement("canvas"); c.width=c.height=4; const g=c.getContext("2d"); g.drawImage(t,0,0,4,4); g.getImageData(0,0,1,1); ok=true; }catch(e){ ok=false; } }   // readable = copyable
-  return (_tileProv=ok?"google":"esri"); }
-async function loadMapTile(z,x,y){ const prov=await tileProvider(); return _fetchTile(TILE_SRC[prov](z,x,y)); }
+  return (_tileProv=(await _fetchTile(TILE_SRC.google(3,6,4)))?"google":"esri"); }
+async function loadMapTile(z,x,y){ const prov=await tileProvider();
+  return (await _fetchTile(TILE_SRC[prov](z,x,y)))||(await _fetchTile(TILE_SRC[prov==="google"?"esri":"google"](z,x,y)));   // a failed tile tries the other source rather than leaving a hole
+}
 /* Where the user is right now (desktop YOU ARE HERE marker, else a quick one-off fix) — null if unknown/blocked. */
 async function currentPos(){
   try{ if(geoMarker){ const l=geoMarker.getLatLng(); return {lat:l.lat,lng:l.lng}; } }catch(e){}
