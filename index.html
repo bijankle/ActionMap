@@ -638,94 +638,118 @@
   #mroot{display:none;position:fixed;inset:0;z-index:9000;background:#f3f4f6;overflow:hidden;font-family:var(--font);}
   body.mobile #mroot{display:block;}
   body.mobile>*:not(#mroot){display:none!important;}
-  .m-scr{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;}
-  .m-head{background:var(--panel);border-bottom:1px solid var(--line);padding:14px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
-  .m-brand{font-size:18px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px;}
+  .m-scr{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;background:#fff;}
+  .m-head{background:#fff;border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .m-brand{font-size:15px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px;}
   .m-brand .pm-mark{flex-shrink:0;}
   .m-brand span{color:var(--accent);}
-  .m-sub{font-family:var(--font);font-size:10px;color:var(--dim);font-variant-numeric:tabular-nums}
-  .m-chip{font-family:var(--font);font-size:10px;border-radius:999px;padding:4px 10px;border:1px solid var(--line2);color:var(--muted);background:var(--panel);font-variant-numeric:tabular-nums}
-  .m-chip.ok{color:var(--good);border-color:var(--good);background:#EAF7EE;}
-  .m-back{width:44px;height:44px;margin-left:-10px;border:none;background:none;font-size:26px;color:var(--muted);flex-shrink:0;}
-  .m-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px;display:flex;flex-direction:column;gap:10px;}
-  .m-card{background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:13px;display:flex;gap:12px;align-items:flex-start;}
-  .m-card.done{opacity:.65;}
-  .m-chk{width:26px;height:26px;flex-shrink:0;margin-top:2px;box-sizing:border-box;border:2px solid var(--line2);border-radius:8px;background:#3BA55C33;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px;}
-  .m-chk.on{background:var(--good);border-color:var(--good);}
-  .m-hold{width:26px;height:26px;flex-shrink:0;margin-top:2px;box-sizing:border-box;border:2px solid var(--line2);border-radius:8px;background:#E8A33D33;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:11px;letter-spacing:1px;}
-  .m-hold.on{background:#E8A33D;border-color:#E8A33D;}
-  .m-card.hold{opacity:.8;}
-  .m-homemap{height:50vh;height:50dvh;flex-shrink:0;border-top:1px solid var(--line);background:#ECEEF1;}   /* the bottom half of the home screen is the map */
-  #mToast{position:absolute;left:12px;right:12px;bottom:90px;z-index:9500;background:var(--ink);color:#fff;font-size:14px;font-weight:600;padding:12px 14px;border-radius:12px;text-align:center;box-shadow:0 8px 24px #00000066;display:none;}
-  .m-anum{color:var(--accent2);font-family:var(--mono);font-weight:700;margin-right:3px;}
-  .m-card{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
-  .m-card.mdrag{opacity:.8;transform:scale(1.02);box-shadow:0 8px 24px #1e1f2240;border-color:var(--accent);position:relative;z-index:5;}
-  .m-cbody{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;}
-  .m-ct{font-size:15px;font-weight:600;color:var(--ink);line-height:1.35;}
-  .m-cm{font-family:var(--font);font-size:10.5px;color:var(--dim);display:flex;gap:12px;font-variant-numeric:tabular-nums}
-  .m-cm b{color:var(--accent);font-weight:600;}
-  .m-foot{background:var(--panel);border-top:1px solid var(--line);padding:12px 14px 18px;display:flex;flex-direction:column;gap:7px;flex-shrink:0;}
-  .m-btn{box-sizing:border-box;width:100%;min-height:50px;border:none;border-radius:14px;background:var(--gold);color:var(--on-accent);font:inherit;font-size:15px;font-weight:700;}
-  .m-btn.green{background:var(--good);}
-  .m-btn.ghost{background:var(--panel);border:1px solid var(--line2);color:var(--text);font-weight:600;}
-  .m-btn[disabled]{background:var(--line2);}
-  .m-note{text-align:center;font-family:var(--font);font-size:10px;color:var(--faint);font-variant-numeric:tabular-nums}
-  .m-map{height:230px;border-radius:14px;border:1px solid var(--line);overflow:hidden;flex-shrink:0;background:#ECEEF1;}
-  .m-sec{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;}
-  .m-lab{font-family:var(--font);font-size:10px;letter-spacing:.6px;color:var(--dim);font-variant-numeric:tabular-nums}
-  .m-strow{display:flex;align-items:center;gap:12px;}
-  .m-strow .t{font-size:14px;color:var(--ink);}
-  .m-strow.done .t{text-decoration:line-through;color:var(--dim);}
-  .m-ph{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;}
-  .m-ph img{height:104px;border-radius:12px;border:1px solid var(--line);flex-shrink:0;}
-  .m-in{box-sizing:border-box;width:100%;font:inherit;font-size:14px;color:var(--ink);background:var(--panel);border:1px solid var(--line2);border-radius:12px;padding:12px;outline:none;}
+  .m-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px;display:flex;flex-direction:column;gap:10px;background:#f3f4f6;}
+  .m-foot{background:#fff;border-top:1px solid var(--line);padding:10px 14px 18px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;}
+  .m-btn{box-sizing:border-box;width:100%;min-height:46px;border:1.5px solid var(--gold);border-radius:8px;background:#fdf6e6;box-shadow:inset 0 0 0 1px var(--gold);color:var(--ink);font:inherit;font-size:15px;font-weight:700;}
+  .m-btn.ghost{background:#fff;border:1.5px solid var(--line);box-shadow:none;font-weight:600;}
+  .m-btn[disabled]{opacity:.5;}
+  .m-note{text-align:center;font-size:13px;color:var(--faint);}
+  .m-sec{background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;}
+  .m-lab{font-size:13px;font-weight:600;color:var(--dim);}
+  .m-in{box-sizing:border-box;width:100%;font:inherit;font-size:16px;color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;outline:none;}
+  .m-in:focus{border-color:var(--gold);}
   .m-err{color:var(--bad);font-size:13px;line-height:1.5;}
-  /* snap detail: map / full-screen photos / details, continuous scroll with gentle locking */
-  .m-snap{flex:1;min-height:0;overflow-y:hidden;background:#f3f4f6;}   /* neutral grout between windows */
-  .m-page{position:relative;height:100%;scroll-snap-align:start;overflow:hidden;}
-  .m-pphoto{background:#f3f4f6;}
-  .m-pphoto img{width:100%;height:100%;object-fit:contain;}
-  .m-hsnap{position:absolute;top:19%;left:8px;right:8px;bottom:11%;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;background:#ECEEF1;border-radius:12px;}   /* the image window: 8px blue grout all around */
-  .m-thumbs{position:absolute;z-index:4;overflow:hidden;background:#f3f4f6;border-radius:0 0 12px 12px;padding:8px;display:grid;gap:8px;}
-  .m-thumbs img{width:100%;height:100%;object-fit:contain;display:block;min-height:0;min-width:0;background:#000;border-radius:6px;}   /* scaled, never cropped or stretched; black fills the slot */
-  .m-thumbs img.cur{display:none;}   /* previews show the OTHER images of this action */
-  .m-hsnap::-webkit-scrollbar{display:none;}
-  .m-hpage{position:relative;flex:0 0 100%;height:100%;scroll-snap-align:start;}
-  .m-hpage img{position:absolute;top:0;left:0;width:100%;height:62%;object-fit:contain;object-position:top center;}   /* photo rides the TOP; JS sizes it exactly */
-  .m-pcap{position:absolute;bottom:12px;left:0;right:0;text-align:center;color:#fff;font-family:var(--font);font-size:10px;text-shadow:0 1px 4px #000;pointer-events:none;font-variant-numeric:tabular-nums}
-  .m-nin{position:absolute;left:14px;bottom:34px;z-index:3;box-sizing:border-box;border:1px solid var(--line2);border-radius:10px;background:#ffffffe8;color:var(--ink);
-    font:inherit;font-size:16px;padding:8px 11px;outline:none;box-shadow:0 4px 14px #1e1f221f;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}
-  .m-nin:focus{border-color:var(--accent);}
-  .m-nin::placeholder{color:var(--muted);}
-  .m-cue{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-family:var(--font);font-size:10px;color:#fff;text-shadow:0 1px 4px #000;pointer-events:none;z-index:500;font-variant-numeric:tabular-nums}
-  .m-inset{position:absolute;top:8px;left:8px;right:8px;height:calc(19% - 16px);z-index:4;display:flex;border-radius:12px;overflow:hidden;background:#ECEEF1;transition:opacity .2s;}
-  .m-inset .mi-half{flex:1 1 50%;min-width:0;height:100%;}
-  .m-inset .mi-half+.mi-half{border-left:8px solid #f3f4f6;}
-  .m-sub2{position:absolute;left:8px;right:8px;bottom:8px;max-height:58%;z-index:4;box-sizing:border-box;overflow-y:auto;background:#ffffffe8;border:1px solid var(--line2);border-radius:12px;padding:6px 9px;box-shadow:0 4px 14px #1e1f221f;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}   /* content-sized: every sub-action visible, the image yields */
-  .m-sub2 .s2row{display:flex;gap:7px;align-items:flex-start;font-size:16px;color:var(--ink);line-height:1.35;padding:3px 0;}
-  .m-sub2 .s2row .n{color:var(--accent2);font-family:var(--mono);font-size:15px;font-weight:700;flex-shrink:0;margin-top:1px;}
-  .m-sub2 .k2{width:20px;height:20px;flex-shrink:0;box-sizing:border-box;border:2px solid var(--line2);border-radius:6px;background:var(--panel);color:#fff;font-size:13px;line-height:16px;text-align:center;margin-top:1px;}
-  .m-sub2 .k2.on{background:var(--good);border-color:var(--good);}
-  .m-sub2 .s2row .t{min-width:0;}
-  .m-sub2 .s2row.done .t{text-decoration:line-through;color:var(--dim);}
-  .m-sub2 .s2row.s2drag{opacity:.55;}
-  .m-sub2 .s2row.s2ins{box-shadow:0 -2px 0 var(--accent);}
-  .m-sub2 .s2row.s2insb{box-shadow:0 2px 0 var(--accent);}
-  .m-sub2 .s2new{margin-top:5px;background:var(--panel);border-color:var(--line2);color:var(--ink);font-size:15px;}
-  .s2x{border:none;background:none;color:var(--faint);font-size:19px;line-height:1;padding:0 6px;margin-left:auto;flex-shrink:0;cursor:pointer;}
-  .s2x:active{color:var(--bad);}
-  .m-ub{min-width:38px;padding:7px 8px;font-size:14px;line-height:1;flex-shrink:0;}
+  .m-anum{color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums;}
+  #mToast{position:absolute;left:12px;right:12px;bottom:84px;z-index:9500;background:var(--ink);color:#fff;font-size:15px;font-weight:600;padding:12px 14px;border-radius:10px;text-align:center;box-shadow:0 8px 24px #00000055;display:none;}
   .m-ub.off{opacity:.3;pointer-events:none;}
-  .m-sted{border:none;background:none;color:var(--faint);font-size:14px;padding:4px 6px;flex-shrink:0;cursor:pointer;}
-  .m-fhead{position:absolute;top:0;left:0;right:0;z-index:600;display:flex;align-items:center;gap:6px;padding:8px 10px;pointer-events:none;}   /* no backdrop wash — pills float over the map like the desktop's map controls */
-  .m-fhead .m-chip{pointer-events:auto;}
-  .m-fhead input.m-in{pointer-events:auto;flex:1;min-width:0;}
-  .m-fhead .m-fht{pointer-events:auto;}
-  .m-ur{position:absolute;right:8px;z-index:5;display:flex;gap:6px;}
-  .m-ur .m-chip{background:#ffffffe8;border:1px solid var(--line2);color:var(--ink);}
-  .m-fhead .m-back{pointer-events:auto;color:var(--muted);width:38px;height:38px;margin-left:0;border:1px solid var(--line2);border-radius:10px;background:#ffffffe8;font-size:22px;flex-shrink:0;box-shadow:0 4px 14px #1e1f221f;}
-  .m-fht{color:var(--ink);font-weight:600;font-size:14px;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#ffffffe8;border:1px solid var(--line2);border-radius:10px;padding:8px 12px;box-shadow:0 4px 14px #1e1f221f;}
-  .m-pdet{background:#f3f4f6;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  .s2x{border:none;background:none;color:var(--faint);font-size:20px;line-height:1;padding:0 4px 0 8px;margin-left:auto;flex-shrink:0;cursor:pointer;}
+  .s2x:active{color:var(--bad);}
+  /* phone layout "A": slim top bar with a Map | List toggle; the map fills the screen, close-together
+     dots merge into a count bubble that lists its actions; an action opens on its own full screen */
+  .ma-top{flex-shrink:0;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top));position:relative;z-index:700;}
+  .ma-top svg,.ma-seg svg,.ma-fab svg,.ma-btn svg,.ma-add svg,.ma-search svg,.ma-dist svg,.ma-first svg,.ma-thumbs svg{width:17px;height:17px;flex-shrink:0;}
+  .ma-proj{flex:1;min-width:0;text-align:left;background:none;border:0;padding:0;font:inherit;color:var(--ink);display:flex;flex-direction:column;gap:1px;}
+  .ma-pn{font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ma-pn i{font-style:normal;color:var(--faint);font-weight:400;margin-left:4px;}
+  .ma-ps{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ma-ps.warn{color:#9a5b00;}
+  .ma-seg{display:inline-flex;border:1.5px solid var(--line);border-radius:8px;background:#fff;flex-shrink:0;}
+  .ma-seg button{font:inherit;font-size:13px;font-weight:600;color:var(--muted);background:none;border:0;padding:7px 11px;display:flex;align-items:center;gap:5px;border-radius:7px;}
+  .ma-seg button.on{background:#fdf6e6;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--gold);}
+  .ma-mapwrap{flex:1;min-height:0;position:relative;}
+  .ma-map{position:absolute;inset:0;background:#e9ecef;}
+  .ma-fabs{position:absolute;top:12px;right:12px;z-index:500;display:flex;flex-direction:column;gap:8px;}
+  .ma-fab{width:42px;height:42px;box-sizing:border-box;border-radius:10px;background:#fff;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink);box-shadow:0 2px 8px #1d243018;padding:0;font:inherit;flex-shrink:0;}
+  .ma-fab.on{background:#fdf6e6;border-color:var(--gold);}
+  .ma-add{position:absolute;right:12px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:500;height:44px;padding:0 14px;border-radius:10px;background:#fff;border:1.5px solid var(--line);box-shadow:0 2px 8px #1d243018;font:inherit;font-size:15px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px;}
+  .ma-dot{width:30px;height:30px;box-sizing:border-box;border-radius:50%;background:#F28C28;border:2px solid #fff;box-shadow:0 0 0 1.5px #9A520B,0 2px 6px #0005;color:#fff;font:800 10px/26px var(--font);text-align:center;letter-spacing:-.2px;}
+  .ma-dot.new{background:#fff;color:#9A520B;font-size:16px;}
+  .ma-cl{width:38px;height:38px;box-sizing:border-box;border-radius:50%;background:#fff;border:3px solid #F28C28;box-shadow:0 2px 8px #0005;color:#9A520B;font:800 15px/32px var(--font);text-align:center;}
+  .ma-ov{position:absolute;inset:0;z-index:800;background:#1d243033;}
+  .ma-sheet{position:absolute;left:0;right:0;bottom:0;z-index:801;background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -4px 20px #1d24302a;padding:0 0 calc(16px + env(safe-area-inset-bottom));max-height:78%;overflow-y:auto;}
+  .ma-handle{width:36px;height:4px;border-radius:2px;background:var(--line2);margin:8px auto 6px;}
+  .ma-shh{display:flex;align-items:baseline;padding:2px 16px 10px;gap:8px;}
+  .ma-shh b{flex:1;font-size:15px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .ma-shh span{font-size:13px;color:var(--muted);}
+  .ma-row{box-sizing:border-box;display:flex;align-items:center;gap:12px;padding:10px 16px;border:0;border-top:1px solid var(--line);background:none;width:100%;text-align:left;font:inherit;color:var(--ink);}
+  .ma-rt{flex:1;min-width:0;}
+  .ma-rt .t{font-size:15px;font-weight:600;line-height:1.3;}
+  .ma-row .ma-rt .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ma-rt .m{font-size:13px;color:var(--muted);margin-top:2px;}
+  .ma-th{width:48px;height:48px;border-radius:6px;background:#dfe3e8 center/cover no-repeat;flex-shrink:0;}
+  .ma-chev{color:var(--faint);font-size:22px;line-height:1;}
+  .ma-sbtns{display:flex;flex-direction:column;gap:8px;padding:0 16px;}
+  .ma-sbtns .ma-btn{flex:none;}
+  .ma-lwrap{flex:1;min-height:0;display:flex;flex-direction:column;background:#f3f4f6;}
+  .ma-lhead{display:flex;gap:8px;align-items:center;padding:12px 14px 8px;}
+  .ma-search{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:0 10px;color:var(--faint);height:42px;box-sizing:border-box;}
+  .ma-search input{flex:1;min-width:0;border:0;outline:none;font:inherit;font-size:16px;background:none;color:var(--ink);padding:0;}
+  .ma-chips{display:flex;gap:6px;padding:0 14px 10px;}
+  .ma-chip{font:inherit;font-size:13px;font-weight:600;background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:6px 11px;color:var(--ink);}
+  .ma-chip.on{background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);}
+  .ma-list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px 24px;display:flex;flex-direction:column;gap:8px;}
+  .ma-list .m-card{display:flex;align-items:center;gap:12px;background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;flex-shrink:0;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+  .ma-list .m-card .ma-th{width:52px;height:52px;}
+  .ma-list .m-card.hold{opacity:.6;}
+  .ma-list .m-card.done .t{color:var(--muted);}
+  .ma-list .m-card.mdrag{opacity:.85;transform:scale(1.02);box-shadow:0 8px 24px #1e1f2240;border-color:var(--gold);position:relative;z-index:5;}
+  .ma-empty{padding:40px 10px;text-align:center;color:var(--faint);font-size:15px;}
+  .ma-back{display:flex;align-items:center;gap:2px;background:none;border:0;font:inherit;font-size:15px;font-weight:600;color:var(--accent);padding:6px 4px;margin-left:-6px;}
+  .ma-back svg{width:22px;height:22px;}
+  .ma-top .m-ub{width:40px;height:36px;border-radius:8px;border:0;background:none;color:var(--muted);font-size:20px;display:flex;align-items:center;justify-content:center;padding:0;}
+  .ma-dbody{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px 24px;}
+  .ma-title{font-size:20px;font-weight:700;line-height:1.25;color:var(--ink);}
+  .ma-strow{display:flex;align-items:center;gap:6px;margin-top:10px;}
+  .ma-dist{margin-left:auto;display:flex;align-items:center;gap:4px;font:inherit;font-size:13px;color:var(--muted);background:none;border:0;padding:6px 0;white-space:nowrap;}
+  .ma-car{position:relative;margin-top:14px;border-radius:10px 10px 0 0;overflow:hidden;background:#000;aspect-ratio:4/3;}
+  .ma-hs{position:absolute;inset:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;}
+  .ma-hs::-webkit-scrollbar{display:none;}
+  .ma-hs .m-hpage{position:relative;flex:0 0 100%;height:100%;scroll-snap-align:start;overflow:hidden;}
+  .ma-hs .m-hpage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
+  .ma-cnt{position:absolute;right:8px;top:8px;background:#000a;color:#fff;font-size:13px;font-weight:600;border-radius:999px;padding:3px 9px;pointer-events:none;}
+  .ma-note{display:flex;gap:10px;align-items:flex-start;border:1.5px solid var(--line);border-top:0;border-radius:0 0 10px 10px;padding:10px 12px;}
+  .ma-note textarea{flex:1;min-width:0;border:0;outline:none;resize:none;font:inherit;font-size:15px;line-height:1.4;color:var(--ink);background:none;padding:0;overflow:hidden;height:21px;}
+  .ma-note textarea::placeholder{color:var(--faint);}
+  .ma-note svg{width:16px;height:16px;color:var(--faint);flex-shrink:0;margin-top:3px;}
+  .ma-thumbs{display:flex;gap:8px;overflow-x:auto;padding:10px 0 2px;scrollbar-width:none;}
+  .ma-thumbs .tb{width:56px;height:42px;border-radius:6px;background:#dfe3e8 center/cover no-repeat;flex-shrink:0;border:0;padding:0;}
+  .ma-thumbs .tb.cur{box-shadow:0 0 0 2px var(--gold);}
+  .ma-thumbs .tb.cam{box-sizing:border-box;background:#fff;border:1.5px dashed var(--line2);color:var(--dim);display:flex;align-items:center;justify-content:center;}
+  .ma-first{margin-top:14px;width:100%;height:120px;border:1.5px dashed var(--line2);border-radius:10px;background:#fff;color:var(--muted);font:inherit;font-size:15px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;}
+  .ma-first svg{width:24px;height:24px;}
+  .ma-sech{display:flex;align-items:baseline;margin:18px 0 2px;}
+  .ma-sech b{flex:1;font-size:15px;}
+  .ma-sech span{font-size:13px;color:var(--muted);}
+  .ma-cl2 .s2row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px;color:var(--ink);line-height:1.35;}
+  .ma-cl2 .k2{width:22px;height:22px;box-sizing:border-box;border:1.5px solid var(--line2);border-radius:6px;background:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#1a1307;font-size:13px;font-weight:800;}
+  .ma-cl2 .k2.on{background:var(--gold);border-color:var(--gold);}
+  .ma-cl2 .n{color:var(--accent);font-weight:700;font-size:13px;flex-shrink:0;min-width:14px;}
+  .ma-cl2 .t{flex:1;min-width:0;}
+  .ma-cl2 .s2row.done .t{text-decoration:line-through;color:var(--faint);}
+  .ma-cl2 .s2row.s2drag{opacity:.55;}
+  .ma-cl2 .s2row.s2ins{box-shadow:0 -2px 0 var(--accent);}
+  .ma-cl2 .s2row.s2insb{box-shadow:0 2px 0 var(--accent);}
+  .ma-cl2 .s2new{margin-top:10px;}
+  .ma-bar{flex-shrink:0;display:flex;gap:8px;padding:10px 14px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:#fff;}
+  .ma-btn{box-sizing:border-box;height:46px;border-radius:8px;background:#fff;border:1.5px solid var(--line);font:inherit;font-size:15px;font-weight:600;color:var(--ink);display:flex;align-items:center;justify-content:center;gap:7px;flex:1;padding:0 12px;white-space:nowrap;}
+  .ma-btn.pri{flex:2;background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);font-weight:700;}
+  .ma-btn.busy{opacity:.6;pointer-events:none;}
+  .ma-btn[disabled]{opacity:.4;}
 
   /* new-version pill (only appears when the app is served from the web, e.g. GitHub Pages) */
   #updpill{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:6000;display:flex;align-items:center;gap:10px;
@@ -3001,6 +3025,7 @@ async function loadMapTile(z,x,y){ const prov=await tileProvider();
 }
 /* Where the user is right now (desktop YOU ARE HERE marker, else a quick one-off fix) — null if unknown/blocked. */
 async function currentPos(){
+  try{ if(document.body.classList.contains("mobile")&&mGeo) return {lat:mGeo.lat,lng:mGeo.lng}; }catch(e){}
   try{ if(geoMarker){ const l=geoMarker.getLatLng(); return {lat:l.lat,lng:l.lng}; } }catch(e){}
   let pref=null; try{ pref=localStorage.getItem("pmGeoOn"); }catch(e){}
   if(pref==="0"||!navigator.geolocation) return null;
@@ -3041,7 +3066,7 @@ const CARD_LAYOUT={head:.20,main:.50,thumbs:.30,mapW:.50};   // chosen: header 2
 const CARD_K=2;   // drawn at 2x (2160x3840): photos stay sharp when zoomed in Messenger (inside its HD size limit)
 const _within=(pr,ms)=>Promise.race([pr,new Promise(r=>setTimeout(()=>r(null),ms))]);
 async function cardImage(p){   // sharpest image reachable WITHOUT any prompt: the original (photo folder / phone upload), else the preview
-  let file=null; try{ file=await _within(getOriginalFileSilent(p),8000); }catch(e){}
+  let file=null; if(!p._phone){ try{ file=await _within(getOriginalFileSilent(p),8000); }catch(e){} }
   if(file){ try{ const r=await displayURL(p,file); try{ return {im:await loadImg(r.url),url:r.url}; }catch(e){ URL.revokeObjectURL(r.url); } }catch(e){} }
   const src=p.preview||p.thumb; if(!src) return null;
   try{ return {im:await loadImg(src)}; }catch(e){ return null; }
@@ -3052,9 +3077,9 @@ function _drawPhoto(ctx,p,im,x,y,w,h,r){   // the WHOLE photo (never cropped) on
     ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality="high"; ctx.drawImage(im,dx,dy,dw,dh);
     if(p&&p.marks&&p.marks.length) paintMarks(ctx,dx,dy,dw,dh,Math.min(dw,dh)*0.0012,p.marks,(p.mkw!=null?p.mkw:null),(p.mth!=null?p.mth:null)); }
   ctx.restore(); }
-async function composeActionCard(a){   // portrait card: title | satellite mini-map · main photo · the rest tiled
+async function composeActionCard(a,psIn){   // psIn: the phone passes its own photo list   // portrait card: title | satellite mini-map · main photo · the rest tiled
   const S=CARD_STYLE, Lo=CARD_LAYOUT, W=1080, H=1920, gap=S.gap, K=CARD_K;   // laid out in 1080x1920 units, rendered at K x
-  const ps=actPhotos(a), ars=[];
+  const ps=psIn||actPhotos(a), ars=[];
   for(const ph of ps){ let ar=4/3; try{ const src=ph.preview||ph.thumb; if(src){ const im=await loadImg(src); if(im.width&&im.height) ar=im.width/im.height; } }catch(e){} ars.push(ar); }   // shapes only, for the layout
   const pts=ps.filter(p=>isFinite(p.lat)&&isFinite(p.lng)&&p.lat!=null).map(p=>({lat:+p.lat,lng:+p.lng}));   // every dot on the map, incl. placed (noGps) ones
   if(a.loc&&isFinite(a.loc.lat)&&isFinite(a.loc.lng)) pts.push({lat:+a.loc.lat,lng:+a.loc.lng});
@@ -5101,7 +5126,7 @@ function parseShareHash(){
    pack.json from the private data repo (token pasted once) and pushes ticks/notes back. */
 const PM_MARK=w=>'<svg class="pm-mark" viewBox="0 0 64 64" width="'+w+'" height="'+w+'" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#e8b44a"/><rect x="6" y="6" width="52" height="52" rx="13" fill="none" stroke="#111418" stroke-width="2.5"/><text x="32" y="46" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="38" fill="#111418">A</text></svg>';
 function isMobile(){ try{ return matchMedia("(pointer:coarse)").matches && Math.min(screen.width,screen.height)<600 && !localStorage.getItem("pmForceDesktop"); }catch(e){ return false; } }
-let mPack=null, mGeo=null, mMiniMap=null, mInsetMap=null, mInsetMapL=null, mInsetCur=null, mHomeMap=null, mHomeBB=null;
+let mPack=null, mGeo=null, mHomeMap=null, mHomeBB=null;
 let _mpRaw=null,_mpObj=null;
 function mPend(){   // parsed once per actual change (renders used to re-parse it hundreds of times)
   let raw; try{ raw=localStorage.getItem(mFieldKey())||"{}"; }catch(e){ return {}; }
@@ -5151,7 +5176,7 @@ let mSoftRefresh=null;   // detail screens register an in-place refresher so und
 function mRestoreKeepMeta(raw){ const cur=mPend(); let o={}; try{ o=JSON.parse(raw)||{}; }catch(e){} for(const k of ["sentAt","sentUpd","sentSnap"]){ if(cur[k]!==undefined) o[k]=cur[k]; else delete o[k]; } mPendSave(o); }
 function mUndo(){ if(!mUndoStack.length) return; mRedoStack.push(localStorage.getItem(mFieldKey())||"{}"); mRestoreKeepMeta(mUndoStack.pop()); if(!(mSoftRefresh&&mSoftRefresh())&&mRerender) mRerender(); }
 function mRedo(){ if(!mRedoStack.length) return; mUndoStack.push(localStorage.getItem(mFieldKey())||"{}"); mRestoreKeepMeta(mRedoStack.pop()); if(!(mSoftRefresh&&mSoftRefresh())&&mRerender) mRerender(); }
-function mUndoHtml(){ return '<button class="m-chip m-ub'+(mUndoStack.length?'':' off')+'" id="mUndoB" type="button" aria-label="Undo">↺</button><button class="m-chip m-ub'+(mRedoStack.length?'':' off')+'" id="mRedoB" type="button" aria-label="Redo">↻</button>'; }
+function mUndoHtml(){ return '<button class="m-ub'+(mUndoStack.length?'':' off')+'" id="mUndoB" type="button" aria-label="Undo">↺</button><button class="m-ub'+(mRedoStack.length?'':' off')+'" id="mRedoB" type="button" aria-label="Redo">↻</button>'; }
 function mWireUndo(){ const u=document.getElementById("mUndoB"),r=document.getElementById("mRedoB");
   if(u) u.addEventListener("click",e=>{ e.stopPropagation(); mUndo(); });
   if(r) r.addEventListener("click",e=>{ e.stopPropagation(); mRedo(); }); }
@@ -5242,7 +5267,7 @@ function mToggleHold(a){ mMutate(()=>{ const p=mPend();
   else{ const c=(p.changes=p.changes||{})[a.id]||(p.changes[a.id]={}); c.hold=!mHold(a); }
   mPendSave(p); }); }
 function mStepDone(a,i){ if(a._new){ const x=mNewActs()[a._ni]; return !!(x&&x.steps&&x.steps[i]&&x.steps[i].d); } const c=mCh(a.id); return (c.steps&&(String(i) in c.steps))?!!c.steps[String(i)]:!!(a.steps[i]&&a.steps[i].d); }
-function mScr(html){ [mMiniMap,mInsetMap,mInsetMapL,mHomeMap].forEach(m=>{ if(m){ try{ m.remove(); }catch(e){} } }); mMiniMap=null; mInsetMap=null; mInsetMapL=null; mInsetCur=null; mHomeMap=null; mHomeBB=null; mSoftRefresh=null; document.getElementById("mroot").innerHTML='<div class="m-scr">'+html+'</div>'; if(mToastEl) document.getElementById("mroot").appendChild(mToastEl); }
+function mScr(html){ if(mHomeMap){ try{ mHomeMap.remove(); }catch(e){} } mHomeMap=null; mHomeBB=null; mSoftRefresh=null; document.getElementById("mroot").innerHTML='<div class="m-scr">'+html+'</div>'; if(mToastEl) document.getElementById("mroot").appendChild(mToastEl); }
 function mShowSetup(msg){
   const g=ghRaw();
   mScr('<div class="m-head"><div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div></div>'
@@ -5365,25 +5390,16 @@ function mStartGeo(){
     mAddCrumb(mGeo.lat,mGeo.lng);
     const picking=mUpBusy||(window.mPickT&&Date.now()-window.mPickT<180000);
     const typing=(()=>{ const i=document.getElementById("mNewAct"); return !!(i&&(i===document.activeElement||i.value)); })();   // a rebuild would wipe a half-typed action
-    if(document.getElementById("mList")){ if(first&&!picking&&!typing) mShowList(); else mGeoLive(false); }   // never rebuild the screen mid-pick/upload — that used to eat the selection
+    if(document.getElementById("mList")&&mTab==="list"){ if(first&&!picking&&!typing) mShowList(); else mGeoLive(false); }   // never rebuild the screen mid-pick/upload — that used to eat the selection
     else mGeoLive(first);
   },()=>{},{enableHighAccuracy:true,maximumAge:10000,timeout:20000});
 }
 function mGeoLive(refit){
   try{
-    if(mInsetMapL){
-      if(mInsetMapL._geoPin) mInsetMapL._geoPin.setLatLng([mGeo.lat,mGeo.lng]);
-      else{ mInsetMapL._geoPin=L.marker([mGeo.lat,mGeo.lng],{icon:youAreHereIcon(26),interactive:false,zIndexOffset:900}).addTo(mInsetMapL);
-        const el=document.getElementById("mInset"); if(refit&&el&&el._refit) el._refit(); }
-    }
-    if(mMiniMap){
-      if(mMiniMap._geoPin) mMiniMap._geoPin.setLatLng([mGeo.lat,mGeo.lng]);
-      else mMiniMap._geoPin=L.marker([mGeo.lat,mGeo.lng],{icon:youAreHereIcon(40),interactive:false,zIndexOffset:900}).addTo(mMiniMap);
-    }
     if(mHomeMap){
       if(mHomeMap._geoPin) mHomeMap._geoPin.setLatLng([mGeo.lat,mGeo.lng]);
       else{ mHomeMap._geoPin=L.marker([mGeo.lat,mGeo.lng],{icon:youAreHereIcon(30),interactive:false,zIndexOffset:900}).addTo(mHomeMap);
-        if(refit){ if(mHomeBB){ mHomeBB.extend([mGeo.lat,mGeo.lng]); mHomeMap.fitBounds(mHomeBB,{padding:[26,26],maxZoom:18}); } else mHomeMap.setView([mGeo.lat,mGeo.lng],16); } }
+        if(refit&&!mHomeTouched){ if(mHomeBB){ mHomeBB.extend([mGeo.lat,mGeo.lng]); mHomeMap.fitBounds(mHomeBB,{padding:[26,26],maxZoom:18}); } else mHomeMap.setView([mGeo.lat,mGeo.lng],16); } }
     }
   }catch(e){}
 }
@@ -5394,55 +5410,141 @@ function mNavPush(){ if(!mNavDepth){ try{ history.pushState({m:"act"},""); mNavD
 function mExitDetail(){ if(mNavDepth){ try{ history.back(); return; }catch(e){} } mShowList(); }
 window.addEventListener("popstate",()=>{ if(!document.body.classList.contains("mobile")) return;
   if(mNavDepth){ mNavDepth=false; mShowList(); } });
-function mShowList(){
-  if(!mPack){ mLoadPack(); return; }
-  if(mPackStale){ mPackStale=false; if(mPackNext){ const np=mPackNext; setTimeout(()=>{ if(mSafeToSwap()){ mApplyPack(np); mShowList(); mToast("\u21bb Updated from the desktop"); } else { mPackNext=np; mPackStale=true; } },0); } else setTimeout(()=>mLoadPack(true),0); }
-  mRerender=mShowList;
+/* Phone home (layout "A"): the MAP fills the screen by default; the top-right toggle swaps to the
+   LIST. Tapping an action (a dot, a list card, a row in a group) opens it on its own full screen.
+   Everything that adds something lives behind the one "+ Add" button; the project name opens the
+   menu (sync, undo, project, name, refresh). */
+const MI={
+  map:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>',
+  list:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  loc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>',
+  layers:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/></svg>',
+  back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 8 12l7 7"/></svg>',
+  cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+  msg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3C7 3 3 6.6 3 11c0 2.4 1.2 4.6 3.2 6.1V21l3.3-1.8c.8.2 1.6.3 2.5.3 5 0 9-3.6 9-8.2S17 3 12 3Z"/><path d="m7.5 13 3-3 2.5 2 3.5-3"/></svg>',
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg>',
+  pen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/></svg>',
+  pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+  up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg>',
+};
+let mTab=(()=>{ try{ return localStorage.getItem("pmMTab")==="list"?"list":"map"; }catch(e){ return "map"; } })();
+let mLayer=(()=>{ try{ return localStorage.getItem("pmMLayer")==="m"?"m":"s"; }catch(e){ return "s"; } })();
+let mLFilt="open", mLQ="", mHomeView=null, mHomeTouched=false, mHomeFocus=null;
+function mSetTab(t){ mTab=t; try{ localStorage.setItem("pmMTab",t); }catch(e){} }
+function mHomeActs(){
   const packActs=mActOrder().map(i=>(mPack.actions||[])[i]).filter(Boolean);   /* priority order: pack order with the phone's pending reorder applied */
   const packFu=new Set((mPack.actions||[]).map(a=>a.fu).filter(Boolean));   // once merged, the pack's copy is the one shown (and edited)
   const news=mNewActs().map((x,i)=>({id:"n"+i,_new:true,_ni:i,text:x.text,steps:x.steps||[],photos:[],done:!!x.done,u:x.u})).filter(x=>!(x.u&&packFu.has(x.u)));
-  const mRank=a=>mDone(a)?2:(mHold(a)?1:0);   // ticked on hold / completed sink to the bottom, like the desktop
-  const acts=news.concat(packActs.map((a,i)=>({a,i})).sort((x,y)=>(mRank(x.a)-mRank(y.a))||(x.i-y.i)).map(x=>x.a));   // phone-created actions sit on top until they're merged on desktop
-  mScr('<div class="m-head"><div style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;"><div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div>'
-    +'<div class="m-sub" id="mProjSub" title="Tap to switch project">'+esc(mPack.project||"")+(mRO()?' · <b>view only</b>':'')+' · exported '+(mPack.exportedAt?new Date(mPack.exportedAt).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"")+' · app '+new Date(document.lastModified).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})+'</div></div>'
-    +mUndoHtml()+'<button class="m-chip" id="mWho" type="button" title="Your name in the change history">\ud83d\udc64 '+esc(mUserName())+'</button><button class="m-chip" id="mRefresh" type="button">REFRESH</button></div>'
-    +'<div class="m-body" id="mList">'
-    +'<input class="m-in" id="mNewAct" placeholder="+ New action" autocomplete="off" style="margin-bottom:2px;" />'
-    +(acts.length?acts.map(a=>{
-      const done=mDone(a), rows=mSteps(a), sd=rows.filter(s=>s.d).length, st=rows.length, d=mDist(a);
-      const k=a._new?a.id:String((mPack.actions||[]).indexOf(a));
-      const hold=mHold(a);
-      return '<div class="m-card'+(done?' done':'')+(hold?' hold':'')+'" data-k="'+k+'"><div class="m-chk'+(done?' on':'')+'">'+(done?'✓':'')+'</div>'
-        +'<div class="m-hold'+(hold?' on':'')+'" data-hold="1" title="On hold">'+(hold?'❙❙':'')+'</div>'
-        +'<div class="m-cbody"><div class="m-ct"'+(done?' style="text-decoration:line-through;color:var(--muted)"':'')+'>'+(a._new?'':'<span class="m-anum">'+actNo(a)+'</span>')+esc(mTitle(a))+'</div>'
-        +'<div class="m-cm">'+(a._new?'<span style="color:var(--accent2);font-weight:600;">NEW · on phone</span>':'<b>'+(a.photos||[]).length+' photo'+((a.photos||[]).length===1?'':'s')+'</b>')
-        +(st?'<span>steps '+sd+'/'+st+'</span>':'')+(d!=null?'<span>'+mFmtD(d)+' away</span>':'')+'</div></div>'
-        +'<div style="align-self:center;color:var(--line2);font-size:22px;">›</div></div>';
-    }).join(''):'<div class="m-note" style="padding-top:40px">No open actions in the pack.</div>')
-    +'</div>'
-    +'<div class="m-foot"><div style="display:flex;gap:8px;"><button class="m-btn" id="mCamBtn" style="flex:1">\ud83d\udcf7 Take photo</button><button class="m-btn" id="mCamNewBtn" style="flex:1">\ud83d\udcf7 + New action</button></div>'
-    +'<button class="m-btn ghost" id="mUpBtn">Upload photos to the map</button>'
-    +'<div class="m-note m-sync" id="mSendNote">'+mSyncText()+'</div></div>'
-    +'<div class="m-homemap" id="mHomeMap"></div>');
-  document.getElementById("mRefresh").addEventListener("click",()=>{ mCheckFresh(true); mLoadPack(); });
-  document.getElementById("mWho").addEventListener("click",()=>{ const v=prompt("Your name, shown next to your changes in the history:",mUserName(true)); if(v!=null){ try{ localStorage.setItem("pmUserName",v.trim()); }catch(e){} mShowList(); } });   // one tap: newest app build + newest pack
-  document.getElementById("mProjSub").addEventListener("click",()=>mChooseProject());
-  document.getElementById("mUpBtn").addEventListener("click",()=>{ if(mRoBlock()) return; mUpInput().click(); window.mPickT=Date.now(); });
-  document.getElementById("mCamBtn").addEventListener("click",()=>mTakePhoto(null));
-  document.getElementById("mCamNewBtn").addEventListener("click",()=>mTakePhoto({newAction:true}));
-  document.getElementById("mSendNote").addEventListener("click",()=>{ mSendChanges(); mPackPoll(true); });   // tap = sync now
-  mWireUndo();
-  document.getElementById("mNewAct").addEventListener("keydown",e=>{
-    e.stopPropagation(); if(e.key!=="Enter") return; const v=e.target.value.trim(); if(!v) return;
+  const mRank=a=>mDone(a)?2:(mHold(a)?1:0);   // on hold / completed sink to the bottom, like the desktop
+  return news.concat(packActs.map((a,i)=>({a,i})).sort((x,y)=>(mRank(x.a)-mRank(y.a))||(x.i-y.i)).map(x=>x.a));   // phone-created actions sit on top until they're merged on desktop
+}
+function mCardKey(a){ return a._new?a.id:String((mPack.actions||[]).indexOf(a)); }
+function mOpenAct(k){ mShowDetail(mIsNew(k)?k:Number(k)); }
+function mHeadSub(){ if(!mPack) return "";
+  const n=mChCount();
+  if(n&&mSyncState==="error") return "⚠ "+n+" change"+(n===1?"":"s")+" waiting to sync";
+  if(n||mSyncState==="sending") return "↻ Syncing…";
+  let o=0,h=0; for(const a of mHomeActs()){ if(mDone(a)) continue; if(mHold(a)) h++; else o++; }
+  return (mRO()?"View only · ":"")+o+" open"+(h?" · "+h+" on hold":""); }
+function mMeta(a){ const rows=mSteps(a), sd=rows.filter(s=>s.d).length, n=(a.photos||[]).length, d=mDist(a), out=[];
+  if(a._new) out.push('<span style="color:var(--accent);font-weight:600">New · on this phone</span>');
+  if(rows.length) out.push(sd+"/"+rows.length+" steps");
+  if(!a._new||n) out.push(n+" photo"+(n===1?"":"s"));
+  if(d!=null) out.push(mFmtD(d));
+  if(!mDone(a)&&mHold(a)) out.push("on hold");
+  return out.join(" · "); }
+function mThumbOf(a){ const p=(a.photos||[]).find(x=>x.img); return p?'<div class="ma-th" style="background-image:url(\''+p.img+'\')"></div>':''; }
+function mActLine(a){ return (a._new?'':'<span class="m-anum">'+actNo(a)+'</span> ')+esc(mTitle(a)); }
+function mTopHtml(on){
+  return '<div class="ma-top"><button class="ma-proj" id="mProjSub" type="button"><span class="ma-pn">'+esc(mPack.project||"Project")+'<i>▾</i></span><span class="ma-ps" id="mSendNote">'+esc(mHeadSub())+'</span></button>'
+    +'<div class="ma-seg" id="mSeg"><button type="button" data-t="map" class="'+(on==="map"?"on":"")+'">'+MI.map+'Map</button><button type="button" data-t="list" class="'+(on==="list"?"on":"")+'">'+MI.list+'List</button></div></div>';
+}
+/* bottom sheets: one at a time, dropped by a tap on the dimmed map/list behind them */
+function mSheet(html){ mCloseSheet(); if(mToastEl&&!mUpBusy) mToastEl.style.display="none"; const root=document.getElementById("mroot");
+  const ov=document.createElement("div"); ov.className="ma-ov"; ov.id="mOv"; ov.addEventListener("click",mCloseSheet);
+  const sh=document.createElement("div"); sh.className="ma-sheet"; sh.id="mSheet"; sh.innerHTML='<div class="ma-handle"></div>'+html;
+  root.appendChild(ov); root.appendChild(sh); return sh; }
+function mCloseSheet(){ ["mOv","mSheet"].forEach(id=>{ const e=document.getElementById(id); if(e) e.remove(); }); }
+function mShowList(){
+  if(!mPack){ mLoadPack(); return; }
+  if(mPackStale){ mPackStale=false; if(mPackNext){ const np=mPackNext; setTimeout(()=>{ if(mSafeToSwap()){ mApplyPack(np); mShowList(); mToast("↻ Updated from the desktop"); } else { mPackNext=np; mPackStale=true; } },0); } else setTimeout(()=>mLoadPack(true),0); }
+  mRerender=mShowList;
+  const acts=mHomeActs();
+  if(mTab==="map"){
+    mScr(mTopHtml("map")+'<div class="ma-mapwrap" id="mList"><div class="ma-map" id="mHomeMap"></div>'
+      +'<div class="ma-fabs"><button class="ma-fab'+(mLayer==="m"?" on":"")+'" id="mLayerB" type="button" aria-label="Satellite or street map">'+MI.layers+'</button><button class="ma-fab" id="mLocB" type="button" aria-label="Show where I am">'+MI.loc+'</button></div>'
+      +'<button class="ma-add" id="mAddB" type="button">'+MI.plus+'Add</button></div>');
+  } else {
+    const shown=acts.filter(a=>mLFilt==="done"?mDone(a):mLFilt==="hold"?(!mDone(a)&&mHold(a)):!mDone(a));
+    mScr(mTopHtml("list")+'<div class="ma-lwrap"><div class="ma-lhead"><label class="ma-search">'+MI.search+'<input id="mQ" type="search" placeholder="Search actions" autocomplete="off" value="'+esc(mLQ)+'" /></label><button class="ma-fab" id="mAddB" type="button" aria-label="Add">'+MI.plus+'</button></div>'
+      +'<div class="ma-chips">'+[["open","Open"],["hold","On hold"],["done","Done"]].map(([k,t])=>'<button type="button" class="ma-chip'+(mLFilt===k?" on":"")+'" data-f="'+k+'">'+t+'</button>').join("")+'</div>'
+      +'<div class="ma-list" id="mList">'+(shown.length?shown.map(a=>{ const done=mDone(a), hold=!done&&mHold(a);
+          return '<div class="m-card'+(done?' done':'')+(hold?' hold':'')+'" data-k="'+mCardKey(a)+'" data-s="'+esc(((a._new?'':actNo(a)+' ')+mTitle(a)).toLowerCase())+'"><div class="ma-rt"><div class="t">'+mActLine(a)+'</div><div class="m">'+mMeta(a)+'</div></div>'+mThumbOf(a)+'</div>'; }).join("")
+        :'<div class="ma-empty">'+(mLFilt==="open"?"No open actions.":mLFilt==="hold"?"Nothing on hold.":"Nothing completed on this phone yet. Actions finished on the desktop drop off the phone.")+'</div>')+'</div></div>');
+  }
+  document.querySelectorAll("#mSeg button").forEach(b=>b.addEventListener("click",()=>{ if(b.dataset.t===mTab) return; mSetTab(b.dataset.t); mShowList(); }));
+  document.getElementById("mProjSub").addEventListener("click",mShowMenu);
+  document.getElementById("mAddB").addEventListener("click",mShowAdd);
+  if(mTab==="map"){
+    document.getElementById("mLayerB").addEventListener("click",e=>{ mLayer=mLayer==="m"?"s":"m"; try{ localStorage.setItem("pmMLayer",mLayer); }catch(_e){}
+      e.currentTarget.classList.toggle("on",mLayer==="m"); if(mHomeMap&&mHomeMap._tl) mHomeMap._tl.setUrl(mTileUrl()); });
+    document.getElementById("mLocB").addEventListener("click",()=>{
+      if(mGeo&&mHomeMap){ mHomeTouched=true; mHomeMap.setView([mGeo.lat,mGeo.lng],Math.max(mHomeMap.getZoom(),17)); }
+      else { mStartGeo(); mToast("Finding your location…"); } });
+    mBuildHomeMap(acts);
+  } else {
+    const q=document.getElementById("mQ");
+    const applyQ=()=>{ const v=mLQ.trim().toLowerCase(); document.querySelectorAll("#mList .m-card").forEach(el=>{ el.style.display=(!v||el.dataset.s.includes(v))?"":"none"; }); };
+    q.addEventListener("input",()=>{ mLQ=q.value; applyQ(); });
+    q.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter") q.blur(); });
+    applyQ();
+    document.querySelectorAll(".ma-chip[data-f]").forEach(b=>b.addEventListener("click",()=>{ mLFilt=b.dataset.f; mShowList(); }));
+    document.querySelectorAll("#mList .m-card").forEach(el=>el.addEventListener("click",()=>{ if(Date.now()-mCardDropT<500) return; mOpenAct(el.dataset.k); }));
+    if(mLFilt==="open") mWireCardDrag();   // hold-press + drag sets priority (open list only)
+  }
+}
+function mShowAdd(){
+  if(mRoBlock()) return;
+  mSheet('<div class="ma-shh"><b>Add</b></div><div class="ma-sbtns">'
+    +'<div style="display:flex;gap:8px"><input class="m-in" id="mNewAct" placeholder="New action" autocomplete="off" enterkeyhint="done" /><button class="ma-btn pri" id="mNewGo" type="button" style="flex:0 0 auto">Add</button></div>'
+    +'<button class="ma-btn" id="mCamNewBtn" type="button">'+MI.cam+'New action from a photo</button>'
+    +'<button class="ma-btn" id="mCamBtn" type="button">'+MI.cam+'Photo only (no action)</button>'
+    +'<button class="ma-btn" id="mUpBtn" type="button">'+MI.up+'Upload photos to the map</button>'
+    +'<div class="m-note" style="padding-top:4px">Tip: long-press the map to add an action at that spot.</div></div>');
+  const inp=document.getElementById("mNewAct");
+  const go=()=>{ const v=inp.value.trim(); if(!v){ inp.focus(); return; }
     mMutate(()=>{ const p=mPend(); p.newActs=(p.newActs||[]).concat([{text:v,steps:[],done:false,u:mUid()}]); mPendSave(p); });
-    mShowList();
-  });
-  document.querySelectorAll("#mList .m-card").forEach(el=>{
-    el.querySelector(".m-hold").addEventListener("click",e=>{ e.stopPropagation(); const k=el.dataset.k; const a=mActAt(mIsNew(k)?k:Number(k)); if(a){ mToggleHold(a); mShowList(); } });
-    el.addEventListener("click",()=>{ if(Date.now()-mCardDropT<500) return; const k=el.dataset.k; mShowDetail(mIsNew(k)?k:Number(k)); });
-  });
-  mWireCardDrag();
-  mBuildHomeMap(acts);
+    mCloseSheet(); mLFilt="open"; mShowList(); mToast("Added “"+v+"”"); };
+  inp.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"){ e.preventDefault(); go(); } });
+  document.getElementById("mNewGo").addEventListener("click",go);
+  document.getElementById("mCamNewBtn").addEventListener("click",()=>{ mCloseSheet(); mTakePhoto({newAction:true}); });
+  document.getElementById("mCamBtn").addEventListener("click",()=>{ mCloseSheet(); mTakePhoto(null); });
+  document.getElementById("mUpBtn").addEventListener("click",()=>{ mCloseSheet(); mUpInput().click(); window.mPickT=Date.now(); });
+}
+function mShowMenu(){
+  const when=t=>t?new Date(t).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"";
+  mSheet('<div class="ma-shh"><b>'+esc(mPack.project||"Project")+'</b>'+(mRO()?'<span>view only</span>':'')+'</div>'
+    +'<button class="ma-row" id="mSyncRow" type="button"><div class="ma-rt"><div class="t" id="mSyncLine">'+esc(mSyncText())+'</div><div class="m">Tap to sync now</div></div></button>'
+    +'<div class="ma-row" style="gap:8px"><button class="ma-btn" id="mMU" type="button"'+(mUndoStack.length?'':' disabled')+'>↺ Undo</button><button class="ma-btn" id="mMR" type="button"'+(mRedoStack.length?'':' disabled')+'>↻ Redo</button></div>'
+    +'<button class="ma-row" id="mMP" type="button"><div class="ma-rt"><div class="t">Switch project</div></div><span class="ma-chev">›</span></button>'
+    +'<button class="ma-row" id="mMN" type="button"><div class="ma-rt"><div class="t">Your name</div><div class="m">'+esc(mUserName(true)||"Not set")+' — shown next to your changes</div></div><span class="ma-chev">›</span></button>'
+    +'<button class="ma-row" id="mMF" type="button"><div class="ma-rt"><div class="t">Refresh</div><div class="m">Newest app and newest actions from the desktop</div></div></button>'
+    +'<button class="ma-row" id="mMS" type="button"><div class="ma-rt"><div class="t">Settings</div><div class="m">Data repository and access token</div></div><span class="ma-chev">›</span></button>'
+    +'<div class="m-note" style="padding:12px 16px 0">Actions from '+esc(when(mPack.exportedAt))+' · app '+esc(when(document.lastModified))+'</div>');
+  document.getElementById("mSyncRow").addEventListener("click",()=>{ mSendChanges(); mPackPoll(true); const l=document.getElementById("mSyncLine"); if(l) l.textContent=mSyncText(); });
+  document.getElementById("mMU").addEventListener("click",()=>{ mCloseSheet(); mUndo(); });
+  document.getElementById("mMR").addEventListener("click",()=>{ mCloseSheet(); mRedo(); });
+  document.getElementById("mMP").addEventListener("click",()=>{ mCloseSheet(); mChooseProject(); });
+  document.getElementById("mMN").addEventListener("click",()=>{ const v=prompt("Your name, shown next to your changes in the history:",mUserName(true)); if(v!=null){ try{ localStorage.setItem("pmUserName",v.trim()); }catch(e){} mCloseSheet(); } });
+  document.getElementById("mMF").addEventListener("click",()=>{ mCloseSheet(); mCheckFresh(true); mLoadPack(); });
+  document.getElementById("mMS").addEventListener("click",()=>{ mCloseSheet(); mShowSetup(); });
+}
+/* A group of actions whose dots sit together: a short pick-list */
+function mShowGroup(list){
+  mSheet('<div class="ma-shh"><b>'+list.length+' actions here</b><span>tap one to open</span></div>'
+    +list.map(a=>'<button class="ma-row" type="button" data-k="'+mCardKey(a)+'">'+mThumbOf(a)+'<div class="ma-rt"><div class="t">'+mActLine(a)+'</div><div class="m">'+mMeta(a)+'</div></div><span class="ma-chev">›</span></button>').join(""));
+  document.querySelectorAll("#mSheet .ma-row[data-k]").forEach(b=>b.addEventListener("click",()=>{ mCloseSheet(); mOpenAct(b.dataset.k); }));
 }
 function mActOrder(){ const n=(mPack&&mPack.actions||[]).length; const seen=new Set(); const o=[];
   for(const i of (mPend().actOrder||[])){ const j=+i; if(j>=0&&j<n&&!seen.has(j)){ seen.add(j); o.push(j); } }
@@ -5623,30 +5725,49 @@ async function mRegisterUploads(cfg,entries){
 }
 /* Home-screen map: the bottom half of the actions list. Dots = photos of ACTIVE actions
    (not done, not on hold); the view fits those dots plus your live location. */
+function mTileUrl(){ return "https://{s}.google.com/vt/lyrs="+(mLayer==="m"?"m":"s")+"&x={x}&y={y}&z={z}"; }
+/* Home map: one numbered dot per open action spot. Dots closer than a finger's width merge into a
+   count bubble; tapping it lists those actions. Re-grouped on every zoom. */
 function mBuildHomeMap(acts){
   const hm=document.getElementById("mHomeMap"); if(!hm||typeof L==="undefined") return;
   try{
     const m2=L.map(hm,{zoomControl:false,attributionControl:false});
-    L.tileLayer("https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",{subdomains:["mt0","mt1","mt2","mt3"],maxZoom:22,maxNativeZoom:21}).addTo(m2);
-    const seen=new Set(), pts=[];
-    acts.forEach((a,ix)=>{ if(mDone(a)||mHold(a)) return;
-      for(const ph of (a.photos||[])){ if(ph.lat!=null&&!seen.has(ph.id)){ seen.add(ph.id); pts.push(ph);
-        L.marker([ph.lat,ph.lng],{interactive:false,icon:L.divIcon({className:"",html:'<div class="num-dot">'+(a._new?"\u2022":actNo(a))+'</div>',iconSize:[26,26],iconAnchor:[13,13]})}).addTo(m2); } } });
-    const packFu=new Set((mPack.actions||[]).map(x=>x.fu).filter(Boolean));
-    const locs=(mPack.actions||[]).filter(x=>x.loc&&!mDone(x)&&!mHold(x)).map(x=>({loc:x.loc,lbl:actNo(x)}))
-      .concat(mNewActs().filter(x=>x.loc&&!(x.u&&packFu.has(x.u))).map(x=>({loc:x.loc,lbl:"\u2022"})));
-    for(const l of locs){ L.marker([l.loc.lat,l.loc.lng],{interactive:false,icon:L.divIcon({className:"",html:'<div class="act-pin"><span>'+l.lbl+'</span></div>',iconSize:[40,34],iconAnchor:[20,34]})}).addTo(m2); pts.push({lat:l.loc.lat,lng:l.loc.lng}); }
+    m2._tl=L.tileLayer(mTileUrl(),{subdomains:["mt0","mt1","mt2","mt3"],maxZoom:22,maxNativeZoom:21}).addTo(m2);
+    const pts=[];
+    acts.forEach(a=>{ if(mDone(a)||mHold(a)) return; const k=mCardKey(a);
+      for(const ph of (a.photos||[])) if(ph.lat!=null&&isFinite(ph.lat)&&isFinite(ph.lng)) pts.push({lat:+ph.lat,lng:+ph.lng,k,a});
+      const loc=a._new?(mNewActs()[a._ni]||{}).loc:a.loc;
+      if(loc&&isFinite(loc.lat)&&isFinite(loc.lng)) pts.push({lat:+loc.lat,lng:+loc.lng,k,a}); });
+    const lay=L.layerGroup().addTo(m2);
+    const draw=()=>{ lay.clearLayers(); const z=m2.getZoom(), groups=[];
+      for(const p of pts){ const q=m2.project([p.lat,p.lng],z); const g=groups.find(g2=>Math.hypot(g2.x-q.x,g2.y-q.y)<34);
+        if(g) g.items.push(p); else groups.push({x:q.x,y:q.y,items:[p]}); }
+      for(const g of groups){ const ks=[...new Set(g.items.map(p=>p.k))], ll=m2.unproject([g.x,g.y],z);
+        if(ks.length===1){ const a=g.items[0].a;
+          L.marker(ll,{icon:L.divIcon({className:"",html:'<div class="ma-dot'+(a._new?' new':'')+'">'+(a._new?'•':actNo(a))+'</div>',iconSize:[30,30],iconAnchor:[15,15]})})
+            .on("click",()=>mOpenAct(ks[0])).addTo(lay); }
+        else L.marker(ll,{zIndexOffset:500,icon:L.divIcon({className:"",html:'<div class="ma-cl">'+ks.length+'</div>',iconSize:[38,38],iconAnchor:[19,19]})})
+            .on("click",()=>mShowGroup(ks.map(k=>g.items.find(p=>p.k===k).a))).addTo(lay); } };
     m2.on("contextmenu",e=>{   // long-press the map: a new action at that spot
-      const v=prompt("New action at this spot \u2014 name it:",""); if(!v||!v.trim()) return;
+      if(mRoBlock()) return;
+      const v=prompt("New action at this spot — name it:",""); if(!v||!v.trim()) return;
       mMutate(()=>{ const p=mPend(); p.newActs=(p.newActs||[]).concat([{text:v.trim(),steps:[],done:false,u:mUid(),loc:{lat:e.latlng.lat,lng:e.latlng.lng}}]); mPendSave(p); });
-      mShowList(); });
+      mHomeTouched=true; mShowList(); });
     const bb=pts.length?L.latLngBounds(pts.map(p=>[p.lat,p.lng])):null;
     if(mGeo){ m2._geoPin=L.marker([mGeo.lat,mGeo.lng],{icon:youAreHereIcon(30),interactive:false,zIndexOffset:900}).addTo(m2); if(bb) bb.extend([mGeo.lat,mGeo.lng]); }
     mHomeMap=m2; mHomeBB=bb;
-    const fit=()=>{ try{ m2.invalidateSize();
-      if(bb){ if(pts.length>1||mGeo) m2.fitBounds(bb,{padding:[26,26],maxZoom:18}); else m2.setView(bb.getCenter(),17); }
-      else if(mGeo) m2.setView([mGeo.lat,mGeo.lng],16); else m2.setView([0,0],2); }catch(e){} };
-    requestAnimationFrame(fit); setTimeout(fit,180);
+    const fit=()=>{ m2.invalidateSize();
+      if(mHomeFocus!=null){ const fp=pts.filter(p=>p.k===String(mHomeFocus)); mHomeFocus=null;
+        if(fp.length){ mHomeTouched=true; const fb=L.latLngBounds(fp.map(p=>[p.lat,p.lng])); if(fp.length>1) m2.fitBounds(fb,{padding:[60,60],maxZoom:19}); else m2.setView(fb.getCenter(),19); return; } }
+      if(mHomeTouched&&mHomeView){ m2.setView(mHomeView.c,mHomeView.z,{animate:false}); return; }
+      if(bb){ if(pts.length>1||mGeo) m2.fitBounds(bb,{padding:[40,40],maxZoom:18}); else m2.setView(bb.getCenter(),17); }
+      else if(mGeo) m2.setView([mGeo.lat,mGeo.lng],16); else m2.setView([0,0],2); };
+    fit(); draw();
+    m2.on("zoomend",draw);
+    m2.on("moveend",()=>{ mHomeView={c:m2.getCenter(),z:m2.getZoom()}; });
+    m2.on("dragstart",()=>{ mHomeTouched=true; });
+    hm.addEventListener("touchstart",e=>{ if(e.touches.length>1) mHomeTouched=true; },{passive:true});   // a pinch is the user's view too
+    requestAnimationFrame(()=>{ try{ m2.invalidateSize(); }catch(e){} });
   }catch(e){}
 }
 /* Two-way AUTO sync. Phone -> desktop: every edit is pushed a few seconds after it's made (and
@@ -5659,7 +5780,8 @@ function mSyncText(){ const n=mChCount();
   if(n) return "\u21bb "+n+" change"+(n===1?"":"s")+" syncing\u2026";
   return "\u2713 All changes synced to the desktop";
 }
-function mSyncUI(){ const el=document.getElementById("mSendNote"); if(el) el.textContent=mSyncText(); }
+function mSyncUI(){ const el=document.getElementById("mSendNote"); if(!el) return;
+  if(el.classList.contains("ma-ps")){ el.textContent=mHeadSub(); el.classList.toggle("warn",mSyncState==="error"&&!!mChCount()); } else el.textContent=mSyncText(); }
 function mAutoSendSoon(ms){ clearTimeout(_msT); _msT=setTimeout(()=>mSendChanges(),ms==null?2500:ms); mSyncUI(); }
 async function mSendChanges(){
   const cfg=ghCfg();
@@ -5717,254 +5839,145 @@ async function mPackPoll(force){
   }catch(e){}
   _mppBusy=false;
 }
+/* One action, full screen: title, Open / On hold / Done, the photos (swipe; pinch to zoom) with the
+   note of the photo being viewed right under it, then the checklist. Photo + Copy for Messenger
+   stay pinned at the bottom. */
+function mSetState(a,s){
+  const d0=mDone(a), h0=mHold(a), wd=s==="done", wh=s==="hold";
+  if(d0===wd&&h0===wh) return;
+  mMutate(()=>{ const p=mPend();
+    if(a._new){ const x=(p.newActs||[])[a._ni]; if(x){ if(d0!==wd){ x.done=wd; x.doneAt=Date.now(); } x.hold=wh; } }
+    else { const c=(p.changes=p.changes||{})[a.id]||(p.changes[a.id]={});
+      if(d0!==wd){ c.done=wd; c.doneAt=Date.now(); }
+      if(h0!==wh) c.hold=wh; }
+    mPendSave(p); });
+}
 function mShowDetail(ai,keepScroll){
   const a=mActAt(ai); if(!a){ mShowList(); return; }
   mRerender=()=>{ const sc=document.getElementById("mSnap"); mShowDetail(ai,sc?sc.scrollTop:null); };
   mNavPush();
-  const done=mDone(a);
-  const photos=(a.photos||[]), hasMap=photos.some(p=>p.lat!=null);
-  /* Snapchat-style vertical pager: MAP on top, full-screen PHOTOS (landing), DETAILS below —
-     one continuous scroll with gentle (proximity) locking. */
-  mScr('<div class="m-snap" id="mSnap">'
-    +(hasMap?'<section class="m-page"><div id="mMap" style="position:absolute;inset:0;"></div><div class="m-cue">▾ swipe up for photos · tap a dot to jump to its photo</div></section>':'')
-    +(photos.length?'<section class="m-page m-pphoto"><div class="m-hsnap" id="mHsnap">'
-      +photos.map((p,i)=>'<div class="m-hpage">'+(p.img?'<img src="'+p.img+'" alt="'+esc(p.name||"photo")+'" />':'')
-        +'<div class="m-pcap">'+esc(p.name||"")+' · '+(i+1)+'/'+photos.length+' ▸ · details ▴</div></div>').join('')
-      +'</div>'+(hasMap?'<div class="m-inset" id="mInset"></div>':'')
-      +(photos.length>1?'<div class="m-thumbs" id="mThumbs"></div>':'')
-      +'<input class="m-nin" id="mNin" placeholder="Image note" autocomplete="off" />'
-      +'<div class="m-ur" id="mUR"><button class="m-chip m-ub" id="mCamAct" type="button" aria-label="Take a photo for this action">\ud83d\udcf7</button>'+mUndoHtml()+'</div>'
-      +'<div class="m-sub2" id="mSub2"></div></section>':'')
-    +'<section class="m-page m-pdet"><div class="m-body" style="height:100%;box-sizing:border-box;padding-top:70px;">'
-    +(!photos.length?'<div class="m-sec"><div class="m-lab">SUB-ACTIONS</div>'+mSteps(a).map((s,i)=>
-        '<div class="m-strow'+(s.d?' done':'')+'" data-si="'+i+'"><div class="m-chk'+(s.d?' on':'')+'">'+(s.d?'✓':'')+'</div><div class="t"><span style="color:var(--accent2);font-family:var(--mono);font-size:11px;">'+stepLetter(i)+'.</span> <span class="m-stt">'+esc(s.t)+'</span></div><button class="m-sted" type="button" aria-label="Edit sub-action">✎</button><button class="s2x" type="button" aria-label="Delete sub-action">&times;</button></div>'
-      ).join('')
-    +'<input class="m-in" id="mStNew" placeholder="+ sub-action" autocomplete="off" style="margin-top:4px;" /></div>':'')
-    +'<button class="m-btn" id="mCamAct2">\ud83d\udcf7 Take a photo for this action</button>'
-    +'<button class="m-btn '+(done?'ghost':'green')+'" id="mDoneBtn">'+(done?'Reopen action':'Mark action complete')+'</button>'
-    +'<button class="m-btn ghost" id="mAllBtn">All actions</button>'
-    +'</div></section>'
-    +'</div>');
-  document.getElementById("mAllBtn").addEventListener("click",mExitDetail);
+  const photos=(a.photos||[]), d=mDist(a), key=mCardKey(a);
+  const loc=a._new?(mNewActs()[a._ni]||{}).loc:a.loc, onMap=!!loc||photos.some(p=>p.lat!=null);
+  const stNow=()=>mDone(a)?"done":mHold(a)?"hold":"open";
+  mScr('<div class="ma-top"><button class="ma-back" id="mBack" type="button">'+MI.back+(mTab==="list"?"List":"Map")+'</button><div style="flex:1"></div>'+mUndoHtml()+'</div>'
+    +'<div class="ma-dbody" id="mSnap">'
+    +'<div class="ma-title">'+mActLine(a)+'</div>'
+    +'<div class="ma-strow" id="mState">'+[["open","Open"],["hold","On hold"],["done","Done"]].map(([k,t])=>'<button type="button" class="ma-chip'+(stNow()===k?" on":"")+'" data-s="'+k+'">'+t+'</button>').join("")
+      +(onMap?'<button type="button" class="ma-dist" id="mDistB">'+MI.pin+(d!=null?mFmtD(d)+" away":"On the map")+'</button>':'')+'</div>'
+    +(photos.length?'<div class="ma-car"><div class="ma-hs" id="mHsnap">'+photos.map(p=>'<div class="m-hpage">'+(p.img?'<img src="'+p.img+'" alt="'+esc(p.name||"photo")+'" />':'')+'</div>').join("")+'</div>'
+        +(photos.length>1?'<div class="ma-cnt" id="mCnt">1 / '+photos.length+'</div>':'')+'</div>'
+        +'<div class="ma-note"><textarea id="mNin" rows="1" placeholder="Add a note about this photo" enterkeyhint="done"></textarea>'+MI.pen+'</div>'
+        +'<div class="ma-thumbs" id="mThumbs">'+(photos.length>1?photos.map((p,i)=>'<button type="button" class="tb'+(i?'':' cur')+'" data-i="'+i+'" style="background-image:url(\''+(p.img||'')+'\')" aria-label="Photo '+(i+1)+'"></button>').join(""):'')
+        +'<button type="button" class="tb cam" id="mCamAct" aria-label="Take a photo for this action">'+MI.cam+'</button></div>'
+      :'<button type="button" class="ma-first" id="mCamAct">'+MI.cam+'Add the first photo</button>')
+    +'<div class="ma-sech"><b>Checklist</b><span id="mStCnt"></span></div><div class="ma-cl2" id="mSub2"></div>'
+    +'</div>'
+    +'<div class="ma-bar"><button type="button" class="ma-btn" id="mCamAct2">'+MI.cam+'Photo</button><button type="button" class="ma-btn pri" id="mCopyB">'+MI.msg+'Copy for Messenger</button></div>');
+  document.getElementById("mBack").addEventListener("click",mExitDetail);
   mWireUndo();
   const snap=document.getElementById("mSnap");
-  const rer=()=>mShowDetail(ai,snap.scrollTop);
+  const paintState=()=>document.querySelectorAll("#mState .ma-chip").forEach(b=>b.classList.toggle("on",b.dataset.s===stNow()));
+  document.querySelectorAll("#mState .ma-chip").forEach(b=>b.addEventListener("click",()=>{ mSetState(a,b.dataset.s); paintState(); }));
+  const db=document.getElementById("mDistB"); if(db) db.addEventListener("click",()=>{ mHomeFocus=key; mSetTab("map"); mExitDetail(); });   // show this action on the map
   { const lk=a._new?{au:(mNewActs()[a._ni]||{}).u}:{act:a.id};   // shots taken here are linked to THIS action on the desktop
-    const go=()=>{ mTakePhoto(lk); mToast("Photo will be linked to "+(a._new?"this new action":"action "+actNo(a))+" \u2014 it appears here after the desktop syncs"); };
-    const c1=document.getElementById("mCamAct"), c2=document.getElementById("mCamAct2"); if(c1) c1.addEventListener("click",e=>{ e.stopPropagation(); go(); }); if(c2) c2.addEventListener("click",go); }
-  document.getElementById("mDoneBtn").addEventListener("click",()=>{
-    if(a._new) mEditNewAct(a._ni,x=>{ x.done=!mDone(a); x.doneAt=Date.now(); });
-    else mMutate(()=>mSetCh(a.id,{done:!mDone(a),doneAt:Date.now()}));
-    if(!(mSoftRefresh&&mSoftRefresh())) rer(); });
-  /* image note: ONE input anchored above the sub-actions (it doesn't ride the zoomable image);
-     it follows the photo being viewed, committing any edit before swapping to the next photo */
+    const go=()=>{ mTakePhoto(lk); mToast("Photo will be linked to "+(a._new?"this new action":"action "+actNo(a))+" — it appears here after the desktop syncs"); };
+    ["mCamAct","mCamAct2"].forEach(id=>{ const b=document.getElementById(id); if(b) b.addEventListener("click",e=>{ e.stopPropagation(); go(); }); }); }
+  document.getElementById("mCopyB").addEventListener("click",e=>mCopyCard(a,e.currentTarget));
+  /* the note under the photo belongs to the photo being viewed; an edit is kept before swapping */
   const nin=document.getElementById("mNin");
   let ninPi=0;
-  const ninLoad=()=>{ if(!nin) return; const p=photos[ninPi]; const pend=p?mPn(p.id):null; nin.value=p?((pend!=null)?pend:(p.note||"")):""; };
+  const ninSize=()=>{ if(!nin) return; nin.style.height="auto"; nin.style.height=nin.scrollHeight+"px"; };
+  const ninLoad=()=>{ if(!nin) return; const p=photos[ninPi]; const pend=p?mPn(p.id):null; nin.value=p?((pend!=null)?pend:(p.note||"")):""; ninSize(); };
   const ninCommit=()=>{ if(!nin) return; const p=photos[ninPi]; if(!p) return; const v=nin.value.trim();
     const base=(mPn(p.id)!=null?mPn(p.id):(p.note||"")); if(v===base) return; if(!v&&mPn(p.id)==null) return;
     mMutate(()=>mSetPn(p.id,p.name||"",v)); };
   if(nin){
-    ["click","touchstart","pointerdown"].forEach(ev=>nin.addEventListener(ev,e=>e.stopPropagation()));
-    nin.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"){ e.preventDefault(); nin.blur(); } });
+    nin.addEventListener("input",ninSize);
+    nin.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); nin.blur(); } });
     nin.addEventListener("blur",ninCommit);
     ninLoad();
   }
-  const swapHooks=[];
-  const onPhotoSwap=i=>{ if(i===ninPi) return; ninCommit(); ninPi=i; ninLoad(); swapHooks.forEach(f=>{ try{ f(i); }catch(e){} }); };
-  const rows=mSteps(a);
-  document.querySelectorAll(".m-strow").forEach(el=>{
-    const s=rows[Number(el.dataset.si)]; if(!s) return;
-    el.addEventListener("click",()=>{ mToggleStep(a,s); rer(); });
-    el.querySelector(".m-sted").addEventListener("click",e=>{ e.stopPropagation();
-      mInline(el.querySelector(".m-stt"),s.t,v=>{ if(v!=null&&v.trim()&&v.trim()!==s.t) mEditStep(a,s,v.trim()); rer(); }); });
-    const sx=el.querySelector(".s2x"); if(sx) sx.addEventListener("click",e=>{ e.stopPropagation(); mDeleteStep(a,s); rer(); });
-  });
-  const stNew=document.getElementById("mStNew");
-  if(stNew){   // photo-less actions manage sub-actions from the details page
-    stNew.addEventListener("keydown",e=>{
-      e.stopPropagation(); if(e.key!=="Enter") return; const v=e.target.value.trim(); if(!v) return;
-      mAddStep(a,v); rer(); });
-    ["click","touchstart","pointerdown"].forEach(ev=>stNew.addEventListener(ev,e=>e.stopPropagation()));
+  const hsEl=document.getElementById("mHsnap"), cnt=document.getElementById("mCnt"), th=document.getElementById("mThumbs");
+  if(hsEl){ let fr=0, last=0;
+    hsEl.addEventListener("scroll",()=>{ if(fr) return; fr=requestAnimationFrame(()=>{ fr=0; const i=Math.round(hsEl.scrollLeft/Math.max(1,hsEl.clientWidth));
+      if(i===last) return; last=i;
+      ninCommit(); ninPi=i; ninLoad();
+      if(cnt) cnt.textContent=(i+1)+" / "+photos.length;
+      if(th) th.querySelectorAll(".tb[data-i]").forEach(b=>b.classList.toggle("cur",Number(b.dataset.i)===i)); }); });
+    if(th) th.querySelectorAll(".tb[data-i]").forEach(b=>b.addEventListener("click",()=>hsEl.scrollTo({left:Number(b.dataset.i)*hsEl.clientWidth,behavior:"smooth"})));
+    mWirePinch(hsEl);
   }
-  const mapEl=document.getElementById("mMap");
-  if(mapEl){
-    const pts=photos.filter(p=>p.lat!=null);
-    mMiniMap=L.map(mapEl,{zoomControl:false,attributionControl:false,dragging:false,touchZoom:true,scrollWheelZoom:false,tap:false});   // one-finger swipes scroll the pager; two fingers zoom the map
-    L.tileLayer("https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",{subdomains:["mt0","mt1","mt2","mt3"],maxZoom:22,maxNativeZoom:21}).addTo(mMiniMap);
-    photos.forEach((p,i)=>{ if(p.lat==null) return;
-      const tapDot=L.circleMarker([p.lat,p.lng],{radius:18,stroke:false,fill:true,fillOpacity:0}).addTo(mMiniMap);   // finger-sized tap target
-      tapDot.on("click",()=>{ const strip=snap.querySelector(".m-pphoto"), hs=document.getElementById("mHsnap");
-        if(strip) snap.scrollTo({top:strip.offsetTop,behavior:"smooth"});
-        if(hs) setTimeout(()=>hs.scrollTo({left:i*hs.clientWidth,behavior:"smooth"}),80); });
-      L.circleMarker([p.lat,p.lng],{radius:9,color:"#ffffff",weight:3,fillColor:"#3BA55C",fillOpacity:.85,className:"hl-dot",interactive:false}).addTo(mMiniMap);
+  /* checklist: tick the box, tap the text to edit it, × deletes (undoable), drag the letter to reorder */
+  const sub2=document.getElementById("mSub2"), stCnt=document.getElementById("mStCnt");
+  let s2drag=null;
+  const fill=focusNew=>{ const rows2=mSteps(a);
+    stCnt.textContent=rows2.length?rows2.filter(s=>s.d).length+" of "+rows2.length:"";
+    sub2.innerHTML=rows2.map((s,i)=>'<div class="s2row'+(s.d?' done':'')+'" data-si="'+i+'"><span class="k2'+(s.d?' on':'')+'">'+(s.d?'✓':'')+'</span><span class="n" title="Drag to reorder">'+stepLetter(i)+'.</span><span class="t">'+esc(s.t)+'</span><button class="s2x" type="button" aria-label="Delete step">&times;</button></div>').join('')
+      +'<input class="m-in s2new" placeholder="+ Add a step" autocomplete="off" enterkeyhint="done" />';
+    sub2.querySelectorAll(".s2row").forEach(el2=>{
+      const si=Number(el2.dataset.si);
+      el2.querySelector(".k2").addEventListener("click",e=>{ e.stopPropagation(); const s=mSteps(a)[si]; if(s){ mToggleStep(a,s); fill(); } });
+      el2.querySelector(".t").addEventListener("click",e=>{ e.stopPropagation(); const s=mSteps(a)[si]; if(!s) return;
+        mInline(el2.querySelector(".t"),s.t,v=>{ if(v!=null&&v.trim()&&v.trim()!==s.t) mEditStep(a,s,v.trim()); fill(); }); });
+      el2.querySelector(".s2x").addEventListener("click",e=>{ e.stopPropagation(); const s=mSteps(a)[si]; if(s){ mDeleteStep(a,s); fill(); } });
+      el2.querySelector(".n").addEventListener("touchstart",e=>{ e.preventDefault(); e.stopPropagation();
+        s2drag={si,rows:Array.from(sub2.querySelectorAll(".s2row")),to:null}; el2.classList.add("s2drag"); },{passive:false});
     });
-    if(mGeo) mMiniMap._geoPin=L.marker([mGeo.lat,mGeo.lng],{icon:youAreHereIcon(40),interactive:false,zIndexOffset:900}).addTo(mMiniMap);
-    const bb=L.latLngBounds(pts.map(p=>[p.lat,p.lng])); if(mGeo) bb.extend([mGeo.lat,mGeo.lng]);
-    mMiniMap.fitBounds(bb,{padding:[36,36],maxZoom:19});
-  }
-  /* Inset mini-map top-right of the photo pages: every action dot, with the photo being
-     viewed as the flashing one. It follows the horizontal swipe. */
-  const insEl=document.getElementById("mInset"), sub2=document.getElementById("mSub2"), hsEl=document.getElementById("mHsnap");
-  /* both overlays pin to the IMAGE's own corners (contain-fit leaves letterbox bars) */
-  /* Page bands: mini-map full-width on top (28%), the image band below it down to the bottom
-     third, sub-actions filling the bottom third. Inside the band the image sits top-aligned with
-     the Image note input on its bottom edge and the caption just underneath. */
-  if(!insEl&&hsEl) hsEl.style.top="8px";   // no map in the pack: the image window starts at the top
-  const posOverlays=()=>{ if(!hsEl) return;
-    const W=hsEl.clientWidth,H=hsEl.clientHeight;
-    const geom=img=>{ if(img&&img.naturalWidth&&img.naturalHeight){ const sc=Math.min(W/img.naturalWidth,H/img.naturalHeight);
-      return {w:img.naturalWidth*sc,h:img.naturalHeight*sc}; } return {w:W,h:H}; };
-    Array.from(hsEl.children).forEach(pg=>{
-      const img=pg.querySelector("img"); const gm=geom(img); const lbX=(W-gm.w)/2;
-      if(img){ img.style.position="absolute"; img.style.top="0"; img.style.left=Math.round(lbX)+"px";
-        img.style.width=Math.round(gm.w)+"px"; img.style.height=Math.round(gm.h)+"px"; img.style.objectFit="fill"; }
-      const cap=pg.querySelector(".m-pcap"); if(cap){ cap.style.top=Math.round(Math.max(4,gm.h-20))+"px"; cap.style.bottom="auto"; }   // caption overlays the image's bottom edge
-    });
-    /* the Image note + undo/redo row anchors ABOVE the sub-actions card — it never rides the zoomable image */
-    const ur=document.getElementById("mUR"), nin2=document.getElementById("mNin");
-    const rowBottom=((sub2&&sub2.offsetHeight)||0)+16;   // 8px grout each side of the card
-    if(ur){ ur.style.top="auto"; ur.style.bottom=rowBottom+"px"; }
-    if(nin2){ nin2.style.left="8px"; nin2.style.top="auto"; nin2.style.bottom=rowBottom+"px";
-      nin2.style.width=Math.round(W-8-((ur&&ur.offsetWidth)||90)-16)+"px"; }
-    /* spare space in the image window shows previews of the action's OTHER images */
-    const th=document.getElementById("mThumbs");
-    if(th){
-      const i=Math.round(hsEl.scrollLeft/Math.max(1,W));
-      const gc=geom(hsEl.children[i]&&hsEl.children[i].querySelector("img"));
-      const secH=hsEl.parentElement?hsEl.parentElement.clientHeight:0;
-      const spare=H-gc.h;
-      if(spare>=68){
-        th.style.display="grid";
-        th.style.left=hsEl.offsetLeft+"px"; th.style.right=(hsEl.offsetLeft)+"px";
-        th.style.top=Math.round(hsEl.offsetTop+gc.h)+"px";
-        th.style.bottom=Math.max(0,secH-(hsEl.offsetTop+hsEl.offsetHeight))+"px";
-        /* the gap should read as IMAGES: pick the col/row split that lets the previews (at their
-           true aspect ratios) cover the most of the area — black only absorbs the remainder */
-        const imgs=Array.from(th.querySelectorAll("img:not(.cur)"));
-        const n=Math.max(1,imgs.length);
-        const asp=imgs.map(im=>(im.naturalWidth&&im.naturalHeight)?im.naturalWidth/im.naturalHeight:4/3);
-        const W2=W-16, H2=spare-16;
-        let best={cols:1,rows:n,fill:-1};
-        for(let cols=1;cols<=n;cols++){ const rows=Math.ceil(n/cols);
-          const cw=(W2-(cols-1)*8)/cols, chh=(H2-(rows-1)*8)/rows;
-          if(cw<=20||chh<=20) continue;
-          let shown=0;
-          for(const a2 of asp){ const s3=Math.min(cw/a2,chh); shown+=Math.min(cw,s3*a2)*Math.min(chh,s3); }
-          if(shown>best.fill) best={cols,rows,fill:shown};
-        }
-        th.style.gridTemplateColumns="repeat("+best.cols+",1fr)";
-        th.style.gridTemplateRows="repeat("+best.rows+",1fr)";
-      } else th.style.display="none";
-    } };
-  if(hsEl){ hsEl.querySelectorAll("img").forEach(im=>im.addEventListener("load",posOverlays));
-    requestAnimationFrame(posOverlays); setTimeout(posOverlays,120); setTimeout(posOverlays,450); }   // data-URL images can be complete before the load listeners attach
-  if(insEl){
-    /* split view: LEFT = whole site (this action's dots + your location), RIGHT = snug fit of
-       just the action's photos. Two fingers zoom either half; one finger still pages. */
-    insEl.innerHTML='<div class="mi-half" id="miL"></div><div class="mi-half" id="miR"></div>';
-    const pts=photos.filter(p=>p.lat!=null);
-    const mkMini=el=>{ const m2=L.map(el,{zoomControl:false,attributionControl:false,dragging:false,touchZoom:true,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false,tap:false});
-      L.tileLayer("https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",{subdomains:["mt0","mt1","mt2","mt3"],maxZoom:22,maxNativeZoom:21}).addTo(m2); return m2; };
-    mInsetMapL=mkMini(document.getElementById("miL"));
-    mInsetMap=mkMini(document.getElementById("miR"));
-    for(const p of pts){
-      L.circleMarker([p.lat,p.lng],{radius:4,color:"#ffffff",weight:2,fillColor:"#3BA55C",fillOpacity:.9,interactive:false}).addTo(mInsetMapL);
-      L.circleMarker([p.lat,p.lng],{radius:4,color:"#ffffff",weight:2,fillColor:"#3BA55C",fillOpacity:.9,interactive:false}).addTo(mInsetMap);
-    }
-    if(mGeo) mInsetMapL._geoPin=L.marker([mGeo.lat,mGeo.lng],{icon:youAreHereIcon(26),interactive:false,zIndexOffset:900}).addTo(mInsetMapL);
-    mInsetCur=L.circleMarker([pts[0].lat,pts[0].lng],{radius:7,color:"#ffffff",weight:3,fillColor:"#3BA55C",fillOpacity:1,className:"hl-dot",interactive:false}).addTo(mInsetMap);
-    const bbR=L.latLngBounds(pts.map(p=>[p.lat,p.lng]));
-    const ifit=()=>{ try{
-      mInsetMapL.invalidateSize(); mInsetMap.invalidateSize();
-      if(pts.length>1) mInsetMap.fitBounds(bbR,{padding:[12,12],maxZoom:19}); else mInsetMap.setView([pts[0].lat,pts[0].lng],18);
-      const bl=L.latLngBounds(pts.map(p=>[p.lat,p.lng])); if(mGeo) bl.extend([mGeo.lat,mGeo.lng]);   // location can arrive late — always current
-      if(mGeo||pts.length>1) mInsetMapL.fitBounds(bl,{padding:[14,14],maxZoom:17}); else mInsetMapL.setView([pts[0].lat,pts[0].lng],15);
-    }catch(e){} };
-    insEl._refit=ifit;
-    setTimeout(ifit,150);
-    const setCur=i=>{ const p=photos[i]; if(!p) return;
-      if(p.lat!=null){ insEl.style.opacity="1"; mInsetCur.setLatLng([p.lat,p.lng]); }
-      else insEl.style.opacity="0.25"; };   // photo without GPS: dim the inset instead of pointing at nothing
-    setCur(0);
-    if(hsEl){ let fr=0; hsEl.addEventListener("scroll",()=>{ if(fr) return; fr=requestAnimationFrame(()=>{ fr=0; const i=Math.round(hsEl.scrollLeft/Math.max(1,hsEl.clientWidth)); if(i!==insEl._ci){ insEl._ci=i; posOverlays(); setCur(i); onPhotoSwap(i); if(insEl._refit) insEl._refit(); } }); }); }   // one frame at a time; relayout only on landing a new photo (sizes don't change mid-swipe); swiping resets zoom
-  } else if(hsEl){ let fr=0, last=-1; hsEl.addEventListener("scroll",()=>{ if(fr) return; fr=requestAnimationFrame(()=>{ fr=0; const i=Math.round(hsEl.scrollLeft/Math.max(1,hsEl.clientWidth)); if(i!==last){ last=i; posOverlays(); onPhotoSwap(i); } }); }); }
-  if(sub2){
-    /* the card is THE sub-action editor: tick via the box, tap text to edit, Enter in the input
-       to keep adding, drag the number badge to reorder. All refreshes stay local to the card.
-       The card is content-sized — the image band shrinks to whatever the list leaves it. */
-    let s2drag=null;
-    const syncBands=()=>{ if(!hsEl) return;
-      const rowH=((document.getElementById("mNin")||{}).offsetHeight)||38;
-      hsEl.style.bottom=(sub2.offsetHeight+16+rowH+8)+"px"; posOverlays(); };   // 8px grout everywhere: card + row + gaps
-    const fill=(focusNew)=>{ const rows2=mSteps(a);
-      sub2.innerHTML=rows2.map((s,i)=>'<div class="s2row'+(s.d?' done':'')+'" data-si="'+i+'"><span class="k2'+(s.d?' on':'')+'">'+(s.d?'✓':'')+'</span><span class="n" title="Drag to reorder">'+stepLetter(i)+'.</span><span class="t">'+esc(s.t)+'</span><button class="s2x" type="button" aria-label="Delete sub-action">&times;</button></div>').join('')
-        +'<input class="m-in s2new" placeholder="+ sub-action" autocomplete="off" />';
-      sub2.querySelectorAll(".s2row").forEach(el2=>{
-        const si=Number(el2.dataset.si);
-        el2.querySelector(".k2").addEventListener("click",e=>{ e.stopPropagation(); const s=mSteps(a)[si]; if(s){ mToggleStep(a,s); fill(); } });   // ticking is the box's job alone
-        el2.querySelector(".t").addEventListener("click",e=>{ e.stopPropagation(); const s=mSteps(a)[si]; if(!s) return;
-          mInline(el2.querySelector(".t"),s.t,v=>{ if(v!=null&&v.trim()&&v.trim()!==s.t) mEditStep(a,s,v.trim()); fill(); }); });   // tapping the text edits it
-        el2.querySelector(".s2x").addEventListener("click",e=>{ e.stopPropagation(); const s=mSteps(a)[si]; if(s){ mDeleteStep(a,s); fill(); } });   // × DELETES (undoable)
-        el2.querySelector(".n").addEventListener("touchstart",e=>{ e.preventDefault(); e.stopPropagation();
-          s2drag={si,rows:Array.from(sub2.querySelectorAll(".s2row")),to:null}; el2.classList.add("s2drag"); },{passive:false});
-      });
-      const ninp=sub2.querySelector(".s2new");
-      ["click","touchstart","pointerdown"].forEach(ev=>ninp.addEventListener(ev,e=>e.stopPropagation()));
-      ninp.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key!=="Enter") return; const v=ninp.value.trim(); if(!v) return;
-        mAddStep(a,v); fill(true); });
-      if(focusNew){ const n2=sub2.querySelector(".s2new"); if(n2) n2.focus(); }
-      requestAnimationFrame(syncBands);
-    };
-    fill();
-    sub2.addEventListener("touchstart",e=>e.stopPropagation(),{passive:true});
-    sub2.addEventListener("touchmove",e=>{ e.stopPropagation();
-      if(!s2drag) return; e.preventDefault();
-      const y=e.touches[0].clientY; let to=s2drag.rows.length;
-      s2drag.rows.forEach((r,idx)=>{ const b=r.getBoundingClientRect(); if(to===s2drag.rows.length&&y<b.top+b.height/2) to=idx; });
-      s2drag.to=to;
-      s2drag.rows.forEach((r,idx)=>{ r.classList.toggle("s2ins",idx===to); r.classList.remove("s2insb"); });
-      if(to===s2drag.rows.length&&s2drag.rows.length) s2drag.rows[s2drag.rows.length-1].classList.add("s2insb");
-    },{passive:false});
-    sub2.addEventListener("touchend",()=>{ if(!s2drag) return; const d=s2drag; s2drag=null;
-      d.rows.forEach(r=>r.classList.remove("s2ins","s2insb","s2drag"));
-      if(d.to!=null){ let to=d.to; if(to>d.si) to--; if(to!==d.si) mReorderStep(a,d.si,to); }
-      fill(); },{passive:true});
-    /* in-place refresher: undo/redo and the done button update the card, note and button without
-       tearing down the screen (rebuilding both Leaflet maps made every tap feel slow) */
-    mSoftRefresh=()=>{
-      if(!mActAt(ai)){ mSoftRefresh=null; mShowList(); return true; }   // e.g. an undone phone-created action vanished
-      const d2=mDone(a);
-      const b=document.getElementById("mDoneBtn");
-      if(b){ b.textContent=d2?"Reopen action":"Mark action complete"; b.className="m-btn "+(d2?"ghost":"green"); }
-      fill(); ninLoad(); mUpdUndoUI();
-      return true;
-    };
-  }
-  const th=document.getElementById("mThumbs");
-  if(th&&hsEl){
-    th.innerHTML=photos.map((p,i)=>'<img data-i="'+i+'" src="'+(p.img||"")+'" alt="" loading="lazy" />').join("");
-    ["touchstart","touchmove"].forEach(ev=>th.addEventListener(ev,e=>e.stopPropagation(),{passive:true}));
-    th.querySelectorAll("img").forEach(im=>{
-      im.addEventListener("load",posOverlays);   // aspect ratios feed the grid fit
-      im.addEventListener("click",e=>{ e.stopPropagation();
-        hsEl.scrollTo({left:Number(im.dataset.i)*hsEl.clientWidth,behavior:"smooth"}); });
-    });
-    const updTh=i=>th.querySelectorAll("img").forEach(im=>im.classList.toggle("cur",Number(im.dataset.i)===i));
-    updTh(0); swapHooks.push(updTh);
-  }
-  mWirePinch(hsEl);
-  mWirePager(snap);
-  requestAnimationFrame(()=>{   // land on the first photo; the map waits one swipe down
-    if(keepScroll!=null){ snap.scrollTop=keepScroll; }
-    else { const first=snap.querySelector(".m-pphoto"); if(first) snap.scrollTop=first.offsetTop; }
-    if(mMiniMap) setTimeout(()=>{ try{ mMiniMap.invalidateSize(); const pts2=photos.filter(p=>p.lat!=null); const bb2=L.latLngBounds(pts2.map(p=>[p.lat,p.lng])); if(mGeo) bb2.extend([mGeo.lat,mGeo.lng]); mMiniMap.fitBounds(bb2,{padding:[36,36],maxZoom:19}); }catch(e){} },120);
-  });
+    const ninp=sub2.querySelector(".s2new");
+    ninp.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key!=="Enter") return; const v=ninp.value.trim(); if(!v) return;
+      mAddStep(a,v); fill(true); });
+    if(focusNew){ const n2=sub2.querySelector(".s2new"); if(n2) n2.focus(); }
+  };
+  fill();
+  sub2.addEventListener("touchmove",e=>{
+    if(!s2drag) return; e.preventDefault();
+    const y=e.touches[0].clientY; let to=s2drag.rows.length;
+    s2drag.rows.forEach((r,idx)=>{ const b=r.getBoundingClientRect(); if(to===s2drag.rows.length&&y<b.top+b.height/2) to=idx; });
+    s2drag.to=to;
+    s2drag.rows.forEach((r,idx)=>{ r.classList.toggle("s2ins",idx===to); r.classList.remove("s2insb"); });
+    if(to===s2drag.rows.length&&s2drag.rows.length) s2drag.rows[s2drag.rows.length-1].classList.add("s2insb");
+  },{passive:false});
+  sub2.addEventListener("touchend",()=>{ if(!s2drag) return; const dd=s2drag; s2drag=null;
+    dd.rows.forEach(r=>r.classList.remove("s2ins","s2insb","s2drag"));
+    if(dd.to!=null){ let to=dd.to; if(to>dd.si) to--; if(to!==dd.si) mReorderStep(a,dd.si,to); }
+    fill(); },{passive:true});
+  /* undo/redo refresh this screen in place (no rebuild, the photo stays where it is) */
+  mSoftRefresh=()=>{
+    if(!mActAt(ai)){ mSoftRefresh=null; mShowList(); return true; }   // e.g. an undone phone-created action vanished
+    paintState(); fill(); ninLoad(); mUpdUndoUI();
+    return true;
+  };
+  if(keepScroll!=null) requestAnimationFrame(()=>{ snap.scrollTop=keepScroll; });
 }
-/* Pinch-zoom and pan on the photo pages. The transform lives on the IMG alone, so the overlays
-   (inset map, sub-action card, note bar) keep their size. While zoomed, one-finger pans move the
-   image; only a pan that pushes PAST the image edge is released to the pager/strip, so the view
-   never springs back mid-photo. */
+/* Copy for Messenger: the same portrait card as the desktop (title + satellite map with the spots and
+   YOU ARE HERE, main photo, the rest below), straight to the clipboard. Where the phone won't allow
+   an image on the clipboard, it offers Share (pick Messenger) or Save instead. */
+async function mCopyCard(a,btn){
+  if(btn) btn.classList.add("busy");
+  mToast("Making the image…",true);
+  const ps=(a.photos||[]).filter(p=>p.img).map(p=>({preview:p.img,lat:p.lat,lng:p.lng,_phone:true}));
+  const act={text:mTitle(a),loc:a._new?(mNewActs()[a._ni]||{}).loc:a.loc};
+  const blobP=(async()=>{ const cv=await composeActionCard(act,ps); return await new Promise((res,rej)=>cv.toBlob(b=>b?res(b):rej(new Error("image failed")),"image/png")); })();
+  let ok=false;
+  try{ await navigator.clipboard.write([new ClipboardItem({"image/png":blobP})]); ok=true; }catch(e){}
+  if(btn) btn.classList.remove("busy");
+  if(ok){ mToast("✓ Copied — paste it into Messenger"); return; }
+  let blob=null; try{ blob=await blobP; }catch(e){}
+  if(!blob){ mToast("Couldn’t make the image"); return; }
+  mToast("");
+  const name=(a._new?"":actNo(a)+" ")+String(mTitle(a)||"action").replace(/[\\/:*?"<>|]+/g,"").slice(0,60)+".png";
+  const file=new File([blob],name,{type:"image/png"});
+  mSheet('<div class="ma-shh"><b>Image ready</b><span>this phone won’t copy images</span></div><div class="ma-sbtns">'
+    +'<button class="ma-btn pri" id="mShareB" type="button">'+MI.msg+'Share to Messenger…</button><button class="ma-btn" id="mSaveB" type="button">Save the image</button></div>');
+  const save=()=>{ const u=URL.createObjectURL(blob), dl=document.createElement("a"); dl.href=u; dl.download=name; document.body.appendChild(dl); dl.click(); dl.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); mCloseSheet(); };
+  document.getElementById("mShareB").addEventListener("click",()=>{
+    if(navigator.canShare&&navigator.canShare({files:[file]})) navigator.share({files:[file],title:mTitle(a)}).then(mCloseSheet).catch(()=>{});
+    else save(); });
+  document.getElementById("mSaveB").addEventListener("click",save);
+}
+/* Pinch-zoom and pan on the action's photos. The transform lives on the IMG alone. While zoomed,
+   one-finger pans move the image; only a pan that pushes PAST the image edge is released to the
+   photo strip, so the view never springs back mid-photo. */
 function mWirePinch(hs){
   if(!hs) return;
   hs.querySelectorAll(".m-hpage").forEach(page=>{
@@ -6003,58 +6016,6 @@ function mWirePinch(hs){
     },{passive:true});
   });
 }
-/* TikTok-style vertical pager: a swipe moves AT MOST one page, however hard you fling. A drag
-   under ~22% of the screen (and no flick) peeks and springs back; past that, or a quick flick,
-   commits to the neighbouring page. Horizontal gestures stay with the photo strip, an inner
-   scroller (the details body) scrolls natively until its edge, and pinch-zoomed photo pans are
-   consumed upstream by the pinch handler. */
-function mWirePager(snap){
-  if(!snap) return;
-  const pages=()=>Array.from(snap.children);
-  let anim=null, g=null;
-  const stopAnim=()=>{ if(anim){ cancelAnimationFrame(anim); anim=null; } };
-  const glide=to=>{ stopAnim(); const from=snap.scrollTop, d=to-from; if(!d) return;
-    const t0=performance.now(), dur=300;
-    const step=t=>{ const k=Math.min(1,(t-t0)/dur); snap.scrollTop=from+d*(1-Math.pow(1-k,3)); anim=(k<1)?requestAnimationFrame(step):null; };
-    anim=requestAnimationFrame(step); };
-  const pageAt=y=>{ const ps=pages(); let best=0,bd=1e9; ps.forEach((p,i)=>{ const d=Math.abs(p.offsetTop-y); if(d<bd){bd=d;best=i;} }); return best; };
-  snap.addEventListener("touchstart",e=>{
-    if(e.touches.length!==1){ g=null; return; }
-    stopAnim();
-    g={y0:e.touches[0].clientY,x0:e.touches[0].clientX,top0:snap.scrollTop,mode:null,applied:false,vel:0,lastY:e.touches[0].clientY,lastT:performance.now(),scroller:null};
-    let n=e.target;   // an inner scrollable (details body) gets first claim on vertical drags
-    while(n&&n!==snap){ const cs=getComputedStyle(n); if(n.scrollHeight>n.clientHeight+2&&(cs.overflowY==="auto"||cs.overflowY==="scroll")){ g.scroller=n; break; } n=n.parentElement; }
-  },{passive:true});
-  snap.addEventListener("touchmove",e=>{
-    if(!g||e.touches.length!==1) return;
-    const y=e.touches[0].clientY,x=e.touches[0].clientX, dy=y-g.y0, dx=x-g.x0;
-    if(!g.mode){ if(Math.abs(dy)<8&&Math.abs(dx)<8) return; g.mode=(Math.abs(dy)>=Math.abs(dx))?"v":"h"; }
-    if(g.mode!=="v") return;   // horizontal: the photo strip scrolls natively
-    if(g.scroller){ const s=g.scroller, up=(y-g.lastY)<0;
-      const can=up?(s.scrollTop+s.clientHeight<s.scrollHeight-1):(s.scrollTop>1);
-      if(can){ g.lastY=y; g.lastT=performance.now(); return; } }   // still native-scrolling inside
-    e.preventDefault();
-    if(!g.applied){ g.applied=true; g.y0=y; g.top0=snap.scrollTop; g.lastY=y; g.lastT=performance.now(); return; }   // re-baseline (smooth handoff from zoomed-pan release too)
-    const now=performance.now();
-    g.vel=(y-g.lastY)/Math.max(1,now-g.lastT); g.lastY=y; g.lastT=now;
-    const H=snap.clientHeight;
-    snap.scrollTop=Math.max(g.top0-H,Math.min(g.top0+H,g.top0-(y-g.y0)));   // 1:1 drag, hard-clamped to the neighbours
-  },{passive:false});
-  snap.addEventListener("touchend",()=>{
-    if(!g) return; const gg=g; g=null;
-    if(gg.mode!=="v"||!gg.applied) return;
-    const H=snap.clientHeight, moved=snap.scrollTop-gg.top0, cur=pageAt(gg.top0);
-    const FLICK=0.5;   // px/ms of finger speed that counts as a committed flick
-    let tgt=cur;
-    if(moved>H*0.22||(-gg.vel>FLICK&&moved>30)) tgt=cur+1;
-    else if(moved<-H*0.22||(gg.vel>FLICK&&moved<-30)) tgt=cur-1;
-    tgt=Math.max(0,Math.min(pages().length-1,tgt));
-    const ps=pages(); if(ps[tgt]) glide(ps[tgt].offsetTop);
-  },{passive:true});
-}
-/* Fullscreen image viewer: tap a photo in the band to open it edge-to-edge; swipe left/right
-   between the action's images, pinch to zoom, and the Image note stays snug in the bottom-left.
-   Tapping the image (or ‹) drops back to the detail view at the same photo. */
 /* The mobile UI has no update pill, so a stale cached copy could linger forever: on boot,
    compare this file's timestamp with the server's and force ONE clean reload when behind. */
 async function mCheckFresh(force){
