@@ -4,11 +4,11 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#ffffff" />
-<link rel="manifest" href="manifest.webmanifest?v=8" />
+<link rel="manifest" href="manifest.webmanifest?v=9" />
 <link rel="icon" href="icon.svg" type="image/svg+xml" />
 <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&display=swap" rel="stylesheet" />
-<title>PhotoMap</title>
+<title>ActionMap</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
@@ -39,7 +39,7 @@
   header{height:var(--header-h);display:flex;align-items:center;gap:14px;padding:0 16px;
     background:var(--panel);border-bottom:1px solid var(--line);position:relative;z-index:1200;}
   .brand{display:flex;align-items:center;gap:9px;flex:0 0 auto;}
-  .brand .pm-mark{flex-shrink:0;display:block;}   /* the KCGM app mark, split K / P for PhotoMap */
+  .brand .pm-mark{flex-shrink:0;display:block;}   /* the KCGM app mark, split A / M for ActionMap */
   .brand h1{font-family:var(--font);font-weight:700;font-size:17px;margin:0;color:var(--ink);}
   .brand h1 span{color:var(--accent);}
   .menubar{display:flex;align-items:center;gap:2px;margin-left:10px;height:100%;}
@@ -728,7 +728,7 @@
 <body>
 
 <header>
-  <div class="brand"><svg class="pm-mark" viewBox="0 0 64 64" width="30" height="30" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#e8b44a"/><rect x="6" y="6" width="52" height="52" rx="13" fill="none" stroke="#111418" stroke-width="2.5"/><path d="M9.8 54.2 54.2 9.8" stroke="#111418" stroke-width="2.5" stroke-linecap="round"/><text x="21" y="31" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="24" fill="#111418">K</text><text x="44" y="53" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="24" fill="#111418">P</text></svg><div class="brand-t"><h1>Photo<span>Map</span></h1><span class="savestat" id="saveStatus" title="When the project file was last saved"></span></div><span class="build" id="buildStamp" style="display:none" title="When this copy of the app was published — if it's older than the latest change, you're running a stale copy"></span></div>
+  <div class="brand"><svg class="pm-mark" viewBox="0 0 64 64" width="30" height="30" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#e8b44a"/><rect x="6" y="6" width="52" height="52" rx="13" fill="none" stroke="#111418" stroke-width="2.5"/><path d="M9.8 54.2 54.2 9.8" stroke="#111418" stroke-width="2.5" stroke-linecap="round"/><text x="21" y="31" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="24" fill="#111418">A</text><text x="42.5" y="52" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="21" fill="#111418">M</text></svg><div class="brand-t"><h1>Action<span>Map</span></h1><span class="savestat" id="saveStatus" title="When the project file was last saved"></span></div><span class="build" id="buildStamp" style="display:none" title="When this copy of the app was published — if it's older than the latest change, you're running a stale copy"></span></div>
   <nav class="menubar" id="menubar">
     <div class="mb"><button class="mb-btn" type="button">File</button><div class="mb-drop">
       <button class="mi" id="btnOpenJson" type="button" title="Open a saved project file (.json). The current project is closed first — you'll be asked.">Open project…</button>
@@ -2112,7 +2112,7 @@ async function publishPackImages(cfg,pack,st){
 async function buildMobilePack(){
   const open=actions.filter(a=>!a.done);
   let mergedFrom=null; try{ mergedFrom=localStorage.getItem("pmMergedChanges")||null; }catch(e){}
-  const pk={ v:2, exportedAt:new Date().toISOString(), project:loadedJsonName||folderName||"PhotoMap", mergedFrom, actions:[] };   // mergedFrom = ack: the phone lets go of sent edits only once this covers them
+  const pk={ v:2, exportedAt:new Date().toISOString(), project:loadedJsonName||folderName||"ActionMap", mergedFrom, actions:[] };   // mergedFrom = ack: the phone lets go of sent edits only once this covers them
   for(const a of open){
     const ps=[];
     for(const p of actPhotos(a)) ps.push({ id:p.id, k:metaKey(p), name:p.name, note:(p.note||""), lat:(p.lat!=null?p.lat:null), lng:(p.lng!=null?p.lng:null), img:await packPreview(p) });   // exportMobile swaps img for a content hash
@@ -2129,7 +2129,7 @@ function packSig(){
   for(const a of open) for(const st of (a.steps||[])) if(!st.id) st.id=newSid();
   let ack=""; try{ ack=localStorage.getItem("pmMergedChanges")||""; }catch(e){}
   const noT=m=>Array.isArray(m)?m.map(x=>{ if(x&&x._t!=null){ const c={...x}; delete c._t; return c; } return x; }):m;   // session timestamps must not change the signature
-  return JSON.stringify([loadedJsonName||folderName||"PhotoMap",ack,open.map(a=>[a.id,a.text,!!a.hold,a.fu||null,a.loc||null,(a.steps||[]).map(st=>[st.id,st.t,!!st.d]),
+  return JSON.stringify([loadedJsonName||folderName||"ActionMap",ack,open.map(a=>[a.id,a.text,!!a.hold,a.fu||null,a.loc||null,(a.steps||[]).map(st=>[st.id,st.t,!!st.d]),
     actPhotos(a).map(ph=>[ph.id,metaKey(ph),ph.note||"",ph.lat,ph.lng,JSON.stringify([noT(ph.marks||[]),ph.mkw||0,ph.mth||0,ph.rot||0])])])]);
 }
 let _expBusy=false,_expAgain=false,_expT=null;
@@ -2153,7 +2153,7 @@ async function exportMobile(manual){
     const imgs=await publishPackImages(cfg,pack,st);
     const text=JSON.stringify(pack);
     st.textContent="Pushing "+Math.max(1,Math.round(text.length/1024))+" KB to "+cfg.repo+"…";
-    await ghPutFile(cfg,"pack.json",text,"PhotoMap mobile pack — "+openN+" open action"+(openN===1?"":"s"));
+    await ghPutFile(cfg,"pack.json",text,"ActionMap mobile pack — "+openN+" open action"+(openN===1?"":"s"));
     /* previews no pack refers to any more are removed (keeping the previous pack's, for phones mid-update) */
     try{ const pk="pmPackImgs:"+cfg.repo; const prev=new Set(JSON.parse(localStorage.getItem(pk)||"[]"));
       const stale=[...imgs.have].filter(x=>!imgs.used.has(x)&&!prev.has(x)); if(stale.length) ghDeleteMany(cfg,stale).catch(()=>{});
@@ -2177,7 +2177,7 @@ async function openPendingReport(){
   const w=window.open("","_blank");   // opened inside the click so no popup blocker interferes
   if(!w){ alert("Your browser blocked the report window — allow pop-ups for this site and try again."); return; }
   w.document.write('<!doctype html><title>Building report…</title><body style="font:15px system-ui;padding:40px;color:#333">Building the report… preparing '+pend.length+' action'+(pend.length===1?'':'s')+'.</body>');
-  const proj=String(loadedJsonName||folderName||"PhotoMap").replace(/\.json$/i,"");
+  const proj=String(loadedJsonName||folderName||"ActionMap").replace(/\.json$/i,"");
   const now=new Date(), nOpen=pend.filter(a=>!a.hold).length, nHold=pend.length-nOpen;
   const fmtD=t=>t?new Date(t).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}):"";
   let toc="", body="";
@@ -2410,7 +2410,7 @@ async function exportActionsXlsx(){
     const buf=await wb.xlsx.writeBuffer();
     const blob=new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
     const aEl=document.createElement("a"); aEl.href=URL.createObjectURL(blob);
-    aEl.download=String(loadedJsonName||folderName||"PhotoMap").replace(/\.[^.]+$/,"")+"-actions-"+new Date().toISOString().slice(0,10)+".xlsx";
+    aEl.download=String(loadedJsonName||folderName||"ActionMap").replace(/\.[^.]+$/,"")+"-actions-"+new Date().toISOString().slice(0,10)+".xlsx";
     document.body.appendChild(aEl); aEl.click(); aEl.remove();
     setTimeout(()=>{ try{ URL.revokeObjectURL(aEl.href); }catch(e){} },4000);
     done("\u2713 saved "+order.length+" action"+(order.length===1?"":"s"),2600); return;
@@ -2586,7 +2586,7 @@ function renderProjHead(){
   }
   const has=!!(loadedJsonName||folderName||photos.length||projLoadMsg);
   projHeadEl.classList.toggle("show",has); if(!has) return;
-  projHeadEl.querySelector(".ph-name").textContent=loadedJsonName||folderName||"PhotoMap";
+  projHeadEl.querySelector(".ph-name").textContent=loadedJsonName||folderName||"ActionMap";
   projHeadEl.querySelector(".ph-saved").textContent=lastSavedAt?(" (last saved "+fmtDate(lastSavedAt)+")"):" (not saved yet)";
   projHeadEl.querySelector(".ph-load").textContent=projLoadMsg?(" — "+projLoadMsg):"";
   projHeadEl.classList.toggle("loading",!!projLoadMsg);
@@ -4168,7 +4168,7 @@ async function adoptNewJson(){
   if(!photos.length){ alert("Nothing to save yet."); return; }
   const suggested=(loadedJsonName||folderName||"photomap").replace(/\.json$/i,"")+".json";
   if(hasFSA&&window.showSaveFilePicker){
-    try{ const h=await window.showSaveFilePicker({suggestedName:suggested,types:[{description:"PhotoMap project",accept:{"application/json":[".json"]}}]});
+    try{ const h=await window.showSaveFilePicker({suggestedName:suggested,types:[{description:"ActionMap project",accept:{"application/json":[".json"]}}]});
       jsonHandle=h; saveFileHandle=h; loadedJsonName=h.name; autoDisabled=false; fileCorrupt=false; lastWrittenSig=null; try{await idbSet("jsonHandle",h);}catch(e){}
       const r=await flushAutoSave(true); hideBanner();
       if(r.status==="error"){ const msg=(r.error&&(r.error.message||r.error.name))||"unknown error"; alert("Still could not write there.\n\nReason: "+msg+"\n\nTip: choose a LOCAL folder (e.g. Documents), not the P: network drive."); }
@@ -4395,7 +4395,7 @@ function parseShareHash(){
 /* ================= MOBILE FIELD UI =================
    Phone-sized touch screens get an actions-first UI at the SAME link. It reads the latest
    pack.json from the private data repo (token pasted once) and pushes ticks/notes back. */
-const PM_MARK=w=>'<svg class="pm-mark" viewBox="0 0 64 64" width="'+w+'" height="'+w+'" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#e8b44a"/><rect x="6" y="6" width="52" height="52" rx="13" fill="none" stroke="#111418" stroke-width="2.5"/><path d="M9.8 54.2 54.2 9.8" stroke="#111418" stroke-width="2.5" stroke-linecap="round"/><text x="21" y="31" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="24" fill="#111418">K</text><text x="44" y="53" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="24" fill="#111418">P</text></svg>';
+const PM_MARK=w=>'<svg class="pm-mark" viewBox="0 0 64 64" width="'+w+'" height="'+w+'" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#e8b44a"/><rect x="6" y="6" width="52" height="52" rx="13" fill="none" stroke="#111418" stroke-width="2.5"/><path d="M9.8 54.2 54.2 9.8" stroke="#111418" stroke-width="2.5" stroke-linecap="round"/><text x="21" y="31" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="24" fill="#111418">A</text><text x="42.5" y="52" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="21" fill="#111418">M</text></svg>';
 function isMobile(){ try{ return matchMedia("(pointer:coarse)").matches && Math.min(screen.width,screen.height)<600 && !localStorage.getItem("pmForceDesktop"); }catch(e){ return false; } }
 let mPack=null, mGeo=null, mMiniMap=null, mInsetMap=null, mInsetMapL=null, mInsetCur=null, mHomeMap=null, mHomeBB=null;
 let _mpRaw=null,_mpObj=null;
@@ -4535,7 +4535,7 @@ function mStepDone(a,i){ if(a._new){ const x=mNewActs()[a._ni]; return !!(x&&x.s
 function mScr(html){ [mMiniMap,mInsetMap,mInsetMapL,mHomeMap].forEach(m=>{ if(m){ try{ m.remove(); }catch(e){} } }); mMiniMap=null; mInsetMap=null; mInsetMapL=null; mInsetCur=null; mHomeMap=null; mHomeBB=null; mSoftRefresh=null; document.getElementById("mroot").innerHTML='<div class="m-scr">'+html+'</div>'; if(mToastEl) document.getElementById("mroot").appendChild(mToastEl); }
 function mShowSetup(msg){
   const g=ghCfg();
-  mScr('<div class="m-head"><div class="m-brand">'+PM_MARK(26)+'<div>Photo<span>Map</span> Field</div></div></div>'
+  mScr('<div class="m-head"><div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div></div>'
     +'<div class="m-body"><div class="m-sec"><div class="m-lab">DATA REPOSITORY</div><input class="m-in" id="mRepo" value="'+esc(g.repo)+'" autocomplete="off" />'
     +'<div class="m-lab">ACCESS TOKEN</div><input class="m-in" id="mTok" type="password" placeholder="github_pat_…" value="'+esc(g.token)+'" />'
     +'<div class="m-lab">YOUR NAME (FOR THE CHANGE HISTORY)</div><input class="m-in" id="mWhoIn" placeholder="e.g. Sam" value="'+esc(mUserName(true))+'" autocomplete="off" />'
@@ -4551,7 +4551,7 @@ async function mLoadPack(silent){
   const cfg=ghCfg();
   if(!cfg.token){ mShowSetup(); return; }
   const lst=document.getElementById("mList"), keepScroll=(silent&&lst)?lst.scrollTop:null;
-  if(!silent) mScr('<div class="m-head"><div class="m-brand">'+PM_MARK(26)+'<div>Photo<span>Map</span> Field</div></div></div><div class="m-body"><div class="m-note" style="padding-top:40px">Loading the latest pack…</div></div>');
+  if(!silent) mScr('<div class="m-head"><div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div></div><div class="m-body"><div class="m-note" style="padding-top:40px">Loading the latest pack…</div></div>');
   try{
     const text=await ghGetRaw(cfg,"pack.json");
     if(!text){ if(!silent) mShowSetup("No pack.json in "+cfg.repo+" yet — open the project on the desktop once (it syncs to the phone automatically)."); return; }
@@ -4669,7 +4669,7 @@ function mShowList(){
   const packFu=new Set((mPack.actions||[]).map(a=>a.fu).filter(Boolean));   // once merged, the pack's copy is the one shown (and edited)
   const news=mNewActs().map((x,i)=>({id:"n"+i,_new:true,_ni:i,text:x.text,steps:x.steps||[],photos:[],done:!!x.done,u:x.u})).filter(x=>!(x.u&&packFu.has(x.u)));
   const acts=news.concat(packActs);   // phone-created actions sit on top until they're merged on desktop
-  mScr('<div class="m-head"><div style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;"><div class="m-brand">'+PM_MARK(26)+'<div>Photo<span>Map</span> Field</div></div>'
+  mScr('<div class="m-head"><div style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;"><div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div>'
     +'<div class="m-sub">'+esc(mPack.project||"")+' · exported '+(mPack.exportedAt?new Date(mPack.exportedAt).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"")+' · app '+new Date(document.lastModified).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})+'</div></div>'
     +mUndoHtml()+'<button class="m-chip" id="mWho" type="button" title="Your name in the change history">\ud83d\udc64 '+esc(mUserName())+'</button><button class="m-chip" id="mRefresh" type="button">REFRESH</button></div>'
     +'<div class="m-body" id="mList">'
@@ -5490,7 +5490,7 @@ async function checkFieldChanges(){
     const nActs=Array.isArray(data.newActs)?data.newActs:[];
     const ordIds=Array.isArray(data.actOrder)?data.actOrder.map(Number).filter(x=>x>0):[];
     const ids=Object.keys(ch), pids=Object.keys(pnCh);
-    const cur=loadedJsonName||folderName||"PhotoMap";
+    const cur=loadedJsonName||folderName||"ActionMap";
     if(raw.project&&raw.project!==cur){ loadNote("Phone changes are for “"+data.project+"” — open that project to merge them"); setTimeout(()=>loadNote(""),6000); return; }   // left in place for the right project
     if(!ids.length&&!pids.length&&!nActs.length&&ordIds.length<2){   // a resend with nothing new: just acknowledge it
       try{ localStorage.setItem("pmMergedChanges",raw.updatedAt); localStorage.setItem(lmKey,JSON.stringify(raw)); }catch(e){}
@@ -5649,7 +5649,7 @@ async function checkFieldChanges(){
     if(pill) return;
     const stuck=updTriedRecently();
     pill=document.createElement("div"); pill.id="updpill";
-    pill.innerHTML='<span>'+(stuck?"Still on the old version — your browser cache is being stubborn. Hold <b>Ctrl</b> and press <b>F5</b>, or try again.":"A newer version of PhotoMap is available.")+'</span><button class="updgo" type="button">'+(stuck?"Try again":"Refresh")+'</button><button class="updx" type="button" title="Not now">×</button>';
+    pill.innerHTML='<span>'+(stuck?"Still on the old version — your browser cache is being stubborn. Hold <b>Ctrl</b> and press <b>F5</b>, or try again.":"A newer version of ActionMap is available.")+'</span><button class="updgo" type="button">'+(stuck?"Try again":"Refresh")+'</button><button class="updx" type="button" title="Not now">×</button>';
     document.body.appendChild(pill);
     pill.querySelector(".updgo").addEventListener("click",hardReload);
     pill.querySelector(".updx").addEventListener("click",()=>{ dismissedTag=tag; pill.remove(); pill=null; });
