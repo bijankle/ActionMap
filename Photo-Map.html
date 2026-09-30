@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#ffffff" />
-<link rel="manifest" href="manifest.webmanifest?v=10" />
+<link rel="manifest" href="manifest.webmanifest?v=11" />
 <link rel="icon" href="icon.svg" type="image/svg+xml" />
 <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@700&display=swap" rel="stylesheet" />
@@ -39,7 +39,7 @@
   header{height:var(--header-h);display:flex;align-items:center;gap:14px;padding:0 16px;
     background:var(--panel);border-bottom:1px solid var(--line);position:relative;z-index:1200;}
   .brand{display:flex;align-items:center;gap:9px;flex:0 0 auto;}
-  .brand .pm-mark{flex-shrink:0;display:block;}   /* the app mark: gold squircle with a framed P */
+  .brand .pm-mark{flex-shrink:0;display:block;}   /* the app mark: gold squircle with a framed A */
   .brand h1{font-family:var(--font);font-weight:700;font-size:17px;margin:0;color:var(--ink);}
   .brand h1 span{color:var(--accent);}
   .menubar{display:flex;align-items:center;gap:2px;margin-left:10px;height:100%;}
@@ -728,7 +728,7 @@
 <body>
 
 <header>
-  <div class="brand"><svg class="pm-mark" viewBox="0 0 64 64" width="30" height="30" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#e8b44a"/><rect x="6" y="6" width="52" height="52" rx="13" fill="none" stroke="#111418" stroke-width="2.5"/><text x="32" y="46" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="38" fill="#111418">P</text></svg><div class="brand-t"><h1>Action<span>Map</span></h1><span class="savestat" id="saveStatus" title="When the project file was last saved"></span></div><span class="build" id="buildStamp" style="display:none" title="When this copy of the app was published — if it's older than the latest change, you're running a stale copy"></span></div>
+  <div class="brand"><svg class="pm-mark" viewBox="0 0 64 64" width="30" height="30" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#e8b44a"/><rect x="6" y="6" width="52" height="52" rx="13" fill="none" stroke="#111418" stroke-width="2.5"/><text x="32" y="46" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="38" fill="#111418">A</text></svg><div class="brand-t"><h1>Action<span>Map</span></h1><span class="savestat" id="saveStatus" title="When the project file was last saved"></span></div><span class="build" id="buildStamp" style="display:none" title="When this copy of the app was published — if it's older than the latest change, you're running a stale copy"></span></div>
   <nav class="menubar" id="menubar">
     <div class="mb"><button class="mb-btn" type="button">File</button><div class="mb-drop">
       <button class="mi" id="btnOpenJson" type="button" title="Open a saved project file (.json). The current project is closed first — you'll be asked.">Open project…</button>
@@ -4412,7 +4412,7 @@ function parseShareHash(){
 /* ================= MOBILE FIELD UI =================
    Phone-sized touch screens get an actions-first UI at the SAME link. It reads the latest
    pack.json from the private data repo (token pasted once) and pushes ticks/notes back. */
-const PM_MARK=w=>'<svg class="pm-mark" viewBox="0 0 64 64" width="'+w+'" height="'+w+'" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#e8b44a"/><rect x="6" y="6" width="52" height="52" rx="13" fill="none" stroke="#111418" stroke-width="2.5"/><text x="32" y="46" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="38" fill="#111418">P</text></svg>';
+const PM_MARK=w=>'<svg class="pm-mark" viewBox="0 0 64 64" width="'+w+'" height="'+w+'" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#e8b44a"/><rect x="6" y="6" width="52" height="52" rx="13" fill="none" stroke="#111418" stroke-width="2.5"/><text x="32" y="46" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="38" fill="#111418">A</text></svg>';
 function isMobile(){ try{ return matchMedia("(pointer:coarse)").matches && Math.min(screen.width,screen.height)<600 && !localStorage.getItem("pmForceDesktop"); }catch(e){ return false; } }
 let mPack=null, mGeo=null, mMiniMap=null, mInsetMap=null, mInsetMapL=null, mInsetCur=null, mHomeMap=null, mHomeBB=null;
 let _mpRaw=null,_mpObj=null;
