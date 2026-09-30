@@ -4034,6 +4034,22 @@ document.addEventListener("keydown",e=>{
     selObj=null; afterMarkChange(); return; }
   if(!e.ctrlKey&&!e.metaKey){ const map={p:"pen",l:"poly",a:"arrow",r:"rect",o:"oval",t:"text",q:"call",e:"erase"}; const k=e.key.toLowerCase(); if(map[k]){ e.preventDefault(); setMarkTool(map[k]===markTool?"none":map[k]); } }
 });
+/* Delete key: the selected photo dots (Select area), or else the photo open in the viewer, leave the
+   project — after a yes/no; Ctrl+Z brings them back. A selected drawing on the photo is deleted first. */
+document.addEventListener("keydown",async e=>{
+  if(e.key!=="Delete"||e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey||document.body.classList.contains("mobile")) return;   // already used (e.g. deleting a selected drawing)
+  const t=e.target, tag=((t&&t.tagName)||"").toLowerCase();
+  if(tag==="input"||tag==="select"||tag==="textarea"||(t&&t.isContentEditable)) return;
+  if(document.querySelector(".ynmodal.show")) return;
+  if(lb.classList.contains("open")&&(selObj||selMark||draft||markTool!=="none")) return;   // the drawing tools own Delete while they're in use
+  const list=selSet.size?[...selSet].map(photoById).filter(Boolean):(lb.classList.contains("open")&&curPhoto()?[curPhoto()]:[]);
+  if(!list.length) return;
+  e.preventDefault(); if(roBlock()) return;
+  const n=list.length, what=n===1?"\u201c"+list[0].name+"\u201d":n+" photos";
+  if(!(await askYesNo("Delete "+(n===1?"this photo":n+" photos")+"?","Delete "+what+" from the project"+((list.some(p=>(p.acts||[]).length))?" (and from the actions it\u2019s on)":"")+".\n\nCtrl+Z brings "+(n===1?"it":"them")+" back.","Yes, delete",true))) return;
+  removePhotos(list); clearSel();
+  loadNote("Deleted "+what+" \u2014 Ctrl+Z undoes"); setTimeout(()=>loadNote(""),3500);
+});
 function refit(){ if(lbImg.naturalWidth) setupFit(lbImg.naturalWidth,lbImg.naturalHeight); }
 function positionTools(){ try{ const ls=document.getElementById("leftstack"), mainEl=document.getElementById("main"); const mr=map.getContainer().getBoundingClientRect(), pr=mainEl.getBoundingClientRect(); ls.style.left=((mr.left-pr.left)+mr.width/2)+"px"; }catch(e){} }
 window.addEventListener("resize",()=>{ if(lb.classList.contains("open")) refit(); positionTools(); });
