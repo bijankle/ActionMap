@@ -1016,10 +1016,6 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
           <div class="set-lbl">Your name<span class="set-sub">Shown in the History tab next to every change made on this computer.</span></div>
           <div class="set-ctl"><input type="text" id="setUserName" placeholder="Desktop" style="width:180px;font:inherit;font-size:var(--fb);padding:6px 8px;border:1px solid var(--line2);border-radius:8px;" /></div>
         </div>
-        <div class="set-row">
-          <div class="set-lbl">List: open actions only<span class="set-sub">Hide completed actions in the Actions panel.</span></div>
-          <div class="set-ctl"><input type="checkbox" id="setActOpen" /></div>
-        </div>
       </div>
     </div>
   </div>
@@ -1034,9 +1030,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
 <div class="main tab-photo" id="main">
   <aside class="actpanel" id="actPanel">
     <div class="act-head"><span class="title">Actions</span><span style="flex:1"></span>
-      <button class="act-tgl" id="actOpenOnly" title="Open — show only uncompleted actions in this list (hides completed ones)">Open</button>
-      <button class="act-tgl" id="actHoldOnly" title="On hold — show only the actions that are on hold">On hold</button>
-      <button class="act-tgl" id="actDoneSteps" title="Done — also show ticked (completed) sub-actions under each action">Done</button>
+      <button class="act-tgl" id="actShowHold" title="On hold — also show the actions that are on hold, in this list and on the map (white dots with an orange ring)">On hold</button>
+      <button class="act-tgl" id="actShowDone" title="Done — also show finished actions, in this list and on the map (grey dots)">Done</button>
       <button class="act-tgl" id="actExpAll" title="Collapse or expand every action's sub-actions and notes">Collapse</button></div>
     <div class="act-new"><input type="text" id="actNewInput" placeholder="+ New action" autocomplete="off" /></div>
     <div class="act-list" id="actList"></div>
@@ -1309,7 +1304,7 @@ function renderClusters(){
   drawActionPins();
 }
 function drawActionPins(){   // actions placed at a map spot: a green numbered pin (open ones, plus any selected)
-  for(const a of actions){ if(!a.loc) continue; const sel=selActs.has(a.id); if((a.done||a.hold)&&!sel) continue;
+  for(const a of actions){ if(!a.loc) continue; const sel=selActs.has(a.id); if(!actVisible(a)) continue;
     if(sel) markerLayer.addLayer(mkHlDot(a.loc.lat,a.loc.lng));
     const m=L.marker([a.loc.lat,a.loc.lng],{zIndexOffset:500,icon:L.divIcon({className:"",html:'<div class="act-pin"><span>'+actNo(a)+'</span></div>',iconSize:[46,40],iconAnchor:[23,40]})});
     m.on("mouseover",()=>{ m.bindTooltip(actNo(a)+" \u2014 "+esc(a.text),{direction:"top",offset:[0,-36]}).openTooltip(); });
@@ -1336,7 +1331,7 @@ function addSingleDot(p,lat,lng,isSel){
   const num=photoActNum(p);
   const dot=(num!=null)
     ?L.marker([lat,lng],{interactive:false,icon:L.divIcon({className:"",html:'<div class="num-dot">'+actNo(num)+'</div>',iconSize:[34,34],iconAnchor:[17,17]})})
-    :(()=>{ const cc=DOT_COL[photoStatus(p)]; return L.circleMarker([lat,lng],{renderer:dotRenderer,radius:8,color:cc[1],weight:2,fillColor:cc[0],fillOpacity:.95,interactive:false}); })();
+    :(()=>{ const st=photoStatus(p), cc=DOT_COL[st]; return L.circleMarker([lat,lng],{renderer:dotRenderer,radius:8,color:cc[1],weight:st==="hold"?3:2,fillColor:cc[0],fillOpacity:.95,interactive:false}); })();
   if(isSel){ const mk=dotMarkers.get(p.id); mk.hit=hit; mk.dot=dot; }
   markerLayer.addLayer(hit); markerLayer.addLayer(dot);
 }
@@ -1485,7 +1480,7 @@ map.on("click",e=>{
    An action is a task with a tick box (tick = completed). Actions link to photos (one action to
    many photos, or many actions to one photo). Stored in the .json like tags; photos untouched. */
 let actions=[], nextActId=1, selActs=new Set(), actionFilter=null;
-let actShowOpenOnly=false, actShowHoldOnly=false, actOnlyMap=false, rightTab="photo";
+let actShowHold=false, actShowDone=false, actOnlyMap=false, rightTab="photo";   // open actions always show; On hold / Done add theirs (list + map)
 let _aIdx=null,_aArr=null;
 function actById(id){
   if(_aIdx&&_aArr===actions){ const i=_aIdx.get(id); if(i!=null){ const a=actions[i]; if(a&&a.id===id) return a; } }
@@ -1512,17 +1507,15 @@ function reorderActPhoto(a,dragId,targetId,before){   // gallery drag: photo ord
   const b=actState(a); a.porder=ids; recordActEdit(a,b); afterFolderChange();
 }
 function hasOpenAct(p){ return Array.isArray(p.acts)&&p.acts.some(id=>{ const a=actById(id); return a&&!a.done&&!a.hold; }); }
-const DOT_COL={none:["#ffffff","#4a5563"],open:["#F28C28","#9A520B"],hold:["#F28C28","#9A520B"],done:["#F28C28","#9A520B"]};   // white = not on an action, orange = on an action
+const DOT_COL={none:["#ffffff","#4a5563"],open:["#F28C28","#9A520B"],hold:["#ffffff","#F28C28"],done:["#6b7580","#3f4750"]};   // white = not on an action, orange = open, white with an orange ring = on hold, grey = done (same as the phone)
 function photoStatus(p){   // open beats on-hold beats complete, when a photo belongs to several actions
   if(!Array.isArray(p.acts)||!p.acts.length) return "none";
   let hold=false,done=false,any=false;
   for(const id of p.acts){ const a=actById(id); if(!a) continue; any=true; if(a.done) done=true; else if(a.hold) hold=true; else return "open"; }
   return !any?"none":hold?"hold":done?"done":"none"; }
-function heldHidden(p){ if(!Array.isArray(p.acts)||!p.acts.length) return false;   /* on-hold: photo leaves the map only when EVERY action it belongs to is held */
-  let held=false; for(const id of p.acts){ const a=actById(id); if(!a) continue; if(a.hold&&!selActs.has(a.id)) held=true; else return false; } return held; }
-function allDoneHidden(p){ if(!Array.isArray(p.acts)||!p.acts.length) return false; let any=false;   /* every action this photo is on is completed (and none is selected) */
-  for(const id of p.acts){ const a=actById(id); if(!a) continue; any=true; if(!a.done||selActs.has(a.id)) return false; } return any; }
-function passActs(p){ return !heldHidden(p)&&!allDoneHidden(p); }
+function actVisible(a){ return selActs.has(a.id)||(a.done?actShowDone:a.hold?actShowHold:true); }   // open always; on hold / done when their pill is on; a selected action always
+function passActs(p){ if(!Array.isArray(p.acts)||!p.acts.length) return true;   /* photos on no action always show */
+  let any=false; for(const id of p.acts){ const a=actById(id); if(!a) continue; any=true; if(actVisible(a)) return true; } return !any; }
 function normActs(list){ let mx=0; const out=(list||[]).map(a=>{
   const parts=[];   // retired fields (description, note lists, action-level note): stash for migration into a photo note
   if(a.desc&&String(a.desc).trim()) parts.push(String(a.desc).trim());
@@ -1557,7 +1550,7 @@ function createAction(text,pids,loc){
 }
 function stepLetter(i){ let t=""; do{ t=String.fromCharCode(97+(i%26))+t; i=Math.floor(i/26)-1; }while(i>=0); return t; }   /* a..z, aa, ab… */
 function actNo(a){ return String(a&&a.id!=null?a.id:a).padStart(3,"0"); }   /* the action NUMBER: creation-sequential id, 001-style */
-function actsShown(){ return actions.filter(a=>actShowHoldOnly?(a.hold&&!a.done):(!actShowOpenOnly||!a.done)).sort((x,y)=>actRank(x)-actRank(y)); }   // the list as rendered: filtered by the Open / On hold pills
+function actsShown(){ return actions.filter(a=>a.done?actShowDone:a.hold?actShowHold:true).sort((x,y)=>actRank(x)-actRank(y)); }   // the list as rendered: open, plus on hold / done when their pill is on
 function actRank(a){ return a.done?2:(a.hold?1:0); }   // list order: open, then on hold, then completed (display only — stored order unchanged)
 function setActionDone(a,done){ const before=actState(a); a.done=!!done; a.doneAt=a.done?Date.now():null; recordActEdit(a,before); afterFolderChange(); }
 function setActionHold(a,hold){ const before=actState(a); a.hold=!!hold; recordActEdit(a,before); afterFolderChange(); }
@@ -1655,7 +1648,7 @@ function wirePNote(el,p){
     inp.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key!=="Enter") return; const v=inp.value.trim(); if(!v) return; setPhotoNote(p,v); });
   }
 }
-let hideDoneSteps=true;   // ticked sub-actions tuck away by default (pill in the Actions header)
+const hideDoneSteps=false;   // ticked sub-actions always show
 function stepsHtml(a){
   const rows=(a.steps||[]).map((s,i)=>(hideDoneSteps&&s.d)?'':'<div class="st-row" data-si="'+i+'">'
     +'<span class="st-num" draggable="true" title="Priority '+stepLetter(i)+' — drag to reorder">'+stepLetter(i)+'.</span>'
@@ -1835,7 +1828,7 @@ function actNavigate(a,refitOnly){
     /* Fit ALL open actions' dots (plus the selected action's own), so the flashing selection
        reads in the context of the remaining work rather than filling the screen alone. */
     const seen=new Set(), ctx=[];
-    for(const x of actions){ if((x.done||x.hold)&&!selActs.has(x.id)) continue;
+    for(const x of actions){ if(!actVisible(x)) continue;
       for(const p of actPhotos(x)){ if(p.lat!=null&&!seen.has(p.id)){ seen.add(p.id); ctx.push(p); } }
       if(x.loc) ctx.push({lat:x.loc.lat,lng:x.loc.lng}); }
     const all=ctx.length?ctx:geo;
@@ -1889,9 +1882,8 @@ async function maybeStartGeo(){
 /* Zoom to a set of photos, at MINIMUM deep enough that none of them is hidden inside a cluster. */
 function renderActions(){
   const list=document.getElementById("actList"); if(!list) return;
-  document.getElementById("actOpenOnly").classList.toggle("on",actShowOpenOnly&&!actShowHoldOnly);
-  document.getElementById("actHoldOnly").classList.toggle("on",actShowHoldOnly);
-  document.getElementById("actDoneSteps").classList.toggle("on",!hideDoneSteps);
+  document.getElementById("actShowHold").classList.toggle("on",actShowHold);
+  document.getElementById("actShowDone").classList.toggle("on",actShowDone);
 
   document.getElementById("actExpAll").textContent=actions.some(a=>!collActs.has(a.id))?"Collapse":"Expand";
   const shown=actsShown();   // on-hold then completed actions sink to the bottom (display only — stored order unchanged)
@@ -1953,9 +1945,9 @@ function renderIpActions(){   // the strip under the photo holds ONLY the photo 
   pnEl.innerHTML=pNoteHtml(p);
   wirePNote(pnEl,p);
 }
-document.getElementById("actOpenOnly").addEventListener("click",()=>{ actShowOpenOnly=actShowHoldOnly?true:!actShowOpenOnly; actShowHoldOnly=false; renderActions(); persistState(); });
-document.getElementById("actHoldOnly").addEventListener("click",()=>{ actShowHoldOnly=!actShowHoldOnly; renderActions(); persistState(); });   // Open and On hold are either/or
-document.getElementById("actDoneSteps").addEventListener("click",()=>{ hideDoneSteps=!hideDoneSteps; renderActions(); persistState(); });
+function actFilterChanged(){ renderActions(); buildCluster(); renderClusters(); updateGallery(); persistState(); }   // the pills filter the list AND the map
+document.getElementById("actShowHold").addEventListener("click",()=>{ actShowHold=!actShowHold; actFilterChanged(); });
+document.getElementById("actShowDone").addEventListener("click",()=>{ actShowDone=!actShowDone; actFilterChanged(); });
 document.getElementById("actMapOnly")?.addEventListener("click",()=>{ actOnlyMap=!actOnlyMap; buildCluster(); renderClusters(); updateGallery(); renderActions(); renderMapTags(); persistState(); });
 document.getElementById("actExpAll").addEventListener("click",()=>{ if(actions.some(a=>!collActs.has(a.id))) actions.forEach(a=>collActs.add(a.id)); else collActs.clear(); renderActions(); });
 /* Right-click "New action" on photos doesn't pop a dialog: it ARMS this input — type the action
@@ -1979,7 +1971,6 @@ document.getElementById("actNewInput").addEventListener("keydown",e=>{
   const loc=pendingActLoc;
   const pids=loc?null:(pendingActPhotos||(selSet.size?[...selSet]:((lb.classList.contains("open")&&curPhoto())?[curPhoto().id]:null)));
   armNewAction(null);
-  actShowHoldOnly=false;   // a new action is open, so it must show in the list
   createAction(v,pids,loc);
   document.getElementById("actNewInput").focus();   // keep typing to add the next one
 });
@@ -2090,8 +2081,7 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
   function mark(){ drop.querySelectorAll(".hs-row").forEach((el,i)=>el.classList.toggle("on",i===cur)); const el=drop.querySelector(".hs-row.on"); if(el) el.scrollIntoView({block:"nearest"}); }
   function pick(i){ const r=res[i]; if(!r) return; const a=r.a;
     inp.value=""; closeS();
-    if(a.done&&actShowOpenOnly){ actShowOpenOnly=false; }   // a completed hit must be visible in the list
-    if(actShowHoldOnly&&!(a.hold&&!a.done)) actShowHoldOnly=false;
+    if(a.done) actShowDone=true; else if(a.hold) actShowHold=true;   // a search hit must be visible in the list
     collActs.delete(a.id);
     selActs=new Set([a.id]); lastActClick=a.id; if(typeof rebuildActionFilter==="function") rebuildActionFilter();
     renderActions(); buildCluster(); renderClusters();
@@ -2137,7 +2127,6 @@ function syncSettingsUI(){
   setModal.querySelectorAll('input[name="setBase"]').forEach(r=>r.checked=(r.value===base));
   document.getElementById("setNoGeo").checked=showNoGeo;
   document.getElementById("setThumb").value=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--thumb"))||120;
-  document.getElementById("setActOpen").checked=actShowOpenOnly;
 
   { let n=""; try{ n=localStorage.getItem("pmUserName")||""; }catch(e){} document.getElementById("setUserName").value=n; }
   const g=ghRaw(); document.getElementById("setGhRepo").value=g.repo; document.getElementById("setGhToken").value=g.token;
@@ -2155,7 +2144,6 @@ setModal.querySelectorAll('input[name="setBase"]').forEach(r=>r.addEventListener
 }));
 document.getElementById("setNoGeo").addEventListener("change",e=>{ showNoGeo=e.target.checked; document.getElementById("showNoGeo").checked=showNoGeo; updateGallery(); persistState(); });
 document.getElementById("setThumb").addEventListener("input",e=>{ document.documentElement.style.setProperty("--thumb",e.target.value+"px"); document.getElementById("thumbSize").value=e.target.value; persistState(); });
-document.getElementById("setActOpen").addEventListener("change",e=>{ actShowOpenOnly=e.target.checked; renderActions(); persistState(); });
 
 /* ---- Mobile export: push the field pack to the PRIVATE data repo via the GitHub API ----
    Token + repo live ONLY in this browser's localStorage — never in the .json, never in the public repo. */
@@ -4998,7 +4986,7 @@ function uiSettings(){ return { baseLayer: map.hasLayer(google)?"google":map.has
       sideW:getComputedStyle(document.documentElement).getPropertyValue("--side-w").trim(),
       actW:getComputedStyle(document.documentElement).getPropertyValue("--act-w").trim()||null,
       covW:getComputedStyle(document.documentElement).getPropertyValue("--cov-w").trim()||null,
-      recentTags: recentTags.slice(0,10), rightTab, actShowOpenOnly, actShowHoldOnly, hideDoneSteps, actOnlyMap, clusterSens,
+      recentTags: recentTags.slice(0,10), rightTab, actShowHold, actShowDone, actOnlyMap, clusterSens,
       view:{ center:[map.getCenter().lat, map.getCenter().lng], zoom:map.getZoom() } }; }   // this device's view of the project (layout, filters, map view) — never shared
 function serializeState(includeImages){
   return {
@@ -5062,7 +5050,7 @@ function applyUiSettings(s){ s=s||{};
   if(s.baseLayer==="esri"){ map.removeLayer(google); esri.addTo(map); } else if(s.baseLayer==="none"){ map.removeLayer(google); map.removeLayer(esri); } else if(s.baseLayer==="google"&&!map.hasLayer(google)){ map.removeLayer(esri); google.addTo(map); }
   showNoGeo=!!s.showNoGeo; document.getElementById("showNoGeo").checked=showNoGeo;
   if(Array.isArray(s.recentTags)) recentTags=s.recentTags.slice(0,10);
-  actShowOpenOnly=!!s.actShowOpenOnly; actShowHoldOnly=!!s.actShowHoldOnly; hideDoneSteps=s.hideDoneSteps!==false; actOnlyMap=false; setTab(s.rightTab==="gallery"?"gallery":"photo"); renderActions();
+  actShowHold=!!s.actShowHold; actShowDone=!!s.actShowDone; actOnlyMap=false; setTab(s.rightTab==="gallery"?"gallery":"photo"); renderActions();
   currentSort=s.sortBy||"date_desc"; document.getElementById("sortSel").value=currentSort;
   clusterSens=(typeof s.clusterSens==="number"?Math.max(0,Math.min(100,s.clusterSens)):50);
   if(boxRect){map.removeLayer(boxRect);boxRect=null;} boxBounds=null;
@@ -5490,7 +5478,7 @@ const MI={
 let mShowHold=(()=>{ try{ return localStorage.getItem("pmMHold")==="1"; }catch(e){ return false; } })();
 let mShowDone=(()=>{ try{ return localStorage.getItem("pmMDone")==="1"; }catch(e){ return false; } })();
 let mTab=(()=>{ try{ return localStorage.getItem("pmMTab")==="list"?"list":"map"; }catch(e){ return "map"; } })();
-let mLFilt="open", mLQ="", mHomeView=null, mHomeTouched=false, mHomeFocus=null;
+let mLQ="", mHomeView=null, mHomeTouched=false, mHomeFocus=null;
 function mSetTab(t){ mTab=t; try{ localStorage.setItem("pmMTab",t); }catch(e){} }
 function mHomeActs(){
   const packActs=mActOrder().map(i=>(mPack.actions||[])[i]).filter(Boolean);   /* priority order: pack order with the phone's pending reorder applied */
@@ -5518,10 +5506,10 @@ function mThumbOf(a){ const p=(a.photos||[]).find(x=>x.img); return p?'<div clas
 function mActLine(a){ return (a._new?'':'<span class="m-anum">'+actNo(a)+'</span> ')+esc(mTitle(a)); }
 function mStatus(a){ return mDone(a)?"done":mHold(a)?"hold":"open"; }
 function mTopHtml(on){
-  let nh=0,nd=0; if(on==="map") for(const a of mHomeActs()){ if(mDone(a)) nd++; else if(mHold(a)) nh++; }
+  let nh=0,nd=0; for(const a of mHomeActs()){ if(mDone(a)) nd++; else if(mHold(a)) nh++; }
   return '<div class="ma-top"><button class="ma-proj" id="mProjSub" type="button"><span class="ma-pn">'+esc(mPack.project||"Project")+'<i>▾</i></span><span class="ma-ps" id="mSendNote">'+esc(mHeadSub())+'</span></button>'
     +'<div class="ma-seg" id="mSeg"><button type="button" data-t="map" class="'+(on==="map"?"on":"")+'" aria-label="Map">'+MI.map+'<span class="sl">Map</span></button><button type="button" data-t="list" class="'+(on==="list"?"on":"")+'" aria-label="List">'+MI.list+'<span class="sl">List</span></button></div>'
-    +(on==="map"?'<div class="ma-show"><button type="button" id="mShowH" class="'+(mShowHold?"on":"")+'"><i class="ma-sym hold"></i><em class="sw">Show on hold</em><em class="sn">On hold</em> <span>'+nh+'</span></button><button type="button" id="mShowD" class="'+(mShowDone?"on":"")+'"><i class="ma-sym done"></i><em class="sw">Show done</em><em class="sn">Done</em> <span>'+nd+'</span></button></div>':'')
+    +((on==="map"||on==="list")?'<div class="ma-show"><button type="button" id="mShowH" class="'+(mShowHold?"on":"")+'"><i class="ma-sym hold"></i><em class="sw">Show on hold</em><em class="sn">On hold</em> <span>'+nh+'</span></button><button type="button" id="mShowD" class="'+(mShowDone?"on":"")+'"><i class="ma-sym done"></i><em class="sw">Show done</em><em class="sn">Done</em> <span>'+nd+'</span></button></div>':'')
     +'</div>';
 }
 /* bottom sheets: one at a time, dropped by a tap on the dimmed map/list behind them */
@@ -5542,19 +5530,18 @@ function mShowList(){
       +'<button class="ma-add'+(pk?" up":"")+'" id="mAddB" type="button">'+MI.plus+'Add</button>'
       +(pk?'<button class="ma-peek" id="mPeek" type="button" data-k="'+mCardKey(pk)+'">'+mThumbOf(pk)+'<div class="ma-rt"><div class="t">'+mActLine(pk)+'</div><div class="m">'+mMeta(pk)+'</div></div><span class="ma-chev">›</span></button>':'')+'</div>');
   } else {
-    const shown=acts.filter(a=>mLFilt==="done"?mDone(a):mLFilt==="hold"?(!mDone(a)&&mHold(a)):!mDone(a));
+    const shown=acts.filter(a=>{ const st=mStatus(a); return st==="open"||(st==="hold"&&mShowHold)||(st==="done"&&mShowDone); });
     mScr(mTopHtml("list")+'<div class="ma-lwrap"><div class="ma-lhead"><label class="ma-search">'+MI.search+'<input id="mQ" type="search" placeholder="Search actions" autocomplete="off" value="'+esc(mLQ)+'" /></label><button class="ma-fab" id="mAddB" type="button" aria-label="Add">'+MI.plus+'</button></div>'
-      +'<div class="ma-chips">'+[["open","Open"],["hold","On hold"],["done","Done"]].map(([k,t])=>'<button type="button" class="ma-chip'+(mLFilt===k?" on":"")+'" data-f="'+k+'">'+t+'</button>').join("")+'</div>'
       +'<div class="ma-list" id="mList">'+(shown.length?shown.map(a=>{ const done=mDone(a), hold=!done&&mHold(a);
           return '<div class="m-card'+(done?' done':'')+(hold?' hold':'')+'" data-k="'+mCardKey(a)+'" data-s="'+esc(((a._new?'':actNo(a)+' ')+mTitle(a)).toLowerCase())+'"><div class="ma-rt"><div class="t">'+mActLine(a)+'</div><div class="m">'+mMeta(a)+'</div></div>'+mThumbOf(a)+'</div>'; }).join("")
-        :'<div class="ma-empty">'+(mLFilt==="open"?"No open actions.":mLFilt==="hold"?"Nothing on hold.":"Nothing completed yet.")+'</div>')+'</div></div>');
+        :'<div class="ma-empty">No open actions.</div>')+'</div></div>');
   }
   document.querySelectorAll("#mSeg button").forEach(b=>b.addEventListener("click",()=>{ if(b.dataset.t===mTab) return; mSetTab(b.dataset.t); mShowList(); }));
   document.getElementById("mProjSub").addEventListener("click",mShowMenu);
   document.getElementById("mAddB").addEventListener("click",mShowAdd);
+  document.getElementById("mShowH").addEventListener("click",()=>{ mShowHold=!mShowHold; try{ localStorage.setItem("pmMHold",mShowHold?"1":"0"); }catch(e){} mShowList(); });   // one setting for the map and the list
+  document.getElementById("mShowD").addEventListener("click",()=>{ mShowDone=!mShowDone; try{ localStorage.setItem("pmMDone",mShowDone?"1":"0"); }catch(e){} mShowList(); });
   if(mTab==="map"){
-    document.getElementById("mShowH").addEventListener("click",()=>{ mShowHold=!mShowHold; try{ localStorage.setItem("pmMHold",mShowHold?"1":"0"); }catch(e){} mShowList(); });
-    document.getElementById("mShowD").addEventListener("click",()=>{ mShowDone=!mShowDone; try{ localStorage.setItem("pmMDone",mShowDone?"1":"0"); }catch(e){} mShowList(); });
     const pb=document.getElementById("mPeek"); if(pb) pb.addEventListener("click",()=>mOpenAct(pb.dataset.k));
     document.getElementById("mLocB").addEventListener("click",()=>{
       if(mGeo&&mHomeMap){ mHomeTouched=true; mHomeMap.setView([mGeo.lat,mGeo.lng],Math.max(mHomeMap.getZoom(),17)); }
@@ -5566,9 +5553,8 @@ function mShowList(){
     q.addEventListener("input",()=>{ mLQ=q.value; applyQ(); });
     q.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter") q.blur(); });
     applyQ();
-    document.querySelectorAll(".ma-chip[data-f]").forEach(b=>b.addEventListener("click",()=>{ mLFilt=b.dataset.f; mShowList(); }));
     document.querySelectorAll("#mList .m-card").forEach(el=>el.addEventListener("click",()=>{ if(Date.now()-mCardDropT<500) return; mOpenAct(el.dataset.k); }));
-    if(mLFilt==="open") mWireCardDrag();   // hold-press + drag sets priority (open list only)
+    mWireCardDrag();   // hold-press + drag sets priority
   }
 }
 /* the card under the map: the open action nearest to you (else the first open one on the map) */
@@ -5588,7 +5574,7 @@ function mShowAdd(){
   const inp=document.getElementById("mNewAct");
   const go=()=>{ const v=inp.value.trim(); if(!v){ inp.focus(); return; }
     mMutate(()=>{ const p=mPend(); p.newActs=(p.newActs||[]).concat([{text:v,steps:[],done:false,u:mUid()}]); mPendSave(p); });
-    mCloseSheet(); mLFilt="open"; mShowList(); mToast("Added “"+v+"”"); };
+    mCloseSheet(); mShowList(); mToast("Added “"+v+"”"); };
   inp.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"){ e.preventDefault(); go(); } });
   document.getElementById("mNewGo").addEventListener("click",go);
   document.getElementById("mCamNewBtn").addEventListener("click",()=>{ mCloseSheet(); mTakePhoto({newAction:true}); });
