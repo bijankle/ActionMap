@@ -2,7 +2,7 @@
   "name": "ActionMap Field",
   "short_name": "ActionMap",
   "description": "Field companion for ActionMap \u2014 share photos straight from your gallery and they land on the desktop map with their location intact.",
-  "start_url": "./Photo-Map.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f3f4f6",
@@ -21,7 +21,7 @@
     }
   ],
   "share_target": {
-    "action": "./Photo-Map.html",
+    "action": "./",
     "method": "POST",
     "enctype": "multipart/form-data",
     "params": {
