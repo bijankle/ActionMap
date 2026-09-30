@@ -14,7 +14,7 @@
 
 <style>
   :root{
-    /* KCGM palette (shared with the KCGM plant app): cool slate neutrals, one gold accent */
+    /* palette: cool slate neutrals, one gold accent */
     --bg:#ffffff; --panel:#ffffff; --panel2:#f3f4f6; --line:#d9dee5; --line2:#c3cad3;
     --text:#1d2430; --ink:#1d2430; --muted:#5d6875; --dim:#7a8591; --faint:#9aa3ad;
     --gold:#e8b44a; --gold2:#dba43a; --on-accent:#1a1307;          /* filled buttons: gold with near-black text */
@@ -25,7 +25,7 @@
     --header-h:58px; --gallery-w:360px; --thumb:120px; --img-w:42%; --side-w:380px;
   }
   *{box-sizing:border-box;}
-  /* KCGM scroll bars: barely there until hovered, gold while dragging */
+  /* scroll bars: barely there until hovered, gold while dragging */
   ::-webkit-scrollbar{width:10px;height:10px;}
   ::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent;}
   ::-webkit-scrollbar-thumb{background-color:transparent;border:3px solid transparent;background-clip:padding-box;border-radius:6px;}
@@ -39,7 +39,7 @@
   header{height:var(--header-h);display:flex;align-items:center;gap:14px;padding:0 16px;
     background:var(--panel);border-bottom:1px solid var(--line);position:relative;z-index:1200;}
   .brand{display:flex;align-items:center;gap:9px;flex:0 0 auto;}
-  .brand .pm-mark{flex-shrink:0;display:block;}   /* the KCGM app mark, split A / M for ActionMap */
+  .brand .pm-mark{flex-shrink:0;display:block;}   /* the app mark: gold squircle, A / M split by a diagonal */
   .brand h1{font-family:var(--font);font-weight:700;font-size:17px;margin:0;color:var(--ink);}
   .brand h1 span{color:var(--accent);}
   .menubar{display:flex;align-items:center;gap:2px;margin-left:10px;height:100%;}
@@ -501,7 +501,7 @@
   .rtabs{align-self:stretch;gap:2px;}
   .rtab{font:700 14px var(--font);color:var(--muted);background:none;border:none;border-bottom:3px solid transparent;border-radius:0;padding:3px 14px 0;cursor:pointer;}
   .rtab:hover{color:var(--ink);}
-  .rtab.active{color:var(--ink);border-bottom-color:var(--accent);}   /* KCGM tabs: gold underline on the open one */
+  .rtab.active{color:var(--ink);border-bottom-color:var(--accent);}   /* tabs: gold underline on the open one */
   .rtabs .count{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--accent);}
 
   /* tab visibility: photo tab shows the viewer panel (or its placeholder), gallery tab shows the gallery */
@@ -831,7 +831,7 @@
         <h3>Mobile</h3>
         <div class="set-row">
           <div class="set-lbl">Data repository<span class="set-sub">The PRIVATE GitHub repo that holds the mobile pack. Never use the public app repo.</span></div>
-          <div class="set-ctl"><input type="text" id="setGhRepo" placeholder="bijankle/photo-map-KCGM" style="width:200px;font:inherit;font-size:12px;padding:6px 8px;border:1px solid var(--line2);border-radius:8px;" /></div>
+          <div class="set-ctl"><input type="text" id="setGhRepo" placeholder="found from the token" style="width:200px;font:inherit;font-size:12px;padding:6px 8px;border:1px solid var(--line2);border-radius:8px;" /></div>
         </div>
         <div class="set-row">
           <div class="set-lbl">Access token<span class="set-sub">Fine-grained GitHub token with Contents read/write on that repo only. Stored only in this browser, never in the project file.</span></div>
@@ -1978,7 +1978,7 @@ function syncSettingsUI(){
   document.getElementById("setActOpen").checked=actShowOpenOnly;
   document.getElementById("setActMap").checked=actOnlyMap;
   { let n=""; try{ n=localStorage.getItem("pmUserName")||""; }catch(e){} document.getElementById("setUserName").value=n; }
-  const g=ghCfg(); document.getElementById("setGhRepo").value=g.repo; document.getElementById("setGhToken").value=g.token;
+  const g=ghRaw(); document.getElementById("setGhRepo").value=g.repo; document.getElementById("setGhToken").value=g.token;
   let le=0; try{ le=+localStorage.getItem("pmLastExport")||0; }catch(e){}
   document.getElementById("mobExpStatus").textContent=le?("Last export: "+new Date(le).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})):"";
 }
@@ -1997,7 +1997,22 @@ document.getElementById("setActOpen").addEventListener("change",e=>{ actShowOpen
 
 /* ---- Mobile export: push the field pack to the PRIVATE data repo via the GitHub API ----
    Token + repo live ONLY in this browser's localStorage — never in the .json, never in the public repo. */
-function ghCfg(){ let t="",r=""; try{ t=localStorage.getItem("pmGhToken")||""; r=localStorage.getItem("pmGhRepo")||""; }catch(e){} return {token:t.trim(),repo:(r.trim()||"bijankle/photo-map-KCGM")}; }
+function ghRaw(){ let t="",r=""; try{ t=localStorage.getItem("pmGhToken")||""; r=localStorage.getItem("pmGhRepo")||""; }catch(e){} return {token:t.trim(),repo:r.trim()}; }
+function ghCfg(){ const g=ghRaw(); return g.repo?g:{token:"",repo:""}; }   // sync is only "configured" once both token and repo are known
+/* No repo typed in: ask GitHub which repository the token can write to (the token is scoped to the one
+   data repo) and remember it — so no repository name has to be baked into the app. */
+let _ghFindP=null;
+function ghFindRepo(){ const g=ghRaw(); if(!g.token||g.repo) return Promise.resolve(g.repo||"");
+  if(_ghFindP) return _ghFindP;
+  _ghFindP=(async()=>{ try{
+    const r=await fetch("https://api.github.com/user/repos?per_page=100&sort=pushed",{headers:ghHeaders(g.token),cache:"no-store"});
+    if(!r.ok) return "";
+    const list=(await r.json()).filter(x=>x&&x.full_name&&(!x.permissions||x.permissions.push));
+    const pick=list.length===1?list[0]:(list.find(x=>x.private&&/photo|map|action/i.test(x.name))||list.find(x=>x.private)||null);
+    if(pick){ try{ localStorage.setItem("pmGhRepo",pick.full_name); }catch(e){} return pick.full_name; }
+    return "";
+  }catch(e){ return ""; } finally{ setTimeout(()=>{ _ghFindP=null; },0); } })();
+  return _ghFindP; }
 function ghHeaders(token){ return {"Authorization":"Bearer "+token,"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"}; }
 async function ghFileSha(cfg,path){   // sha via the parent directory listing (works for files over 1 MB too)
   const dir=path.includes("/")?path.slice(0,path.lastIndexOf("/")):"";
@@ -2137,8 +2152,9 @@ let _expBackoffUntil=0;
 function scheduleAutoExport(delay){ let d=delay==null?8000:delay; const w=_expBackoffUntil-Date.now(); if(w>d) d=w; clearTimeout(_expT); _expT=setTimeout(()=>exportMobile(false),d); }
 async function exportMobile(manual){
   const st=document.getElementById("mobExpStatus"), btn=document.getElementById("btnMobileExport");
+  if(!ghCfg().token&&ghRaw().token) await ghFindRepo();
   const cfg=ghCfg();
-  if(!cfg.token){ if(manual) st.textContent="Paste your GitHub token above first."; return; }
+  if(!cfg.token){ if(manual) st.textContent=ghRaw().token?"Couldn't find the data repository for this token \u2014 type it in above.":"Paste your GitHub token above first."; return; }
   if(!projectReady()||!photos.length&&!actions.length) return;   // never publish an empty pre-load session over the real pack
   if(_expBusy){ _expAgain=true; return; }
   let sig; try{ sig=packSig(); }catch(e){ return; }
@@ -2417,7 +2433,8 @@ async function exportActionsXlsx(){
   }catch(err){ done("failed: "+(err&&err.message||err),6000); }
 }
 document.getElementById("setGhRepo").addEventListener("change",e=>{ try{ localStorage.setItem("pmGhRepo",e.target.value.trim()); }catch(err){} });
-document.getElementById("setGhToken").addEventListener("change",e=>{ try{ localStorage.setItem("pmGhToken",e.target.value.trim()); }catch(err){} });
+document.getElementById("setGhToken").addEventListener("change",e=>{ try{ localStorage.setItem("pmGhToken",e.target.value.trim()); }catch(err){}
+  ghFindRepo().then(r=>{ const el=document.getElementById("setGhRepo"); if(r&&el&&!el.value) el.value=r; }); });
 document.getElementById("setUserName").addEventListener("input",e=>{ try{ localStorage.setItem("pmUserName",e.target.value.trim()); }catch(err){} });
 document.getElementById("setActMap").addEventListener("change",e=>{ actOnlyMap=e.target.checked; buildCluster(); renderClusters(); updateGallery(); renderActions(); persistState(); });
 
@@ -4534,9 +4551,9 @@ function mToggleHold(a){ mMutate(()=>{ const p=mPend();
 function mStepDone(a,i){ if(a._new){ const x=mNewActs()[a._ni]; return !!(x&&x.steps&&x.steps[i]&&x.steps[i].d); } const c=mCh(a.id); return (c.steps&&(String(i) in c.steps))?!!c.steps[String(i)]:!!(a.steps[i]&&a.steps[i].d); }
 function mScr(html){ [mMiniMap,mInsetMap,mInsetMapL,mHomeMap].forEach(m=>{ if(m){ try{ m.remove(); }catch(e){} } }); mMiniMap=null; mInsetMap=null; mInsetMapL=null; mInsetCur=null; mHomeMap=null; mHomeBB=null; mSoftRefresh=null; document.getElementById("mroot").innerHTML='<div class="m-scr">'+html+'</div>'; if(mToastEl) document.getElementById("mroot").appendChild(mToastEl); }
 function mShowSetup(msg){
-  const g=ghCfg();
+  const g=ghRaw();
   mScr('<div class="m-head"><div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div></div>'
-    +'<div class="m-body"><div class="m-sec"><div class="m-lab">DATA REPOSITORY</div><input class="m-in" id="mRepo" value="'+esc(g.repo)+'" autocomplete="off" />'
+    +'<div class="m-body"><div class="m-sec"><div class="m-lab">DATA REPOSITORY</div><input class="m-in" id="mRepo" value="'+esc(g.repo)+'" placeholder="found automatically from the token" autocomplete="off" />'
     +'<div class="m-lab">ACCESS TOKEN</div><input class="m-in" id="mTok" type="password" placeholder="github_pat_…" value="'+esc(g.token)+'" />'
     +'<div class="m-lab">YOUR NAME (FOR THE CHANGE HISTORY)</div><input class="m-in" id="mWhoIn" placeholder="e.g. Sam" value="'+esc(mUserName(true))+'" autocomplete="off" />'
     +(msg?'<div class="m-err">'+esc(msg)+'</div>':'')
@@ -4548,8 +4565,9 @@ function mShowSetup(msg){
   });
 }
 async function mLoadPack(silent){
+  if(!ghCfg().token&&ghRaw().token) await ghFindRepo();   // token saved but no repo: look it up
   const cfg=ghCfg();
-  if(!cfg.token){ mShowSetup(); return; }
+  if(!cfg.token){ mShowSetup(ghRaw().token?"Couldn't find the data repository for this token \u2014 type it in (owner/name).":""); return; }
   const lst=document.getElementById("mList"), keepScroll=(silent&&lst)?lst.scrollTop:null;
   if(!silent) mScr('<div class="m-head"><div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div></div><div class="m-body"><div class="m-note" style="padding-top:40px">Loading the latest pack…</div></div>');
   try{
@@ -5615,7 +5633,7 @@ async function checkFieldChanges(){
   if(jsonHandle){ if(!loadedJsonName) loadedJsonName=jsonHandle.name||null; armFileSync(); }   // on first interaction, pull the latest from the file and enable auto-save
   if(dirHandle){ try{ if((await dirHandle.queryPermission({mode:"read"}))!=="granted") armFolderPermission(); }catch(e){} }
   renderProjHead();
-  setTimeout(checkFieldChanges,1500);   // merge any field changes the phone has pushed…
+  ghFindRepo().finally(()=>setTimeout(checkFieldChanges,1500));   // merge any field changes the phone has pushed (repo looked up first if needed)…
   setInterval(()=>syncTick(),20000);   // …and keep watching
   setInterval(()=>watchFolder(),180000);   // new photos copied into the folder are picked up by themselves
   setTimeout(()=>scheduleAutoExport(0),6000);   // bring the phone up to date with this session
