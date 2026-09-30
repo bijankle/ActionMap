@@ -388,9 +388,13 @@
   .actpanel{order:1;} #actSplit{order:1;} #map{order:2;} #splitter{order:3;} .imgpanel{order:4;} .gallery{order:5;} .histpanel{order:6;}
 
   /* left actions panel */
-  .actpanel{width:var(--act-w,330px);flex:0 0 var(--act-w,330px);min-width:170px;height:100%;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:2;}
+  .actpanel{width:var(--act-w,390px);flex:0 0 var(--act-w,390px);min-width:170px;height:100%;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:2;}
   .act-edit{width:100%;box-sizing:border-box;font:inherit;font-size:13px;color:var(--ink);background:var(--panel);border:1px solid var(--accent);border-radius:7px;padding:4px 7px;outline:none;}
   textarea.act-edit{resize:vertical;min-height:48px;font-size:12.5px;line-height:1.45;}
+  .act-copy{border:none;background:none;color:var(--dim);cursor:pointer;padding:3px 4px;line-height:0;align-self:flex-start;}
+  .act-copy svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;}
+  .act-copy:hover{color:var(--accent);}
+  .act-copy.busy{opacity:.4;pointer-events:none;}
   .act-exp{border:none;background:none;color:var(--dim);cursor:pointer;padding:3px 5px;font-size:19px;line-height:1;align-self:flex-start;transition:transform .15s;}
   .act-exp:hover{color:var(--accent);}
   .act-exp.on{transform:rotate(180deg);}
@@ -433,7 +437,8 @@
   .act-head{display:flex;align-items:center;gap:8px;padding:12px 12px 8px;}
   .act-head .title{font-weight:700;color:var(--ink);font-size:14px;}
   .act-head .count{font-family:var(--mono);font-size:10px;color:var(--dim);flex:1;}
-  .act-tgl{font-family:var(--mono);font-size:10px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);background:var(--panel2);border:1px solid var(--line2);border-radius:999px;padding:4px 9px;cursor:pointer;}
+  .act-tgl{font-family:var(--mono);font-size:10px;letter-spacing:.2px;text-transform:uppercase;color:var(--muted);background:var(--panel2);border:1px solid var(--line2);border-radius:999px;padding:4px 7px;cursor:pointer;}
+  .st-hid{font:11px var(--mono);color:var(--dim);padding:2px 0 3px 22px;}
   .act-tgl:hover{border-color:var(--accent);color:var(--accent);}
   .act-tgl.on{background:var(--accent);border-color:var(--accent);color:#fff;}
   .act-new{padding:0 12px 10px;}
@@ -865,6 +870,7 @@
   <aside class="actpanel" id="actPanel">
     <div class="act-head"><span class="title">Actions</span><span style="flex:1"></span>
       <button class="act-tgl" id="actOpenOnly" title="Show only uncompleted actions in this list">Open only</button>
+      <button class="act-tgl" id="actDoneSteps" title="Show or hide ticked (completed) sub-actions">Show done</button>
       <button class="act-tgl" id="actMapOnly" title="Show only photos with an uncompleted action on the map">Actions only</button>
       <button class="act-tgl" id="actExpAll" title="Expand or collapse every action's details">Collapse all</button></div>
     <div class="act-new"><input type="text" id="actNewInput" placeholder="+ New action" autocomplete="off" /></div>
@@ -1485,13 +1491,15 @@ function wirePNote(el,p){
     inp.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key!=="Enter") return; const v=inp.value.trim(); if(!v) return; setPhotoNote(p,v); });
   }
 }
+let hideDoneSteps=true;   // ticked sub-actions tuck away by default (pill in the Actions header)
 function stepsHtml(a){
-  const rows=(a.steps||[]).map((s,i)=>'<div class="st-row" data-si="'+i+'">'
+  const hidden=hideDoneSteps?(a.steps||[]).filter(x=>x.d).length:0;
+  const rows=(a.steps||[]).map((s,i)=>(hideDoneSteps&&s.d)?'':'<div class="st-row" data-si="'+i+'">'
     +'<span class="st-num" draggable="true" title="Priority '+stepLetter(i)+' — drag to reorder">'+stepLetter(i)+'.</span>'
     +'<button class="st-chk'+(s.d?' on':'')+'" type="button" title="'+(s.d?'Reopen sub-action':'Mark sub-action done')+'">'+(s.d?'✓':'')+'</button>'
     +'<span class="st-t'+(s.d?' done':'')+'" title="Double-click to edit">'+esc(s.t)+'</span>'
     +'<button class="st-x" type="button" title="Remove sub-action">&times;</button></div>').join("");
-  return '<div class="act-steps">'+rows+'<input class="st-new" type="text" placeholder="+ sub-action" autocomplete="off" /></div>';
+  return '<div class="act-steps">'+rows+(hidden?'<div class="st-hid" title="Ticked sub-actions are hidden \u2014 use the \u201cShow done\u201d pill above to show them">\u2713 '+hidden+' done</div>':'')+'<input class="st-new" type="text" placeholder="+ sub-action" autocomplete="off" /></div>';
 }
 function wireSteps(el,a){
   const box=el.querySelector(".act-steps"); if(!box) return;
@@ -1719,6 +1727,7 @@ async function maybeStartGeo(){
 function renderActions(){
   const list=document.getElementById("actList"); if(!list) return;
   document.getElementById("actOpenOnly").classList.toggle("on",actShowOpenOnly);
+  document.getElementById("actDoneSteps").classList.toggle("on",!hideDoneSteps);
   document.getElementById("actMapOnly").classList.toggle("on",actOnlyMap);
   document.getElementById("actExpAll").textContent=actions.some(a=>!collActs.has(a.id))?"Collapse all":"Expand all";
   const shown=(actShowOpenOnly?actions.filter(a=>!a.done):actions.slice()).sort((x,y)=>(x.done?1:0)-(y.done?1:0));   // completed actions sink to the bottom (display only — stored order unchanged)
@@ -1738,6 +1747,7 @@ function renderActions(){
       +'<label class="act-chk" title="'+(a.done?'Reopen this action':'Mark completed')+'"><input type="checkbox"'+(a.done?' checked':'')+'/></label>'
       +'<label class="act-hold" title="On hold — stays in this list but its photos leave the map"><input type="checkbox"'+(a.hold?' checked':'')+'/></label>'
       +'<div class="act-body"><div class="bh"><div class="t"><span class="a-num">'+actNo(a)+'</span>'+esc(a.text)+'</div>'
+        +'<button class="act-copy" type="button" title="Copy for phone: one portrait image — title, main photo, the rest below, with markup — ready to paste into Messenger"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.3h2"/></svg></button>'
         +expBtnHtml(a)+'<button class="ipa-x act-del" type="button" title="'+(isCur?'Remove this action from the open photo':'Delete this action')+'">&times;</button></div>'
       +(exp?('<div class="asec">'+stepsHtml(a)+'</div>'
         +((a.done&&a.doneAt)?('<div class="m">done '+fmtDate(a.doneAt)+'</div>'):'')):'')
@@ -1754,7 +1764,8 @@ function renderActions(){
     wireActRowCommon(el,a);
     /* single click selects/navigates (slightly delayed so a double-click can win); double click edits in place */
     /* selection is INSTANT; only the zoom waits briefly so a double-click (edit) can cancel it */
-    el.addEventListener("click",e=>{ if(e.target.closest(".act-chk,.act-hold,.act-exp,.act-del,.act-steps,.act-notes")||el.querySelector(".act-edit")) return;
+    { const cb=el.querySelector(".act-copy"); if(cb) cb.addEventListener("click",e=>{ e.stopPropagation(); copyActionForPhone(a,cb); }); }
+    el.addEventListener("click",e=>{ if(e.target.closest(".act-chk,.act-hold,.act-exp,.act-del,.act-copy,.act-steps,.act-notes")||el.querySelector(".act-edit")) return;
       clearTimeout(el._ct); clickAction(a,e,true);
       if(!e.ctrlKey&&!e.metaKey&&!e.shiftKey) el._ct=setTimeout(()=>actNavigate(a),260); });
     el.addEventListener("dblclick",e=>{ if(e.target.closest(".act-chk,.act-exp,.act-del,.act-steps,.act-notes,.act-cover")||el.querySelector(".act-edit")) return; clearTimeout(el._ct); startActEdit(a,el); });
@@ -1780,6 +1791,7 @@ function renderIpActions(){   // the strip under the photo holds ONLY the photo 
   wirePNote(pnEl,p);
 }
 document.getElementById("actOpenOnly").addEventListener("click",()=>{ actShowOpenOnly=!actShowOpenOnly; renderActions(); persistState(); });
+document.getElementById("actDoneSteps").addEventListener("click",()=>{ hideDoneSteps=!hideDoneSteps; renderActions(); persistState(); });
 document.getElementById("actMapOnly").addEventListener("click",()=>{ actOnlyMap=!actOnlyMap; buildCluster(); renderClusters(); updateGallery(); renderActions(); renderMapTags(); persistState(); });
 document.getElementById("actExpAll").addEventListener("click",()=>{ if(actions.some(a=>!collActs.has(a.id))) actions.forEach(a=>collActs.add(a.id)); else collActs.clear(); renderActions(); });
 /* Right-click "New action" on photos doesn't pop a dialog: it ARMS this input — type the action
@@ -2209,6 +2221,59 @@ async function openPendingReport(){
     +body+'</div><script>window.addEventListener("load",()=>setTimeout(()=>{ try{ print(); }catch(e){} },500));<\/script></body></html>';
   w.document.open(); w.document.write(html); w.document.close();
   logChange("Created the pending actions report ("+pend.length+" action"+(pend.length===1?"":"s")+")");
+}
+/* ---- Copy an action for a phone: ONE portrait image (1080x1920) — title (10%), main photo
+   (60%), the other photos tiled in the remaining 30% — with markup burned in, straight to the
+   clipboard for pasting into Messenger. ---- */
+const CARD_STYLE={bg:"#ffffff",titleColor:"#1e1f22",pad:28,gap:12,radius:18,mainBg:"#1e1f22",tileBg:"#e9ebee"};   // "clean white" — chosen for Messenger
+function _rr(ctx,x,y,w,h,r){ ctx.beginPath(); if(ctx.roundRect&&r) ctx.roundRect(x,y,w,h,r); else ctx.rect(x,y,w,h); }
+function _drawImg(ctx,im,x,y,w,h,fit,bg,r){
+  ctx.save(); _rr(ctx,x,y,w,h,r); ctx.clip(); ctx.fillStyle=bg; ctx.fillRect(x,y,w,h);
+  if(im&&fit==="contain"){   // letterbox space is filled with a blurred, dimmed copy of the same photo — no dead black bars
+    const sc=Math.max(w/im.width,h/im.height); ctx.filter="blur(26px) brightness(.62) saturate(1.1)"; ctx.drawImage(im,x+(w-im.width*sc)/2-40,y+(h-im.height*sc)/2-40,im.width*sc+80,im.height*sc+80); ctx.filter="none"; }
+  if(im){ const s=fit==="cover"?Math.max(w/im.width,h/im.height):Math.min(w/im.width,h/im.height); const dw=im.width*s, dh=im.height*s; ctx.drawImage(im,x+(w-dw)/2,y+(h-dh)/2,dw,dh); }
+  ctx.restore(); }
+function _wrap(ctx,text,maxW,maxLines){ const words=String(text||"").split(/\s+/), lines=[]; let cur="";
+  for(const w of words){ const t=cur?cur+" "+w:w; if(ctx.measureText(t).width<=maxW||!cur) cur=t; else { lines.push(cur); cur=w; } }
+  if(cur) lines.push(cur);
+  if(lines.length>maxLines){ const keep=lines.slice(0,maxLines); let last=keep[maxLines-1]; while(ctx.measureText(last+"…").width>maxW&&last.length>1) last=last.slice(0,-1); keep[maxLines-1]=last+"…"; return keep; }
+  return lines; }
+function _gridFor(m,W,H,gap){ let best=null;   // columns/rows that give the biggest near-square tiles
+  for(let c=1;c<=m;c++){ const r=Math.ceil(m/c), tw=(W-(c-1)*gap)/c, th=(H-(r-1)*gap)/r; const sc=Math.min(tw,th*1.35)*Math.min(th,tw);
+    if(!best||sc>best.sc) best={c,r,tw,th,sc}; }
+  return best; }
+async function composeActionCard(a){   // 1080x1920 portrait: title 10% · main photo 60% · the rest tiled in 30%
+  const S=CARD_STYLE, W=1080, H=1920, gap=S.gap;
+  const ps=actPhotos(a), ims=[];
+  for(const ph of ps){ try{ const src=await annotatedPreview(ph); ims.push(src?await loadImg(src):null); }catch(e){ ims.push(null); } }   // markup burned in
+  const c=document.createElement("canvas"); c.width=W; c.height=H; const ctx=c.getContext("2d");
+  ctx.fillStyle=S.bg; ctx.fillRect(0,0,W,H);
+  const X=S.pad, IW=W-2*S.pad, titleH=Math.round(H*0.10);
+  const font=px=>"700 "+px+"px 'Segoe UI',Aptos,system-ui,-apple-system,Roboto,sans-serif";
+  let px=64, lines; for(;px>=36;px-=4){ ctx.font=font(px); lines=_wrap(ctx,a.text,IW-8,3); if(lines.length*px*1.18<=titleH-gap-8) break; }
+  ctx.fillStyle=S.titleColor; ctx.textBaseline="middle"; const lh=px*1.18, top=S.pad+(titleH-gap-lines.length*lh)/2+lh/2;
+  lines.forEach((l,i)=>ctx.fillText(l,X+4,top+i*lh));
+  const mainY=S.pad+titleH, rest=ims.slice(1);
+  const mainH=(rest.length?Math.round(H*0.60):H-S.pad-mainY)-gap;   // a lone photo takes all the space below the title
+  _drawImg(ctx,ims[0]||null,X,mainY,IW,mainH,ims[0]?"contain":"cover",S.mainBg,S.radius);
+  if(rest.length){ const Y=mainY+mainH+gap, TH=H-S.pad-Y, gr=_gridFor(rest.length,IW,TH,gap);
+    rest.forEach((im,i)=>{ const col=i%gr.c, row=Math.floor(i/gr.c);
+      _drawImg(ctx,im,X+col*(gr.tw+gap),Y+row*(gr.th+gap),gr.tw,gr.th,"cover",S.tileBg,12); }); }
+  return c;
+}
+async function copyActionForPhone(a,btn){
+  if(btn) btn.classList.add("busy");
+  const blobP=(async()=>{ const cv=await composeActionCard(a); return await new Promise((res,rej)=>cv.toBlob(b=>b?res(b):rej(new Error("image failed")),"image/png")); })();
+  try{
+    try{ await navigator.clipboard.write([new ClipboardItem({"image/png":blobP})]); }   // promise form keeps the click's permission while the image renders
+    catch(e1){ const b=await blobP; await navigator.clipboard.write([new ClipboardItem({"image/png":b})]); }
+    loadNote("\u2713 Copied "+actNo(a)+" for the phone \u2014 paste it into Messenger (Ctrl+V)"); logChange("Copied action "+actLbl(a.id)+" as a phone image",a.id);
+  }catch(err){   // clipboard blocked: fall back to saving the image
+    try{ const b=await blobP; const u=URL.createObjectURL(b); const d=document.createElement("a"); d.href=u; d.download=actNo(a)+" "+String(a.text||"action").replace(/[\\/:*?"<>|]+/g,"").slice(0,60)+".png"; document.body.appendChild(d); d.click(); d.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000);
+      loadNote("Clipboard unavailable \u2014 saved the image instead (drag it into Messenger)"); }catch(e2){ loadNote("Couldn't make the image: "+(err&&err.message||err)); }
+  }
+  if(btn) btn.classList.remove("busy");
+  setTimeout(()=>loadNote(""),4000);
 }
 /* ---- Excel export: every action as a row, annotated photos embedded alongside ---- */
 let _exceljsP=null;
@@ -4079,7 +4144,7 @@ function serializeState(includeImages){
       actW:getComputedStyle(document.documentElement).getPropertyValue("--act-w").trim()||null,
       covW:getComputedStyle(document.documentElement).getPropertyValue("--cov-w").trim()||null, dateLo, dateHi,
       box: boxBounds?[boxBounds.getSouth(),boxBounds.getWest(),boxBounds.getNorth(),boxBounds.getEast()]:null,
-      recentTags: recentTags.slice(0,10), rightTab, actShowOpenOnly, actOnlyMap, altLo, altHi, altBlank, dateBlank, clusterSens,
+      recentTags: recentTags.slice(0,10), rightTab, actShowOpenOnly, hideDoneSteps, actOnlyMap, altLo, altHi, altBlank, dateBlank, clusterSens,
       view:{ center:[map.getCenter().lat, map.getCenter().lng], zoom:map.getZoom() } },
     photos: photos.map(p=>{ const o={path:p.path,name:p.name,lat:p.lat,lng:p.lng,time:p.time,dir:p.dir,size:p.size,isHeic:p.isHeic};
       if(Array.isArray(p.paths)&&(p.paths.length!==1||p.paths[0]!==p.path))o.paths=p.paths;   // physical locations (incl. empty when pruned from disk)
@@ -4134,7 +4199,7 @@ function applyState(st){
   if(s.baseLayer==="esri"){ map.removeLayer(google); esri.addTo(map); } else if(s.baseLayer==="none"){ map.removeLayer(google); }
   showNoGeo=!!s.showNoGeo; document.getElementById("showNoGeo").checked=showNoGeo;
   if(Array.isArray(s.recentTags)) recentTags=s.recentTags.slice(0,10);
-  actShowOpenOnly=!!s.actShowOpenOnly; actOnlyMap=!!s.actOnlyMap; setTab(s.rightTab==="gallery"?"gallery":"photo"); renderActions();
+  actShowOpenOnly=!!s.actShowOpenOnly; hideDoneSteps=s.hideDoneSteps!==false; actOnlyMap=!!s.actOnlyMap; setTab(s.rightTab==="gallery"?"gallery":"photo"); renderActions();
   currentSort=s.sortBy||"date_desc"; document.getElementById("sortSel").value=currentSort;
   buildDateFilter(); if(s.dateLo!=null&&dateMin!=null){ dateLo=s.dateLo; dateHi=s.dateHi; syncSliderUI(); }
   altBlank=(s.altBlank!==false); document.getElementById("altBlank").checked=altBlank;
