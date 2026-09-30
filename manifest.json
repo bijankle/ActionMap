@@ -1,8 +1,8 @@
 {
-  "id": "./?app=actionmap-field-2",
-  "name": "ActionMap Field",
+  "id": "./?app=action-map",
+  "name": "ActionMap",
   "short_name": "ActionMap",
-  "description": "Field companion for ActionMap — share photos straight from your gallery and they land on the desktop map with their location intact.",
+  "description": "Actions on a map, with photos. Share photos straight from your gallery and they land on the map with their location intact.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

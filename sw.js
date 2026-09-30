@@ -1,16 +1,31 @@
-/* PhotoMap Field service worker.
-   Exists ONLY to receive photos shared from other apps (the Android share sheet hands
-   original files WITH their GPS intact, unlike the file picker, which strips it).
-   It never caches the app itself — every normal request goes straight to the network,
-   so the self-updating page keeps working exactly as before. */
-const SW_VER = "7";
+/* ActionMap service worker (same shape as Project Library's, which phones install fine):
+   1. receives photos shared from other apps (the Android share sheet hands original files WITH
+      their GPS intact, unlike the file picker, which strips it);
+   2. network first for the app's own files, with the last good copy as the offline fallback.
+      Online you always get the newest version; the fallback is what lets the phone install it
+      as a real app. */
+const SW_VER = "8";
+const APP_CACHE = "am-app-1";
+const CORE = ["./", "index.html", "manifest.json", "icon-192.png", "icon-512.png", "icon-maskable-512.png", "apple-touch-icon.png"];
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open("pm-shared").then(c => c.put("swver", new Response(SW_VER))));
+  e.waitUntil(Promise.all([
+    caches.open("pm-shared").then(c => c.put("swver", new Response(SW_VER))),
+    caches.open(APP_CACHE).then(c => Promise.all(CORE.map(f => c.add(f).catch(() => {}))))   // one missing file never blocks the install
+  ]));
   self.skipWaiting();
 });
-self.addEventListener("activate", e => e.waitUntil(self.clients.claim()));
+self.addEventListener("activate", e => {
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== APP_CACHE && k !== "pm-shared").map(k => caches.delete(k)))).then(() => self.clients.claim()));
+});
 self.addEventListener("fetch", e => {
   const u = new URL(e.request.url);
+  if (e.request.method === "GET" && u.origin === self.location.origin) {   // only this site's own files; GitHub API / photos / map tiles go straight through
+    e.respondWith(fetch(e.request).then(r => {
+      if (r.ok && r.status === 200 && r.type === "basic") { const copy = r.clone(); caches.open(APP_CACHE).then(c => c.put(e.request, copy)).catch(() => {}); }
+      return r;
+    }).catch(() => caches.match(e.request, { ignoreSearch: true }).then(hit => hit || caches.match("./"))));
+    return;
+  }
   if (e.request.method === "POST" && (u.pathname.endsWith("/share-target") || u.pathname.endsWith("/Photo-Map.html") || u.pathname.endsWith("/index.html") || u.pathname.endsWith("/"))) {
     e.respondWith((async () => {
       try {

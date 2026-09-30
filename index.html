@@ -4,7 +4,16 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#ffffff" />
-<link rel="manifest" href="manifest.webmanifest?v=15" />
+<link rel="manifest" href="manifest.json?v=16" />
+<meta name="mobile-web-app-capable" content="yes" />
+<script>
+/* Installable app: the service worker (share receiver + offline copy) is registered on every device at
+   one fixed address, and Chrome's install offer is kept so the phone menu can show "Install app". */
+window._bip=null;
+addEventListener("beforeinstallprompt",function(e){ e.preventDefault(); window._bip=e; });
+addEventListener("appinstalled",function(){ window._bip=null; });
+if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(function(r){ try{ r.update(); }catch(e){} }).catch(function(){}); });
+</script>
 <link rel="icon" href="icon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -5522,9 +5531,14 @@ function mShowAdd(){
   document.getElementById("mCamBtn").addEventListener("click",()=>{ mCloseSheet(); mTakePhoto(null); });
   document.getElementById("mUpBtn").addEventListener("click",()=>{ mCloseSheet(); mUpInput().click(); window.mPickT=Date.now(); });
 }
+function mInstalled(){ try{ return matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: fullscreen)").matches||navigator.standalone===true; }catch(e){ return false; } }
+function mInstallRow(){ if(mInstalled()) return "";
+  return '<button class="ma-row" id="mInstB" type="button"><div class="ma-rt"><div class="t">Install app</div><div class="m">'
+    +(window._bip?"Adds ActionMap to your apps and home screen":"Chrome menu \u22ee \u2192 Install app")+'</div></div><span class="ma-chev">\u203a</span></button>'; }
 function mShowMenu(){
   const when=t=>t?new Date(t).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"";
   mSheet('<div class="ma-shh"><b>'+esc(mPack.project||"Project")+'</b>'+(mRO()?'<span>view only</span>':'')+'</div>'
+    +mInstallRow()
     +'<button class="ma-row" id="mSyncRow" type="button"><div class="ma-rt"><div class="t" id="mSyncLine">'+esc(mSyncText())+'</div><div class="m">Tap to sync now</div></div></button>'
     +'<div class="ma-row" style="gap:8px"><button class="ma-btn" id="mMU" type="button"'+(mUndoStack.length?'':' disabled')+'>↺ Undo</button><button class="ma-btn" id="mMR" type="button"'+(mRedoStack.length?'':' disabled')+'>↻ Redo</button></div>'
     +'<button class="ma-row" id="mMP" type="button"><div class="ma-rt"><div class="t">Switch project</div></div><span class="ma-chev">›</span></button>'
@@ -5532,6 +5546,11 @@ function mShowMenu(){
     +'<button class="ma-row" id="mMF" type="button"><div class="ma-rt"><div class="t">Refresh</div><div class="m">Newest app and newest actions from the desktop</div></div></button>'
     +'<button class="ma-row" id="mMS" type="button"><div class="ma-rt"><div class="t">Settings</div><div class="m">Data repository and access token</div></div><span class="ma-chev">›</span></button>'
     +'<div class="m-note" style="padding:12px 16px 0">Actions from '+esc(when(mPack.exportedAt))+' · app '+esc(when(document.lastModified))+'</div>');
+  const ib=document.getElementById("mInstB"); if(ib) ib.addEventListener("click",async()=>{
+    const ev=window._bip;
+    if(!ev){ mToast("In Chrome: tap \u22ee (top right) \u2192 Install app"); return; }
+    mCloseSheet(); window._bip=null;
+    try{ ev.prompt(); const r=await ev.userChoice; if(r&&r.outcome==="accepted") mToast("\u2713 Installing \u2014 ActionMap will appear with your apps"); }catch(e){ mToast("In Chrome: tap \u22ee (top right) \u2192 Install app"); } });
   document.getElementById("mSyncRow").addEventListener("click",()=>{ mSendChanges(); mPackPoll(true); const l=document.getElementById("mSyncLine"); if(l) l.textContent=mSyncText(); });
   document.getElementById("mMU").addEventListener("click",()=>{ mCloseSheet(); mUndo(); });
   document.getElementById("mMR").addEventListener("click",()=>{ mCloseSheet(); mRedo(); });
@@ -6063,9 +6082,8 @@ function mobileBoot(){
 }
 /* Share-sheet intake: photos shared from the gallery (Google Photos etc.) arrive through the
    service worker WITH their GPS intact — Android only strips location on the file-picker path.
-   Requires the app installed to the home screen once (Chrome menu -> Add to Home screen). */
+   Requires the app installed once (menu \u2192 Install app). The service worker is registered in <head>. */
 async function mSetupShare(){
-  try{ if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js?v="+(Date.parse(document.lastModified)||0),{updateViaCache:"none"}).then(r=>{ try{ r.update(); }catch(e){} }).catch(()=>{}); }catch(e){}   // version-stamped URL: the CDN has never cached it, so the newest receiver always lands with the page
   try{
     const q=new URLSearchParams(location.search);
     if(!q.has("shared")) return;
