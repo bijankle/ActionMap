@@ -13,11 +13,11 @@
    same way Project Library does it, so a zoom saved for this site can't shrink the app. */
 window.amViewport=function(z){ try{
   var m=document.querySelector('meta[name="viewport"]'); if(!m||!matchMedia("(pointer: coarse)").matches) return;
-  if(!(z>=.7&&z<=1.6)||z===1){ m.setAttribute("content","width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no"); return; }
+  if(!(z>=.7&&z<=1.8)||z===1){ m.setAttribute("content","width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no"); return; }
   var land=screen.orientation?/landscape/.test(screen.orientation.type):innerWidth>innerHeight, w=land?Math.max(screen.width,screen.height):Math.min(screen.width,screen.height);
   m.setAttribute("content","width="+Math.round(w/z)+", initial-scale="+z+", minimum-scale="+z+", maximum-scale="+z+", viewport-fit=cover, user-scalable=no");
 }catch(e){} };
-window.amSize=function(){ try{ var v=parseFloat(localStorage.getItem("amAppSize")); return v>=.7&&v<=1.6?v:1; }catch(e){ return 1; } };
+window.amSize=function(){ try{ var v=parseFloat(localStorage.getItem("amAppSize2")); return v>=.7&&v<=1.8?v:1.3; }catch(e){ return 1.3; } };   // Normal = 1.3 (the old Extra large), leaving room to grow
 amViewport(amSize());
 try{ (screen.orientation||window).addEventListener("change",function(){ amViewport(amSize()); }); }catch(e){}
 window._bip=null;
@@ -793,6 +793,20 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-btn.pri{flex:1.6;background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);font-weight:700;}
   .ma-btn.busy{opacity:.6;pointer-events:none;}
   .ma-btn[disabled]{opacity:.4;}
+  .ma-chip{white-space:nowrap;}
+  .ma-strow{flex-wrap:wrap;}
+  .ma-show em{font-style:normal;}
+  .ma-show .sn{display:none;}
+  .ma-sizes{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:0 0 100%;}
+  .ma-sizes .ma-chip{padding:0 6px;}
+  @media (max-width:380px){   /* narrow layouts (bigger App size): icons carry Map/List, the switches drop "Show" */
+    .ma-seg button .sl{display:none;}
+    .ma-seg button{padding:0 12px;}
+    .ma-show .sw{display:none;} .ma-show .sn{display:inline;}
+    .ma-show button{font-size:16px;gap:8px;}
+    .ma-chips .ma-chip,.ma-strow .ma-chip{padding:0 12px;}
+    .ma-strow .ma-dist{margin-left:0;flex:0 0 100%;justify-content:flex-start;height:32px;}
+  }
   body.mobile .m-in{font-size:17px;padding:12px 14px;border-radius:12px;}
   body.mobile #mToast{font-size:16px;padding:14px 16px;border-radius:12px;}
   body.mobile .m-note{font-size:15px;}
@@ -5506,8 +5520,8 @@ function mStatus(a){ return mDone(a)?"done":mHold(a)?"hold":"open"; }
 function mTopHtml(on){
   let nh=0,nd=0; if(on==="map") for(const a of mHomeActs()){ if(mDone(a)) nd++; else if(mHold(a)) nh++; }
   return '<div class="ma-top"><button class="ma-proj" id="mProjSub" type="button"><span class="ma-pn">'+esc(mPack.project||"Project")+'<i>▾</i></span><span class="ma-ps" id="mSendNote">'+esc(mHeadSub())+'</span></button>'
-    +'<div class="ma-seg" id="mSeg"><button type="button" data-t="map" class="'+(on==="map"?"on":"")+'">'+MI.map+'Map</button><button type="button" data-t="list" class="'+(on==="list"?"on":"")+'">'+MI.list+'List</button></div>'
-    +(on==="map"?'<div class="ma-show"><button type="button" id="mShowH" class="'+(mShowHold?"on":"")+'"><i class="ma-sym hold"></i>Show on hold <span>'+nh+'</span></button><button type="button" id="mShowD" class="'+(mShowDone?"on":"")+'"><i class="ma-sym done"></i>Show done <span>'+nd+'</span></button></div>':'')
+    +'<div class="ma-seg" id="mSeg"><button type="button" data-t="map" class="'+(on==="map"?"on":"")+'" aria-label="Map">'+MI.map+'<span class="sl">Map</span></button><button type="button" data-t="list" class="'+(on==="list"?"on":"")+'" aria-label="List">'+MI.list+'<span class="sl">List</span></button></div>'
+    +(on==="map"?'<div class="ma-show"><button type="button" id="mShowH" class="'+(mShowHold?"on":"")+'"><i class="ma-sym hold"></i><em class="sw">Show on hold</em><em class="sn">On hold</em> <span>'+nh+'</span></button><button type="button" id="mShowD" class="'+(mShowDone?"on":"")+'"><i class="ma-sym done"></i><em class="sw">Show done</em><em class="sn">Done</em> <span>'+nd+'</span></button></div>':'')
     +'</div>';
 }
 /* bottom sheets: one at a time, dropped by a tap on the dimmed map/list behind them */
@@ -5591,8 +5605,8 @@ function mShowMenu(){
     +mInstallRow()
     +'<button class="ma-row" id="mSyncRow" type="button"><div class="ma-rt"><div class="t" id="mSyncLine">'+esc(mSyncText())+'</div><div class="m">Tap to sync now</div></div></button>'
     +'<div class="ma-row" style="gap:8px"><button class="ma-btn" id="mMU" type="button"'+(mUndoStack.length?'':' disabled')+'>↺ Undo</button><button class="ma-btn" id="mMR" type="button"'+(mRedoStack.length?'':' disabled')+'>↻ Redo</button></div>'
-    +'<div class="ma-row" style="flex-wrap:wrap;gap:10px"><div class="ma-rt" style="flex:0 0 100%"><div class="t">App size</div></div>'
-      +[[.85,"Small"],[1,"Normal"],[1.15,"Large"],[1.3,"Extra large"]].map(([v,t])=>'<button type="button" class="ma-chip'+(Math.abs(amSize()-v)<.01?' on':'')+'" data-z="'+v+'" style="flex:1;padding:0 6px">'+t+'</button>').join("")+'</div>'
+    +'<div class="ma-row" style="flex-wrap:wrap;gap:10px"><div class="ma-rt" style="flex:0 0 100%"><div class="t">App size</div></div><div class="ma-sizes">'
+      +[[1.1,"Small"],[1.3,"Normal"],[1.45,"Large"],[1.6,"Extra large"]].map(([v,t])=>'<button type="button" class="ma-chip'+(Math.abs(amSize()-v)<.01?' on':'')+'" data-z="'+v+'">'+t+'</button>').join("")+'</div></div>'
     +'<button class="ma-row" id="mMP" type="button"><div class="ma-rt"><div class="t">Switch project</div></div><span class="ma-chev">›</span></button>'
     +'<button class="ma-row" id="mMN" type="button"><div class="ma-rt"><div class="t">Your name</div><div class="m">'+esc(mUserName(true)||"Not set")+' — shown next to your changes</div></div><span class="ma-chev">›</span></button>'
     +'<button class="ma-row" id="mMF" type="button"><div class="ma-rt"><div class="t">Refresh</div><div class="m">Newest app and newest actions from the desktop</div></div></button>'
@@ -5607,7 +5621,7 @@ function mShowMenu(){
   document.getElementById("mMU").addEventListener("click",()=>{ mCloseSheet(); mUndo(); });
   document.getElementById("mMR").addEventListener("click",()=>{ mCloseSheet(); mRedo(); });
   document.querySelectorAll("#mSheet [data-z]").forEach(b=>b.addEventListener("click",()=>{ const z=parseFloat(b.dataset.z);
-    try{ localStorage.setItem("amAppSize",String(z)); }catch(e){} amViewport(z); mCloseSheet();
+    try{ localStorage.setItem("amAppSize2",String(z)); }catch(e){} amViewport(z); mCloseSheet();
     setTimeout(()=>{ if(mRerender) mRerender(); mShowMenu(); },250); }));   // relaid out at the new size, menu reopened to compare
   document.getElementById("mMP").addEventListener("click",()=>{ mCloseSheet(); mChooseProject(); });
   document.getElementById("mMN").addEventListener("click",()=>{ const v=prompt("Your name, shown next to your changes in the history:",mUserName(true)); if(v!=null){ try{ localStorage.setItem("pmUserName",v.trim()); }catch(e){} mCloseSheet(); } });
