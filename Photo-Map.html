@@ -448,7 +448,6 @@
   .act-head .title{font-weight:700;color:var(--ink);font-size:14px;}
   .act-head .count{font-family:var(--font);font-size:10px;color:var(--dim);flex:1;font-variant-numeric:tabular-nums}
   .act-tgl{font-family:var(--font);font-size:11.5px;white-space:nowrap;font-weight:600;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px 8px;cursor:pointer;}
-  .st-hid{font:11px var(--font);color:var(--dim);padding:2px 0 3px 22px;font-variant-numeric:tabular-nums}
   .act-tgl:hover{border-color:var(--accent);color:var(--ink);}
   .act-tgl.on{background:var(--accent-tint);border-color:var(--accent);color:var(--accent2);}
   .act-new{padding:0 12px 10px;}
@@ -1498,13 +1497,12 @@ function wirePNote(el,p){
 }
 let hideDoneSteps=true;   // ticked sub-actions tuck away by default (pill in the Actions header)
 function stepsHtml(a){
-  const hidden=hideDoneSteps?(a.steps||[]).filter(x=>x.d).length:0;
   const rows=(a.steps||[]).map((s,i)=>(hideDoneSteps&&s.d)?'':'<div class="st-row" data-si="'+i+'">'
     +'<span class="st-num" draggable="true" title="Priority '+stepLetter(i)+' — drag to reorder">'+stepLetter(i)+'.</span>'
     +'<button class="st-chk'+(s.d?' on':'')+'" type="button" title="'+(s.d?'Reopen sub-action':'Mark sub-action done')+'">'+(s.d?'✓':'')+'</button>'
     +'<span class="st-t'+(s.d?' done':'')+'" title="Double-click to edit">'+esc(s.t)+'</span>'
     +'<button class="st-x" type="button" title="Remove sub-action">&times;</button></div>').join("");
-  return '<div class="act-steps">'+rows+(hidden?'<div class="st-hid" title="Ticked sub-actions are hidden \u2014 use the \u201cShow done\u201d pill above to show them">\u2713 '+hidden+' done</div>':'')+'<input class="st-new" type="text" placeholder="+ sub-action" autocomplete="off" /></div>';
+  return '<div class="act-steps">'+rows+'<input class="st-new" type="text" placeholder="+ sub-action" autocomplete="off" /></div>';
 }
 function wireSteps(el,a){
   const box=el.querySelector(".act-steps"); if(!box) return;
