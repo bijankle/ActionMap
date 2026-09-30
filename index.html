@@ -261,13 +261,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .markpalette .sw:hover{border-color:#00000044;}
   .markpalette .sw.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent),0 0 8px var(--accent-tint);}
   .markpalette .thick{-webkit-appearance:slider-vertical;appearance:slider-vertical;writing-mode:vertical-lr;direction:rtl;width:22px;height:90px;margin-top:3px;accent-color:var(--accent);cursor:pointer;}
-  .tbed{position:absolute;z-index:8;}
-  .tbed .tbtext{display:inline-block;min-width:8px;background:#ffffff;border:2px solid #ff3b30;color:#ff3b30;font:600 13px var(--font);line-height:1.15;padding:2px 5px;border-radius:0;white-space:pre;outline:none;cursor:text;box-shadow:none;box-sizing:content-box;}
-  .tbed .tbctrl{position:absolute;left:0;top:-26px;display:flex;align-items:center;gap:3px;background:#fff;border:1px solid var(--line2);border-radius:7px;padding:2px 3px;box-shadow:0 2px 8px #1e1f221f;}
-  .tbed .tbctrl button{background:var(--panel2);border:1px solid var(--line2);color:var(--text);font:700 var(--fl) var(--font);width:24px;height:20px;border-radius:5px;cursor:pointer;padding:0;}
-  .tbed .tbctrl button:hover{border-color:var(--accent);color:var(--accent);}
-  .tbed .tbctrl .tbdel{background:var(--bad);border-color:var(--bad);color:#fff;font-size:14px;line-height:1;}
-  .tbed .tbctrl .tbdel:hover{background:#b83436;border-color:#b83436;color:#fff;}
+  .tbed{position:absolute;z-index:8;line-height:0;}
+  .tbed .tbtext{display:inline-block;min-width:8px;background:#ffffff;border:2px solid #ff3b30;color:#ff3b30;font:600 13px var(--font);line-height:1.15;padding:2px 5px;border-radius:0;white-space:pre;outline:none;cursor:text;box-shadow:none;box-sizing:content-box;vertical-align:top;}
   .projhead{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:1300;display:none;flex-direction:column;align-items:stretch;background:#ffffffee;border:1px solid var(--line2);border-radius:10px;padding:9px 16px;box-shadow:0 6px 24px #1e1f2233;max-width:72%;pointer-events:none;}
   .projhead.show{display:flex;}
   .ph-track{display:none;height:4px;border-radius:3px;background:var(--line);overflow:hidden;margin:0 0 7px;}
@@ -1084,8 +1079,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
       <button class="sw" data-c="#111111" style="--c:#111111" title="Black"></button>
     </div>
     <div class="ip-sizebars" id="ipSizebars">
-      <div class="szb" title="Line weight — one weight for every line on this photo"><svg viewBox="0 0 24 24"><path d="M5 6h14" stroke-width="1.6"/><path d="M5 12h14" stroke-width="3.2"/><path d="M5 18h14" stroke-width="5"/></svg><input type="range" id="szLine" min="1" max="12" step="1" /></div>
-      <div class="szb" title="Text size — one size for every text on this photo"><b class="a">A</b><input type="range" id="szText" min="12" max="90" step="2" /></div>
+      <div class="szb" title="Line weight — one weight for every line on this photo"><svg viewBox="0 0 24 24"><path d="M5 6h14" stroke-width="1.6"/><path d="M5 12h14" stroke-width="3.2"/><path d="M5 18h14" stroke-width="5"/></svg><input type="range" id="szLine" min="0" max="100" step="1" title="Double-click to reset" /></div>
+      <div class="szb" title="Text size — one size for every text on this photo"><b class="a">A</b><input type="range" id="szText" min="0" max="100" step="1" title="Double-click to reset" /></div>
     </div>
     <button class="ip-editbtn" id="lbEdit" title="Edit — drawing tools: pen, lines, arrows, shapes, text and callouts on the photo"><svg viewBox="0 0 24 24"><path d="M4 20l3-.7L19 7.3 16.7 5 5 16.7 4 20z"/></svg></button>
     <div class="ip-marktools">
@@ -1113,7 +1108,6 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
     </div>
     <div class="folder-pop" id="folderPop"></div>
     <div class="tbed" id="tbEditor" style="display:none">
-      <div class="tbctrl"><button id="tbDel" class="tbdel" title="Delete text box">&times;</button><button id="tbMinus" title="Smaller">A&minus;</button><button id="tbPlus" title="Larger">A+</button></div>
       <div class="tbtext" id="tbText" contenteditable="true" spellcheck="false"></div>
     </div>
   </div>
@@ -4119,7 +4113,7 @@ document.getElementById("lbPrev").addEventListener("click",e=>{e.stopPropagation
 document.getElementById("lbNext").addEventListener("click",e=>{e.stopPropagation();vStep(1);});
 document.addEventListener("keydown",e=>{
   if(!lb.classList.contains("open"))return;
-  if(document.activeElement===tbText){ if(e.key==="Escape"){ e.preventDefault(); deselectText(); } else if(e.key==="Enter"){ e.preventDefault(); document.execCommand("insertText",false,"\n"); } return; }
+  if(document.activeElement===tbText){ if(e.key==="Escape"){ e.preventDefault(); const m=selMark; deselectText(); if(m&&curMarks().includes(m)){ selObj=m; redrawMarks(); } } else if(e.key==="Enter"){ e.preventDefault(); document.execCommand("insertText",false,"\n"); } return; }
   if(e.key==="Escape"){
     if(selMark){ deselectText(); return; }
     if(draft&&draft.t==="poly"){ endPoly(false); return; }
@@ -4129,6 +4123,7 @@ document.addEventListener("keydown",e=>{
     if(fileInfoShown){ closeFileInfo(); return; }
     return;
   }
+  if(e.key==="Enter"&&selObj&&(selObj.t==="text"||selObj.t==="call")&&curMarks().includes(selObj)){ e.preventDefault(); const m=selObj; selObj=null; selectText(m); return; }   // Enter: type in the selected text box
   if(e.key==="Enter"){ if(markTool==="poly"&&draft&&draft.t==="poly"&&draft.p.length>=2){ curMarks().push({t:"poly",p:draft.p,c:draft.c,k:draft.k}); draft=null; polyPrev=null; afterMarkChange(); } return; }
   const tag=((e.target&&e.target.tagName)||"").toLowerCase(); if(tag==="input"||tag==="select"||tag==="textarea"||(e.target&&e.target.isContentEditable)) return;
   if(e.key==="ArrowLeft"){ e.preventDefault(); vStep(-1); return; }
@@ -4196,12 +4191,16 @@ document.querySelectorAll("#markPalette .sw").forEach(b=>{ b.addEventListener("m
    sliders next to the tools set them for every object on the image at once. */
 const szLine=document.getElementById("szLine"), szText=document.getElementById("szText");
 let sizeBefore=null;
-function syncSizeBars(){ const p=curPhoto(); if(!p) return; szLine.value=(p.mkw!=null?p.mkw:markThick); szText.value=Math.round(((p.mth!=null?p.mth:0.03))*1000); }
+/* the sliders run from 1/3 to 3 x today's default, the default in the middle (log scale: finer near the middle) */
+const DEF_MKW=5, DEF_MTH=0.03;    // line weight / text size (share of the photo height) you get when nothing was changed
+const szToV=(v,def)=>Math.round(50+50*Math.log(v/def)/Math.log(3)), vToSz=(x,def)=>def*Math.pow(3,(x-50)/50);
+function syncSizeBars(){ const p=curPhoto(); if(!p) return; szLine.value=szToV(p.mkw!=null?p.mkw:DEF_MKW,DEF_MKW); szText.value=szToV(p.mth!=null?p.mth:DEF_MTH,DEF_MTH); }
 function sizeSnapStart(){ const p=curPhoto(); if(p&&!sizeBefore) sizeBefore={mkw:(p.mkw!=null?p.mkw:null),mth:(p.mth!=null?p.mth:null)}; }
 function sizeSnapEnd(){ const p=curPhoto(); if(p&&sizeBefore){ const after={mkw:(p.mkw!=null?p.mkw:null),mth:(p.mth!=null?p.mth:null)}; if(JSON.stringify(after)!==JSON.stringify(sizeBefore)) pushUndo({sizeSnap:{id:p.id,before:sizeBefore,after}}); persistState(); } sizeBefore=null; }
-szLine.addEventListener("input",()=>{ const p=curPhoto(); if(!p) return; sizeSnapStart(); p.mkw=parseInt(szLine.value)||5; markThick=p.mkw; redrawMarks(); });
+szLine.addEventListener("input",()=>{ const p=curPhoto(); if(!p) return; sizeSnapStart(); const v=+szLine.value; p.mkw=(Math.abs(v-50)<1)?null:+vToSz(v,DEF_MKW).toFixed(2); markThick=p.mkw||DEF_MKW; redrawMarks(); });
 szLine.addEventListener("change",sizeSnapEnd);
-szText.addEventListener("input",()=>{ const p=curPhoto(); if(!p) return; sizeSnapStart(); p.mth=Math.max(0.012,Math.min(0.09,(parseInt(szText.value)||30)/1000)); if(selMark) positionEditor(); redrawMarks(); });
+szText.addEventListener("input",()=>{ const p=curPhoto(); if(!p) return; sizeSnapStart(); const v=+szText.value; p.mth=(Math.abs(v-50)<1)?null:+vToSz(v,DEF_MTH).toFixed(4); if(selMark) positionEditor(); redrawMarks(); });
+[szLine,szText].forEach(el=>el.addEventListener("dblclick",()=>{ const p=curPhoto(); if(!p) return; sizeSnapStart(); if(el===szLine){ p.mkw=null; markThick=DEF_MKW; } else p.mth=null; syncSizeBars(); if(selMark) positionEditor(); redrawMarks(); sizeSnapEnd(); }));
 szText.addEventListener("change",sizeSnapEnd);
 ["mousedown","pointerdown","dblclick"].forEach(ev=>document.getElementById("ipSizebars").addEventListener(ev,e=>e.stopPropagation()));
 setColor(markColor);
@@ -4235,7 +4234,7 @@ function paintMarks(ctx,ox,oy,sx,sy,lwBase,list,mkAll,thAll){
   ctx.restore();
 }
 function paintLabel(ctx,m,PX,PY,sy,col,lw,thAll){
-  const fpx=Math.max(9,((thAll!=null?thAll:(m.th||0.03)))*sy);   // ONE text size per photo
+  const fpx=Math.max(9,((thAll!=null?thAll:(m.th||DEF_MTH)))*sy);   // ONE text size per photo
   const bl=Math.max(1.5,lw||1.5);                                // border/leader weight matches the line tools
   ctx.save(); ctx.shadowBlur=0; ctx.font="600 "+fpx+"px 'Aptos',sans-serif"; ctx.textBaseline="top";
   const lines=String(m.s||"").split("\n"), lh=fpx*1.2, padx=fpx*0.42, pady=fpx*0.3;
@@ -4267,7 +4266,7 @@ function redrawMarks(){ queueMicrotask(syncPalette);
   if(draft&&draft.t==="poly"&&polyPrev&&draft.p.length){ const a=draft.p[draft.p.length-1]; markCtx.save(); markCtx.strokeStyle=draft.c||"#ff3b30"; markCtx.lineWidth=Math.max(1,lwBase*(draft.k||5)); markCtx.setLineDash([6,6]); markCtx.beginPath(); markCtx.moveTo(vTx+a[0]*fitW*vScale,vTy+a[1]*fitH*vScale); markCtx.lineTo(vTx+polyPrev.x*fitW*vScale,vTy+polyPrev.y*fitH*vScale); markCtx.stroke(); markCtx.restore(); }
 }
 function segDistPx(p,a,b){ const dx=b[0]-a[0],dy=b[1]-a[1],L2=dx*dx+dy*dy; let t=L2?((p[0]-a[0])*dx+(p[1]-a[1])*dy)/L2:0; t=Math.max(0,Math.min(1,t)); return Math.hypot(p[0]-(a[0]+t*dx),p[1]-(a[1]+t*dy)); }
-function effTh(m){ const p=curPhoto(); return (p&&p.mth!=null)?p.mth:((m&&m.th)||0.03); }
+function effTh(m){ const p=curPhoto(); return (p&&p.mth!=null)?p.mth:((m&&m.th)||DEF_MTH); }
 function textBox(m){ const fpx=effTh(m)*fitH; const lines=String(m.s||"").split("\n"); let maxlen=0; for(const ln of lines) maxlen=Math.max(maxlen,ln.length); const w=Math.max(8,maxlen*fpx*0.6)+fpx*0.84, h=lines.length*fpx*1.2+fpx*0.6; return {x:m.x*fitW,y:m.y*fitH,w,h}; }
 function hitMark(m,n){ const np=[n.x*fitW,n.y*fitH], thr=11;
   if(m.t==="pen"||m.t==="poly"){ const pts=m.p; if(pts.length===1) return Math.hypot(np[0]-pts[0][0]*fitW,np[1]-pts[0][1]*fitH)<thr; for(let i=1;i<pts.length;i++){ if(segDistPx(np,[pts[i-1][0]*fitW,pts[i-1][1]*fitH],[pts[i][0]*fitW,pts[i][1]*fitH])<thr) return true; } return false; }
@@ -4288,13 +4287,7 @@ function positionEditor(){ if(!selMark)return; const sx=fitW*vScale, sy=fitH*vSc
   tbEditor.style.left=(lbStage.offsetLeft+vTx+selMark.x*sx-bl)+"px"; tbEditor.style.top=(lbStage.offsetTop+vTy+selMark.y*sy-bl)+"px"; }
 function selectText(m){ if(selMark&&selMark!==m) deselectText(); selMark=m; selPhoto=curPhoto(); tbText.textContent=m.s||""; tbText.style.color=m.c||markColor; tbText.style.borderColor=m.c||markColor; tbEditor.style.display="block"; positionEditor(); redrawMarks(); setTimeout(()=>{ tbText.focus(); const r=document.createRange(); r.selectNodeContents(tbText); r.collapse(false); const s=getSelection(); s.removeAllRanges(); s.addRange(r); },0); }
 function deselectText(){ if(!selMark)return; const m=selMark, ph=selPhoto; const txt=tbText.innerText.replace(/\u00a0/g," ").replace(/\s+$/,"").replace(/^\s+/,""); m.s=txt; selMark=null; selPhoto=null; tbEditor.style.display="none"; if(!txt&&ph&&ph.marks){ const i=ph.marks.indexOf(m); if(i>=0) ph.marks.splice(i,1); } redrawMarks(); persistState(); }
-function newText(n){ const p=curPhoto(); const m={t:"text",x:Math.min(0.96,Math.max(0,n.x)),y:Math.min(0.96,Math.max(0,n.y)),s:"",th:(p&&p.mth!=null)?p.mth:Math.max(0.012,Math.min(0.06,13/fitH)),c:markColor}; curMarks().push(m); selectText(m); }
-document.getElementById("tbMinus").addEventListener("mousedown",e=>e.preventDefault());
-document.getElementById("tbPlus").addEventListener("mousedown",e=>e.preventDefault());
-document.getElementById("tbMinus").addEventListener("click",e=>{ e.stopPropagation(); const p=curPhoto(); if(p){ sizeSnapStart(); p.mth=Math.max(0.012,effTh(selMark)*0.85); sizeSnapEnd(); syncSizeBars(); if(selMark) positionEditor(); redrawMarks(); } });
-document.getElementById("tbPlus").addEventListener("click",e=>{ e.stopPropagation(); const p=curPhoto(); if(p){ sizeSnapStart(); p.mth=Math.min(0.09,effTh(selMark)*1.18); sizeSnapEnd(); syncSizeBars(); if(selMark) positionEditor(); redrawMarks(); } });
-document.getElementById("tbDel").addEventListener("mousedown",e=>e.preventDefault());
-document.getElementById("tbDel").addEventListener("click",e=>{ e.stopPropagation(); const m=selMark, ph=selPhoto; selMark=null; selPhoto=null; tbEditor.style.display="none"; if(m&&ph&&ph.marks){ const i=ph.marks.indexOf(m); if(i>=0){ const before=cpMarks(ph.marks); ph.marks.splice(i,1); pushMarksSnap(ph,before,cpMarks(ph.marks)); } } afterMarkChange(); });
+function newText(n){ const p=curPhoto(); const m={t:"text",x:Math.min(0.96,Math.max(0,n.x)),y:Math.min(0.96,Math.max(0,n.y)),s:"",th:(p&&p.mth!=null)?p.mth:DEF_MTH,c:markColor}; curMarks().push(m); selectText(m); }
 /* the text box's edge, all the way round, is its handle: drag it to move (Ctrl+drag drops a copy);
    inside the edge is for typing */
 function tbOnEdge(e){ const r=tbText.getBoundingClientRect(), g=Math.max(7,parseFloat(tbText.style.borderWidth)||2)+3;
@@ -4320,7 +4313,9 @@ function onDown(e){
     if(hit){ e.preventDefault(); if(draft&&draft.t!=="poly"){ draft=null; dragging=false; } startCopyDrag(hit,e); return; }
   }
   if(markTool==="none"){
-    if(selObj&&hitMark(selObj,n)){ e.preventDefault(); movingObj={start:n,orig:cpMarks([selObj])[0],before:cpMarks(curMarks())}; return; }   // drag an already-selected object to move it
+    { const ms=curMarks(); let hit=(selObj&&ms.includes(selObj)&&hitMark(selObj,n))?selObj:null;
+      if(!hit) for(let i=ms.length-1;i>=0;i--){ if(hitMark(ms[i],n)){ hit=ms[i]; break; } }
+      if(hit){ e.preventDefault(); selObj=hit; movingObj={start:n,orig:cpMarks([hit])[0],before:cpMarks(ms)}; redrawMarks(); return; } }   // press on an object: it's selected and a drag moves it
     clickCand={n,cx:e.clientX,cy:e.clientY};   // selection is decided on mouseup — a held drag pans, never selects
     if(vScale<=1)return; e.preventDefault(); panning=true; panX=e.clientX; panY=e.clientY; lbStage.classList.add("panning"); return;
   }
@@ -4367,7 +4362,7 @@ function onUp(e){
     if(e&&Math.hypot(e.clientX-cand.cx,e.clientY-cand.cy)<=5&&markTool==="none"){   // clean click (no drag): select whatever is under it
       const ms=curMarks(); let hit=null;
       for(let i=ms.length-1;i>=0;i--){ if(hitMark(ms[i],cand.n)){ hit=ms[i]; break; } }
-      if(hit){ if(hit.t==="text"||hit.t==="call"){ selObj=null; selectText(hit); } else { if(selMark) deselectText(); selObj=hit; redrawMarks(); } }
+      if(hit){ if(selMark) deselectText(); selObj=hit; redrawMarks(); }
       else if(selObj){ selObj=null; redrawMarks(); }
     }
   }
@@ -4393,7 +4388,9 @@ window.addEventListener("mouseup",onUp);
 // The big-view image must never start a native file/image drag — dragging always pans.
 document.addEventListener("dragstart",e=>{ if(e.target&&e.target.closest&&e.target.closest("#imgPanel")) e.preventDefault(); },true);
 function endPoly(addCursor){ if(!draft||draft.t!=="poly")return; if(addCursor&&polyPrev){ const last=draft.p[draft.p.length-1]; if(!last||distPx(last,[polyPrev.x,polyPrev.y])>=4) draft.p.push([polyPrev.x,polyPrev.y]); } if(draft.p.length>=2){ curMarks().push({t:"poly",p:draft.p,c:draft.c,k:draft.k}); afterMarkChange(); } draft=null; polyPrev=null; redrawMarks(); }
-lbStage.addEventListener("dblclick",e=>{ if(markTool==="poly"&&draft&&draft.t==="poly") endPoly(false); });
+lbStage.addEventListener("dblclick",e=>{ if(markTool==="poly"&&draft&&draft.t==="poly"){ endPoly(false); return; }
+  if(markTool!=="none"||(e.target.closest&&e.target.closest("#tbEditor"))) return;
+  const h=hitText(evToNorm(e)); if(h){ selObj=null; selectText(h); } });   // double-click a text box to type in it
 lbStage.addEventListener("contextmenu",e=>{ if(markTool==="poly"&&draft&&draft.t==="poly"){ e.preventDefault(); endPoly(true); } });
 
 /* ---- file info popover ---- */
