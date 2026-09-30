@@ -58,6 +58,18 @@
   .msep{height:1px;background:var(--line);margin:5px 6px;}
   .ynmodal{position:fixed;inset:0;z-index:9500;background:#1E1F2266;display:none;align-items:center;justify-content:center;}
   .ynmodal.show{display:flex;}
+  .pj-win{width:min(520px,94vw);}
+  .pj-msg{font-size:13px;color:var(--bad);margin:-4px 0 10px;}
+  .pj-list{display:flex;flex-direction:column;gap:6px;max-height:55vh;overflow:auto;margin:4px 0 2px;}
+  .pj-row{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;}
+  .pj-row:hover{border-color:var(--accent);background:var(--accent-tint);}
+  .pj-row.on{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--gold);}
+  .pj-name{flex:1;min-width:0;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .pj-row button{font:600 12px var(--font);color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px 9px;cursor:pointer;}
+  .pj-row button:hover{color:var(--ink);border-color:var(--accent);}
+  .pj-empty{font-size:13px;color:var(--muted);padding:10px 2px;line-height:1.5;}
+  .savestat.ro{color:var(--accent2);font-weight:600;cursor:pointer;}
+  body.view-only .act-new,body.view-only .st-new,body.view-only #lbEdit,body.view-only .act-del,body.view-only .st-x,body.view-only .gal-x{display:none!important;}
   .yn-win{width:min(460px,92vw);background:var(--panel);border-radius:12px;border:1px solid var(--line2);box-shadow:0 24px 64px #1e1f2255;padding:20px 22px 16px;}
   .yn-win h3{margin:0 0 10px;font-size:16px;color:var(--ink);}
   .yn-msg{font-size:13px;line-height:1.55;color:var(--text);white-space:pre-line;}
@@ -730,18 +742,18 @@
   <div class="brand"><svg class="pm-mark" viewBox="0 0 64 64" width="30" height="30" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#e8b44a"/><rect x="6" y="6" width="52" height="52" rx="13" fill="none" stroke="#111418" stroke-width="2.5"/><text x="32" y="46" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="38" fill="#111418">A</text></svg><div class="brand-t"><h1>Action<span>Map</span></h1><span class="savestat" id="saveStatus" title="When the project file was last saved"></span></div><span class="build" id="buildStamp" style="display:none" title="When this copy of the app was published — if it's older than the latest change, you're running a stale copy"></span></div>
   <nav class="menubar" id="menubar">
     <div class="mb"><button class="mb-btn" type="button">File</button><div class="mb-drop">
-      <button class="mi" id="btnOpenJson" type="button" title="Open a saved project file (.json). The current project is closed first — you'll be asked.">Open project…</button>
-      <button class="mi" id="btnSave" type="button" title="Save the project now. It also saves by itself a moment after every change.">Save</button>
-      <button class="mi" id="btnSaveAs" type="button" title="Keep this project in a new .json file (metadata only — the photos stay where they are).">Save as…</button>
+      <button class="mi" id="miProjects" type="button" title="Open another project, rename one, or copy a project's share link.">Projects…</button>
+      <button class="mi" id="miNewProj" type="button" title="Start a new, empty project. It lives online in the data repository — share its link with anyone.">New project…</button>
+      <button class="mi" id="miShare" type="button" title="Copy this project's link. Anyone with it can view the actions and photos; people with your access token can also edit.">Share link</button>
       <div class="msep"></div>
-      <button class="mi" id="btnFolder" type="button" title="Add every photo from a folder to this project. Nothing already in the project is removed.">Add folder…</button>
-      <button class="mi" id="btnRefresh" type="button" title="Re-scan the main photo folder: add new photos and drop ones whose files were deleted or moved out. You'll be asked first, and removals can be undone.">Refresh folder…</button>
+      <button class="mi" id="miAddPhotos" type="button" title="Choose photos to add to this project — or just paste (Ctrl+V) or drag them onto the map. They're uploaded to the project online; photos with GPS land where they were taken.">Add photos…</button>
       <div class="msep"></div>
       <button class="mi" id="miReport" type="button" title="Pending actions report: every open and on-hold action with its photos, sub-actions and notes, a linked contents page and a 'Back to contents' link on every page. Save it as a PDF from the print dialog.">Report (PDF)…</button>
       <button class="mi" id="miXlsx" type="button" title="Every action as a spreadsheet row — status, sub-actions, photo notes — with the annotated photos embedded.">Export to Excel…</button>
-      <button class="mi" id="miPush" type="button" title="Push to the phone right now. The phone already syncs by itself within seconds of any change.">Sync phone</button>
+      <button class="mi" id="miBackup" type="button" title="Download a zip of this project — actions, notes, markup, history and every photo at full size — to keep as your own copy. Not needed to use or share the project.">Download backup</button>
       <div class="msep"></div>
-      <button class="mi danger" id="btnClear" type="button" title="Close this project and clear the map. Nothing on disk is deleted — reopen it any time. You'll be asked first.">Close project…</button>
+      <button class="mi" id="miMigrate" type="button" style="display:none" title="One time: copy the project stored on this PC (from before ActionMap went online) into the data repository — every photo, action, note and markup. Nothing on this PC is changed.">Move this project online…</button>
+      <button class="mi danger" id="btnClear" type="button" title="Close this project on this device. Nothing online is deleted — reopen it any time from Projects.">Close project…</button>
     </div></div>
     <div class="mb"><button class="mb-btn" type="button">Edit</button><div class="mb-drop">
       <button class="mi" id="miUndo" type="button" title="Undo the last change — edits, ticks, moves, notes, links, deletions.">Undo<span class="mk">Ctrl+Z</span></button>
@@ -761,6 +773,7 @@
   <input id="folderInput" type="file" webkitdirectory directory multiple style="display:none" />
   <input id="origInput" type="file" webkitdirectory directory multiple style="display:none" />
   <input id="jsonInput" type="file" accept="application/json,.json" style="display:none" />
+  <input id="addPhotosInput" type="file" accept="image/*,.heic,.heif" multiple style="display:none" />
   <div class="stats" style="display:none">
     <div class="stat total"><div class="v" id="stTotal">0</div><div class="k">Photos</div></div>
     <div class="stat geo"><div class="v" id="stGeo">0</div><div class="k">Geotagged</div></div>
@@ -785,7 +798,7 @@
       <button class="set-tab" data-sec="photos">Photos</button>
       <button class="set-tab" data-sec="filters">Filters</button>
       <button class="set-tab" data-sec="actions">Actions</button>
-      <button class="set-tab" data-sec="mobile">Mobile</button>
+      <button class="set-tab" data-sec="mobile">Online</button>
     </div>
     <div class="set-main">
       <button class="set-close" id="setClose">&times;</button>
@@ -827,19 +840,19 @@
         </div>
       </div>
       <div class="set-sec" data-sec="mobile">
-        <h3>Mobile</h3>
+        <h3>Online</h3>
         <div class="set-row">
-          <div class="set-lbl">Data repository<span class="set-sub">The PRIVATE GitHub repo that holds the mobile pack. Never use the public app repo.</span></div>
+          <div class="set-lbl">Data repository<span class="set-sub">The GitHub repo that holds every project and photo (owner/name). Filled in by itself from a shared link or from your token.</span></div>
           <div class="set-ctl"><input type="text" id="setGhRepo" placeholder="found from the token" style="width:200px;font:inherit;font-size:12px;padding:6px 8px;border:1px solid var(--line2);border-radius:8px;" /></div>
         </div>
         <div class="set-row">
-          <div class="set-lbl">Access token<span class="set-sub">Fine-grained GitHub token with Contents read/write on that repo only. Stored only in this browser, never in the project file.</span></div>
+          <div class="set-lbl">Access token<span class="set-sub">Needed to EDIT (viewing needs none). Fine-grained GitHub token with Contents read/write on that repo only. Stored only in this browser, never online.</span></div>
           <div class="set-ctl"><input type="password" id="setGhToken" placeholder="github_pat_&hellip;" style="width:200px;font:inherit;font-size:12px;padding:6px 8px;border:1px solid var(--line2);border-radius:8px;" /></div>
         </div>
         <div class="set-row">
-          <div class="set-lbl">Phone sync<span class="set-sub">Automatic: the OPEN actions, their steps and preview photos are pushed to the data repo a few seconds after any change, and the phone picks them up by itself. The button forces a push now.</span></div>
+          <div class="set-lbl">Phone sync<span class="set-sub">Automatic: the OPEN actions, their steps and preview photos are pushed to the project a few seconds after any change, and the phone picks them up by itself.</span></div>
           <div class="set-ctl" style="flex-direction:column;align-items:flex-start;gap:6px;">
-            <button class="btn primary" id="btnMobileExport" style="font-size:13px;">Push now</button>
+            
             <span id="mobExpStatus" style="font-family:var(--mono);font-size:10px;color:var(--dim);"></span>
           </div>
         </div>
@@ -966,8 +979,8 @@
       <div class="ctl-row"><label for="thumbSize">Size</label><input type="range" id="thumbSize" min="64" max="260" value="120" /></div>
     </div>
     <div class="gallery-body" id="galleryBody">
-      <div class="empty-msg"><b>No photos loaded.</b><br/>Use <b>File → Add photos from a folder</b>, or drag a folder onto the window.<br/><br/>
-        <span class="hint">Images stay on your device. Only geotagged photos appear on the map.</span></div>
+      <div class="empty-msg"><b>No photos yet.</b><br/>Paste (Ctrl+V), drag photos onto the map, or use <b>File → Add photos…</b><br/><br/>
+        <span class="hint">Photos are stored with the project online. Photos with GPS land where they were taken.</span></div>
     </div>
   </aside>
   <aside class="histpanel" id="histPanel">
@@ -978,7 +991,7 @@
 
 <div class="hoverview" id="hoverview"><img id="hvImg" src="" alt="" /><div class="cap" id="hvCap"></div></div>
 
-<div class="dropzone" id="dropzone">Drop photos or a folder to add</div>
+<div class="dropzone" id="dropzone">Drop photos to add them to the project</div>
 
 <div id="mroot"></div>
 
@@ -1747,7 +1760,7 @@ function renderActions(){
     if(n) ensureAnnotThumb(ap[0]);
     const cov='<div class="act-cover"><div class="cov-rs" title="Drag to resize all covers"></div>'
       +((n&&ap[0].thumb)?('<img data-cov="'+ap[0].id+'" src="'+thumbSrc(ap[0])+'" alt="" draggable="false"/>')
-        :'<svg class="cov-ph" viewBox="0 0 48 36"><rect x="1.5" y="1.5" width="45" height="33" rx="4" fill="#E9EBEE" stroke="#B8BCC2" stroke-width="2.5"/><circle cx="31.5" cy="12" r="4.2" fill="#9AA0A8"/><path d="M6.5 30.5 18 17.5l8.5 8.5 6-6 9 10.5z" fill="#9AA0A8"/></svg>')
+        :'<svg class="cov-ph"'+(n?' data-covph="'+ap[0].id+'"':'')+' viewBox="0 0 48 36"><rect x="1.5" y="1.5" width="45" height="33" rx="4" fill="#E9EBEE" stroke="#B8BCC2" stroke-width="2.5"/><circle cx="31.5" cy="12" r="4.2" fill="#9AA0A8"/><path d="M6.5 30.5 18 17.5l8.5 8.5 6-6 9 10.5z" fill="#9AA0A8"/></svg>')
       +'</div>';
     const isCur=!!(cp&&Array.isArray(cp.acts)&&cp.acts.includes(a.id));
     const exp=!collActs.has(a.id);
@@ -1891,7 +1904,7 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
   document.getElementById("miRedo").addEventListener("click",()=>redoLatest(lb.classList.contains("open")));
   document.getElementById("miXlsx").addEventListener("click",()=>exportActionsXlsx());
   document.getElementById("miReport").addEventListener("click",()=>openPendingReport());
-  document.getElementById("miPush").addEventListener("click",()=>{ const c=ghCfg(); if(!c.token){ openSettings(); return; } exportMobile(true); loadNote("Syncing to the phone\u2026"); setTimeout(()=>loadNote(""),2500); });
+  document.getElementById("miPush")?.addEventListener("click",()=>{ const c=ghCfg(); if(!c.token){ openSettings(); return; } exportMobile(true); loadNote("Syncing to the phone\u2026"); setTimeout(()=>loadNote(""),2500); });
 })();
 /* ---- Find an action: one box searches numbers, titles, sub-actions and photo notes across
    active AND completed actions; picking a result jumps to it (list + map). ---- */
@@ -2078,11 +2091,612 @@ async function ghPutB64(cfg,path,b64,msg,retried,isNew){   // binary upload: con
   if(!r.ok){ let d=""; try{ d=(await r.json()).message||""; }catch(e){} throw new Error("GitHub says "+r.status+(d?" \u2014 "+d:"")); }
 }
 async function ghGetBin(cfg,path){
+  if(!cfg.token){ const r=await fetch("https://raw.githubusercontent.com/"+cfg.repo+"/HEAD/"+path); if(r.status===404) return null; if(!r.ok) throw new Error("GitHub says "+r.status); return new Uint8Array(await r.arrayBuffer()); }
   const r=await fetch("https://api.github.com/repos/"+cfg.repo+"/contents/"+path+"?t="+Date.now(),{headers:Object.assign(ghHeaders(cfg.token),{Accept:"application/vnd.github.raw+json"})});
   if(r.status===404) return null;
   if(!r.ok) throw new Error("GitHub says "+r.status);
   return new Uint8Array(await r.arrayBuffer());
 }
+/* =====================================================================================
+   ONLINE PROJECTS — the data repo is the ONE home of every project: actions, markup, notes,
+   history and every photo. No photo folders, no .json files to pass around. Anyone with the
+   link can VIEW (public repo, no token); devices holding the access token can EDIT. Several
+   people can edit at once: every save is a three-way merge against what's online, so nobody
+   overwrites anybody.
+     projects.json                    index {v:1, projects:[{id,name,created}]}
+     projects/<pid>/state.json        the project — text only, photos referenced by content hash
+     projects/<pid>/pack.json …       the phone pack + phone change channels, per project
+     photos/<h>.jpg                   every photo once, longest side ≤3000px (h = SHA-1 of the file)
+     thumbs/<h>.jpg                   its 480px thumbnail
+   ===================================================================================== */
+const FULL_PX=3000, FULL_Q=0.86;
+const ON={pid:null,name:"",base:null,sha:null,etag:null,rawText:null,cleanJ:null,live:false,busy:false,again:false,saveT:null,err:null,at:0,denied:false,wait:null};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function urlParam(k){ try{ return new URLSearchParams(location.search).get(k); }catch(e){ return null; } }
+function onRepo(){ return ghRaw().repo; }
+function canEdit(){ return !!(ON.pid&&ON.live&&ghRaw().token&&onRepo()&&!ON.denied); }
+function isOnline(){ return !!ON.pid; }
+function projPath(x){ return "projects/"+ON.pid+"/"+x; }
+function statePath(){ return projPath("state.json"); }
+function rawURL(path){ return "https://raw.githubusercontent.com/"+onRepo()+"/HEAD/"+path; }
+function newUid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+function bytesToB64(u8){ let s=""; for(let i=0;i<u8.length;i+=0x8000) s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000)); return btoa(s); }
+function b64ToBytes(b64){ const s=atob(String(b64||"").replace(/\s/g,"")), u=new Uint8Array(s.length); for(let i=0;i<s.length;i++) u[i]=s.charCodeAt(i); return u; }
+const utf8ToB64=t=>bytesToB64(new TextEncoder().encode(t)), b64ToUtf8=b=>new TextDecoder().decode(b64ToBytes(b));
+async function sha1Hex(u8){ const d=await crypto.subtle.digest("SHA-1",u8); return Array.from(new Uint8Array(d)).map(x=>x.toString(16).padStart(2,"0")).join(""); }
+function blobToDataURL(b){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(r.error); r.readAsDataURL(b); }); }
+async function dataURLToBlob(du){ return await (await fetch(du)).blob(); }
+function canvasToBlob(c,type,q){ return new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error("image encode failed")),type,q)); }
+/* GitHub API with patience: GitHub paces heavy writers (secondary rate limits) — wait it out, then carry on. */
+async function ghApi(path,opt){ opt=opt||{};
+  const tok=ghRaw().token, url=/^https?:/.test(path)?path:"https://api.github.com/"+path;
+  const headers=Object.assign({"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"},(tok&&!opt.anon)?{"Authorization":"Bearer "+tok}:{},opt.headers||{});
+  for(let i=0;i<10;i++){
+    let r; try{ r=await fetch(url,{method:opt.method||"GET",headers,body:opt.body!=null?JSON.stringify(opt.body):undefined,cache:"no-store"}); }
+    catch(e){ if(i<3){ await sleep(1500*(i+1)); continue; } throw new Error("Can't reach GitHub — are you online?"); }
+    if(r.status===403||r.status===429){
+      const ra=+r.headers.get("retry-after")||0, rem=r.headers.get("x-ratelimit-remaining"), reset=+r.headers.get("x-ratelimit-reset")||0;
+      let txt=""; try{ txt=await r.clone().text(); }catch(e){}
+      if(ra||rem==="0"||/rate limit/i.test(txt)){
+        const wait=ra?ra*1000:(rem==="0"&&reset)?Math.max(5000,reset*1000-Date.now()+1500):Math.min(600000,60000*(i+1));
+        ON.wait=Date.now()+wait; renderSaveStatus(); if(opt.onWait) opt.onWait(wait);
+        await sleep(wait); ON.wait=null; renderSaveStatus(); continue; }
+    }
+    return r;
+  }
+  throw new Error("GitHub rate limit — try again later");
+}
+async function ghErr(r,what){ let d=""; try{ d=(await r.json()).message||""; }catch(e){} return new Error("GitHub says "+r.status+(what?" "+what:"")+(d?" — "+d:"")); }
+let _branch=null;
+async function repoBranch(){ if(_branch) return _branch;
+  try{ const r=await ghApi("repos/"+onRepo()); if(r.ok){ _branch=(await r.json()).default_branch||"main"; return _branch; } }catch(e){}
+  return "main"; }
+/* Read a JSON file. With a token: fresh from the API, with its sha (needed to write back safely).
+   Without one: the public raw copy. A matching ETag answers "unchanged" for free. */
+async function repoReadJson(path,etag){
+  const tok=ghRaw().token;
+  if(tok&&!ON.denied){
+    const r=await ghApi("repos/"+onRepo()+"/contents/"+path,{headers:etag?{"If-None-Match":etag}:{}});
+    if(r.status===304) return {same:true};
+    if(r.status===404) return {obj:null,sha:null,etag:null};
+    if(r.ok){ const j=await r.json(); let text;
+      if(j.content&&j.encoding==="base64") text=b64ToUtf8(j.content);
+      else { const b=await ghApi("repos/"+onRepo()+"/git/blobs/"+j.sha); if(!b.ok) throw await ghErr(b,"reading "+path); text=b64ToUtf8((await b.json()).content); }   // over 1 MB
+      let obj=null; try{ obj=JSON.parse(text); }catch(e){}
+      return {obj,sha:j.sha,etag:r.headers.get("etag"),text}; }
+    if(r.status!==401&&r.status!==403) throw await ghErr(r,"reading "+path);
+    ON.denied=true;   // token without access to this repo: fall back to viewing
+  }
+  const r=await fetch(rawURL(path)+"?t="+Date.now(),{cache:"no-store"});
+  if(r.status===404) return {obj:null,sha:null};
+  if(!r.ok) throw new Error("Couldn't read "+path+" ("+r.status+") — is the data repo public?");
+  const text=await r.text(); if(text===ON.rawText&&path===statePath()) return {same:true};
+  let obj=null; try{ obj=JSON.parse(text); }catch(e){}
+  return {obj,sha:null,text};
+}
+async function repoWriteJson(path,obj,sha,msg){
+  const body={message:msg,content:utf8ToB64(JSON.stringify(obj))}; if(sha) body.sha=sha;
+  const r=await ghApi("repos/"+onRepo()+"/contents/"+path,{method:"PUT",body});
+  if(r.status===409||r.status===422) return {conflict:true};   // someone saved first (or it exists): re-read, merge, retry
+  if(r.status===401||r.status===403||r.status===404){ ON.denied=true; throw new Error("This access token can't change "+onRepo()+" — viewing only"); }
+  if(!r.ok) throw await ghErr(r,"saving "+path);
+  const j=await r.json(); return {sha:j.content&&j.content.sha};
+}
+/* Many files in ONE commit (git data API): photos + thumbnails go up in batches, not a commit each. */
+async function repoCommitFiles(files,msg,onWait){
+  const repo=onRepo(), br=await repoBranch(), shas=[];
+  for(const f of files){
+    const r=await ghApi("repos/"+repo+"/git/blobs",{method:"POST",body:{content:bytesToB64(f.bytes),encoding:"base64"},onWait});
+    if(r.status===401||r.status===403||r.status===404){ ON.denied=true; throw new Error("This access token can't add photos to "+repo); }
+    if(!r.ok) throw await ghErr(r,"uploading a photo");
+    shas.push((await r.json()).sha); }
+  for(let attempt=0;attempt<8;attempt++){
+    const rr=await ghApi("repos/"+repo+"/git/ref/heads/"+br); if(!rr.ok) throw await ghErr(rr,"reading the branch");
+    const head=(await rr.json()).object.sha;
+    const cr=await ghApi("repos/"+repo+"/git/commits/"+head); if(!cr.ok) throw await ghErr(cr);
+    const baseTree=(await cr.json()).tree.sha;
+    const tr=await ghApi("repos/"+repo+"/git/trees",{method:"POST",body:{base_tree:baseTree,tree:files.map((f,i)=>({path:f.path,mode:"100644",type:"blob",sha:shas[i]}))},onWait}); if(!tr.ok) throw await ghErr(tr);
+    const tree=(await tr.json()).sha;
+    const nc=await ghApi("repos/"+repo+"/git/commits",{method:"POST",body:{message:msg,tree,parents:[head]},onWait}); if(!nc.ok) throw await ghErr(nc);
+    const commit=(await nc.json()).sha;
+    const up=await ghApi("repos/"+repo+"/git/refs/heads/"+br,{method:"PATCH",body:{sha:commit},onWait});
+    if(up.ok) return;
+    if(up.status===409||up.status===422){ await sleep(400+Math.random()*1200); continue; }   // someone committed meanwhile: rebuild on top of theirs
+    throw await ghErr(up);
+  }
+  throw new Error("GitHub kept changing under us — will retry");
+}
+let _imgHave=null;
+async function repoImageSet(force){   // which photos/thumbs are already online (one request for the whole repo)
+  if(_imgHave&&!force) return _imgHave;
+  const s=new Set();
+  try{ const br=await repoBranch(); const r=await ghApi("repos/"+onRepo()+"/git/trees/"+br+"?recursive=1");
+    if(r.ok){ const j=await r.json(); for(const t of (j.tree||[])) if(t.type==="blob"&&/^(photos|thumbs)\//.test(t.path)) s.add(t.path); } }catch(e){}
+  _imgHave=s; return s; }
+async function repoGetImage(path){   // photos/thumbs never change once written: the public copy is fine, the API is the fallback
+  try{ const r=await fetch(rawURL(path)); if(r.ok) return await r.blob(); }catch(e){}
+  if(ghRaw().token&&!ON.denied){ try{ const r=await ghApi("repos/"+onRepo()+"/contents/"+path,{headers:{Accept:"application/vnd.github.raw+json"}}); if(r.ok) return await r.blob(); }catch(e){} }
+  return null;
+}
+
+/* ---- the project document (v4) ---- */
+function uiSettingsKey(){ return "pmUi:"+(ON.pid||"local"); }
+function serializeOnline(){
+  const byId=new Map(); for(const a of actions){ if(!a.u) a.u=newUid(); byId.set(a.id,a); }
+  const noT=m=>(m&&m._t!=null)?(()=>{ const c={...m}; delete c._t; return c; })():m;
+  let nextNo=nextActId; for(const a of actions) if(a.id>=nextNo) nextNo=a.id+1;
+  const hOf=new Map(photos.filter(p=>p.h).map(p=>[p.id,p.h]));
+  return { v:4, id:ON.pid, name:ON.name, nextNo, mergedFrom:(()=>{ try{ return localStorage.getItem("pmMergedChanges:"+ON.pid)||null; }catch(e){ return null; } })(),
+    actions: actions.map(a=>{ const o={u:a.u,id:a.id,text:a.text};
+      if(a.done) o.done=true; if(a.hold) o.hold=true; if(a.created) o.created=a.created; if(a.doneAt) o.doneAt=a.doneAt; if(a.fu) o.fu=a.fu;
+      if(a.loc) o.loc={lat:a.loc.lat,lng:a.loc.lng};
+      if(a.steps&&a.steps.length){ for(const st of a.steps) if(!st.id) st.id=newSid(); o.steps=a.steps.map(stepCopy); }   // every sub-action has a permanent id, so they merge one by one
+      if(Array.isArray(a.porder)&&a.porder.length){ const po=a.porder.map(id=>hOf.get(id)).filter(Boolean); if(po.length) o.porder=po; }
+      return o; }),
+    photos: photos.filter(p=>p.h).map(p=>{ const o={h:p.h,name:p.name||"photo.jpg"};
+      if(p.size!=null) o.size=p.size; if(p.lat!=null){ o.lat=p.lat; o.lng=p.lng; } if(p.glat!=null){ o.glat=p.glat; o.glng=p.glng; }
+      if(p.time!=null) o.time=p.time; if(p.dir!=null) o.dir=p.dir; if(p.alt!=null) o.alt=p.alt; if(p.rot) o.rot=p.rot;
+      const tags=pathsOf(p); if(tags.length) o.tags=tags.slice();
+      const acts=(p.acts||[]).map(id=>byId.get(id)).filter(Boolean).map(a=>a.u); if(acts.length) o.acts=acts;
+      if(p.note) o.note=p.note; if(p.marks&&p.marks.length) o.marks=p.marks.map(noT);
+      if(p.mkw!=null) o.mkw=p.mkw; if(p.mth!=null) o.mth=p.mth; if(p.noGps) o.noGps=1; if(p.adhoc) o.adhoc=1;
+      if(p.repoPath) o.repoPath=p.repoPath; if(p.pendFu) o.pendFu=p.pendFu; if(p.added) o.added=p.added;
+      return o; }),
+    log: projLog.slice(-3000) };
+}
+const J=x=>JSON.stringify(x);
+function canonJ(doc){ if(!doc) return ""; const c={...doc}; delete c.updatedAt; delete c.by; return J(c); }
+function applyOnline(st){
+  st=st||{};
+  const oldA=new Map(actions.filter(a=>a.u).map(a=>[a.u,a])), acts=[]; let mx=0;
+  for(const s of (st.actions||[])){ if(!s||!s.u||acts.some(x=>x.u===s.u)) continue;
+    const a=oldA.get(s.u)||{steps:[]};
+    a.u=s.u; a.id=+s.id||0; a.text=String(s.text||""); a.done=!!s.done; a.hold=!!s.hold; a.created=s.created||null; a.doneAt=s.doneAt||null;
+    if(s.fu) a.fu=s.fu; else delete a.fu;
+    if(s.loc&&isFinite(s.loc.lat)&&isFinite(s.loc.lng)) a.loc={lat:+s.loc.lat,lng:+s.loc.lng}; else delete a.loc;
+    const steps=(s.steps||[]).map(x=>{ const o={t:String(x.t||""),d:!!x.d}; if(x.id) o.id=String(x.id); return o; }).filter(x=>x.t);
+    if(J(steps)!==J((a.steps||[]).map(stepCopy))) a.steps=steps;
+    a._po=s.porder||null; acts.push(a); if(a.id>mx) mx=a.id; }
+  actions=acts; nextActId=Math.max(mx+1,+st.nextNo||0);
+  const uId=new Map(actions.map(a=>[a.u,a.id]));
+  const oldP=new Map(photos.filter(p=>p.h).map(p=>[p.h,p])), out=[], seenH=new Set(), seenRepo=new Set();
+  for(const s of (st.photos||[])){
+    if(!s||!s.h||seenH.has(s.h)||(s.repoPath&&seenRepo.has(s.repoPath))) continue;   // one photo per image / per phone upload, even if two desktops imported it
+    seenH.add(s.h); if(s.repoPath) seenRepo.add(s.repoPath);
+    let p=oldP.get(s.h);
+    if(!p) p={id:nextId++,h:s.h,paths:[],path:null,file:null,thumb:null,preview:null,tv:null,isHeic:false,marks:[],acts:[],vpaths:[]};
+    else if((p.rot||0)!==(s.rot||0)){ p.thumb=null; p.preview=null; p._ta=null; p._taKey=null; p._pa=null; p._paKey=null; p._thq=0; }   // re-fetched at the new orientation
+    p.name=s.name||"photo.jpg"; p.size=(s.size!=null?s.size:null);
+    p.lat=(s.lat!=null?s.lat:null); p.lng=(s.lng!=null?s.lng:null); p.glat=(s.glat!=null?s.glat:null); p.glng=(s.glng!=null?s.glng:null);
+    p.time=(s.time!=null?s.time:null); p.dir=(s.dir!=null?s.dir:null); p.alt=(s.alt!=null?s.alt:null); p.rot=s.rot||0;
+    p.paths=[]; p.path=null; const tags=Array.isArray(s.tags)?s.tags.slice():[]; if(J(tags)!==J(p.vpaths||[])) p.vpaths=tags;
+    const pa=(s.acts||[]).map(u=>uId.get(u)).filter(x=>x!=null); if(J(pa)!==J(p.acts||[])) p.acts=pa;
+    p.note=(typeof s.note==="string"?s.note:"");
+    const mk=Array.isArray(s.marks)?s.marks:[]; if(J(mk)!==J((p.marks||[]).map(m=>{ if(m&&m._t!=null){ const c={...m}; delete c._t; return c; } return m; }))) p.marks=mk.map(m=>({...m}));
+    p.mkw=(s.mkw!=null?s.mkw:null); p.mth=(s.mth!=null?s.mth:null); p.noGps=!!s.noGps; p.adhoc=!!s.adhoc;
+    p.repoPath=s.repoPath||null; p.pendFu=s.pendFu||null; p.added=s.added||null;
+    out.push(p); }
+  for(const p of photos) if(!p.h) out.push(p);   // still uploading from this device
+  photos=out; _pIdx=null;
+  const hId=new Map(photos.filter(p=>p.h).map(p=>[p.h,p.id]));
+  for(const a of actions){ const po=a._po; delete a._po;
+    const ids=Array.isArray(po)?po.map(h=>hId.get(h)).filter(x=>x!=null):[];
+    if(ids.length) a.porder=ids; else delete a.porder; }
+  projLog=Array.isArray(st.log)?st.log.slice(-3000):[];
+  if(st.name) ON.name=st.name; loadedJsonName=ON.name; folderName="";
+  if(st.mergedFrom){ try{ const k="pmMergedChanges:"+ON.pid, cur=localStorage.getItem(k)||""; if(st.mergedFrom>cur) localStorage.setItem(k,st.mergedFrom); }catch(e){} }   // phone acknowledgement travels with the project
+}
+/* Three-way merge of project documents: what this device changed since the last sync (base -> local)
+   and what everyone else saved (base -> remote) are BOTH kept. Same field changed on both sides:
+   this device's newer edit wins. Links and tags merge as sets; sub-actions merge one by one. */
+function merge3(b,l,r){
+  b=b||{}; l=l||{}; r=r||{};
+  const val=(bv,lv,rv)=>J(lv)===J(bv)?rv:(J(rv)===J(bv)?lv:lv);
+  const set=(bv,lv,rv)=>{ const B=new Set((bv||[]).map(J)), L=new Set((lv||[]).map(J)), R=new Set((rv||[]).map(J)), out=[], seen=new Set();
+    for(const x of (lv||[]).concat(rv||[])){ const k=J(x); if(seen.has(k)) continue; seen.add(k);
+      if((L.has(k)&&R.has(k))||(L.has(k)&&!B.has(k))||(R.has(k)&&!B.has(k))) out.push(x); }   // kept by both, or newly added by either
+    return out; };
+  const obj=(bo,lo,ro,spec)=>{
+    if(J(lo)===J(bo)) return ro; if(J(ro)===J(bo)) return lo;
+    if(!lo) return ro; if(!ro) return lo;   // deleted on one side, edited on the other: the edit survives
+    const o={}, keys=new Set(Object.keys(bo||{}).concat(Object.keys(lo),Object.keys(ro)));
+    for(const k of keys){ const bv=bo?bo[k]:undefined; let v;
+      if(spec.sets&&spec.sets.includes(k)) v=set(bv,lo[k],ro[k]);
+      else if(spec.lists&&spec.lists[k]) v=list(bv||[],lo[k]||[],ro[k]||[],spec.lists[k],{});
+      else v=val(bv,lo[k],ro[k]);
+      if(v!==undefined&&!(Array.isArray(v)&&!v.length)) o[k]=v; }
+    return o; };
+  const list=(bl,ll,rl,key,spec)=>{
+    const kb=(bl||[]).map(x=>x[key]), kl=(ll||[]).map(x=>x[key]), kr=(rl||[]).map(x=>x[key]);
+    const B=new Map((bl||[]).map(x=>[x[key],x])), Lm=new Map((ll||[]).map(x=>[x[key],x])), Rm=new Map((rl||[]).map(x=>[x[key],x]));
+    const common=a=>a.filter(k=>B.has(k)&&Lm.has(k)&&Rm.has(k));
+    const lMoved=J(common(kl))!==J(common(kb));
+    const prim=lMoved?kl:kr, sec=lMoved?kr:kl, order=prim.slice();
+    sec.forEach((k,i)=>{ if(order.includes(k)) return; let at=0; for(let j=i-1;j>=0;j--){ const p=order.indexOf(sec[j]); if(p>=0){ at=p+1; break; } } order.splice(at,0,k); });
+    const out=[];
+    for(const k of order){ const bv=B.get(k), lv=Lm.get(k), rv=Rm.get(k);
+      if(bv&&(!lv||!rv)){ const other=lv||rv; if(J(other)===J(bv)) continue; }   // deleted on one side, untouched on the other
+      const v=obj(bv,lv,rv,spec); if(v) out.push(v); }
+    return out; };
+  const m={v:4,id:r.id||l.id,name:val(b.name,l.name,r.name)};
+  m.actions=list(b.actions,l.actions,r.actions,"u",{lists:{steps:"id"}});
+  m.photos=list(b.photos,l.photos,r.photos,"h",{sets:["acts","tags"]});
+  /* two people created action 012 at the same moment: the one already online keeps its number */
+  const rU=new Set((r.actions||[]).map(a=>a.u)); let nextNo=Math.max(+b.nextNo||0,+l.nextNo||0,+r.nextNo||0); const used=new Map();
+  for(const a of m.actions){ if(a.id>=nextNo) nextNo=a.id+1; }
+  for(const a of m.actions.filter(a=>rU.has(a.u)).concat(m.actions.filter(a=>!rU.has(a.u)))){ if(used.has(a.id)&&used.get(a.id)!==a.u) a.id=nextNo++; used.set(a.id,a.u); }
+  m.nextNo=nextNo;
+  const seen=new Map(); for(const e of (r.log||[]).concat(l.log||[])){ if(!e) continue; seen.set(e.t+"|"+e.by+"|"+(e.k||"")+"|"+(e.k==="annot"?e.pid:e.d),e); }
+  m.log=[...seen.values()].sort((x,y)=>x.t-y.t).slice(-3000);
+  m.mergedFrom=[l.mergedFrom,r.mergedFrom].filter(Boolean).sort().pop()||null;
+  return m;
+}
+
+/* ---- sync: save (merge + retry), poll, and view-only ---- */
+async function onCacheLocal(){ if(!ON.pid) return; try{ await idbSet("on:"+onRepo()+"|"+ON.pid,{base:ON.base,sha:ON.sha,local:ON.live?serializeOnline():null,at:Date.now()}); }catch(e){} }
+function onDirty(){ return ON.live&&canonJ(serializeOnline())!==ON.cleanJ; }
+let _roToastT=0;
+function onLocalChanged(){
+  if(!ON.pid||!ON.live) return;
+  try{ localStorage.setItem(uiSettingsKey(),JSON.stringify(uiSettings())); }catch(e){}
+  if(!canEdit()){
+    if(onDirty()){ applyOnline(ON.base); ON.cleanJ=canonJ(serializeOnline()); tagUndoStack=[]; tagRedoStack=[]; onRefreshUI();
+      if(Date.now()-_roToastT>4000){ _roToastT=Date.now(); loadNote("View only — add your access token in Tools → Settings to make changes"); setTimeout(()=>loadNote(""),4500); } }
+    return; }
+  onCacheLocal(); scheduleOnlineSave(1200); pumpUploads(); scheduleAutoExport();
+}
+function scheduleOnlineSave(ms){ clearTimeout(ON.saveT); ON.saveT=setTimeout(onlineSave,ms==null?1200:ms); }
+async function onlineSave(){
+  if(!canEdit()) return;
+  if(ON.busy){ ON.again=true; return; }
+  const local=serializeOnline(); if(canonJ(local)===ON.cleanJ) return;
+  ON.busy=true; renderSaveStatus();
+  try{
+    let sha=ON.sha, remote=null, doc=local;
+    for(let i=0;i<8;i++){
+      if(i>0){ const rd=await repoReadJson(statePath()); remote=rd.obj; sha=rd.sha; ON.etag=rd.etag||null; doc=remote?merge3(ON.base,local,remote):local; }
+      doc.updatedAt=new Date().toISOString(); doc.by=userName();
+      const w=await repoWriteJson(statePath(),doc,sha,"ActionMap: "+(ON.name||"project")+" — "+userName());
+      if(w.conflict){ await sleep(300+Math.random()*700); continue; }
+      ON.sha=w.sha; ON.etag=null; absorb(doc,local); ON.at=Date.now(); ON.err=null; lastSavedAt=ON.at;
+      break; }
+  }catch(e){ ON.err=e; console.warn("online save failed",e); scheduleOnlineSave(20000); }
+  finally{ ON.busy=false; renderSaveStatus(); onCacheLocal(); if(ON.again){ ON.again=false; scheduleOnlineSave(600); } }
+}
+/* A synced document arrives (our own merged save, or someone else's): adopt it, but keep any edit
+   made on this device while it was in flight. */
+function absorb(doc,sentLocal){
+  const now=serializeOnline(), inFlight=sentLocal&&canonJ(now)!==canonJ(sentLocal);
+  const target=inFlight?merge3(sentLocal,now,doc):doc;
+  ON.base=doc;
+  if(canonJ(target)!==canonJ(now)){ applyOnline(target); onRefreshUI(); }
+  ON.cleanJ=inFlight?"":canonJ(serializeOnline());
+  if(inFlight) scheduleOnlineSave(600);
+}
+let _pollBusy=false;
+async function onlinePoll(){
+  if(!ON.pid||!ON.live||_pollBusy||ON.busy) return;
+  _pollBusy=true;
+  try{
+    const rd=await repoReadJson(statePath(),ON.etag); if(rd.same||!rd.obj) return;
+    if(rd.sha&&rd.sha===ON.sha){ ON.etag=rd.etag||ON.etag; return; }
+    if(userTyping()) return;   // try again next tick — never yank a half-typed edit
+    if(rd.text!=null) ON.rawText=rd.text;
+    ON.sha=rd.sha||null; ON.etag=rd.etag||null;
+    const local=serializeOnline(), dirty=canEdit()&&canonJ(local)!==ON.cleanJ;
+    const target=dirty?merge3(ON.base,local,rd.obj):rd.obj;
+    ON.base=rd.obj;
+    if(canonJ(target)!==canonJ(local)){ applyOnline(target); onRefreshUI(); }
+    ON.cleanJ=dirty?"":canonJ(serializeOnline());
+    if(dirty) scheduleOnlineSave(600);
+    onCacheLocal(); renderSaveStatus();
+  }catch(e){ console.warn("poll failed",e); }
+  finally{ _pollBusy=false; }
+}
+let _refreshT=null;
+function onRefreshUI(){
+  if(userTyping()){ clearTimeout(_refreshT); _refreshT=setTimeout(onRefreshUI,1200); return; }
+  _pIdx=null; rebuildSizeIndex();
+  for(const id of [...selSet]) if(!photoById(id)) selSet.delete(id);
+  for(const id of [...selActs]) if(!actById(id)) selActs.delete(id);
+  rebuildActionFilter();
+  if(lb.classList.contains("open")){ const c=curPhoto();
+    if(!c||!photos.includes(c)) closeViewer();
+    else { lightboxList=lightboxList.filter(p=>photos.includes(p)); lightboxIndex=Math.max(0,lightboxList.indexOf(c));
+      if(!selMark&&!dragging&&!draft&&!movingObj){ if(selObj&&!(c.marks||[]).includes(selObj)) selObj=null; redrawMarks(); }
+      renderPhotoTags(c); renderIpActions(); if(!c.preview&&!c.thumb) showPreview(c,true); } }
+  buildDateFilter(); buildCluster(); renderClusters(); updateStats(); updateGallery(true); renderActions();
+  if(rightTab==="history") renderHistory();
+  renderProjHead(); renderSaveStatus(); ensureThumbs();
+}
+
+/* ---- photo images: thumbnails for everything, full size on demand, all cached on this device ---- */
+const _thQ=[]; let _thRun=0, _thPatchT=null;
+function ensureThumbs(){
+  for(const p of photos) if(p.h&&!p.thumb&&!p._thq&&!(p._thFail&&Date.now()-p._thFail<60000)){ p._thq=1; _thQ.push(p); }
+  while(_thRun<6&&_thQ.length){ _thRun++; thumbWorker(); }
+}
+function thumbsPatchSoon(){ if(_thPatchT) return; _thPatchT=setTimeout(()=>{ _thPatchT=null; updateGallery(true); },500); }
+async function thumbWorker(){
+  while(_thQ.length){ const p=_thQ.shift();
+    try{ const key="th:"+p.h; let b=null; try{ b=await idbGet(key); }catch(e){}
+      if(!b){ b=await repoGetImage("thumbs/"+p.h+".jpg"); if(b) idbSet(key,b).catch(()=>{}); }
+      if(b){ let du=await blobToDataURL(b); if(p.rot) du=await rotateDataURL(du,rotDelta(p.rot),THUMB_Q); p.thumb=du; p.tv=THUMB_VER; patchThumbEls(p); thumbsPatchSoon(); }
+      else p._thFail=Date.now();
+    }catch(e){ p._thFail=Date.now(); }
+    p._thq=0; }
+  _thRun--;
+}
+const _fullP=new Map();
+function getFullBlob(p){   // one download per photo however many things ask at once; then it's on this device
+  if(!p||!p.h) return Promise.resolve(null);
+  const h=p.h; if(_fullP.has(h)) return _fullP.get(h);
+  const pr=(async()=>{ const key="fu:"+h; let b=null; try{ b=await idbGet(key); }catch(e){}
+    if(!b){ b=await repoGetImage("photos/"+h+".jpg"); if(b) idbSet(key,b).catch(()=>{}); }
+    return b; })().finally(()=>_fullP.delete(h));
+  _fullP.set(h,pr); return pr;
+}
+function ensurePreview(p){
+  if(!p||p.preview||!p.h) return Promise.resolve(p&&p.preview);
+  if(p._pvP) return p._pvP;
+  p._pvP=(async()=>{ const b=await getFullBlob(p); if(!b) return null; const url=URL.createObjectURL(b);
+    try{ const im=await loadImg(url); let du=scaleToDataURL(im,PREVIEW_PX,PREVIEW_Q); if(p.rot) du=await rotateDataURL(du,rotDelta(p.rot),PREVIEW_Q); p.preview=du; return du; }
+    finally{ URL.revokeObjectURL(url); } })().catch(()=>null).finally(()=>{ p._pvP=null; });
+  return p._pvP;
+}
+async function ensurePreviews(list){ for(const p of list) if(p&&p.h&&!p.preview) await ensurePreview(p); }
+/* Renditions for the upload: ≤3000px full + 480px thumb, re-encoded upright (orientation applied,
+   location/camera metadata dropped from the public file — the map keeps the position). */
+async function makeRenditions(src,unrot){
+  let disp=src; if(src instanceof Blob&&isHeic(src)){ try{ disp=await heicToJpegBlob(src,0.92); }catch(e){} }
+  const url=URL.createObjectURL(disp); let im; try{ im=await loadImg(url); } finally{ URL.revokeObjectURL(url); }
+  const sc=Math.min(1,FULL_PX/Math.max(im.naturalWidth||im.width,im.naturalHeight||im.height));
+  let c=document.createElement("canvas"); c.width=Math.max(1,Math.round((im.naturalWidth||im.width)*sc)); c.height=Math.max(1,Math.round((im.naturalHeight||im.height)*sc));
+  const g=c.getContext("2d"); g.imageSmoothingQuality="high"; g.drawImage(im,0,0,c.width,c.height);
+  if(unrot) c=rotCanvas(c,unrot);
+  const full=new Uint8Array(await (await canvasToBlob(c,"image/jpeg",FULL_Q)).arrayBuffer());
+  const ts=Math.min(1,THUMB_PX/Math.max(c.width,c.height)); const t=document.createElement("canvas"); t.width=Math.max(1,Math.round(c.width*ts)); t.height=Math.max(1,Math.round(c.height*ts));
+  const tg=t.getContext("2d"); tg.imageSmoothingQuality="high"; tg.drawImage(c,0,0,t.width,t.height);
+  const thumb=new Uint8Array(await (await canvasToBlob(t,"image/jpeg",THUMB_Q)).arrayBuffer());
+  return {h:await sha1Hex(full),full,thumb};
+}
+async function renditionsFor(p){   // best source: the original file; failing that the preview / thumbnail (already rotated -> un-rotate)
+  let f=p.file||null; if(!f&&!p.h&&!isOnline()){ try{ f=await getOriginalFileSilent(p); }catch(e){} }
+  if(f) return Object.assign(await makeRenditions(f,0),{from:"original"});
+  const du=p.preview||p.thumb; if(!du) throw new Error("no image for "+p.name);
+  const d=rotDelta(p.rot||0);
+  return Object.assign(await makeRenditions(await dataURLToBlob(du),d?-d:0),{from:p.preview?"preview":"thumb"});
+}
+/* New photos (paste, drop, Add photos, phone uploads) go online in the background, a few per commit.
+   Each waits in this device's storage until it's safely uploaded, so closing the tab loses nothing. */
+let _upBusy=false;
+function upQueueKey(p){ if(!p._qk) p._qk=newUid(); return "upq:"+onRepo()+"|"+ON.pid+"|"+p._qk; }
+async function pumpUploads(){
+  if(!canEdit()||_upBusy) return;
+  const todo=photos.filter(p=>!p.h&&!p._upDead); if(!todo.length) return;
+  _upBusy=true; renderSaveStatus();
+  try{
+    for(const p of todo) if(p.file&&!p._queued){ try{ await idbSet(upQueueKey(p),{meta:onPhotoMeta(p),file:p.file}); p._queued=1; }catch(e){} }
+    const have=await repoImageSet();
+    for(let i=0;i<todo.length;i+=8){
+      const batch=todo.slice(i,i+8).filter(p=>photos.includes(p)), files=[], ready=[];
+      for(const p of batch){ try{ if(!p._up) p._up=await renditionsFor(p); ready.push(p);
+          for(const [dir,bytes] of [["photos",p._up.full],["thumbs",p._up.thumb]]){ const path=dir+"/"+p._up.h+".jpg"; if(!have.has(path)&&!files.some(f=>f.path===path)) files.push({path,bytes}); } }
+        catch(e){ console.warn("photo prep failed",p.name,e); p._upDead=1; } }
+      if(files.length) await repoCommitFiles(files,"Add "+ready.length+" photo"+(ready.length===1?"":"s"));
+      for(const f of files) have.add(f.path);
+      for(const p of ready){ const u=p._up; delete p._up;
+        idbSet("th:"+u.h,new Blob([u.thumb],{type:"image/jpeg"})).catch(()=>{}); idbSet("fu:"+u.h,new Blob([u.full],{type:"image/jpeg"})).catch(()=>{});
+        const dup=photos.find(q=>q!==p&&q.h===u.h);
+        if(dup){ dup.acts=[...new Set((dup.acts||[]).concat(p.acts||[]))]; photos=photos.filter(q=>q!==p); _pIdx=null; }   // same image twice: one photo, both links
+        else { p.h=u.h; if(!p.added) p.added=Date.now(); p.file=null; }
+        if(p._qk) idbDel("upq:"+onRepo()+"|"+ON.pid+"|"+p._qk).catch(()=>{}); }
+      persistState(); }
+  }catch(e){ ON.err=e; console.warn("photo upload paused",e); setTimeout(pumpUploads,30000); }
+  finally{ _upBusy=false; renderSaveStatus(); if(photos.some(p=>!p.h&&!p._upDead)&&canEdit()) setTimeout(pumpUploads,1500); }
+}
+function onPhotoMeta(p){ const byId=new Map(actions.map(a=>[a.id,a]));
+  return {name:p.name,size:p.size,lat:p.lat,lng:p.lng,time:p.time,dir:p.dir,alt:p.alt,noGps:!!p.noGps,adhoc:!!p.adhoc,note:p.note||"",tags:virtPaths(p).slice(),acts:(p.acts||[]).map(id=>byId.get(id)).filter(Boolean).map(a=>a.u),repoPath:p.repoPath||null,pendFu:p.pendFu||null,qk:p._qk}; }
+async function restoreUploadQueue(){   // photos that were still uploading when the tab closed
+  let keys=[]; try{ const db=await idbOpen(); keys=await new Promise((res,rej)=>{ const t=db.transaction("kv","readonly"); const q=t.objectStore("kv").getAllKeys(); q.onsuccess=()=>res(q.result||[]); q.onerror=()=>rej(q.error); }); }catch(e){}
+  const pre="upq:"+onRepo()+"|"+ON.pid+"|"; let n=0;
+  for(const k of keys){ if(typeof k!=="string"||!k.startsWith(pre)) continue;
+    let rec=null; try{ rec=await idbGet(k); }catch(e){} if(!rec||!rec.file){ idbDel(k).catch(()=>{}); continue; }
+    const m=rec.meta||{}, uId=new Map(actions.map(a=>[a.u,a.id]));
+    if(photos.some(p=>p._qk===m.qk)) continue;
+    const p={id:nextId++,path:null,paths:[],vpaths:m.tags||[],name:m.name||"photo.jpg",file:rec.file,size:m.size!=null?m.size:null,isHeic:isHeic(rec.file),thumb:null,preview:null,
+      lat:m.lat!=null?m.lat:null,lng:m.lng!=null?m.lng:null,time:m.time!=null?m.time:null,dir:m.dir!=null?m.dir:null,alt:m.alt!=null?m.alt:null,marks:[],acts:(m.acts||[]).map(u=>uId.get(u)).filter(x=>x!=null),
+      note:m.note||"",noGps:!!m.noGps,adhoc:!!m.adhoc,repoPath:m.repoPath||null,pendFu:m.pendFu||null,_qk:m.qk,_queued:1};
+    try{ const im=await makePreviews(rec.file); p.thumb=im.thumb; p.preview=im.preview; p.tv=THUMB_VER; }catch(e){}
+    photos.push(p); n++; }
+  if(n){ _pIdx=null; onRefreshUI(); pumpUploads(); }
+}
+
+/* ---- projects: the index, open / new / rename, share link ---- */
+async function readProjects(){ try{ const rd=await repoReadJson("projects.json"); return (rd.obj&&Array.isArray(rd.obj.projects))?rd.obj.projects:[]; }catch(e){ return []; } }
+async function updateProjects(mutate){
+  for(let i=0;i<6;i++){ const rd=await repoReadJson("projects.json"); const cur=rd.obj&&Array.isArray(rd.obj.projects)?rd.obj:{v:1,projects:[]};
+    const next=mutate(JSON.parse(JSON.stringify(cur))); if(!next) return;
+    const w=await repoWriteJson("projects.json",next,rd.sha,"ActionMap: project list"); if(!w.conflict) return; await sleep(400+Math.random()*800); }
+  throw new Error("Couldn't update the project list — try again");
+}
+function slugify(s){ return String(s||"project").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40)||"project"; }
+function shareLink(pid){ return location.origin+location.pathname+"?r="+encodeURIComponent(onRepo())+"&p="+encodeURIComponent(pid||ON.pid); }
+async function createProject(name,seed){   // seed: a ready document (migration); otherwise an empty project
+  name=String(name||"").trim()||"New project";
+  const pid=(seed&&seed.id)||(slugify(name)+"-"+Math.random().toString(36).slice(2,6));
+  const doc=seed||{v:4,id:pid,name,nextNo:1,actions:[],photos:[],log:[]};
+  doc.id=pid; doc.name=name; doc.log=(doc.log||[]).concat([{t:Date.now(),by:userName(),d:seed?"Moved the project online":"Created the project"}]);
+  doc.updatedAt=new Date().toISOString(); doc.by=userName();
+  const w=await repoWriteJson("projects/"+pid+"/state.json",doc,null,"ActionMap: new project "+name);
+  if(w.conflict) throw new Error("A project with that id already exists — try another name");
+  await updateProjects(ix=>{ if(ix.projects.some(p=>p.id===pid)) return null; ix.projects.push({id:pid,name,created:new Date().toISOString()}); return ix; });
+  return pid;
+}
+async function openProject(pid){
+  if(lb.classList.contains("open")) closeViewer();
+  clearAll(false);
+  Object.assign(ON,{pid,name:"",base:null,sha:null,etag:null,rawText:null,cleanJ:null,live:false,busy:false,again:false,err:null,at:0,denied:false});
+  _imgHave=null; jsonHandle=null; saveFileHandle=null; dirHandle=null; fileLoadedOnce=true; hideBanner();
+  try{ localStorage.setItem("pmProject",pid); }catch(e){}
+  try{ const u=new URL(location.href); if(u.searchParams.get("p")!==pid||u.searchParams.get("r")!==onRepo()){ u.searchParams.set("r",onRepo()); u.searchParams.set("p",pid); history.replaceState(null,"",u.toString()); } }catch(e){}   // the address bar IS the share link
+  loadNote("Opening the project…"); renderSaveStatus(); syncMenus();
+  let cached=null; try{ cached=await idbGet("on:"+onRepo()+"|"+pid); }catch(e){}
+  if(cached&&cached.base){   // instant: this device's last copy, then catch up with what's online
+    ON.base=cached.base; ON.sha=cached.sha||null; applyOnline(cached.local||cached.base); ON.live=true;
+    ON.cleanJ=(cached.local&&canonJ(cached.local)!==canonJ(cached.base))?"":canonJ(serializeOnline());
+    afterOpenUI(); }
+  let rd=null; try{ rd=await repoReadJson(statePath()); }catch(e){ if(!ON.live){ loadNote(""); showBanner("Couldn't open this project: "+esc(e.message||String(e)),()=>openProject(pid),"Try again"); return; } }
+  if(rd&&rd.obj){
+    if(!ON.live){ ON.base=rd.obj; ON.sha=rd.sha||null; ON.etag=rd.etag||null; ON.rawText=rd.text||null; applyOnline(rd.obj); ON.live=true; ON.cleanJ=canonJ(serializeOnline()); afterOpenUI(); }
+    else { const local=serializeOnline(), dirty=ON.cleanJ!==canonJ(local);
+      const target=dirty?merge3(ON.base,local,rd.obj):rd.obj; ON.base=rd.obj; ON.sha=rd.sha||null; ON.etag=rd.etag||null; ON.rawText=rd.text||null;
+      if(canonJ(target)!==canonJ(local)){ applyOnline(target); onRefreshUI(); }
+      ON.cleanJ=dirty?"":canonJ(serializeOnline()); if(dirty) scheduleOnlineSave(800); }
+  } else if(rd&&!rd.obj&&!ON.live){ loadNote(""); ON.pid=null; try{ localStorage.removeItem("pmProject"); }catch(e){} syncMenus(); renderSaveStatus(); showProjectPicker(ghRaw().token?"That project wasn't found in "+onRepo()+".":"Couldn't open this project. If the link is right, its data repository may still be private \u2014 the owner needs to make it public (or give you an access token)."); return; }
+  loadNote(""); onCacheLocal(); renderSaveStatus(); syncMenus();
+  if(canEdit()){ restoreUploadQueue(); pumpUploads(); setTimeout(syncTick,1500); scheduleAutoExport(4000); }
+}
+function afterOpenUI(){
+  let ui=null; try{ ui=JSON.parse(localStorage.getItem(uiSettingsKey())||"null"); }catch(e){}
+  applyUiSettings(ui||{});
+  if(!(ui&&ui.view)) fitToPhotos();
+  renderActions(); renderProjHead(); ensureThumbs(); renderSaveStatus(); syncMenus();
+}
+
+/* ---- the project picker ---- */
+function showProjectPicker(msg){
+  let m=document.getElementById("projModal");
+  if(!m){ m=document.createElement("div"); m.id="projModal"; m.className="ynmodal"; document.body.appendChild(m);
+    m.addEventListener("mousedown",e=>{ if(e.target===m&&ON.pid) m.classList.remove("show"); }); }
+  const repo=onRepo(), edit=!!ghRaw().token;
+  m.innerHTML='<div class="yn-win pj-win"><h3>Projects</h3>'+(msg?'<div class="pj-msg">'+esc(msg)+'</div>':'')
+    +(repo?'<div class="pj-list" id="pjList"><div class="pj-empty">Loading…</div></div>':'<div class="pj-empty">No data repository yet — open a shared ActionMap link, or set the repository in <b>Tools → Settings</b>.</div>')
+    +'<div class="yn-btns">'+(repo&&edit?'<button class="yn-no" id="pjNew" type="button" title="Start a new, empty project in '+esc(repo)+'">New project…</button>':'')
+    +'<button class="yn-no" id="pjSet" type="button">Settings…</button>'+(ON.pid?'<button class="yn-yes" id="pjClose" type="button">Close</button>':'')+'</div></div>';
+  m.classList.add("show");
+  const q=id=>m.querySelector("#"+id);
+  if(q("pjClose")) q("pjClose").onclick=()=>m.classList.remove("show");
+  q("pjSet").onclick=()=>{ m.classList.remove("show"); openSettings(); };
+  if(q("pjNew")) q("pjNew").onclick=()=>{ m.classList.remove("show"); newProjectFlow(); };
+  if(repo) readProjects().then(list=>{ const el=q("pjList"); if(!el) return;
+    if(!list.length){ el.innerHTML='<div class="pj-empty">No projects yet'+(edit?' — click <b>New project…</b>':'')+'.</div>'; return; }
+    el.innerHTML=list.map(p=>'<div class="pj-row'+(p.id===ON.pid?' on':'')+'" data-id="'+esc(p.id)+'"><div class="pj-name">'+esc(p.name||p.id)+'</div>'
+      +(edit?'<button class="pj-ren" type="button" title="Rename this project">Rename</button>':'')
+      +'<button class="pj-link" type="button" title="Copy this project’s share link">Copy link</button></div>').join("");
+    el.querySelectorAll(".pj-row").forEach(row=>{ const id=row.dataset.id;
+      row.addEventListener("click",e=>{ if(e.target.closest("button")) return; m.classList.remove("show"); if(id!==ON.pid) openProject(id); });
+      row.querySelector(".pj-link").onclick=()=>copyShareLink(id);
+      const rn=row.querySelector(".pj-ren"); if(rn) rn.onclick=async()=>{ const cur=(list.find(x=>x.id===id)||{}).name||id; const nv=prompt("New name for “"+cur+"”:",cur); if(nv==null||!nv.trim()||nv.trim()===cur) return;
+        try{ await renameProject(id,nv.trim()); showProjectPicker(); }catch(err){ alert(err.message||err); } }; }); });
+}
+async function renameProject(pid,name){
+  await updateProjects(ix=>{ const p=ix.projects.find(x=>x.id===pid); if(!p||p.name===name) return null; p.name=name; return ix; });
+  if(pid===ON.pid){ ON.name=name; loadedJsonName=name; logChange("Renamed the project to “"+name+"”"); persistState(); renderProjHead(); }
+}
+async function newProjectFlow(){
+  if(!ghRaw().token||!onRepo()){ alert("Creating a project needs the data repository and your access token — Tools → Settings."); openSettings(); return; }
+  const name=prompt("Name for the new project:",""); if(name==null||!name.trim()) return;
+  try{ loadNote("Creating “"+name.trim()+"”…"); const pid=await createProject(name.trim()); await openProject(pid); logChange("Created the project"); }
+  catch(e){ loadNote(""); alert("Couldn't create the project: "+(e.message||e)); }
+}
+function copyShareLink(pid){
+  const link=shareLink(pid);
+  const done=()=>{ loadNote("✓ Link copied — anyone with it can view"+(ghRaw().token?"; people with your access token can also edit":"")); setTimeout(()=>loadNote(""),4000); };
+  try{ navigator.clipboard.writeText(link).then(done,()=>prompt("Copy this link:",link)); }catch(e){ prompt("Copy this link:",link); }
+}
+function syncMenus(){
+  const on=isOnline(), ed=canEdit(), leg=!on&&(photos.length>0||actions.length>0);
+  const show=(id,v)=>{ const el=document.getElementById(id); if(el) el.style.display=v?"":"none"; };
+  show("miShare",on); show("miAddPhotos",!leg); show("miBackup",on); show("miMigrate",leg||_legacyAvail); show("miNewProj",!!ghRaw().token);
+  document.body.classList.toggle("view-only",on&&ON.live&&!ed);
+}
+let _legacyAvail=false;
+
+/* ---- view-only: viewers can look around; anything that would change the project says why it can't ---- */
+function roBlock(){ if(!isOnline()||canEdit()) return false;
+  loadNote(ghRaw().token?"This access token can't change "+onRepo()+" — view only":"View only — add your access token in Tools → Settings to make changes"); setTimeout(()=>loadNote(""),4500); return true; }
+
+/* ---- Add photos (file picker) ---- */
+function addPhotosFlow(){ if(roBlock()) return; if(!isOnline()&&!photos.length&&!actions.length){ showProjectPicker("Open or create a project first, then add photos to it."); return; } document.getElementById("addPhotosInput").click(); }
+
+/* ---- Download backup: a zip of the project + every photo at full size ---- */
+let _zipP=null;
+function loadJSZip(){ if(window.JSZip) return Promise.resolve(); if(!_zipP) _zipP=new Promise((res,rej)=>{ const sc=document.createElement("script"); sc.src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"; sc.onload=res; sc.onerror=()=>{ _zipP=null; rej(new Error("could not load the zip library — are you online?")); }; document.head.appendChild(sc); }); return _zipP; }
+async function downloadBackup(){
+  if(!isOnline()) return;
+  try{
+    await loadJSZip(); const zip=new JSZip(), doc=serializeOnline(), list=photos.filter(p=>p.h);
+    zip.file("project.json",JSON.stringify(doc,null,1));
+    zip.file("README.txt","ActionMap backup of “"+ON.name+"”, "+new Date().toLocaleString()+"\r\nproject.json = actions, notes, markup, locations and history. photos/ = every photo at full size (file name = <original name>_<id>.jpg).\r\nLive project: "+shareLink()+"\r\n");
+    let i=0; for(const p of list){ loadNote("Backup — collecting photos "+(++i)+" / "+list.length);
+      const b=await getFullBlob(p); if(b) zip.file("photos/"+String(p.name||"photo").replace(/\.[^.]+$/,"").replace(/[\\/:*?"<>|]+/g,"_")+"_"+p.h.slice(0,10)+".jpg",b); }
+    loadNote("Backup — packing the zip…");
+    const blob=await zip.generateAsync({type:"blob",compression:"STORE"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=slugify(ON.name)+"-backup-"+new Date().toISOString().slice(0,10)+".zip"; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),10000); loadNote("✓ Backup downloaded ("+list.length+" photos)"); setTimeout(()=>loadNote(""),4000);
+  }catch(e){ loadNote("Backup failed: "+(e.message||e)); setTimeout(()=>loadNote(""),6000); }
+}
+
+/* ---- Moving an existing on-this-PC project online (one time). Every photo goes up from its original
+   file where this PC can still reach it (the photo folder, or the phone upload kept in the repo), else
+   from the preview this browser holds. Resumable: progress is remembered, so closing the tab or
+   GitHub pausing the uploads just means picking up where it left off. ---- */
+async function migrateToOnline(){
+  if(isOnline()){ if(!(await askYesNo("Move the project from this PC online?","This closes “"+ON.name+"” on screen and loads the project that’s stored on this PC so it can be moved online.","Yes, continue"))) return;
+    Object.assign(ON,{pid:null,live:false}); try{ localStorage.removeItem("pmProject"); }catch(e){} clearAll(false); await bootLegacy(); }
+  if(!photos.length&&!actions.length){ alert("There's no project stored on this PC to move."); return; }
+  if(!ghRaw().token&&!onRepo()){ alert("Set the data repository and your access token first (Tools → Settings)."); openSettings(); return; }
+  if(!onRepo()) await ghFindRepo();
+  if(!ghRaw().token||!onRepo()){ alert("Set the data repository and your access token first (Tools → Settings)."); openSettings(); return; }
+  let mig=null; try{ mig=JSON.parse(localStorage.getItem("pmMig")||"null"); }catch(e){}
+  if(!mig||mig.repo!==onRepo()){
+    const def=String(loadedJsonName||folderName||"My project").replace(/\.json$/i,"");
+    const name=prompt("Move this project online.\n\nEvery photo ("+photos.length+"), action, note and markup is copied to "+onRepo()+" — nothing on this PC is changed or deleted.\n\nProject name:",def);
+    if(name==null||!name.trim()) return;
+    mig={repo:onRepo(),name:name.trim(),pid:slugify(name)+"-"+Math.random().toString(36).slice(2,6),done:{}}; }
+  const save=()=>{ try{ localStorage.setItem("pmMig",JSON.stringify(mig)); }catch(e){} };
+  save();
+  try{
+    if(jsonHandle&&!fileLoadedOnce) await loadFromJsonFile(true);   // the file is the latest copy
+    if(dirHandle) await ensurePermission(dirHandle);   // one Allow click: originals come from the folder
+    loadNote("Moving online — merging the phone’s last changes first…");
+    try{ await checkFieldChanges(); }catch(e){} try{ await checkPhotoUploads(); }catch(e){}
+    const have=await repoImageSet(true), list=photos.slice(); let n=0, fromPrev=0;
+    for(const p of list){ const k=metaKey(p); if(mig.done[k]){ p.h=mig.done[k].h; n++; } }
+    const todo=list.filter(p=>!p.h);
+    const say=()=>loadNote("Moving online — photos "+n+" / "+list.length+(ON.wait?" (GitHub is pacing uploads — it carries on by itself)":"")+" — keep this tab open");
+    for(let i=0;i<todo.length;i+=8){
+      const batch=todo.slice(i,i+8), files=[], ready=[];
+      for(const p of batch){ say();
+        try{ const r=await renditionsFor(p); if(r.from!=="original") fromPrev++;
+          for(const [dir,bytes] of [["photos",r.full],["thumbs",r.thumb]]){ const path=dir+"/"+r.h+".jpg"; if(!have.has(path)&&!files.some(f=>f.path===path)) files.push({path,bytes}); }
+          ready.push([p,r]); }
+        catch(e){ console.warn("couldn't prepare",p.name,e); } }
+      if(files.length) await repoCommitFiles(files,"Move online: "+ready.length+" photo"+(ready.length===1?"":"s"),()=>say());
+      for(const f of files) have.add(f.path);
+      for(const [p,r] of ready){ p.h=r.h; mig.done[metaKey(p)]={h:r.h,src:r.from}; n++;
+        idbSet("th:"+r.h,new Blob([r.thumb],{type:"image/jpeg"})).catch(()=>{}); }
+      save(); say(); }
+    const missing=photos.filter(p=>!p.h);
+    if(missing.length&&!(await askYesNo("Some photos couldn't be moved"," "+missing.length+" photo"+(missing.length===1?"":"s")+" had no image on this PC (not in the folder and no cached copy):\n"+missing.slice(0,8).map(p=>"• "+p.name).join("\n")+(missing.length>8?"\n…":"")+"\n\nMove the project without them? (Their actions and notes still come along.)","Yes, move it"))) { loadNote(""); return; }
+    loadNote("Moving online — saving the project…");
+    ON.pid=mig.pid; ON.name=mig.name;
+    for(const p of photos){ if(physPaths(p).length){ p.vpaths=pathsOf(p).slice(); p.paths=[]; p.path=null; } }   // folders become tags, so the way photos were organised survives
+    const doc=serializeOnline(); ON.pid=null;
+    try{ doc.mergedFrom=localStorage.getItem("pmMergedChanges")||null; }catch(e){}
+    await createProject(mig.name,Object.assign(doc,{id:mig.pid}));
+    try{ localStorage.removeItem("pmMig"); localStorage.setItem("pmMigrated",mig.pid); if(doc.mergedFrom) localStorage.setItem("pmMergedChanges:"+mig.pid,doc.mergedFrom);
+      const ui=serializeState(false).settings; localStorage.setItem("pmUi:"+mig.pid,JSON.stringify(ui)); }catch(e){}
+    _legacyAvail=false;
+    await openProject(mig.pid);
+    const msg="✓ “"+mig.name+"” is online — "+photos.length+" photo"+(photos.length===1?"":"s")+(fromPrev?" ("+fromPrev+" from this browser’s preview copy — the original wasn’t reachable)":"")+". Share it with File → Share link.";
+    loadNote(msg); setTimeout(()=>loadNote(""),12000);
+  }catch(e){ console.warn(e); loadNote(""); showBanner("Moving online paused: "+esc(e.message||String(e))+" — progress is kept.",()=>{ hideBanner(); migrateToOnline(); },"Resume"); }
+}
+
+function repoP(x){ return isOnline()?projPath(x):x; }   // phone channels + pack live inside the project folder once online
+function mfKey(){ return "pmMergedChanges"+(ON.pid?":"+ON.pid:""); }
 /* The pack carries the photo previews WITH their annotations baked in (marks are vector data,
    invisible to the phone otherwise). Composited once per photo and cached until marks change. */
 async function annotatedPreview(p){
@@ -2116,12 +2730,12 @@ async function hashB64(b64){   // content address for a preview
 }
 async function publishPackImages(cfg,pack,st){
   let have=new Set();
-  try{ const r=await fetch("https://api.github.com/repos/"+cfg.repo+"/contents/img?t="+Date.now(),{cache:"no-store",headers:ghHeaders(cfg.token)});
+  try{ const r=await fetch("https://api.github.com/repos/"+cfg.repo+"/contents/"+repoP("img")+"?t="+Date.now(),{cache:"no-store",headers:ghHeaders(cfg.token)});
     if(r.ok){ const arr=await r.json(); if(Array.isArray(arr)) for(const f of arr) have.add(f.path); } }catch(e){}
   const used=new Set(); let up=0;
   for(const a of pack.actions) for(const ph of a.photos){
     const m=/^data:image\/[a-z]+;base64,(.*)$/.exec(ph.img||""); if(!m){ delete ph.img; continue; }
-    const h=await hashB64(m[1]), path="img/"+h+".jpg"; used.add(path);
+    const h=await hashB64(m[1]), path=repoP("img/"+h+".jpg"); used.add(path);
     if(!have.has(path)){ if(st) st.textContent="Uploading new photo previews\u2026 "+(++up); await ghPutB64(cfg,path,m[1],"Pack preview",false,true); have.add(path); }
     ph.h=h; delete ph.img;
   }
@@ -2129,8 +2743,9 @@ async function publishPackImages(cfg,pack,st){
 }
 async function buildMobilePack(){
   const open=actions.filter(a=>!a.done);
-  let mergedFrom=null; try{ mergedFrom=localStorage.getItem("pmMergedChanges")||null; }catch(e){}
-  const pk={ v:2, exportedAt:new Date().toISOString(), project:loadedJsonName||folderName||"ActionMap", mergedFrom, actions:[] };   // mergedFrom = ack: the phone lets go of sent edits only once this covers them
+  if(isOnline()) await ensurePreviews(open.flatMap(a=>actPhotos(a)));   // the phone gets proper previews, not thumbnails
+  let mergedFrom=null; try{ mergedFrom=localStorage.getItem(mfKey())||null; }catch(e){}
+  const pk={ v:2, exportedAt:new Date().toISOString(), project:loadedJsonName||folderName||"ActionMap", pid:ON.pid||null, mergedFrom, actions:[] };   // mergedFrom = ack: the phone lets go of sent edits only once this covers them
   for(const a of open){
     const ps=[];
     for(const p of actPhotos(a)) ps.push({ id:p.id, k:metaKey(p), name:p.name, note:(p.note||""), lat:(p.lat!=null?p.lat:null), lng:(p.lng!=null?p.lng:null), img:await packPreview(p) });   // exportMobile swaps img for a content hash
@@ -2145,7 +2760,7 @@ async function buildMobilePack(){
 function packSig(){
   const open=actions.filter(a=>!a.done);
   for(const a of open) for(const st of (a.steps||[])) if(!st.id) st.id=newSid();
-  let ack=""; try{ ack=localStorage.getItem("pmMergedChanges")||""; }catch(e){}
+  let ack=""; try{ ack=localStorage.getItem(mfKey())||""; }catch(e){}
   const noT=m=>Array.isArray(m)?m.map(x=>{ if(x&&x._t!=null){ const c={...x}; delete c._t; return c; } return x; }):m;   // session timestamps must not change the signature
   return JSON.stringify([loadedJsonName||folderName||"ActionMap",ack,open.map(a=>[a.id,a.text,!!a.hold,a.fu||null,a.loc||null,(a.steps||[]).map(st=>[st.id,st.t,!!st.d]),
     actPhotos(a).map(ph=>[ph.id,metaKey(ph),ph.note||"",ph.lat,ph.lng,JSON.stringify([noT(ph.marks||[]),ph.mkw||0,ph.mth||0,ph.rot||0])])])]);
@@ -2159,9 +2774,10 @@ async function exportMobile(manual){
   const cfg=ghCfg();
   if(!cfg.token){ if(manual) st.textContent=ghRaw().token?"Couldn't find the data repository for this token \u2014 type it in above.":"Paste your GitHub token above first."; return; }
   if(!projectReady()||!photos.length&&!actions.length) return;   // never publish an empty pre-load session over the real pack
+  if(isOnline()&&!canEdit()) return;
   if(_expBusy){ _expAgain=true; return; }
   let sig; try{ sig=packSig(); }catch(e){ return; }
-  const key="pmPackSig:"+cfg.repo;
+  const key="pmPackSig:"+cfg.repo+(ON.pid?"|"+ON.pid:"");
   let last=""; try{ last=localStorage.getItem(key)||""; }catch(e){}
   if(!manual&&sig===last) return;   // nothing the phone would see has changed
   _expBusy=true; if(btn) btn.disabled=true;
@@ -2172,12 +2788,12 @@ async function exportMobile(manual){
     const imgs=await publishPackImages(cfg,pack,st);
     const text=JSON.stringify(pack);
     st.textContent="Pushing "+Math.max(1,Math.round(text.length/1024))+" KB to "+cfg.repo+"…";
-    await ghPutFile(cfg,"pack.json",text,"ActionMap mobile pack — "+openN+" open action"+(openN===1?"":"s"));
+    await ghPutFile(cfg,repoP("pack.json"),text,"ActionMap mobile pack — "+openN+" open action"+(openN===1?"":"s"));
     /* previews no pack refers to any more are removed (keeping the previous pack's, for phones mid-update) */
-    try{ const pk="pmPackImgs:"+cfg.repo; const prev=new Set(JSON.parse(localStorage.getItem(pk)||"[]"));
+    try{ const pk="pmPackImgs:"+cfg.repo+(ON.pid?"|"+ON.pid:""); const prev=new Set(JSON.parse(localStorage.getItem(pk)||"[]"));
       const stale=[...imgs.have].filter(x=>!imgs.used.has(x)&&!prev.has(x)); if(stale.length) ghDeleteMany(cfg,stale).catch(()=>{});
       localStorage.setItem(pk,JSON.stringify([...imgs.used])); }catch(e){}
-    await ghPutFile(cfg,"pack-stamp.json",JSON.stringify({exportedAt:pack.exportedAt,project:pack.project,n:openN}),"Pack stamp");
+    await ghPutFile(cfg,repoP("pack-stamp.json"),JSON.stringify({exportedAt:pack.exportedAt,project:pack.project,n:openN}),"Pack stamp");
     try{ localStorage.setItem("pmLastExport",String(Date.now())); localStorage.setItem(key,sig); }catch(e){} _expBackoffUntil=0;
     st.textContent="✓ Phone up to date — "+openN+" action"+(openN===1?"":"s")+", "+new Date().toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
   }catch(err){
@@ -2187,7 +2803,7 @@ async function exportMobile(manual){
   _expBusy=false; if(btn) btn.disabled=false;
   if(_expAgain){ _expAgain=false; scheduleAutoExport(1500); }
 }
-document.getElementById("btnMobileExport").addEventListener("click",()=>exportMobile(true));
+document.getElementById("btnMobileExport")?.addEventListener("click",()=>exportMobile(true));
 /* ---- Pending actions report: a print-ready document (Save as PDF from the print dialog).
    Cover + linked table of contents + one section per open/on-hold action; a fixed
    "Back to contents" link repeats on every printed page. ---- */
@@ -2196,6 +2812,7 @@ async function openPendingReport(){
   const w=window.open("","_blank");   // opened inside the click so no popup blocker interferes
   if(!w){ alert("Your browser blocked the report window — allow pop-ups for this site and try again."); return; }
   w.document.write('<!doctype html><title>Building report…</title><body style="font:15px system-ui;padding:40px;color:#333">Building the report… preparing '+pend.length+' action'+(pend.length===1?'':'s')+'.</body>');
+  if(isOnline()) await ensurePreviews(pend.flatMap(a=>actPhotos(a)));
   const proj=String(loadedJsonName||folderName||"ActionMap").replace(/\.json$/i,"");
   const now=new Date(), nOpen=pend.filter(a=>!a.hold).length, nHold=pend.length-nOpen;
   const fmtD=t=>t?new Date(t).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}):"";
@@ -2449,8 +3066,10 @@ async function exportActionsXlsx(){
     done("\u2713 saved "+order.length+" action"+(order.length===1?"":"s"),2600); return;
   }catch(err){ done("failed: "+(err&&err.message||err),6000); }
 }
-document.getElementById("setGhRepo").addEventListener("change",e=>{ try{ localStorage.setItem("pmGhRepo",e.target.value.trim()); }catch(err){} });
+document.getElementById("setGhRepo").addEventListener("change",e=>{ try{ localStorage.setItem("pmGhRepo",e.target.value.trim()); }catch(err){} _branch=null; _imgHave=null; syncMenus(); });
+document.getElementById("saveStatus").addEventListener("click",()=>{ if(isOnline()&&ON.live&&!canEdit()) openSettings(); });
 document.getElementById("setGhToken").addEventListener("change",e=>{ try{ localStorage.setItem("pmGhToken",e.target.value.trim()); }catch(err){}
+  ON.denied=false; syncMenus(); renderSaveStatus(); renderProjHead(); if(isOnline()){ onlinePoll(); if(canEdit()){ pumpUploads(); scheduleOnlineSave(500); } }   // a token turns view-only into editing straight away
   ghFindRepo().then(r=>{ const el=document.getElementById("setGhRepo"); if(r&&el&&!el.value) el.value=r; }); });
 document.getElementById("setUserName").addEventListener("input",e=>{ try{ localStorage.setItem("pmUserName",e.target.value.trim()); }catch(err){} });
 document.getElementById("setActMap").addEventListener("change",e=>{ actOnlyMap=e.target.checked; buildCluster(); renderClusters(); updateGallery(); renderActions(); persistState(); });
@@ -2496,7 +3115,7 @@ map.on("contextmenu",e=>{
 /* file loading */
 const IMG_RE=/\.(jpe?g|jfif|png|tiff?|heic|heif|webp|avif|gif|bmp)$/i;
 const hasFSA="showDirectoryPicker" in window;
-document.getElementById("btnFolder").addEventListener("click",openFolder);
+document.getElementById("btnFolder")?.addEventListener("click",openFolder);
 document.getElementById("folderInput").addEventListener("change",async e=>{
   const fl=Array.from(e.target.files||[]);
   const items=fl.filter(f=>IMG_RE.test(f.name)).map(f=>({name:f.name,path:f.webkitRelativePath||f.name,getFile:async()=>f}));
@@ -2621,7 +3240,7 @@ function renderProjHead(){
   const has=!!(loadedJsonName||folderName||photos.length||projLoadMsg);
   projHeadEl.classList.toggle("show",has); if(!has) return;
   projHeadEl.querySelector(".ph-name").textContent=loadedJsonName||folderName||"ActionMap";
-  projHeadEl.querySelector(".ph-saved").textContent=lastSavedAt?(" (last saved "+fmtDate(lastSavedAt)+")"):" (not saved yet)";
+  projHeadEl.querySelector(".ph-saved").textContent=isOnline()?(ON.live&&!canEdit()?" (view only)":""):lastSavedAt?(" (last saved "+fmtDate(lastSavedAt)+")"):" (not saved yet)";
   projHeadEl.querySelector(".ph-load").textContent=projLoadMsg?(" — "+projLoadMsg):"";
   projHeadEl.classList.toggle("loading",!!projLoadMsg);
 }
@@ -2676,10 +3295,12 @@ async function ingest(items, append){
    the view flies to the new dot so it's easy to find, and the add is Ctrl+Z-able. */
 async function ingestAdhoc(items){
   if(!items||!items.length) return;
+  if(roBlock()) return;
+  if(!isOnline()&&!photos.length&&!actions.length){ showProjectPicker("Open or create a project first \u2014 photos are added to a project online."); return; }
   const added=(await ingest(items,true))||[];
   if(!added.length){ loadNote("Already in this project — nothing new added"); setTimeout(()=>loadNote(""),2500); return; }
   const c=map.getCenter();
-  for(const p of added){ p.adhoc=true; if(p.lat==null){ p.noGps=true; p.lat=c.lat; p.lng=c.lng; } }
+  for(const p of added){ p.adhoc=true; p.added=Date.now(); if(p.lat==null){ p.noGps=true; p.lat=c.lat; p.lng=c.lng; } }
   pushUndo({addPhotos:added.map(p=>p.id)});
   buildDateFilter(); buildCluster(); renderClusters(); updateStats(); updateGallery(); persistState(); cacheFullSession();
   const geo=added.filter(p=>p.lat!=null);
@@ -2770,6 +3391,7 @@ window.addEventListener("dragleave",e=>{e.preventDefault();if(--dragDepth<=0)dz.
 window.addEventListener("drop",async e=>{
   e.preventDefault();dragDepth=0;dz.classList.remove("show");
   if(!dragHasFiles(e))return;   // an internal drag that missed its target — not an upload
+  if(roBlock()) return;
   const dt=e.dataTransfer;
   const items=dt.items?Array.from(dt.items):[];
   const useFSA=hasFSA&&items[0]&&items[0].getAsFileSystemHandle;
@@ -2779,15 +3401,15 @@ window.addEventListener("drop",async e=>{
   if(handlePs){
     const handles=(await Promise.all(handlePs.map(p=>p.catch(()=>null)))).filter(Boolean);
     const dirs=handles.filter(h=>h.kind==="directory"), fileHandles=handles.filter(h=>h.kind==="file");
-    if(dirs.length===1&&fileHandles.length===0){ const h=dirs[0]; if(!dirHandle){ dirHandle=h; try{await idbSet("dirHandle",h);}catch(er){} folderName=folderName||h.name; } await loadFromHandle(h,true); return; }
+    if(!isOnline()&&dirs.length===1&&fileHandles.length===0){ const h=dirs[0]; if(!dirHandle){ dirHandle=h; try{await idbSet("dirHandle",h);}catch(er){} folderName=folderName||h.name; } await loadFromHandle(h,true); return; }
     const out=[];
     for(const h of fileHandles) out.push({name:h.name,path:h.name,getFile:()=>h.getFile()});
     for(const d of dirs){ for await (const f of walkDir(d,d.name)) if(IMG_RE.test(f.name)) out.push({name:f.name,path:f.path,getFile:()=>f.handle.getFile()}); }
     const flt=out.filter(o=>IMG_RE.test(o.name));
-    if(dirs.length) ingest(flt,true); else ingestAdhoc(flt);   // folder drops = bulk load; loose files = place, focus, undoable
+    if(dirs.length&&!isOnline()) ingest(flt,true); else ingestAdhoc(flt);   // online: a dropped folder is just a pile of photos to add
     return;
   }
-  if(entries&&entries.some(Boolean)){ const its=await entriesToItems(entries); if(entries.some(en=>en&&en.isDirectory)) ingest(its,true); else ingestAdhoc(its); return; }
+  if(entries&&entries.some(Boolean)){ const its=await entriesToItems(entries); if(entries.some(en=>en&&en.isDirectory)&&!isOnline()) ingest(its,true); else ingestAdhoc(its); return; }
   const fl=files.filter(f=>IMG_RE.test(f.name)).map(f=>({name:f.name,path:f.name,getFile:async()=>f})); ingestAdhoc(fl);
 });
 /* Paste an image (Ctrl+V) anywhere on the desktop app: it becomes a photo like any other. */
@@ -2798,6 +3420,7 @@ document.addEventListener("paste",e=>{
   const pf=Array.from((e.clipboardData&&e.clipboardData.files)||[]).filter(f=>/^image\//i.test(f.type||"")||IMG_RE.test(f.name||""));
   if(!pf.length) return;
   e.preventDefault();
+  if(roBlock()) return;
   const d=new Date(), pad=n=>String(n).padStart(2,"0");
   const base="Pasted "+d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+" "+pad(d.getHours())+"."+pad(d.getMinutes())+"."+pad(d.getSeconds());
   const items=pf.map((f,i)=>{
@@ -2886,7 +3509,7 @@ document.getElementById("altBlank").addEventListener("change",e=>{ altBlank=e.ta
 let altAutoBusy=false;
 async function autoReadAltitudes(){
   if(altAutoBusy) return;
-  const targets=photos.filter(p=>p.alt==null&&!p._altTried);
+  const targets=photos.filter(p=>p.alt==null&&!p._altTried&&!p.h);   // online photos had theirs read when they were added
   if(!targets.length) return;
   altAutoBusy=true;
   let found=0;
@@ -3009,7 +3632,7 @@ let galleryLimit=GALLERY_CHUNK;
 function updateGallery(keepLimit){
   if(!keepLimit) galleryLimit=GALLERY_CHUNK;
   const body=document.getElementById("galleryBody");
-  if(!photos.length){ body.innerHTML='<div class="empty-msg"><b>No photos in this project.</b><br/>Open a folder, or paste / drop images onto the map.</div>'; document.getElementById("galCount").textContent="0 shown"; document.getElementById("stView").textContent="0"; renderMapTags(); return; }
+  if(!photos.length){ body.innerHTML='<div class="empty-msg"><b>No photos in this project.</b><br/>Paste (Ctrl+V), drag photos onto the map, or use File → Add photos…</div>'; document.getElementById("galCount").textContent="0 shown"; document.getElementById("stView").textContent="0"; renderMapTags(); return; }
   const bounds=map.getBounds(), center=map.getCenter();
   const spatial=boxBounds||bounds;
   const passName=p=>passSearch(p)&&passTags(p)&&passActs(p)&&passAlt(p)&&(!actionFilter||actionFilter.has(p.id));   // shared with the map so gallery + dots stay in sync; actionFilter narrows to the selected actions' photos
@@ -3027,7 +3650,7 @@ function updateGallery(keepLimit){
   if(openP){ let i=lightboxList.indexOf(openP); if(i<0){ lightboxList=[openP].concat(lightboxList); i=0; } lightboxIndex=i; }
   const anyImg=photos.some(p=>p.thumb);
   if(!anyImg){
-    body.innerHTML='<div class="empty-msg"><b>Locations loaded without images.</b><br/>Open the source folder or a saved .JSON to see thumbnails.</div>';
+    body.innerHTML=(isOnline()?'<div class="empty-msg"><b>Loading photos\u2026</b></div>':'<div class="empty-msg"><b>Locations loaded without images.</b><br/>Open the source folder or a saved .JSON to see thumbnails.</div>');
     document.getElementById("galCount").textContent="0 shown"; document.getElementById("stView").textContent=inView.length; renderMapTags(); return;
   }
   const inShow=inView.slice(0,galleryLimit);
@@ -3038,7 +3661,7 @@ function updateGallery(keepLimit){
   if(inView.length) html+='<div class="section-label">On Map ('+inView.length+')</div><div class="grid">'+inShow.map(p=>cardHtml(p,false)).join("")+'</div>';
   if(geoShow.length) html+='<div class="section-label">No Location ('+noGeo.length+')</div><div class="grid">'+geoShow.map(p=>cardHtml(p,true)).join("")+'</div>';
   if(hidden>0) html+='<button class="gal-more" id="galMore">Show more ('+hidden.toLocaleString()+' remaining)</button>';
-  if(!html) html='<div class="empty-msg"><b>No photos in this view.</b><br/>Pan or zoom the map, widen the date range, or load another folder.</div>';
+  if(!html) html='<div class="empty-msg"><b>No photos in this view.</b><br/>Pan or zoom the map, or widen the date range.</div>';
   body.innerHTML=html;
   body.querySelectorAll(".card").forEach(el=>{ const p=photoById(Number(el.dataset.id));
     el.addEventListener("click",e=>{
@@ -3099,7 +3722,8 @@ function ensureAnnotThumb(p){
   }).catch(()=>{}).then(()=>annotBusy.delete(p.id));
 }
 function patchThumbEls(p){ const src=thumbSrc(p); if(!src) return;
-  document.querySelectorAll('.card[data-id="'+p.id+'"] img.thumb,.act-cover img[data-cov="'+p.id+'"]').forEach(im=>{ if(im.src!==src) im.src=src; }); }
+  document.querySelectorAll('.card[data-id="'+p.id+'"] img.thumb,.act-cover img[data-cov="'+p.id+'"]').forEach(im=>{ if(im.src!==src) im.src=src; });
+  document.querySelectorAll('.act-cover svg[data-covph="'+p.id+'"]').forEach(sv=>{ const im=document.createElement("img"); im.dataset.cov=p.id; im.src=src; im.alt=""; im.draggable=false; sv.replaceWith(im); }); }   // a cover whose image arrived after the list was drawn
 function cardHtml(p,isNoGeo){
   const sub=p.time?fmtDate(p.time):(p.lat!=null?fmtCoord(p.lat,p.lng):"no metadata");
   const flag=isNoGeo?'<div class="flag">NO GPS</div>':"";
@@ -3238,6 +3862,7 @@ function showPreview(p,keepView){
   let s=p.preview||p.thumb||"";
   lbImg.onload=()=>setupFit(lbImg.naturalWidth,lbImg.naturalHeight,keepView);
   lbImg.src=s; lbRefImg.src=s;
+  if(!p.preview&&p.h) ensurePreview(p).then(()=>{ if(curPhoto()===p&&lb.classList.contains("open")&&!curUrl&&p.preview) showPreview(p,true); });   // online: thumbnail first, the photo a moment later
 }
 function swapViewer(src){
   if(curUrl){ URL.revokeObjectURL(curUrl); curUrl=null; }
@@ -3248,6 +3873,7 @@ function swapViewer(src){
 // Original file without prompting: in-memory file, connected-folder index, or a granted FSA handle.
 async function getOriginalFileSilent(p){
   if(p.file) return p.file;
+  if(p.h){ const b=await getFullBlob(p); return b?new File([b],String(p.name||"photo").replace(/\.[^.]+$/,"")+".jpg",{type:"image/jpeg"}):null; }   // online: the full-size copy in the project
   const idx=fromIndex(p); if(idx){ p.file=idx; return idx; }
   if(!dirHandle){ try{ dirHandle=await idbGet("dirHandle"); }catch(e){} }
   try{ if(dirHandle && (await dirHandle.queryPermission({mode:"read"}))==="granted"){ const f=await resolveFromHandle(p); if(f){ p.file=f; return f; } } }catch(e){}
@@ -3992,6 +4618,7 @@ async function resolveFromHandle(p){
   return null;
 }
 async function fetchOriginal(p){
+  if(isOnline()) return p.h?await getOriginalFileSilent(p):null;   // nothing to connect: everything is online
   // 1. Already-indexed original from a connected folder input.
   const cached=fromIndex(p); if(cached) return cached;
   // 2. Remembered folder handle — re-grants permission with a small Allow dialog (no navigating),
@@ -4031,6 +4658,13 @@ window.addEventListener("mousemove",e=>{ if(!resizing)return; let w=Math.max(240
 window.addEventListener("mouseup",()=>{ if(resizing){resizing=false;document.body.style.userSelect="";persistState();} });
 
 /* file ops */
+document.getElementById("miProjects").addEventListener("click",()=>showProjectPicker());
+document.getElementById("miNewProj").addEventListener("click",newProjectFlow);
+document.getElementById("miShare").addEventListener("click",()=>copyShareLink());
+document.getElementById("miAddPhotos").addEventListener("click",addPhotosFlow);
+document.getElementById("addPhotosInput").addEventListener("change",e=>{ const fs=Array.from(e.target.files||[]).filter(f=>/^image\//i.test(f.type||"")||IMG_RE.test(f.name||"")); e.target.value=""; if(fs.length) ingestAdhoc(fs.map(f=>({name:f.name,path:f.name,getFile:async()=>f}))); });
+document.getElementById("miBackup").addEventListener("click",downloadBackup);
+document.getElementById("miMigrate").addEventListener("click",migrateToOnline);
 document.getElementById("btnClear").addEventListener("click",async()=>{
   if(photos.length||actions.length){
     const nm=loadedJsonName||folderName||"this project";
@@ -4042,13 +4676,16 @@ document.getElementById("btnClear").addEventListener("click",async()=>{
   closeProject();
 });
 function closeProject(){   // the app forgets the project file + folder, so nothing typed afterwards can autosave over it
+  if(isOnline()){ clearTimeout(ON.saveT); if(onDirty()&&canEdit()) onlineSave(); Object.assign(ON,{pid:null,live:false,base:null,sha:null}); try{ localStorage.removeItem("pmProject"); }catch(e){}
+    try{ const u=new URL(location.href); u.searchParams.delete("p"); history.replaceState(null,"",u.toString()); }catch(e){}
+    clearAll(true); loadedJsonName=""; renderSaveStatus(); renderProjHead(); syncMenus(); showProjectPicker(); return; }
   clearAll(true);
   jsonHandle=null; saveFileHandle=null; loadedJsonName=""; folderName=""; dirHandle=null; fileLoadedOnce=false;
   try{ idbSet("jsonHandle",null); idbSet("dirHandle",null); }catch(e){}
   setSaveStatus("","");
 }
 // Refresh = re-scan the remembered main photos folder: incremental add + removal sync.
-document.getElementById("btnRefresh").addEventListener("click",async()=>{
+document.getElementById("btnRefresh")?.addEventListener("click",async()=>{
   if(photos.length&&!(await askYesNo("Re-scan the photo folder?","New photos in the folder are added to the map, and photos whose files were deleted or moved out of the folder are REMOVED from the map (with their notes and action links).\n\nYou can undo the removals with Ctrl+Z.","Yes, re-scan",true))) return;
   refreshFolder();
 });
@@ -4073,7 +4710,7 @@ function clearAll(redraw){
   dateMin=dateMax=dateLo=dateHi=null; document.getElementById("datebar").classList.add("hidden");
   altMinV=altMaxV=altLo=altHi=null; document.getElementById("altbar").classList.add("hidden");
   if(redraw){ updateStats(); document.getElementById("galCount").textContent="0 shown"; document.getElementById("stView").textContent="0";
-    document.getElementById("galleryBody").innerHTML='<div class="empty-msg"><b>Map cleared.</b><br/>Open a folder to load photos again.</div>'; persistState(); }
+    document.getElementById("galleryBody").innerHTML='<div class="empty-msg"><b>Project closed.</b><br/>Open one from File → Projects…</div>'; persistState(); }
 }
 /* ---- Auto-save: tiny metadata-only writes straight onto the loaded .json, no button needed ----
    The .json holds folders/locations/dates/markup (no embedded photos), so each write is small and
@@ -4092,7 +4729,19 @@ let _saveSt={txt:"",cls:""};
 function setSaveStatus(txt,cls){ _saveSt={txt:txt||"",cls:cls||""}; renderSaveStatus(); }
 function agoText(t){ const s2=Math.max(0,(Date.now()-t)/1000); if(s2<60) return "just now"; const m=Math.round(s2/60); if(m<60) return m+" min"+(m===1?"":"s")+" ago";
   const h=Math.round(m/60); if(h<24) return h+" hr"+(h===1?"":"s")+" ago"; return "on "+new Date(t).toLocaleDateString(undefined,{day:"numeric",month:"short"}); }
-function renderSaveStatus(){ const el=document.getElementById("saveStatus"); if(!el) return; const {txt,cls}=_saveSt;
+function renderSaveStatus(){ const el=document.getElementById("saveStatus"); if(!el) return;
+  if(isOnline()){ let t="",cls="",tip="";
+    const upN=photos.filter(p=>!p.h&&!p._upDead).length;
+    if(!ON.live) t="Opening\u2026";
+    else if(!canEdit()){ t="View only"; tip=ghRaw().token?"This access token can't change "+onRepo()+".":"Add your access token in Tools \u2192 Settings to make changes."; cls="ro"; }
+    else if(ON.wait){ t="GitHub is pacing uploads \u2014 resuming in "+Math.max(1,Math.ceil((ON.wait-Date.now())/60000))+" min"; }
+    else if(upN) t="Uploading "+upN+" photo"+(upN===1?"":"s")+"\u2026";
+    else if(ON.busy) t="Saving\u2026";
+    else if(ON.err){ t="Not saved yet \u2014 retrying"; tip=String(ON.err.message||ON.err); cls="bad"; }
+    else if(ON.at) t="Saved "+agoText(ON.at);
+    else t="Up to date";
+    el.textContent=t; el.title=tip||("Saved online in "+onRepo()); el.className="savestat"+(cls?" "+cls:""); return; }
+  const {txt,cls}=_saveSt;
   let t=""; if(cls==="bad") t="Save failed \u2014 check the project file"; else if(cls==="busy") t="Saving\u2026"; else if(/pending/i.test(txt)) t="Not saved yet \u2014 click anywhere to save";
   else if(lastSavedAt&&(jsonHandle||saveFileHandle)) t="Updated "+agoText(lastSavedAt);
   el.textContent=t; el.className="savestat"+(cls?" "+cls:""); }
@@ -4156,7 +4805,7 @@ async function repoUploadByName(p){
   return _upList.find(f=>origBase(f.split("/").pop())===b)||null;
 }
 async function healMissingImages(){
-  if(_healBusy) return; const todo=photos.filter(p=>!p.thumb&&!p._healTried); if(!todo.length) return;
+  if(_healBusy||isOnline()) return; const todo=photos.filter(p=>!p.thumb&&!p._healTried); if(!todo.length) return;
   _healBusy=true; let fixed=0;
   try{
     for(const p of todo){ p._healTried=true;
@@ -4220,7 +4869,7 @@ async function adoptNewJson(){
   } else downloadJson(serializeMeta(),suggested);
 }
 // Save = flush the auto-save immediately onto the current file (or pick one). Auto-save means it's optional.
-document.getElementById("btnSave").addEventListener("click",async()=>{
+document.getElementById("btnSave")?.addEventListener("click",async()=>{
   if(!photos.length){ alert("Nothing to save yet."); return; }
   if(!jsonHandle){ adoptNewJson(); return; }
   if(autoDisabled){ autoDisabled=false; }   // Save = user explicitly retrying; clear the paused state and try once
@@ -4234,9 +4883,9 @@ document.getElementById("btnSave").addEventListener("click",async()=>{
   }
   // unchanged / saved / busy(after retry) -> no alert
 });
-document.getElementById("btnSaveAs").addEventListener("click",adoptNewJson);
+document.getElementById("btnSaveAs")?.addEventListener("click",adoptNewJson);
 function downloadJson(data,name){ const blob=new Blob([data],{type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=name||((folderName||"photomap")+".json"); a.click(); setTimeout(()=>URL.revokeObjectURL(url),500); }
-document.getElementById("btnOpenJson").addEventListener("click",async()=>{
+document.getElementById("btnOpenJson")?.addEventListener("click",async()=>{
   if((photos.length||actions.length)&&!(await askYesNo("Open a different project?","\u201c"+(loadedJsonName||folderName||"The current project")+"\u201d will be closed (it's already saved) and replaced on screen by the project you pick.","Yes, choose a project"))) return;
   if(hasFSA&&window.showOpenFilePicker){
     try{ const [h]=await window.showOpenFilePicker({types:[{description:"JSON",accept:{"application/json":[".json"]}}]}); saveFileHandle=h; jsonHandle=h; loadedJsonName=h.name; try{await idbSet("jsonHandle",h);}catch(e){} const f=await h.getFile(); etaStart("json",Math.max(0.05,(f.size||1e6)/1048576),"Loading — reading "+(h.name||".json")+"…"); loadStateText(await f.text()); etaEnd(); fileLoadedOnce=true; lastWrittenSig=metaSignature(); setSaveStatus("Saved","ok"); armFileSync(); }
@@ -4245,18 +4894,19 @@ document.getElementById("btnOpenJson").addEventListener("click",async()=>{
 });
 document.getElementById("jsonInput").addEventListener("change",async e=>{ const f=e.target.files[0]; if(f){ loadedJsonName=f.name; loadStateText(await f.text()); } });
 
-function serializeState(includeImages){
-  return {
-    version:3, folderName, savedAt:new Date().toISOString(), nextActId, log:projLog,
-    actions: actions.map(a=>{ const o={id:a.id,text:a.text,done:!!a.done,created:a.created||null,doneAt:a.doneAt||null}; if(a.hold)o.hold=true; if(a.fu)o.fu=a.fu; if(a.loc)o.loc=a.loc; if(a.steps&&a.steps.length)o.steps=a.steps.map(stepCopy); if(Array.isArray(a.porder)&&a.porder.length){o.porder=a.porder; o.porderK=a.porder.map(id=>{const ph=photoById(id);return ph?metaKey(ph):null;}).filter(Boolean);} return o; }),
-    settings:{ baseLayer: map.hasLayer(google)?"google":map.hasLayer(esri)?"esri":"none", showNoGeo, sortBy:currentSort,
+function uiSettings(){ return { baseLayer: map.hasLayer(google)?"google":map.hasLayer(esri)?"esri":"none", showNoGeo, sortBy:currentSort,
       thumb:getComputedStyle(document.documentElement).getPropertyValue("--thumb").trim(),
       sideW:getComputedStyle(document.documentElement).getPropertyValue("--side-w").trim(),
       actW:getComputedStyle(document.documentElement).getPropertyValue("--act-w").trim()||null,
       covW:getComputedStyle(document.documentElement).getPropertyValue("--cov-w").trim()||null, dateLo, dateHi,
       box: boxBounds?[boxBounds.getSouth(),boxBounds.getWest(),boxBounds.getNorth(),boxBounds.getEast()]:null,
       recentTags: recentTags.slice(0,10), rightTab, actShowOpenOnly, hideDoneSteps, actOnlyMap, altLo, altHi, altBlank, dateBlank, clusterSens,
-      view:{ center:[map.getCenter().lat, map.getCenter().lng], zoom:map.getZoom() } },
+      view:{ center:[map.getCenter().lat, map.getCenter().lng], zoom:map.getZoom() } }; }   // this device's view of the project (layout, filters, map view) — never shared
+function serializeState(includeImages){
+  return {
+    version:3, folderName, savedAt:new Date().toISOString(), nextActId, log:projLog,
+    actions: actions.map(a=>{ const o={id:a.id,text:a.text,done:!!a.done,created:a.created||null,doneAt:a.doneAt||null}; if(a.hold)o.hold=true; if(a.fu)o.fu=a.fu; if(a.loc)o.loc=a.loc; if(a.steps&&a.steps.length)o.steps=a.steps.map(stepCopy); if(Array.isArray(a.porder)&&a.porder.length){o.porder=a.porder; o.porderK=a.porder.map(id=>{const ph=photoById(id);return ph?metaKey(ph):null;}).filter(Boolean);} return o; }),
+    settings:uiSettings(),
     photos: photos.map(p=>{ const o={path:p.path,name:p.name,lat:p.lat,lng:p.lng,time:p.time,dir:p.dir,size:p.size,isHeic:p.isHeic};
       if(Array.isArray(p.paths)&&(p.paths.length!==1||p.paths[0]!==p.path))o.paths=p.paths;   // physical locations (incl. empty when pruned from disk)
       o.vpaths=Array.isArray(p.vpaths)?p.vpaths:[];   // always written: a missing field means 'legacy file' to the loader, which would reclassify real copies as tags
@@ -4301,13 +4951,17 @@ function applyState(st){
   { const live=new Set(actions.map(a=>a.id)); for(const ph of photos) if(Array.isArray(ph.acts)&&ph.acts.some(id=>!live.has(id))) ph.acts=ph.acts.filter(id=>live.has(id)); }   // drop links to actions that no longer exist
   migrateActNotes();
   if(lastFullCache) overlayImagesFromCache(lastFullCache);   // the .json is metadata-only — fill thumbs/previews back in from the browser image cache
-  const s=st.settings||{};
+  applyUiSettings(st.settings||{});
+  maybeOfferReconnect(); cacheFullSession(); renderProjHead();
+  setTimeout(autoReadAltitudes,800);
+}
+function applyUiSettings(s){ s=s||{};
   if(s.thumb){ document.documentElement.style.setProperty("--thumb",s.thumb); document.getElementById("thumbSize").value=parseInt(s.thumb)||120; }
   if(s.sideW) document.documentElement.style.setProperty("--side-w",s.sideW);
   else if(s.galleryW) document.documentElement.style.setProperty("--side-w",s.galleryW);   // older files: adopt the gallery width as the sidebar width
   if(s.actW) document.documentElement.style.setProperty("--act-w",s.actW);
   if(s.covW) document.documentElement.style.setProperty("--cov-w",s.covW);
-  if(s.baseLayer==="esri"){ map.removeLayer(google); esri.addTo(map); } else if(s.baseLayer==="none"){ map.removeLayer(google); }
+  if(s.baseLayer==="esri"){ map.removeLayer(google); esri.addTo(map); } else if(s.baseLayer==="none"){ map.removeLayer(google); map.removeLayer(esri); } else if(s.baseLayer==="google"&&!map.hasLayer(google)){ map.removeLayer(esri); google.addTo(map); }
   showNoGeo=!!s.showNoGeo; document.getElementById("showNoGeo").checked=showNoGeo;
   if(Array.isArray(s.recentTags)) recentTags=s.recentTags.slice(0,10);
   actShowOpenOnly=!!s.actShowOpenOnly; hideDoneSteps=s.hideDoneSteps!==false; actOnlyMap=!!s.actOnlyMap; setTab(s.rightTab==="gallery"?"gallery":"photo"); renderActions();
@@ -4323,8 +4977,6 @@ function applyState(st){
   buildCluster(); renderClusters(); updateStats(); updateGallery(); map.invalidateSize();
   if(s.view && Array.isArray(s.view.center)) map.setView(s.view.center, (s.view.zoom!=null?s.view.zoom:map.getZoom()));
   else fitToPhotos();
-  maybeOfferReconnect(); cacheFullSession(); renderProjHead();
-  setTimeout(autoReadAltitudes,800);
 }
 /* Folder membership + markup are lightweight and are autosaved (lastState) on every change,
    even when the heavy image Save fails or goes stale. These helpers let us re-apply that fresh
@@ -4353,11 +5005,11 @@ async function idbSet(k,v){ const db=await idbOpen(); return new Promise((res,re
 async function idbGet(k){ const db=await idbOpen(); return new Promise((res,rej)=>{ const t=db.transaction("kv","readonly"); const r=t.objectStore("kv").get(k); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
 async function idbDel(k){ const db=await idbOpen(); return new Promise((res,rej)=>{ const t=db.transaction("kv","readwrite"); t.objectStore("kv").delete(k); t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); }
 let persistTimer=null;
-function persistState(){ clearTimeout(persistTimer); persistTimer=setTimeout(()=>{ idbSet("lastState",serializeState(false)).catch(()=>{}); scheduleAutoSave(); scheduleAutoExport(); },400); }   // every change funnels here — the phone pack follows (change-detected)
+function persistState(){ clearTimeout(persistTimer); persistTimer=setTimeout(()=>{ if(isOnline()){ onLocalChanged(); return; } idbSet("lastState",serializeState(false)).catch(()=>{}); scheduleAutoSave(); scheduleAutoExport(); },400); }   // online: every change is saved to the project (merged with everyone else's)   // every change funnels here — the phone pack follows (change-detected)
 // Cache the image-bearing session to IndexedDB (browser-local, no .crswap) so reopen shows photos
 // instantly without reconnecting the folder. The .json file itself stays small (metadata only).
 let fullCacheTimer=null;
-function cacheFullSession(){ clearTimeout(fullCacheTimer); fullCacheTimer=setTimeout(()=>{ try{ if(photos.some(p=>p.thumb)){ const st=serializeState(true); lastFullCache=st; idbSet("lastFull",st).catch(()=>{}); imgStoreSaveAll(); } }catch(e){} },1500); }   // keep the in-memory cache reference fresh so a later Open .JSON in the same session can restore images
+function cacheFullSession(){ if(isOnline()) return; clearTimeout(fullCacheTimer); fullCacheTimer=setTimeout(()=>{ try{ if(photos.some(p=>p.thumb)){ const st=serializeState(true); lastFullCache=st; idbSet("lastFull",st).catch(()=>{}); imgStoreSaveAll(); } }catch(e){} },1500); }   // keep the in-memory cache reference fresh so a later Open .JSON in the same session can restore images
 
 /* banner */
 function showBanner(html,action,label){ document.getElementById("rcMsg").innerHTML=html; bannerAction=action; const b=document.getElementById("btnReconnect"); b.textContent=label||"Load"; b.style.display=action?"":"none"; document.getElementById("reconnect").classList.add("show"); }
@@ -4444,11 +5096,11 @@ function isMobile(){ try{ return matchMedia("(pointer:coarse)").matches && Math.
 let mPack=null, mGeo=null, mMiniMap=null, mInsetMap=null, mInsetMapL=null, mInsetCur=null, mHomeMap=null, mHomeBB=null;
 let _mpRaw=null,_mpObj=null;
 function mPend(){   // parsed once per actual change (renders used to re-parse it hundreds of times)
-  let raw; try{ raw=localStorage.getItem("pmField")||"{}"; }catch(e){ return {}; }
+  let raw; try{ raw=localStorage.getItem(mFieldKey())||"{}"; }catch(e){ return {}; }
   if(raw===_mpRaw&&_mpObj) return _mpObj;
   try{ _mpObj=JSON.parse(raw)||{}; }catch(e){ _mpObj={}; } _mpRaw=raw; return _mpObj; }
 let _mpQuiet=false;
-function mPendSave(o){ try{ const raw=JSON.stringify(o); localStorage.setItem("pmField",raw); _mpRaw=raw; _mpObj=o; }catch(e){} if(!_mpQuiet&&typeof mAutoSendSoon==="function") mAutoSendSoon(); }   // every edit auto-syncs
+function mPendSave(o){ try{ const raw=JSON.stringify(o); localStorage.setItem(mFieldKey(),raw); _mpRaw=raw; _mpObj=o; }catch(e){} if(!_mpQuiet&&typeof mAutoSendSoon==="function") mAutoSendSoon(); }   // every edit auto-syncs
 function mUserName(raw){ let n=""; try{ n=(localStorage.getItem("pmUserName")||"").trim(); }catch(e){} return raw?n:(n||"Phone"); }
 function mDeviceId(){ let d=null; try{ d=localStorage.getItem("pmDevice"); if(!d){ d="d"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); localStorage.setItem("pmDevice",d); } }catch(e){} return d||"d0"; }
 function mUid(){ return "u"+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
@@ -4486,11 +5138,11 @@ let mUndoStack=[],mRedoStack=[],mRerender=null;
 function mUpdUndoUI(){ const u=document.getElementById("mUndoB"),r=document.getElementById("mRedoB");
   if(u) u.classList.toggle("off",!mUndoStack.length);
   if(r) r.classList.toggle("off",!mRedoStack.length); }
-function mMutate(fn){ const before=localStorage.getItem("pmField")||"{}"; fn(); mUndoStack.push(before); if(mUndoStack.length>100) mUndoStack.shift(); mRedoStack.length=0; mUpdUndoUI(); }
+function mMutate(fn){ if(mRoBlock()) return; const before=localStorage.getItem(mFieldKey())||"{}"; fn(); mUndoStack.push(before); if(mUndoStack.length>100) mUndoStack.shift(); mRedoStack.length=0; mUpdUndoUI(); }
 let mSoftRefresh=null;   // detail screens register an in-place refresher so undo/ticks skip full rebuilds (and map reloads)
 function mRestoreKeepMeta(raw){ const cur=mPend(); let o={}; try{ o=JSON.parse(raw)||{}; }catch(e){} for(const k of ["sentAt","sentUpd","sentSnap"]){ if(cur[k]!==undefined) o[k]=cur[k]; else delete o[k]; } mPendSave(o); }
-function mUndo(){ if(!mUndoStack.length) return; mRedoStack.push(localStorage.getItem("pmField")||"{}"); mRestoreKeepMeta(mUndoStack.pop()); if(!(mSoftRefresh&&mSoftRefresh())&&mRerender) mRerender(); }
-function mRedo(){ if(!mRedoStack.length) return; mUndoStack.push(localStorage.getItem("pmField")||"{}"); mRestoreKeepMeta(mRedoStack.pop()); if(!(mSoftRefresh&&mSoftRefresh())&&mRerender) mRerender(); }
+function mUndo(){ if(!mUndoStack.length) return; mRedoStack.push(localStorage.getItem(mFieldKey())||"{}"); mRestoreKeepMeta(mUndoStack.pop()); if(!(mSoftRefresh&&mSoftRefresh())&&mRerender) mRerender(); }
+function mRedo(){ if(!mRedoStack.length) return; mUndoStack.push(localStorage.getItem(mFieldKey())||"{}"); mRestoreKeepMeta(mRedoStack.pop()); if(!(mSoftRefresh&&mSoftRefresh())&&mRerender) mRerender(); }
 function mUndoHtml(){ return '<button class="m-chip m-ub'+(mUndoStack.length?'':' off')+'" id="mUndoB" type="button" aria-label="Undo">↺</button><button class="m-chip m-ub'+(mRedoStack.length?'':' off')+'" id="mRedoB" type="button" aria-label="Redo">↻</button>'; }
 function mWireUndo(){ const u=document.getElementById("mUndoB"),r=document.getElementById("mRedoB");
   if(u) u.addEventListener("click",e=>{ e.stopPropagation(); mUndo(); });
@@ -4555,7 +5207,13 @@ function mInline(el,val,onCommit){
   ["click","touchstart","pointerdown"].forEach(ev=>inp.addEventListener(ev,e=>e.stopPropagation()));
   inp.focus(); inp.select();
 }
+let mPid=null;   // the project this phone is working in (from the shared link, remembered)
+function mP(x){ return mPid?"projects/"+mPid+"/"+x:x; }
+function mFieldKey(){ return "pmField"+(mPid?":"+mPid:""); }
+function mRO(){ return !ghRaw().token; }
+function mRoBlock(){ if(!mRO()) return false; mToast("View only \u2014 add your access token (tap the project name \u2192 Settings) to make changes"); return true; }
 async function ghGetRaw(cfg,path){
+  if(!cfg.token){ const r=await fetch("https://raw.githubusercontent.com/"+cfg.repo+"/HEAD/"+path+"?t="+Date.now(),{cache:"no-store"}); if(r.status===404) return null; if(!r.ok) throw new Error("Couldn't read the project ("+r.status+") \u2014 is the data repo public?"); return await r.text(); }   // viewing needs no token
   const r=await fetch("https://api.github.com/repos/"+cfg.repo+"/contents/"+path+"?t="+Date.now(),{headers:Object.assign(ghHeaders(cfg.token),{Accept:"application/vnd.github.raw+json"})});
   if(r.status===404) return null;
   if(!r.ok) throw new Error("GitHub says "+r.status+(r.status===401?" — token rejected":""));
@@ -4581,7 +5239,7 @@ function mShowSetup(msg){
   const g=ghRaw();
   mScr('<div class="m-head"><div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div></div>'
     +'<div class="m-body"><div class="m-sec"><div class="m-lab">DATA REPOSITORY</div><input class="m-in" id="mRepo" value="'+esc(g.repo)+'" placeholder="found automatically from the token" autocomplete="off" />'
-    +'<div class="m-lab">ACCESS TOKEN</div><input class="m-in" id="mTok" type="password" placeholder="github_pat_…" value="'+esc(g.token)+'" />'
+    +'<div class="m-lab">ACCESS TOKEN (TO EDIT \u2014 LEAVE EMPTY TO JUST VIEW)</div><input class="m-in" id="mTok" type="password" placeholder="github_pat_…" value="'+esc(g.token)+'" />'
     +'<div class="m-lab">YOUR NAME (FOR THE CHANGE HISTORY)</div><input class="m-in" id="mWhoIn" placeholder="e.g. Sam" value="'+esc(mUserName(true))+'" autocomplete="off" />'
     +(msg?'<div class="m-err">'+esc(msg)+'</div>':'')
     +'</div></div>'
@@ -4591,15 +5249,32 @@ function mShowSetup(msg){
     mLoadPack();
   });
 }
+/* Which project this phone works in: tap the project name on the list screen. */
+async function mChooseProject(list){
+  const g=ghRaw(), cfg={token:g.token,repo:g.repo};
+  if(!list){ try{ const t=await ghGetRaw(cfg,"projects.json"); const j=t?JSON.parse(t):null; list=(j&&Array.isArray(j.projects))?j.projects:[]; }catch(e){ list=[]; } }
+  mScr('<div class="m-head"><div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div></div>'
+    +'<div class="m-body"><div class="m-lab">PROJECTS IN '+esc(cfg.repo||"")+'</div>'
+    +(list.length?list.map(p=>'<button class="m-btn ghost m-pj" data-id="'+esc(p.id)+'" style="text-align:left;padding:0 16px;'+(p.id===mPid?'border-color:var(--accent);':'')+'">'+esc(p.name||p.id)+'</button>').join(''):'<div class="m-note" style="padding-top:20px">No projects found.</div>')
+    +'</div><div class="m-foot"><button class="m-btn ghost" id="mPjSet">Settings</button></div>');
+  document.querySelectorAll(".m-pj").forEach(b=>b.addEventListener("click",()=>{ const id=b.dataset.id;
+    if(id!==mPid){ mPid=id; try{ localStorage.setItem("pmProject",id); }catch(e){} mPack=null; mPackNext=null; mPackStale=false; _mpRaw=null; _mpObj=null; mUndoStack.length=0; mRedoStack.length=0; }
+    mLoadPack(); }));
+  document.getElementById("mPjSet").addEventListener("click",()=>mShowSetup());
+}
 async function mLoadPack(silent){
-  if(!ghCfg().token&&ghRaw().token) await ghFindRepo();   // token saved but no repo: look it up
-  const cfg=ghCfg();
-  if(!cfg.token){ mShowSetup(ghRaw().token?"Couldn't find the data repository for this token \u2014 type it in (owner/name).":""); return; }
+  if(!ghRaw().repo&&ghRaw().token) await ghFindRepo();   // token saved but no repo: look it up
+  const g=ghRaw(), cfg={token:g.token,repo:g.repo};
+  if(!cfg.repo){ mShowSetup(g.token?"Couldn't find the data repository for this token \u2014 type it in (owner/name).":"Open the project link you were sent, or enter the data repository."); return; }
+  if(!mPid){ let list=[]; try{ const t=await ghGetRaw(cfg,"projects.json"); const j=t?JSON.parse(t):null; list=(j&&Array.isArray(j.projects))?j.projects:[]; }catch(e){}
+    if(list.length===1){ mPid=list[0].id; try{ localStorage.setItem("pmProject",mPid);
+        if(!localStorage.getItem(mFieldKey())&&localStorage.getItem("pmField")){ localStorage.setItem(mFieldKey(),localStorage.getItem("pmField")); localStorage.removeItem("pmField"); _mpRaw=null; _mpObj=null; } }catch(e){} }   // edits made before the project went online come along
+    else if(list.length>1){ mChooseProject(list); return; } }
   const lst=document.getElementById("mList"), keepScroll=(silent&&lst)?lst.scrollTop:null;
   if(!silent) mScr('<div class="m-head"><div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div></div><div class="m-body"><div class="m-note" style="padding-top:40px">Loading the latest pack…</div></div>');
   try{
-    const text=await ghGetRaw(cfg,"pack.json");
-    if(!text){ if(!silent) mShowSetup("No pack.json in "+cfg.repo+" yet — open the project on the desktop once (it syncs to the phone automatically)."); return; }
+    const text=await ghGetRaw(cfg,mP("pack.json"));
+    if(!text){ if(!silent) mShowSetup(mPid?"This project has no phone copy yet \u2014 open it once on a desktop with the access token (it syncs to phones by itself).":"No pack.json in "+cfg.repo+" yet — open the project on the desktop once (it syncs to the phone automatically)."); return; }
     const np=JSON.parse(text);
     await mHydrateImages(cfg,np,silent);   // previews live as img/<hash>.jpg — fetched once, then from the device cache
     if(silent&&!mSafeToSwap()){ mPackNext=np; mPackStale=true; return; }   // you started something during the download: applied when you're back on the list
@@ -4619,7 +5294,7 @@ async function mHydrateImages(cfg,pk,silent){
   const one=async ph=>{
     if(mImgUrl.has(ph.h)){ ph.img=mImgUrl.get(ph.h); return; }
     let blob=null; try{ blob=await idbGet("pmimg:"+ph.h); }catch(e){}
-    if(!blob){ try{ const b=await ghGetBin(cfg,"img/"+ph.h+".jpg"); if(b){ blob=new Blob([b],{type:"image/jpeg"}); try{ await idbSet("pmimg:"+ph.h,blob); }catch(e){} } }catch(e){} }
+    if(!blob){ try{ const b=await ghGetBin(cfg,mP("img/"+ph.h+".jpg")); if(b){ blob=new Blob([b],{type:"image/jpeg"}); try{ await idbSet("pmimg:"+ph.h,blob); }catch(e){} } }catch(e){} }
     if(blob){ const u=URL.createObjectURL(blob); mImgUrl.set(ph.h,u); ph.img=u; }
   };
   const worker=async()=>{ while(i<need.length){ const ph=need[i++]; await one(ph); done++; if(note) note.textContent="Loading photos\u2026 "+done+" / "+need.length; } };
@@ -4716,7 +5391,7 @@ function mShowList(){
   const mRank=a=>mDone(a)?2:(mHold(a)?1:0);   // ticked on hold / completed sink to the bottom, like the desktop
   const acts=news.concat(packActs.map((a,i)=>({a,i})).sort((x,y)=>(mRank(x.a)-mRank(y.a))||(x.i-y.i)).map(x=>x.a));   // phone-created actions sit on top until they're merged on desktop
   mScr('<div class="m-head"><div style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;"><div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div>'
-    +'<div class="m-sub">'+esc(mPack.project||"")+' · exported '+(mPack.exportedAt?new Date(mPack.exportedAt).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"")+' · app '+new Date(document.lastModified).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})+'</div></div>'
+    +'<div class="m-sub" id="mProjSub" title="Tap to switch project">'+esc(mPack.project||"")+(mRO()?' · <b>view only</b>':'')+' · exported '+(mPack.exportedAt?new Date(mPack.exportedAt).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"")+' · app '+new Date(document.lastModified).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})+'</div></div>'
     +mUndoHtml()+'<button class="m-chip" id="mWho" type="button" title="Your name in the change history">\ud83d\udc64 '+esc(mUserName())+'</button><button class="m-chip" id="mRefresh" type="button">REFRESH</button></div>'
     +'<div class="m-body" id="mList">'
     +'<input class="m-in" id="mNewAct" placeholder="+ New action" autocomplete="off" style="margin-bottom:2px;" />'
@@ -4738,7 +5413,8 @@ function mShowList(){
     +'<div class="m-homemap" id="mHomeMap"></div>');
   document.getElementById("mRefresh").addEventListener("click",()=>{ mCheckFresh(true); mLoadPack(); });
   document.getElementById("mWho").addEventListener("click",()=>{ const v=prompt("Your name, shown next to your changes in the history:",mUserName(true)); if(v!=null){ try{ localStorage.setItem("pmUserName",v.trim()); }catch(e){} mShowList(); } });   // one tap: newest app build + newest pack
-  document.getElementById("mUpBtn").addEventListener("click",()=>{ mUpInput().click(); window.mPickT=Date.now(); });
+  document.getElementById("mProjSub").addEventListener("click",()=>mChooseProject());
+  document.getElementById("mUpBtn").addEventListener("click",()=>{ if(mRoBlock()) return; mUpInput().click(); window.mPickT=Date.now(); });
   document.getElementById("mCamBtn").addEventListener("click",()=>mTakePhoto(null));
   document.getElementById("mCamNewBtn").addEventListener("click",()=>mTakePhoto({newAction:true}));
   document.getElementById("mSendNote").addEventListener("click",()=>{ mSendChanges(); mPackPoll(true); });   // tap = sync now
@@ -4809,7 +5485,7 @@ function mCamInput(){
   return el;
 }
 let mCamLink=null;
-function mTakePhoto(link){ mCamLink=link||null; mCamInput().click(); window.mPickT=Date.now(); }
+function mTakePhoto(link){ if(mRoBlock()) return; mCamLink=link||null; mCamInput().click(); window.mPickT=Date.now(); }
 function mUpInput(){
   let el=document.getElementById("mUpFileG");
   if(el) return el;
@@ -4849,7 +5525,7 @@ function mWatchReceipt(paths,count){   // \u2713 only when the DESKTOP has actua
   mRcptT=setInterval(async()=>{
     if(Date.now()-t0>30*60000){ clearInterval(mRcptT); mRcptT=null; setB("Upload photos to the map"); mToast("Uploaded \u2014 the desktop hasn\u2019t picked them up yet (open the desktop app)"); return; }
     try{
-      const cur=await ghGetRaw(cfg,"uploads.json"); const j=cur?JSON.parse(cur):null;
+      const cur=await ghGetRaw(cfg,mP("uploads.json")); const j=cur?JSON.parse(cur):null;
       const left=new Set(((j&&j.items)||[]).map(it=>it&&it.f));
       if(!paths.some(pp=>left.has(pp))){
         clearInterval(mRcptT); mRcptT=null;
@@ -4929,7 +5605,7 @@ async function mUploadPhotos(files,fixed,link){
   }
 }
 async function mRegisterUploads(cfg,entries){
-  await ghUpdateJson(cfg,"uploads.json",cur=>{ const its=Array.isArray(cur&&cur.items)?cur.items:[]; const have=new Set(its.map(it=>it&&it.f));
+  await ghUpdateJson(cfg,mP("uploads.json"),cur=>{ const its=Array.isArray(cur&&cur.items)?cur.items:[]; const have=new Set(its.map(it=>it&&it.f));
     return {v:1,items:its.concat(entries.filter(en=>!have.has(en.f))),updatedAt:new Date().toISOString()}; },"Photo uploads from phone");
 }
 /* Home-screen map: the bottom half of the actions list. Dots = photos of ACTIVE actions
@@ -4997,7 +5673,7 @@ async function mSendChanges(){
       const nowU=new Set((cur.newSteps||[]).map(x=>x&&x.u).filter(Boolean)), gone=(prev.newSteps||[]).map(x=>x&&x.u).filter(u=>u&&!nowU.has(u));
       if(gone.length) cur.delU=(cur.delU||[]).concat(gone.filter(u=>!(cur.delU||[]).includes(u)));
     } }catch(e){}
-    await ghUpdateJson(cfg,"changes.json",cur=>{   // another phone's batch the desktop hasn't merged yet is folded in, never overwritten
+    await ghUpdateJson(cfg,mP("changes.json"),cur=>{   // another phone's batch the desktop hasn't merged yet is folded in, never overwritten
       if(!cur||!cur.device||cur.device===payload.device||!cur.updatedAt) return payload;
       const out=Object.assign({},payload), ch={};
       for(const k of Object.keys(cur.changes||{})) ch[k]=cur.changes[k];
@@ -5016,10 +5692,10 @@ async function mSendChanges(){
 /* desktop -> phone: watch the tiny stamp; pull the pack when it moves */
 let _mppBusy=false;
 async function mPackPoll(force){
-  const cfg=ghCfg(); if(!cfg.token||!mPack||_mppBusy) return;
+  const g=ghRaw(), cfg={token:g.token,repo:g.repo}; if(!cfg.repo||!mPack||_mppBusy) return;   // viewers get updates too
   _mppBusy=true;
   try{
-    const raw=await ghGetRaw(cfg,"pack-stamp.json"); const st=raw?JSON.parse(raw):null;
+    const raw=await ghGetRaw(cfg,mP("pack-stamp.json")); const st=raw?JSON.parse(raw):null;
     if(st&&st.exportedAt&&st.exportedAt!==mPack.exportedAt){
       const onList=!!document.getElementById("mList"), typing=(()=>{ const i=document.getElementById("mNewAct"); return !!(i&&(i===document.activeElement||i.value)); })();
       if(onList&&!typing&&!mUpBusy&&!document.querySelector(".m-card.mdrag")) await mLoadPack(true);
@@ -5383,6 +6059,8 @@ async function mCheckFresh(force){
 }
 function mobileBoot(){
   document.body.classList.add("mobile");
+  { const qr=urlParam("r"), qp=urlParam("p");   // a shared link carries the data repo and the project
+    try{ if(qr&&/^[\w.-]+\/[\w.-]+$/.test(qr)) localStorage.setItem("pmGhRepo",qr); if(qp) localStorage.setItem("pmProject",qp); mPid=localStorage.getItem("pmProject")||null; }catch(e){} }
   setInterval(()=>{ mPackPoll(); if(mChCount()) mSendChanges(); },30000);   // two-way auto sync heartbeat
   document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"){ mPackPoll(); mSendChanges(); } });
   window.addEventListener("online",()=>{ mPackPoll(); mSendChanges(); });
@@ -5428,16 +6106,16 @@ function linkPendingFu(a){ if(!a||!a.fu) return; const items=[];
   for(const ph of photos) if(ph.pendFu===a.fu){ const before=snapshotTags(ph); if(!Array.isArray(ph.acts)) ph.acts=[]; if(!ph.acts.includes(a.id)) ph.acts.push(a.id); delete ph.pendFu; items.push({id:ph.id,before,after:snapshotTags(ph)}); }
   if(items.length) pushTagAction(items); }
 function resolveLinkAct(it){ if(it.act!=null&&actById(+it.act)) return actById(+it.act); if(it.au){ const a=actions.find(x=>x.fu===it.au); if(a) return a; } return null; }
-function projectReady(){ if(!(loadedJsonName||folderName||photos.length)) return false; return fileLoadedOnce||!jsonHandle; }   // a closed/empty session never takes phone data or publishes a pack   // never merge into a session the .json load is about to replace
+function projectReady(){ if(isOnline()) return ON.live; if(!(loadedJsonName||folderName||photos.length)) return false; return fileLoadedOnce||!jsonHandle; }   // a closed/empty session never takes phone data or publishes a pack   // never merge into a session the .json load is about to replace
 function origBase(n){ return String(n||"").replace(/^\d{8}-\d{6}-\d+-/,"").replace(/\.[^.]+$/,"").toLowerCase(); }   // phone uploads carry a batch prefix; the camera name underneath is the identity
 function sameShot(t1,t2){ if(t1==null||t2==null) return false;   // unknown time: never assume the same shot (a false match would drop a real photo)
   const d=Math.abs(t1-t2); return d<=3000||(d<=14*3600e3&&Math.min(d%3600e3,3600e3-d%3600e3)<=3000); }   // equal times, or equal up to a timezone shift
 async function checkPhotoUploads(){   // polled: phone uploads auto-merge as soon as they land — no click needed
-  if(_upMerging||!projectReady()||userTyping()) return;   // a merge re-renders panels — never under your cursor
+  if(_upMerging||!projectReady()||userTyping()||(isOnline()&&!canEdit())) return;   // a merge re-renders panels — never under your cursor
   const cfg=ghCfg(); if(!cfg.token) return;
   _upMerging=true;
   try{
-    const {obj:man}=await ghReadJson(cfg,"uploads.json");
+    const {obj:man}=await ghReadJson(cfg,repoP("uploads.json"));
     const items=Array.isArray(man&&man.items)?man.items.filter(it=>it&&it.f):[];
     if(!items.length) return;
     loadNote("Photo dump from the phone — downloading "+items.length+" photo"+(items.length===1?"":"s")+"…");
@@ -5493,7 +6171,7 @@ async function checkPhotoUploads(){   // polled: phone uploads auto-merge as soo
     loadNote((added.length||healed.length)?("Added "+added.length+" phone photo"+(added.length===1?"":"s")+(healed.length?(" · moved "+healed.length+" earlier one"+(healed.length===1?"":"s")+" to its real spot"):"")+" — Ctrl+Z undoes"):(handled.size?"Phone upload: those photos are already on the map":""));
     setTimeout(()=>loadNote(""),4000);
     if(handled.size){   // remove ONLY what we handled — anything the phone appended meanwhile survives
-      await ghUpdateJson(cfg,"uploads.json",cur=>{ const its=Array.isArray(cur&&cur.items)?cur.items:[]; const keep=its.filter(it=>!(it&&handled.has(it.f))); if(keep.length===its.length) return null; return {v:1,items:keep,updatedAt:new Date().toISOString()}; },"Phone uploads merged on desktop");   // the phone watches this to show ✓ received
+      await ghUpdateJson(cfg,repoP("uploads.json"),cur=>{ const its=Array.isArray(cur&&cur.items)?cur.items:[]; const keep=its.filter(it=>!(it&&handled.has(it.f))); if(keep.length===its.length) return null; return {v:1,items:keep,updatedAt:new Date().toISOString()}; },"Phone uploads merged on desktop");   // the phone watches this to show ✓ received
       ghDeleteMany(cfg,[...handled].filter(f=>!adopt.has(f)&&(!metaByNameHas(metaByName,f)||onDisk.has(f)))).catch(()=>{});   // originals without a disk copy STAY in the repo (they're the only full-res copy)
     }
   }catch(err){ loadNote("Phone photo merge failed: "+(err&&err.message||err)); setTimeout(()=>loadNote(""),5000); }
@@ -5521,14 +6199,14 @@ function batchDiff(data,last){   // only what changed since the previous merged 
 }
 async function syncTick(){ try{ await checkFieldChanges(); }catch(e){} try{ await checkPhotoUploads(); }catch(e){} try{ await healMissingImages(); }catch(e){} }
 async function checkFieldChanges(){
-  if(_chMerging||!projectReady()||userTyping()) return;
+  if(_chMerging||!projectReady()||userTyping()||(isOnline()&&!canEdit())) return;
   const cfg=ghCfg(); if(!cfg.token) return;
   _chMerging=true;
   try{
-    const {obj:raw}=await ghReadJson(cfg,"changes.json"); if(!raw||!raw.updatedAt) return;   // cleared file: nothing to do
-    const lmKey="pmLastMergedBatch:"+cfg.repo;
+    const {obj:raw}=await ghReadJson(cfg,repoP("changes.json")); if(!raw||!raw.updatedAt) return;   // cleared file: nothing to do
+    const lmKey="pmLastMergedBatch:"+cfg.repo+(ON.pid?"|"+ON.pid:"");
     let lastB=null; try{ lastB=JSON.parse(localStorage.getItem(lmKey)||"null"); }catch(e){}
-    let merged=""; try{ merged=localStorage.getItem("pmMergedChanges")||""; }catch(e){}
+    let merged=""; try{ merged=localStorage.getItem(mfKey())||""; }catch(e){}
     if(raw.updatedAt&&raw.updatedAt===merged) return;   // already merged this batch
     const data=batchDiff(raw,lastB);
     _logBy=String(raw.by||"Phone");   // History credits the phone's user
@@ -5537,9 +6215,9 @@ async function checkFieldChanges(){
     const ordIds=Array.isArray(data.actOrder)?data.actOrder.map(Number).filter(x=>x>0):[];
     const ids=Object.keys(ch), pids=Object.keys(pnCh);
     const cur=loadedJsonName||folderName||"ActionMap";
-    if(raw.project&&raw.project!==cur){ loadNote("Phone changes are for “"+data.project+"” — open that project to merge them"); setTimeout(()=>loadNote(""),6000); return; }   // left in place for the right project
+    if(!isOnline()&&raw.project&&raw.project!==cur){ loadNote("Phone changes are for “"+data.project+"” — open that project to merge them"); setTimeout(()=>loadNote(""),6000); return; }   // left in place for the right project
     if(!ids.length&&!pids.length&&!nActs.length&&ordIds.length<2){   // a resend with nothing new: just acknowledge it
-      try{ localStorage.setItem("pmMergedChanges",raw.updatedAt); localStorage.setItem(lmKey,JSON.stringify(raw)); }catch(e){}
+      try{ localStorage.setItem(mfKey(),raw.updatedAt); localStorage.setItem(lmKey,JSON.stringify(raw)); if(isOnline()) persistState(); }catch(e){}
       scheduleAutoExport(1500); return; }
     for(const id of ids){
       const a=actById(+id); if(!a) continue;
@@ -5615,9 +6293,9 @@ async function checkFieldChanges(){
     }
     if(items.length) pushUndo({items});
     afterFolderChange();
-    try{ localStorage.setItem("pmMergedChanges",raw.updatedAt||String(Date.now())); localStorage.setItem(lmKey,JSON.stringify(raw)); }catch(e){}
+    try{ localStorage.setItem(mfKey(),raw.updatedAt||String(Date.now())); if(isOnline()) persistState(); localStorage.setItem(lmKey,JSON.stringify(raw)); }catch(e){}
     scheduleAutoExport(1500);   // the acknowledgement (pack.mergedFrom) reaches the phone promptly
-    await ghUpdateJson(cfg,"changes.json",now=>{ if(!now||now.updatedAt!==raw.updatedAt) return null;   // the phone sent something newer meanwhile: leave it for the next poll
+    await ghUpdateJson(cfg,repoP("changes.json"),now=>{ if(!now||now.updatedAt!==raw.updatedAt) return null;   // the phone sent something newer meanwhile: leave it for the next poll
       return {v:2,changes:{},photoNotes:{},newActs:[],actOrder:[],clearedAt:new Date().toISOString(),mergedFrom:raw.updatedAt}; },"Field changes merged on desktop");
     const n=ids.length+pids.length+newN+(ordIds.length>1?1:0);
     if(n) loadNote("Merged "+n+" field change"+(n===1?"":"s")+" from the phone ✓ — Ctrl+Z undoes"); setTimeout(()=>loadNote(""),3500);
@@ -5634,6 +6312,32 @@ async function checkFieldChanges(){
   // from automatic low-disk cleanup. Best-effort; ignored where unsupported (e.g. file://).
   try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){}
   try{ if(typeof LZString!=="undefined" && parseShareHash()) return; }catch(e){}
+  /* A link carries the data repo (?r=owner/repo) and the project (?p=id): opening it is all anyone needs. */
+  const qr=urlParam("r"), qp=urlParam("p");
+  if(qr&&/^[\w.-]+\/[\w.-]+$/.test(qr)&&qr!==ghRaw().repo){ try{ localStorage.setItem("pmGhRepo",qr); }catch(e){} }
+  let pid=qp; if(!pid){ try{ pid=localStorage.getItem("pmProject"); }catch(e){} }
+  _legacyAvail=await legacyExists();
+  if(!pid&&_legacyAvail){ await bootLegacy();
+    showBanner('This project is still stored only on this PC. <b>Move it online</b> so it can be shared by link \u2014 every photo comes along.',()=>{ hideBanner(); migrateToOnline(); },"Move online"); }
+  else {
+    if(!onRepo()&&ghRaw().token) await ghFindRepo();
+    if(!pid&&onRepo()){ const list=await readProjects(); if(list.length===1) pid=list[0].id; }
+    if(pid) await openProject(pid); else showProjectPicker();
+  }
+  syncMenus();
+  setInterval(()=>{ if(isOnline()){ onlinePoll(); if(canEdit()){ pumpUploads(); syncTick(); } } else syncTick(); },15000);   // everyone's edits arrive by themselves
+  window.addEventListener("focus",()=>{ if(isOnline()){ onlinePoll(); if(canEdit()) syncTick(); } else syncTick(); });
+  document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&isOnline()) onlinePoll(); });
+  window.addEventListener("beforeunload",e=>{ if(isOnline()&&canEdit()&&(onDirty()||ON.busy||photos.some(p=>!p.h&&!p._upDead))){ onCacheLocal(); e.preventDefault(); e.returnValue=""; } });   // unsaved edits / uploads in flight
+})();
+/* The project stored on this PC before ActionMap went online (kept only until it's moved). */
+async function legacyExists(){
+  try{ if(localStorage.getItem("pmMigrated")) return false; }catch(e){}
+  try{ const a=await idbGet("lastState"); if(a&&((a.photos&&a.photos.length)||(a.actions&&a.actions.length))) return true;
+    const b=await idbGet("lastFull"); if(b&&b.photos&&b.photos.length) return true; if(await idbGet("jsonHandle")) return true; }catch(e){}
+  return false;
+}
+async function bootLegacy(){
   let full=null,last=null;
   try{ full=await idbGet("lastFull"); }catch(e){}
   try{ last=await idbGet("lastState"); }catch(e){}
@@ -5662,13 +6366,11 @@ async function checkFieldChanges(){
   if(dirHandle){ try{ if((await dirHandle.queryPermission({mode:"read"}))!=="granted") armFolderPermission(); }catch(e){} }
   renderProjHead();
   ghFindRepo().finally(()=>setTimeout(checkFieldChanges,1500));   // merge any field changes the phone has pushed (repo looked up first if needed)…
-  setInterval(()=>syncTick(),20000);   // …and keep watching
-  setInterval(()=>watchFolder(),180000);   // new photos copied into the folder are picked up by themselves
   setTimeout(()=>scheduleAutoExport(0),6000);   // bring the phone up to date with this session
   setTimeout(checkPhotoUploads,2600);   // …then keep watching: phone photo dumps auto-merge as they arrive
 
-  window.addEventListener("focus",()=>{ syncTick(); watchFolder(); });
-})();
+  syncMenus();
+}
 
 /* ---- app self-update check (active only when served from the web, e.g. GitHub Pages) ----
    The page asks the server for its own file's version tag (ETag/Last-Modified) and compares it
