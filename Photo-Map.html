@@ -2258,16 +2258,40 @@ async function tileProvider(){ if(_tileProv) return _tileProv;
   if(t){ try{ const c=document.createElement("canvas"); c.width=c.height=4; const g=c.getContext("2d"); g.drawImage(t,0,0,4,4); g.getImageData(0,0,1,1); ok=true; }catch(e){ ok=false; } }   // readable = copyable
   return (_tileProv=ok?"google":"esri"); }
 async function loadMapTile(z,x,y){ const prov=await tileProvider(); return _fetchTile(TILE_SRC[prov](z,x,y)); }
-async function drawMiniMap(ctx,x,y,w,h,pts,r){
+/* Where the user is right now (desktop YOU ARE HERE marker, else a quick one-off fix) — null if unknown/blocked. */
+async function currentPos(){
+  try{ if(geoMarker){ const l=geoMarker.getLatLng(); return {lat:l.lat,lng:l.lng}; } }catch(e){}
+  let pref=null; try{ pref=localStorage.getItem("pmGeoOn"); }catch(e){}
+  if(pref==="0"||!navigator.geolocation) return null;
+  return new Promise(res=>{ let d=false; const f=v=>{ if(!d){ d=true; res(v); } };
+    navigator.geolocation.getCurrentPosition(p=>f({lat:p.coords.latitude,lng:p.coords.longitude}),()=>f(null),{maximumAge:120000,timeout:4000});
+    setTimeout(()=>f(null),4500); });
+}
+const _PIN_PATH="M32 78C17 57 3 46.5 3 30a29 29 0 1 1 58 0c0 16.5-14 27-29 48z";
+function _drawGeoPin(ctx,px,py,w){   // the same red YOU ARE HERE pin as the map, tip on the position
+  const s=w/64; ctx.save(); ctx.translate(px-32*s,py-78*s); ctx.scale(s,s);
+  ctx.shadowColor="rgba(0,0,0,.45)"; ctx.shadowBlur=10; ctx.fillStyle="#E8281E"; ctx.fill(new Path2D(_PIN_PATH)); ctx.shadowColor="transparent";
+  ctx.beginPath(); ctx.arc(32,30,21.5,0,Math.PI*2); ctx.fillStyle="#fff"; ctx.fill();
+  ctx.fillStyle="#111"; ctx.textAlign="center"; ctx.textBaseline="alphabetic";
+  ctx.font="800 10.5px Arial,Helvetica,sans-serif"; ctx.fillText("YOU",32,26); ctx.fillText("HERE",32,45);
+  ctx.font="italic 700 8px Arial,Helvetica,sans-serif"; ctx.fillText("ARE",32,34.5);
+  ctx.restore(); }
+async function drawMiniMap(ctx,x,y,w,h,pts,r,me){
   ctx.save(); _rr(ctx,x,y,w,h,r); ctx.clip(); ctx.fillStyle="#2a2d31"; ctx.fillRect(x,y,w,h);
   if(pts.length){
-    let z=18; for(;z>3;z--){ const xs=pts.map(p=>_lx(p.lng,z)), ys=pts.map(p=>_ly(p.lat,z)); if(Math.max(...xs)-Math.min(...xs)<=w*0.62&&Math.max(...ys)-Math.min(...ys)<=h*0.62) break; }
-    if(pts.length===1) z=17;
-    const xs=pts.map(p=>_lx(p.lng,z)), ys=pts.map(p=>_ly(p.lat,z)), cx=(Math.min(...xs)+Math.max(...xs))/2, cy=(Math.min(...ys)+Math.max(...ys))/2, x0=cx-w/2, y0=cy-h/2, n=Math.pow(2,z), jobs=[];
+    const PIN=Math.round(Math.min(w,h)*0.22), PINH=PIN*80/64, PAD=24, DOT=20;
+    const box=z=>{ let x1=Infinity,x2=-Infinity,y1=Infinity,y2=-Infinity;   // pixel extent of every dot AND the pin (pin rises above its tip)
+      for(const p of pts){ const X=_lx(p.lng,z), Y=_ly(p.lat,z); x1=Math.min(x1,X-DOT); x2=Math.max(x2,X+DOT); y1=Math.min(y1,Y-DOT); y2=Math.max(y2,Y+DOT); }
+      if(me){ const X=_lx(me.lng,z), Y=_ly(me.lat,z); x1=Math.min(x1,X-PIN/2); x2=Math.max(x2,X+PIN/2); y1=Math.min(y1,Y-PINH); y2=Math.max(y2,Y+4); }
+      return {x1,x2,y1,y2}; };
+    let z=18; for(;z>3;z--){ const b=box(z); if(b.x2-b.x1<=w-2*PAD&&b.y2-b.y1<=h-2*PAD) break; }   // closest zoom where everything fits
+    if(pts.length===1&&!me) z=17;
+    const b=box(z), xs=pts.map(p=>_lx(p.lng,z)), ys=pts.map(p=>_ly(p.lat,z)), cx=(b.x1+b.x2)/2, cy=(b.y1+b.y2)/2, x0=cx-w/2, y0=cy-h/2, n=Math.pow(2,z), jobs=[];
     for(let tx=Math.floor(x0/256);tx<=Math.floor((x0+w)/256);tx++) for(let ty=Math.floor(y0/256);ty<=Math.floor((y0+h)/256);ty++){ if(ty<0||ty>=n) continue;
       jobs.push(loadMapTile(z,((tx%n)+n)%n,ty).then(im=>{ if(im) ctx.drawImage(im,x+tx*256-x0,y+ty*256-y0,256,256); })); }
     await Promise.all(jobs);
     for(let i=0;i<pts.length;i++){ const px=x+xs[i]-x0, py=y+ys[i]-y0; ctx.beginPath(); ctx.arc(px,py,13,0,Math.PI*2); ctx.fillStyle="#3BA55C"; ctx.fill(); ctx.lineWidth=5; ctx.strokeStyle="#fff"; ctx.stroke(); }
+    if(me) _drawGeoPin(ctx,x+_lx(me.lng,z)-x0,y+_ly(me.lat,z)-y0,PIN);
   }
   ctx.restore(); ctx.save(); _rr(ctx,x,y,w,h,r); ctx.lineWidth=3; ctx.strokeStyle="rgba(255,255,255,.9)"; ctx.stroke(); ctx.restore();
 }
@@ -2276,7 +2300,8 @@ async function composeActionCard(a){   // 1080x1920 portrait: title | satellite 
   const S=CARD_STYLE, Lo=CARD_LAYOUT, W=1080, H=1920, gap=S.gap;
   const ps=actPhotos(a), ims=[];
   for(const ph of ps){ try{ const src=await annotatedPreview(ph); ims.push(src?await loadImg(src):null); }catch(e){ ims.push(null); } }   // markup burned in
-  const pts=ps.filter(p=>p.lat!=null&&!p.noGps).map(p=>({lat:p.lat,lng:p.lng})); if(a.loc) pts.push({lat:a.loc.lat,lng:a.loc.lng});
+  const pts=ps.filter(p=>isFinite(p.lat)&&isFinite(p.lng)&&p.lat!=null).map(p=>({lat:+p.lat,lng:+p.lng}));   // every dot on the map, incl. placed (noGps) ones
+  if(a.loc&&isFinite(a.loc.lat)&&isFinite(a.loc.lng)) pts.push({lat:+a.loc.lat,lng:+a.loc.lng});
   const c=document.createElement("canvas"); c.width=W; c.height=H; const ctx=c.getContext("2d");
   ctx.fillStyle=S.bg; ctx.fillRect(0,0,W,H);
   const X=S.pad, IW=W-2*S.pad, mapRight=pts.length>0, headH=Math.round(H*(mapRight?Lo.head:0.10)), mapW=mapRight?Math.round(IW*Lo.mapW):0;   // no located photos: a slim title-only header, photos get the room
@@ -2285,7 +2310,7 @@ async function composeActionCard(a){   // 1080x1920 portrait: title | satellite 
   let px=headH>250?76:64, lines; for(;px>=30;px-=2){ ctx.font=font(px); lines=_wrap(ctx,a.text,tW,headH>250?6:4); if(!lines.trunc&&lines.length*px*1.18<=headH-gap-8) break; }   // largest size that shows the WHOLE title
   ctx.fillStyle=S.titleColor; ctx.textBaseline="middle"; const lh=px*1.18, top=S.pad+(headH-gap-lines.length*lh)/2+lh/2;
   lines.forEach((l,i)=>ctx.fillText(l,X+4,top+i*lh));
-  if(mapRight) await drawMiniMap(ctx,X+IW-mapW,S.pad,mapW,headH-gap,pts,S.radius);
+  if(mapRight) await drawMiniMap(ctx,X+IW-mapW,S.pad,mapW,headH-gap,pts,S.radius,await currentPos());   // zoomed to show the spots AND where you are
   const mainY=S.pad+headH, rest=ims.slice(1);
   const mainH=(rest.length?Math.round(H*(Lo.main+Lo.head)-headH):H-S.pad-mainY)-gap;   // small photos always keep their 30%   // a lone photo takes all the space below the header
   _drawImg(ctx,ims[0]||null,X,mainY,IW,mainH,ims[0]?"contain":"cover",S.mainBg,S.radius);
