@@ -818,7 +818,7 @@
 <body>
 
 <header>
-  <div class="brand"><svg class="pm-mark" viewBox="0 0 64 64" width="30" height="30" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#e8b44a"/><rect x="6" y="6" width="52" height="52" rx="13" fill="none" stroke="#111418" stroke-width="2.5"/><text x="32" y="46" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="38" fill="#111418">A</text></svg><div class="brand-t"><h1>Action<span>Map</span></h1><span class="savestat" id="saveStatus" title="When the project file was last saved"></span></div><span class="build" id="buildStamp" style="display:none" title="When this copy of the app was published — if it's older than the latest change, you're running a stale copy"></span></div>
+  <div class="brand"><svg class="pm-mark" viewBox="0 0 64 64" width="30" height="30" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#e8b44a"/><rect x="6" y="6" width="52" height="52" rx="13" fill="none" stroke="#111418" stroke-width="2.5"/><text x="32" y="46" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="38" fill="#111418">A</text></svg><div class="brand-t"><h1>Action<span>Map</span></h1><span class="savestat" id="saveStatus"></span></div><span class="build" id="buildStamp" style="display:none" title="When this copy of the app was published — if it's older than the latest change, you're running a stale copy"></span></div>
   <nav class="menubar" id="menubar">
     <div class="mb"><button class="mb-btn" type="button">File</button><div class="mb-drop">
       <button class="mi" id="miProjects" type="button" title="Open another project, rename one, or copy a project's share link.">Projects…</button>
@@ -2725,11 +2725,13 @@ function showAbout(){
     +(on?row("Link",'<span id="abLink">'+esc(shareLink())+'</span><button id="abCopy" type="button">Copy</button>'):"")
     +(on?row("Access",canEdit()?"You can edit":"View only"+(ghRaw().token?" (this access token can\u2019t change it)":" \u2014 add your access token in Tools \u2192 Settings to edit")):"")
     +row("Data",onRepo()?'<a href="https://github.com/'+esc(onRepo())+'" target="_blank" rel="noopener">github.com/'+esc(onRepo())+'</a>':"Not set up")
-    +row("Version",isNaN(d)?"\u2014":"Published "+d.toLocaleString(undefined,{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}))
+    +row("Version",(isNaN(d)?"\u2014":"Published "+d.toLocaleString(undefined,{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}))+(window._updAvail?' \u2014 <b>a newer version is available</b><button id="abUpd" type="button">Refresh</button>':(/^https?:$/.test(location.protocol)?" \u2014 up to date":"")))
+    +(((document.getElementById("saveStatus")||{}).dataset||{}).tip?row("Note",esc(document.getElementById("saveStatus").dataset.tip)):"")
     +'</div><div class="yn-btns"><button class="yn-yes" id="abClose" type="button">Close</button></div></div>';
   m.classList.add("show");
   m.querySelector("#abClose").onclick=()=>m.classList.remove("show");
   const c=m.querySelector("#abCopy"); if(c) c.onclick=()=>{ copyShareLink(); c.textContent="\u2713 Copied"; };
+  const u=m.querySelector("#abUpd"); if(u) u.onclick=()=>{ const g=document.querySelector("#updpill .updgo"); if(g) g.click(); else location.reload(); };
 }
 /* ---- Add photos (file picker) ---- */
 function addPhotosFlow(){ if(roBlock()) return; if(!isOnline()&&!photos.length&&!actions.length){ showProjectPicker("Open or create a project first, then add photos to it."); return; } document.getElementById("addPhotosInput").click(); }
@@ -4871,7 +4873,7 @@ function renderSaveStatus(){ const el=document.getElementById("saveStatus"); if(
     else if(ON.err){ t="Not saved yet \u2014 retrying"; tip=String(ON.err.message||ON.err); cls="bad"; }
     else if(ON.at) t="Saved "+agoText(ON.at);
     else t="Up to date";
-    el.textContent=t; el.title=tip||("Saved online in "+onRepo()); el.className="savestat"+(cls?" "+cls:"");
+    el.textContent=t; el.dataset.tip=tip||""; el.className="savestat"+(cls?" "+cls:"");
     setStatusWarn((ON.live&&(cls||ON.wait||upN))?t:""); return; }
   const {txt,cls}=_saveSt;
   let t=""; if(cls==="bad") t="Save failed \u2014 check the project file"; else if(cls==="busy") t="Saving\u2026"; else if(/pending/i.test(txt)) t="Not saved yet \u2014 click anywhere to save";
@@ -6448,7 +6450,6 @@ async function checkFieldChanges(){
 (async function init(){
   if(isMobile()){ mobileBoot(); return; }   // phones get the field UI — the desktop app never boots
   // Build stamp: the file's publish/modified time — the quickest way to spot a stale copy.
-  try{ const d=new Date(document.lastModified); if(!isNaN(d)) document.querySelector(".brand").title="App build "+d.toLocaleString(); if(!isNaN(d)) document.getElementById("buildStamp").textContent="build "+d.toLocaleDateString(undefined,{day:"numeric",month:"short"})+" "+d.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"}); }catch(e){}
   setTimeout(maybeStartGeo,800);   // you-are-here dot; silent when the site already holds the permission
   // Ask the browser to protect this site's stored data (remembered .json/folder, image cache)
   // from automatic low-disk cleanup. Best-effort; ignored where unsupported (e.g. file://).
@@ -6539,7 +6540,7 @@ async function bootLegacy(){
   function showPill(tag){
     if(pill) return;
     const stuck=updTriedRecently();
-    pill=document.createElement("div"); pill.id="updpill";
+    window._updAvail=true; pill=document.createElement("div"); pill.id="updpill";
     pill.innerHTML='<span>'+(stuck?"Still on the old version — your browser cache is being stubborn. Hold <b>Ctrl</b> and press <b>F5</b>, or try again.":"A newer version of ActionMap is available.")+'</span><button class="updgo" type="button">'+(stuck?"Try again":"Refresh")+'</button><button class="updx" type="button" title="Not now">×</button>';
     document.body.appendChild(pill);
     pill.querySelector(".updgo").addEventListener("click",hardReload);
