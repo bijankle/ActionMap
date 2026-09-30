@@ -1851,7 +1851,7 @@ function renderActions(){
       +'<label class="act-chk" title="'+(a.done?'Reopen this action':'Mark completed')+'"><input type="checkbox"'+(a.done?' checked':'')+'/></label>'
       +'<label class="act-hold" title="On hold — stays in this list but its photos leave the map"><input type="checkbox"'+(a.hold?' checked':'')+'/></label>'
       +'<div class="act-body"><div class="bh"><div class="t"><span class="a-num">'+actNo(a)+'</span>'+esc(a.text)+'</div>'
-        +'<button class="act-copy" type="button" title="Copy for phone: one portrait image — title, main photo, the rest below, with markup — ready to paste into Messenger"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.3h2"/></svg></button>'
+        +'<button class="act-copy" type="button" title="Copy image: one portrait picture of this action (title, map, photos with markup) to paste into any chat or email"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg></button>'
         +expBtnHtml(a)+'<button class="ipa-x act-del" type="button" title="'+(isCur?'Remove this action from the open photo':'Delete this action')+'">&times;</button></div>'
       +(exp?('<div class="asec">'+stepsHtml(a)+'</div>'):'')
       +'</div>'+cov+'</div>'; }).join("");
@@ -2989,8 +2989,8 @@ async function openPendingReport(){
 }
 /* ---- Copy an action for a phone: ONE portrait image (2160x3840) — title + satellite map, the main
    photo, the other photos tiled below — every photo whole (black around it, never cropped), from the
-   original where reachable, with markup burned in, straight to the clipboard for Messenger. ---- */
-const CARD_STYLE={bg:"#ffffff",titleColor:"#1e1f22",pad:28,gap:12,radius:18};   // "clean white" — chosen for Messenger
+   original where reachable, with markup burned in, straight to the clipboard (desktop) or the share sheet (phone). ---- */
+const CARD_STYLE={bg:"#ffffff",titleColor:"#1e1f22",pad:28,gap:12,radius:18};   // "clean white"
 function _rr(ctx,x,y,w,h,r){ ctx.beginPath(); if(ctx.roundRect&&r) ctx.roundRect(x,y,w,h,r); else ctx.rect(x,y,w,h); }
 function _wrap(ctx,text,maxW,maxLines){ const words=String(text||"").split(/\s+/), lines=[]; let cur="";
   for(const w of words){ const t=cur?cur+" "+w:w; if(ctx.measureText(t).width<=maxW||!cur) cur=t; else { lines.push(cur); cur=w; } }
@@ -3063,7 +3063,7 @@ async function drawMiniMap(ctx,x,y,w,h,pts,r,me,hd){
   ctx.restore(); ctx.save(); _rr(ctx,x,y,w,h,r); ctx.lineWidth=3; ctx.strokeStyle="rgba(255,255,255,.9)"; ctx.stroke(); ctx.restore();
 }
 const CARD_LAYOUT={head:.20,main:.50,thumbs:.30,mapW:.50};   // chosen: header 20% (title | satellite map, half each) · main photo 50% · small photos 30%
-const CARD_K=2;   // drawn at 2x (2160x3840): photos stay sharp when zoomed in Messenger (inside its HD size limit)
+const CARD_K=2;   // drawn at 2x (2160x3840): photos stay sharp when zoomed in chat apps (inside their HD size limits)
 const _within=(pr,ms)=>Promise.race([pr,new Promise(r=>setTimeout(()=>r(null),ms))]);
 async function cardImage(p){   // sharpest image reachable WITHOUT any prompt: the original (photo folder / phone upload), else the preview
   let file=null; if(!p._phone){ try{ file=await _within(getOriginalFileSilent(p),8000); }catch(e){} }
@@ -3110,10 +3110,10 @@ async function copyActionForPhone(a,btn){
   try{
     try{ await navigator.clipboard.write([new ClipboardItem({"image/png":blobP})]); }   // promise form keeps the click's permission while the image renders
     catch(e1){ const b=await blobP; await navigator.clipboard.write([new ClipboardItem({"image/png":b})]); }
-    loadNote("\u2713 Copied "+actNo(a)+" for the phone \u2014 paste it into Messenger (Ctrl+V)"); logChange("Copied action "+actLbl(a.id)+" as a phone image",a.id);
+    loadNote("\u2713 Copied "+actNo(a)+" as an image \u2014 paste it anywhere (Ctrl+V)"); logChange("Copied action "+actLbl(a.id)+" as an image",a.id);
   }catch(err){   // clipboard blocked: fall back to saving the image
     try{ const b=await blobP; const u=URL.createObjectURL(b); const d=document.createElement("a"); d.href=u; d.download=actNo(a)+" "+String(a.text||"action").replace(/[\\/:*?"<>|]+/g,"").slice(0,60)+".png"; document.body.appendChild(d); d.click(); d.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000);
-      loadNote("Clipboard unavailable \u2014 saved the image instead (drag it into Messenger)"); }catch(e2){ loadNote("Couldn't make the image: "+(err&&err.message||err)); }
+      loadNote("Clipboard unavailable \u2014 saved the image instead"); }catch(e2){ loadNote("Couldn't make the image: "+(err&&err.message||err)); }
   }
   if(btn) btn.classList.remove("busy");
   setTimeout(()=>loadNote(""),4000);
@@ -5422,10 +5422,10 @@ const MI={
   layers:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/></svg>',
   back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5 8 12l7 7"/></svg>',
   cam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
-  msg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3C7 3 3 6.6 3 11c0 2.4 1.2 4.6 3.2 6.1V21l3.3-1.8c.8.2 1.6.3 2.5.3 5 0 9-3.6 9-8.2S17 3 12 3Z"/><path d="m7.5 13 3-3 2.5 2 3.5-3"/></svg>',
   search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg>',
   pen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/></svg>',
   pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+  share:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.4M8.2 13.2l7.6 4.4"/></svg>',
   up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg>',
 };
 let mTab=(()=>{ try{ return localStorage.getItem("pmMTab")==="list"?"list":"map"; }catch(e){ return "map"; } })();
@@ -5840,8 +5840,8 @@ async function mPackPoll(force){
   _mppBusy=false;
 }
 /* One action, full screen: title, Open / On hold / Done, the photos (swipe; pinch to zoom) with the
-   note of the photo being viewed right under it, then the checklist. Photo + Copy for Messenger
-   stay pinned at the bottom. */
+   note of the photo being viewed right under it, then the checklist. Photo + Share stay pinned at
+   the bottom. */
 function mSetState(a,s){
   const d0=mDone(a), h0=mHold(a), wd=s==="done", wh=s==="hold";
   if(d0===wd&&h0===wh) return;
@@ -5872,7 +5872,7 @@ function mShowDetail(ai,keepScroll){
       :'<button type="button" class="ma-first" id="mCamAct">'+MI.cam+'Add the first photo</button>')
     +'<div class="ma-sech"><b>Checklist</b><span id="mStCnt"></span></div><div class="ma-cl2" id="mSub2"></div>'
     +'</div>'
-    +'<div class="ma-bar"><button type="button" class="ma-btn" id="mCamAct2">'+MI.cam+'Photo</button><button type="button" class="ma-btn pri" id="mCopyB">'+MI.msg+'Copy for Messenger</button></div>');
+    +'<div class="ma-bar"><button type="button" class="ma-btn" id="mCamAct2">'+MI.cam+'Photo</button><button type="button" class="ma-btn pri" id="mCopyB">'+MI.share+'Share</button></div>');
   document.getElementById("mBack").addEventListener("click",mExitDetail);
   mWireUndo();
   const snap=document.getElementById("mSnap");
@@ -5882,7 +5882,8 @@ function mShowDetail(ai,keepScroll){
   { const lk=a._new?{au:(mNewActs()[a._ni]||{}).u}:{act:a.id};   // shots taken here are linked to THIS action on the desktop
     const go=()=>{ mTakePhoto(lk); mToast("Photo will be linked to "+(a._new?"this new action":"action "+actNo(a))+" — it appears here after the desktop syncs"); };
     ["mCamAct","mCamAct2"].forEach(id=>{ const b=document.getElementById(id); if(b) b.addEventListener("click",e=>{ e.stopPropagation(); go(); }); }); }
-  document.getElementById("mCopyB").addEventListener("click",e=>mCopyCard(a,e.currentTarget));
+  document.getElementById("mCopyB").addEventListener("click",e=>mShareCard(a,e.currentTarget));
+  setTimeout(()=>{ if(document.getElementById("mCopyB")) mCardBlob(a).catch(()=>{}); },700);   // built ahead, so Share opens the moment it's tapped
   /* the note under the photo belongs to the photo being viewed; an edit is kept before swapping */
   const nin=document.getElementById("mNin");
   let ninPi=0;
@@ -5949,31 +5950,48 @@ function mShowDetail(ai,keepScroll){
   };
   if(keepScroll!=null) requestAnimationFrame(()=>{ snap.scrollTop=keepScroll; });
 }
-/* Copy for Messenger: the same portrait card as the desktop (title + satellite map with the spots and
-   YOU ARE HERE, main photo, the rest below), straight to the clipboard. Where the phone won't allow
-   an image on the clipboard, it offers Share (pick Messenger) or Save instead. */
-async function mCopyCard(a,btn){
-  if(btn) btn.classList.add("busy");
-  mToast("Making the image…",true);
-  const ps=(a.photos||[]).filter(p=>p.img).map(p=>({preview:p.img,lat:p.lat,lng:p.lng,_phone:true}));
+/* Share: the same portrait card as the desktop's Copy image (title + satellite map with the spots and
+   YOU ARE HERE, main photo, the rest below), handed to the phone's share sheet so it goes straight
+   into any chat, email or the gallery. Phones only open the share sheet right after a tap, so the
+   card is built in the background when the action opens and is ready when Share is pressed. */
+let mCardJob=null;   // {key,p}: the card being built (or built) for the action on screen
+function mCardName(a){ return (a._new?"":actNo(a)+" ")+String(mTitle(a)||"action").replace(/[\\/:*?"<>|]+/g,"").slice(0,60)+".png"; }
+function mCardBlob(a){
+  const photos=(a.photos||[]).filter(p=>p.img);
+  const key=mCardKey(a)+"|"+mTitle(a)+"|"+photos.map(p=>p.id).join(",");
+  if(mCardJob&&mCardJob.key===key) return mCardJob.p;
   const act={text:mTitle(a),loc:a._new?(mNewActs()[a._ni]||{}).loc:a.loc};
-  const blobP=(async()=>{ const cv=await composeActionCard(act,ps); return await new Promise((res,rej)=>cv.toBlob(b=>b?res(b):rej(new Error("image failed")),"image/png")); })();
-  let ok=false;
-  try{ await navigator.clipboard.write([new ClipboardItem({"image/png":blobP})]); ok=true; }catch(e){}
-  if(btn) btn.classList.remove("busy");
-  if(ok){ mToast("✓ Copied — paste it into Messenger"); return; }
-  let blob=null; try{ blob=await blobP; }catch(e){}
-  if(!blob){ mToast("Couldn’t make the image"); return; }
-  mToast("");
-  const name=(a._new?"":actNo(a)+" ")+String(mTitle(a)||"action").replace(/[\\/:*?"<>|]+/g,"").slice(0,60)+".png";
+  const ps=photos.map(p=>({preview:p.img,lat:p.lat,lng:p.lng,_phone:true}));
+  const p=(async()=>{ const cv=await composeActionCard(act,ps); return await new Promise((res,rej)=>cv.toBlob(b=>b?res(b):rej(new Error("image failed")),"image/png")); })();
+  mCardJob={key,p}; p.catch(()=>{ if(mCardJob&&mCardJob.p===p) mCardJob=null; });
+  return p;
+}
+function mSaveBlob(blob,name){ const u=URL.createObjectURL(blob), dl=document.createElement("a"); dl.href=u; dl.download=name; document.body.appendChild(dl); dl.click(); dl.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); }
+function mShareNow(blob,name,onBlocked){
   const file=new File([blob],name,{type:"image/png"});
-  mSheet('<div class="ma-shh"><b>Image ready</b><span>this phone won’t copy images</span></div><div class="ma-sbtns">'
-    +'<button class="ma-btn pri" id="mShareB" type="button">'+MI.msg+'Share to Messenger…</button><button class="ma-btn" id="mSaveB" type="button">Save the image</button></div>');
-  const save=()=>{ const u=URL.createObjectURL(blob), dl=document.createElement("a"); dl.href=u; dl.download=name; document.body.appendChild(dl); dl.click(); dl.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); mCloseSheet(); };
-  document.getElementById("mShareB").addEventListener("click",()=>{
-    if(navigator.canShare&&navigator.canShare({files:[file]})) navigator.share({files:[file],title:mTitle(a)}).then(mCloseSheet).catch(()=>{});
-    else save(); });
-  document.getElementById("mSaveB").addEventListener("click",save);
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    navigator.share({files:[file]}).catch(err=>{ if(err&&err.name==="AbortError") return; if(onBlocked) onBlocked(); });   // closing the sheet is not an error
+    return; }
+  try{ navigator.clipboard.write([new ClipboardItem({"image/png":blob})]).then(()=>mToast("✓ Image copied — paste it anywhere"),()=>{ mSaveBlob(blob,name); mToast("Saved the image"); }); }   // no share sheet here: copy, else save
+  catch(e){ mSaveBlob(blob,name); mToast("Saved the image"); }
+}
+function mShareSheet(blob,name){   // a fresh tap, for when building took longer than the phone allows
+  mSheet('<div class="ma-shh"><b>Image ready</b></div><div class="ma-sbtns">'
+    +'<button class="ma-btn pri" id="mShareB" type="button">'+MI.share+'Share</button><button class="ma-btn" id="mSaveB" type="button">Save the image</button></div>');
+  document.getElementById("mShareB").addEventListener("click",()=>{ mCloseSheet(); mShareNow(blob,name,()=>{ mSaveBlob(blob,name); mToast("Saved the image"); }); });
+  document.getElementById("mSaveB").addEventListener("click",()=>{ mCloseSheet(); mSaveBlob(blob,name); mToast("Saved the image"); });
+}
+async function mShareCard(a,btn){
+  const name=mCardName(a), p=mCardBlob(a);
+  let blob=await Promise.race([p.catch(()=>null),new Promise(r=>setTimeout(()=>r(undefined),1200))]);
+  if(blob===undefined){   // still being made: wait, then ask for one more tap
+    if(btn) btn.classList.add("busy"); mToast("Preparing the image…",true);
+    blob=await p.catch(()=>null);
+    if(btn) btn.classList.remove("busy"); mToast("");
+    if(blob) mShareSheet(blob,name); else mToast("Couldn’t make the image");
+    return; }
+  if(!blob){ mToast("Couldn’t make the image"); return; }
+  mShareNow(blob,name,()=>mShareSheet(blob,name));
 }
 /* Pinch-zoom and pan on the action's photos. The transform lives on the IMG alone. While zoomed,
    one-finger pans move the image; only a pan that pushes PAST the image edge is released to the
