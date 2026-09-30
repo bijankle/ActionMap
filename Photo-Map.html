@@ -2271,22 +2271,15 @@ async function drawMiniMap(ctx,x,y,w,h,pts,r){
   }
   ctx.restore(); ctx.save(); _rr(ctx,x,y,w,h,r); ctx.lineWidth=3; ctx.strokeStyle="rgba(255,255,255,.9)"; ctx.stroke(); ctx.restore();
 }
-const CARD_LAYOUTS={   // fractions of the 1920px height: head (title+map), main photo, small photos
-  compact:{head:.10,main:.60,thumbs:.30,map:"right",mapW:.22},
-  split:{head:.15,main:.55,thumbs:.30,map:"right",mapW:.42},
-  big:{head:.20,main:.50,thumbs:.30,map:"right",mapW:.50},
-  bigLess:{head:.20,main:.55,thumbs:.25,map:"right",mapW:.50},
-  inset:{head:.10,main:.60,thumbs:.30,map:"inset",mapW:.36}
-};
-async function composeActionCard(a,layoutKey){   // 1080x1920 portrait: title (+ satellite mini-map) · main photo · the rest tiled
-  const S=CARD_STYLE, Lo=CARD_LAYOUTS[layoutKey]||CARD_LAYOUTS.compact, W=1080, H=1920, gap=S.gap;
+const CARD_LAYOUT={head:.20,main:.50,thumbs:.30,mapW:.50};   // chosen: header 20% (title | satellite map, half each) · main photo 50% · small photos 30%
+async function composeActionCard(a){   // 1080x1920 portrait: title | satellite mini-map · main photo · the rest tiled
+  const S=CARD_STYLE, Lo=CARD_LAYOUT, W=1080, H=1920, gap=S.gap;
   const ps=actPhotos(a), ims=[];
   for(const ph of ps){ try{ const src=await annotatedPreview(ph); ims.push(src?await loadImg(src):null); }catch(e){ ims.push(null); } }   // markup burned in
   const pts=ps.filter(p=>p.lat!=null&&!p.noGps).map(p=>({lat:p.lat,lng:p.lng})); if(a.loc) pts.push({lat:a.loc.lat,lng:a.loc.lng});
   const c=document.createElement("canvas"); c.width=W; c.height=H; const ctx=c.getContext("2d");
   ctx.fillStyle=S.bg; ctx.fillRect(0,0,W,H);
-  const X=S.pad, IW=W-2*S.pad, headH=Math.round(H*Lo.head);
-  const hasMap=pts.length>0, mapRight=hasMap&&Lo.map==="right", mapW=mapRight?Math.round(IW*Lo.mapW):0;
+  const X=S.pad, IW=W-2*S.pad, mapRight=pts.length>0, headH=Math.round(H*(mapRight?Lo.head:0.10)), mapW=mapRight?Math.round(IW*Lo.mapW):0;   // no located photos: a slim title-only header, photos get the room
   const tW=IW-(mapRight?mapW+gap*2:0)-8;
   const font=px=>"700 "+px+"px 'Segoe UI',Aptos,system-ui,-apple-system,Roboto,sans-serif";
   let px=headH>250?76:64, lines; for(;px>=30;px-=2){ ctx.font=font(px); lines=_wrap(ctx,a.text,tW,headH>250?6:4); if(!lines.trunc&&lines.length*px*1.18<=headH-gap-8) break; }   // largest size that shows the WHOLE title
@@ -2294,9 +2287,8 @@ async function composeActionCard(a,layoutKey){   // 1080x1920 portrait: title (+
   lines.forEach((l,i)=>ctx.fillText(l,X+4,top+i*lh));
   if(mapRight) await drawMiniMap(ctx,X+IW-mapW,S.pad,mapW,headH-gap,pts,S.radius);
   const mainY=S.pad+headH, rest=ims.slice(1);
-  const mainH=(rest.length?Math.round(H*Lo.main):H-S.pad-mainY)-gap;   // a lone photo takes all the space below the header
+  const mainH=(rest.length?Math.round(H*(Lo.main+Lo.head)-headH):H-S.pad-mainY)-gap;   // small photos always keep their 30%   // a lone photo takes all the space below the header
   _drawImg(ctx,ims[0]||null,X,mainY,IW,mainH,ims[0]?"contain":"cover",S.mainBg,S.radius);
-  if(hasMap&&Lo.map==="inset"){ const iw=Math.round(IW*Lo.mapW), ih=Math.round(iw*0.78); ctx.save(); ctx.shadowColor="rgba(0,0,0,.45)"; ctx.shadowBlur=18; ctx.fillStyle="#000"; _rr(ctx,X+IW-iw-16,mainY+16,iw,ih,14); ctx.fill(); ctx.restore(); await drawMiniMap(ctx,X+IW-iw-16,mainY+16,iw,ih,pts,14); }
   if(rest.length){ const Y=mainY+mainH+gap, TH=H-S.pad-Y, gr=_gridFor(rest.length,IW,TH,gap);
     rest.forEach((im,i)=>{ const col=i%gr.c, row=Math.floor(i/gr.c);
       _drawImg(ctx,im,X+col*(gr.tw+gap),Y+row*(gr.th+gap),gr.tw,gr.th,"cover",S.tileBg,12); }); }
