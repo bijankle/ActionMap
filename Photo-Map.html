@@ -1399,6 +1399,7 @@ function createAction(text,pids,loc){
 }
 function stepLetter(i){ let t=""; do{ t=String.fromCharCode(97+(i%26))+t; i=Math.floor(i/26)-1; }while(i>=0); return t; }   /* a..z, aa, ab… */
 function actNo(a){ return String(a&&a.id!=null?a.id:a).padStart(3,"0"); }   /* the action NUMBER: creation-sequential id, 001-style */
+function actRank(a){ return a.done?2:(a.hold?1:0); }   // list order: open, then on hold, then completed (display only — stored order unchanged)
 function setActionDone(a,done){ const before=actState(a); a.done=!!done; a.doneAt=a.done?Date.now():null; recordActEdit(a,before); afterFolderChange(); }
 function setActionHold(a,hold){ const before=actState(a); a.hold=!!hold; recordActEdit(a,before); afterFolderChange(); }
 /* Inline editing (titles and descriptions, in both the Actions panel and the under-photo strip):
@@ -1598,7 +1599,7 @@ function clickAction(a,ev,deferNav){
   if(pickMode) return;   // while picking photos, the panel stays put
   const ctrl=!!(ev&&(ev.ctrlKey||ev.metaKey)), shift=!!(ev&&ev.shiftKey);
   if(shift&&lastActClick!=null){
-    const shown=(actShowOpenOnly?actions.filter(x=>!x.done):actions.slice()).sort((x,y)=>(x.done?1:0)-(y.done?1:0)).map(x=>x.id);   // same order as the rendered list
+    const shown=(actShowOpenOnly?actions.filter(x=>!x.done):actions.slice()).sort((x,y)=>actRank(x)-actRank(y)).map(x=>x.id);   // same order as the rendered list
     const i1=shown.indexOf(lastActClick), i2=shown.indexOf(a.id);
     if(i1>=0&&i2>=0) selActs=new Set(shown.slice(Math.min(i1,i2),Math.max(i1,i2)+1));
     else { selActs=new Set([a.id]); lastActClick=a.id; }
@@ -1734,7 +1735,7 @@ function renderActions(){
   document.getElementById("actDoneSteps").classList.toggle("on",!hideDoneSteps);
   document.getElementById("actMapOnly").classList.toggle("on",actOnlyMap);
   document.getElementById("actExpAll").textContent=actions.some(a=>!collActs.has(a.id))?"Collapse all":"Expand all";
-  const shown=(actShowOpenOnly?actions.filter(a=>!a.done):actions.slice()).sort((x,y)=>(x.done?1:0)-(y.done?1:0));   // completed actions sink to the bottom (display only — stored order unchanged)
+  const shown=(actShowOpenOnly?actions.filter(a=>!a.done):actions.slice()).sort((x,y)=>actRank(x)-actRank(y));   // on-hold then completed actions sink to the bottom (display only — stored order unchanged)
   if(!shown.length){ list.innerHTML=""; return; }
   const cp=lb.classList.contains("open")?curPhoto():null;   // the open photo's actions get a marker in this list
   const byAct=new Map();   // one pass over the photos for every row (actPhotos per row rescanned them all each time)
@@ -1913,7 +1914,7 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
         if(!best){ score=0; break; } score+=best; if(bw&&bw.k!=="title"&&bw.k!=="num"&&!where) where=bw; }
       if(score) out.push({a,score,where});
     }
-    out.sort((x,y)=>((x.a.done?1:0)-(y.a.done?1:0))||(y.score-x.score));   // active first, then best match
+    out.sort((x,y)=>(actRank(x.a)-actRank(y.a))||(y.score-x.score));   // active first, then best match
     return out.slice(0,30);
   }
   function render(){
@@ -2396,7 +2397,7 @@ async function exportActionsXlsx(){
       {header:"Sub-actions",key:"st",width:42},
       {header:"Photo notes",key:"pn",width:42},
     ];
-    const order=actions.slice().sort((x,y)=>(x.done?1:0)-(y.done?1:0));   // same order as the list; # is the action's 001-style number
+    const order=actions.slice().sort((x,y)=>actRank(x)-actRank(y));   // same order as the list; # is the action's 001-style number
     let maxImgs=0, ri=2;
     for(const a of order){
       st.textContent="Compiling "+(ri-1)+" / "+order.length+"\u2026";
@@ -4686,7 +4687,8 @@ function mShowList(){
   const packActs=mActOrder().map(i=>(mPack.actions||[])[i]).filter(Boolean);   /* priority order: pack order with the phone's pending reorder applied */
   const packFu=new Set((mPack.actions||[]).map(a=>a.fu).filter(Boolean));   // once merged, the pack's copy is the one shown (and edited)
   const news=mNewActs().map((x,i)=>({id:"n"+i,_new:true,_ni:i,text:x.text,steps:x.steps||[],photos:[],done:!!x.done,u:x.u})).filter(x=>!(x.u&&packFu.has(x.u)));
-  const acts=news.concat(packActs);   // phone-created actions sit on top until they're merged on desktop
+  const mRank=a=>mDone(a)?2:(mHold(a)?1:0);   // ticked on hold / completed sink to the bottom, like the desktop
+  const acts=news.concat(packActs.map((a,i)=>({a,i})).sort((x,y)=>(mRank(x.a)-mRank(y.a))||(x.i-y.i)).map(x=>x.a));   // phone-created actions sit on top until they're merged on desktop
   mScr('<div class="m-head"><div style="flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;"><div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div>'
     +'<div class="m-sub">'+esc(mPack.project||"")+' · exported '+(mPack.exportedAt?new Date(mPack.exportedAt).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"")+' · app '+new Date(document.lastModified).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})+'</div></div>'
     +mUndoHtml()+'<button class="m-chip" id="mWho" type="button" title="Your name in the change history">\ud83d\udc64 '+esc(mUserName())+'</button><button class="m-chip" id="mRefresh" type="button">REFRESH</button></div>'
