@@ -876,7 +876,6 @@
       <div class="set-title">Settings</div>
       <button class="set-tab on" data-sec="map">Map</button>
       <button class="set-tab" data-sec="photos">Photos</button>
-      <button class="set-tab" data-sec="filters">Filters</button>
       <button class="set-tab" data-sec="actions">Actions</button>
       <button class="set-tab" data-sec="mobile">Online</button>
     </div>
@@ -895,17 +894,6 @@
             <label><input type="radio" name="setBase" value="esri" /> Esri</label>
             <label><input type="radio" name="setBase" value="none" /> None</label>
           </div>
-        </div>
-      </div>
-      <div class="set-sec" data-sec="filters">
-        <h3>Filters</h3>
-        <div class="set-row">
-          <div class="set-lbl">Altitude: include blank<span class="set-sub">Photos with no altitude in their metadata stay visible while the altitude range is narrowed.</span></div>
-          <div class="set-ctl"><input type="checkbox" id="altBlank" checked /></div>
-        </div>
-        <div class="set-row">
-          <div class="set-lbl">Date: include blank<span class="set-sub">Photos with no capture date stay visible while the date range is narrowed.</span></div>
-          <div class="set-ctl"><input type="checkbox" id="dateBlank" checked /></div>
         </div>
       </div>
       <div class="set-sec" data-sec="photos">
@@ -1033,18 +1021,8 @@
   <div id="map"></div>
   <div class="progress" id="progress"></div>
   <div class="leftstack" id="leftstack">
-    <div class="datebar hidden" id="altbar">
-      <div class="vals"><span id="aStart">&mdash;</span><span id="aEnd">&mdash;</span></div>
-      <div class="slider-wrap"><div class="slider-track"></div><div class="slider-fill" id="altFill"></div>
-        <input type="range" id="altMin" min="0" max="100" value="0" /><input type="range" id="altMax" min="0" max="100" value="100" /></div>
-    </div>
-    <div class="datebar hidden" id="datebar">
-      <div class="vals"><span id="dStart">—</span><span id="dEnd">—</span></div>
-      <div class="slider-wrap"><div class="slider-track"></div><div class="slider-fill" id="sliderFill"></div>
-        <input type="range" id="rangeMin" min="0" max="100" value="0" /><input type="range" id="rangeMax" min="0" max="100" value="100" /></div>
-    </div>
   </div>
-  <div class="toolstack" id="toolstack"><button class="areabtn" id="selBtn">Select area</button><button class="areabtn" id="areaBtn">Filter area</button><button class="areabtn" id="zoomBtn">Zoom window</button><button class="areabtn" id="measureBtn">Measure</button></div>
+  <div class="toolstack" id="toolstack"><button class="areabtn" id="selBtn">Select area</button><button class="areabtn" id="measureBtn">Measure</button></div>
   <div class="splitter" id="splitter"></div>
   <aside class="gallery">
     <div class="controls">
@@ -1182,7 +1160,7 @@ function passSearch(p){
   return terms.every(t=>hay.includes(t));
 }
 // Multi-tag filter: a photo passes only if it is in EVERY active tag (overlap/intersection).
-function passTags(p){ if(!tagFilters.size) return true; for(const f of tagFilters) if(!photoInFolder(p,f)) return false; return true; }
+function passTags(p){ return true; }
 function buildCluster(){
   const hl=hlPhotoSet();   // clusters aggregate how many highlighted photos they contain, so the BUBBLE can flash
   const feats=photos.filter(p=>p.lat!=null && passDate(p) && passSearch(p) && passTags(p) && passActs(p) && passAlt(p) && (!boxBounds||boxBounds.contains([p.lat,p.lng]))).map(p=>({type:"Feature",properties:{pid:p.id,hl:hl.has(p.id)?1:0,sel:selSet.has(p.id)?1:0,asg:photoStatus(p)==="none"?0:1},geometry:{type:"Point",coordinates:[p.lng,p.lat]}}));
@@ -3219,8 +3197,6 @@ map.on("contextmenu",e=>{
   if(p){ openDotMenu(p,e.originalEvent); return; }
   ctxMenu.innerHTML="";
   mkCtxItem("Select area [S]",toggleSelect);
-  mkCtxItem("Filter area [F]",toggleFilter);
-  mkCtxItem("Zoom window [Z]",toggleZoom);
   mkCtxItem("Measure [M]",toggleMeasure);
   mkCtxItem("New action…",()=>armNewAction(null));   // focuses the Actions panel input
   { const ll=e.latlng; mkCtxItem("New action at this spot…",()=>armNewActionAt(ll)); }
@@ -3275,7 +3251,7 @@ function scanReport(r,quiet){
   if(!r) return;
   const n=r.created.length, noLoc=r.created.filter(p=>p.lat==null), hid=r.created.filter(p=>p.lat!=null&&!onMapNow(p));
   if(quiet&&!n) return;
-  const why=[]; if(actOnlyMap) why.push("\u201cActions only\u201d is on"); if(boxBounds) why.push("an area filter is on"); if(nameFilter) why.push("the search box has text"); if(tagFilters.size) why.push("a folder-tag filter is on"); if(dateLo!=null&&(dateLo>dateMin||dateHi<dateMax)) why.push("the date range is narrowed"); if(altLo!=null&&(altLo>altMinV||altHi<altMaxV)) why.push("the altitude range is narrowed");
+  const why=[]; if(actOnlyMap) why.push("\u201cActions only\u201d is on"); if(nameFilter) why.push("the search box has text");
   let msg="Scanned <b>"+esc(r.root)+"</b>: "+r.seen+" photo"+(r.seen===1?"":"s")+" \u2014 <b>"+n+" new</b>";
   if(!n) msg+=" (everything there is already in the project)";
   if(hid.length) msg+=". "+hid.length+" of the new ones "+(hid.length===1?"is":"are")+" hidden because "+(why.join(" and ")||"of a filter");
@@ -3293,7 +3269,6 @@ function showNewPhotos(list){
     actOnlyMap=false; if(boxBounds){ boxBounds=null; if(boxRect){ map.removeLayer(boxRect); boxRect=null; } setAreaBtn(); }
     if(nameFilter){ nameFilter=""; document.getElementById("nameFilter").value=""; }
     if(tagFilters.size){ tagFilters.clear(); }
-    buildDateFilter();   // resets date + altitude ranges to the full span
   }
   if(list.some(p=>p.lat==null)&&!showNoGeo){ showNoGeo=true; const c=document.getElementById("showNoGeo"); if(c) c.checked=true; }
   selSet=new Set(list.map(p=>p.id)); setAreaBtn();
@@ -3560,67 +3535,29 @@ function entriesToItems(roots){
 }
 
 /* date filter */
-function buildDateFilter(){
-  const times=photos.filter(p=>p.time!=null).map(p=>p.time); const bar=document.getElementById("datebar");
-  if(times.length<2){ bar.classList.add("hidden"); dateMin=dateMax=dateLo=dateHi=null; return; }
-  dateMin=times[0]; dateMax=times[0]; for(const t of times){ if(t<dateMin)dateMin=t; if(t>dateMax)dateMax=t; }
-  dateLo=dateMin; dateHi=dateMax; bar.classList.remove("hidden"); syncSliderUI();
-}
-/* the altitude bar follows the date bar everywhere the filters get rebuilt */
-const _bdf=buildDateFilter; buildDateFilter=function(){ _bdf(); buildAltFilter(); };
-const rMin=document.getElementById("rangeMin"),rMax=document.getElementById("rangeMax"),sliderFill=document.getElementById("sliderFill");
-function pctFromTime(t){ return dateMax===dateMin?0:(t-dateMin)/(dateMax-dateMin)*100; }
-function timeFromPct(p){ return dateMin+(dateMax-dateMin)*(p/100); }
-function fmtDay(t){ try{ return new Date(t).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}); }catch(e){ return String(t); } }
-function syncSliderUI(){ const lo=pctFromTime(dateLo),hi=pctFromTime(dateHi); rMin.value=lo; rMax.value=hi; sliderFill.style.left=lo+"%"; sliderFill.style.width=(hi-lo)+"%"; document.getElementById("dStart").textContent=fmtDay(dateLo); document.getElementById("dEnd").textContent=fmtDay(dateHi); }
-/* Slider drags fire dozens of input events a second: dots re-cluster at most once per frame, the
-   gallery + save wait until the drag pauses. The slider's own readout stays instant. */
+function buildDateFilter(){ dateMin=dateMax=dateLo=dateHi=null; }
+/* Live previews fire dozens of events a second: dots re-cluster at most once per frame, the
+   gallery + save wait until things pause. */
 let _frF=0,_frT=null;
 function filterRefreshSoon(){
   if(!_frF) _frF=requestAnimationFrame(()=>{ _frF=0; buildCluster(); renderClusters(); updateStats(); });
   clearTimeout(_frT); _frT=setTimeout(()=>{ updateGallery(); persistState(); },160);
 }
-function onSlider(){ let lo=parseFloat(rMin.value),hi=parseFloat(rMax.value); if(lo>hi){const t=lo;lo=hi;hi=t;} dateLo=timeFromPct(lo); dateHi=timeFromPct(hi); syncSliderUI(); filterRefreshSoon(); }
-rMin.addEventListener("input",onSlider); rMax.addEventListener("input",onSlider);
-let dateBlank=true;
-function passDate(p){ if(dateLo==null)return true; if(p.time==null)return dateBlank; return p.time>=dateLo&&p.time<=dateHi; }
-document.getElementById("dateBlank").addEventListener("change",e=>{ dateBlank=e.target.checked; buildCluster(); renderClusters(); updateStats(); updateGallery(); persistState(); });
 
-/* altitude filter (from photo GPS metadata; meters). Photos without altitude pass while "incl. blank" is ticked. */
-let altMinV=null,altMaxV=null,altLo=null,altHi=null,altBlank=true;
+/* altitude from photo GPS metadata (meters), shown in File info */
+let altMinV=null,altMaxV=null,altLo=null,altHi=null;
 function altFromExif(ex){
   if(!ex) return null; let a=ex.GPSAltitude;
   if(typeof a!=="number"||!isFinite(a)) return null;
   const ref=ex.GPSAltitudeRef; if(a>0&&(ref===1||ref==="1"||(ref&&ref.byteLength))){ if(ref===1||ref==="1"||(ref[0]===1)) a=-a; }
   return Math.round(a*10)/10;
 }
-function passAlt(p){ if(altLo==null) return true; if(p.alt==null) return altBlank; return p.alt>=altLo&&p.alt<=altHi; }
-function buildAltFilter(){
-  const bar=document.getElementById("altbar"); if(!bar) return;
-  if(!photos.length){ bar.classList.add("hidden"); altMinV=altMaxV=altLo=altHi=null; return; }
-  bar.classList.remove("hidden");
-  const alts=photos.filter(p=>p.alt!=null).map(p=>p.alt);
-  if(alts.length<2){ altMinV=altMaxV=altLo=altHi=null; document.getElementById("aStart").textContent="—"; document.getElementById("aEnd").textContent="—";
-    document.getElementById("altFill").style.left="0%"; document.getElementById("altFill").style.width="100%"; return; }
-  let mn=alts[0],mx=alts[0]; for(const a of alts){ if(a<mn)mn=a; if(a>mx)mx=a; }
-  altMinV=mn; altMaxV=mx;
-  if(altLo==null||altLo<mn) altLo=mn; if(altHi==null||altHi>mx) altHi=mx;
-  syncAltUI();
-}
-const aMin=document.getElementById("altMin"),aMax=document.getElementById("altMax"),altFillEl=document.getElementById("altFill");
-function pctFromAlt(a){ return altMaxV===altMinV?0:(a-altMinV)/(altMaxV-altMinV)*100; }
-function altFromPct(p){ return altMinV+(altMaxV-altMinV)*(p/100); }
-function fmtAlt(a){ return Math.round(a)+" m"; }
-function syncAltUI(){ if(altMinV==null) return; const lo=pctFromAlt(altLo),hi=pctFromAlt(altHi);
-  aMin.value=lo; aMax.value=hi; altFillEl.style.left=lo+"%"; altFillEl.style.width=(hi-lo)+"%";
-  document.getElementById("aStart").textContent=fmtAlt(altLo); document.getElementById("aEnd").textContent=fmtAlt(altHi); }
-function onAltSlider(){ if(altMinV==null) return; let lo=parseFloat(aMin.value),hi=parseFloat(aMax.value); if(lo>hi){const t=lo;lo=hi;hi=t;}
-  altLo=Math.round(altFromPct(lo)*10)/10; altHi=Math.round(altFromPct(hi)*10)/10; syncAltUI(); filterRefreshSoon(); }
-aMin.addEventListener("input",onAltSlider); aMax.addEventListener("input",onAltSlider);
-document.getElementById("altBlank").addEventListener("change",e=>{ altBlank=e.target.checked; buildCluster(); renderClusters(); updateStats(); updateGallery(); persistState(); });
+function passDate(p){ return true; }
+function passAlt(p){ return true; }
+function buildAltFilter(){}
 /* Altitude backfill is fully automatic: whenever the photo files are reachable, photos missing
    an altitude get their EXIF read silently in the background — no prompts, no button. Photos
-   that truly have none are simply covered by the "blank" tickbox. A photo is only marked as
+   that truly have none just show no altitude. A photo is only marked as
    tried once its file could actually be opened, so connecting the folder later still fills it. */
 let altAutoBusy=false;
 async function autoReadAltitudes(){
@@ -3638,18 +3575,12 @@ async function autoReadAltitudes(){
     }
   }));
   altAutoBusy=false;
-  if(found){ buildAltFilter(); buildCluster(); renderClusters(); updateStats(); updateGallery(); persistState(); }
+  if(found) persistState();
 }
 
-/* area (box) filter */
-const areaBtn=document.getElementById("areaBtn");
-const zoomBtn=document.getElementById("zoomBtn");
+/* select area */
 const selBtn=document.getElementById("selBtn");
-areaBtn.addEventListener("click",toggleFilter);
-zoomBtn.addEventListener("click",toggleZoom);
 selBtn.addEventListener("click",toggleSelect);
-function toggleFilter(){ if(boxBounds){ clearArea(); return; } if(drawing&&drawMode==="filter"){ stopDraw(); return; } if(drawing){ stopDraw(); } startDraw("filter"); }
-function toggleZoom(){ if(drawing&&drawMode==="zoom"){ stopDraw(); return; } if(drawing){ stopDraw(); } startDraw("zoom"); }
 function toggleSelect(){ if(drawing&&drawMode==="select"){ stopDraw(); return; } if(selSet.size){ clearSel(); return; } if(drawing){ stopDraw(); } startDraw("select"); }
 function startDraw(mode){ if(measuring) stopMeasure(); drawing=true; drawMode=mode; map.dragging.disable(); map.getContainer().style.cursor="crosshair"; setAreaBtn(); map.on("mousedown",dDown); }
 function stopDraw(){ map.off("mousedown",dDown); map.off("mousemove",dMove); map.off("mouseup",dUp); if(tempRect){map.removeLayer(tempRect);tempRect=null;} drawing=false; drawMode=null; map.dragging.enable(); map.getContainer().style.cursor=""; setAreaBtn(); }
@@ -3660,16 +3591,6 @@ function dUp(e){
   map.off("mousemove",dMove); map.off("mouseup",dUp);
   if(tempRect){map.removeLayer(tempRect);tempRect=null;}
   const tiny=Math.abs(b.getNorth()-b.getSouth())<1e-7 && Math.abs(b.getEast()-b.getWest())<1e-7;
-  if(mode==="zoom"){   // stay armed until Escape
-    if(!tiny){
-      // Smart zoom: if the window contains photos (under the current filters), zoom to the extent
-      // of that cluster; an empty window zooms precisely to what was drawn.
-      const inWin=photos.filter(p=>p.lat!=null&&passDate(p)&&passSearch(p)&&passTags(p)&&passActs(p)&&passAlt(p)&&(!boxBounds||boxBounds.contains([p.lat,p.lng]))&&b.contains([p.lat,p.lng]));
-      if(inWin.length) map.fitBounds(L.latLngBounds(inWin.map(p=>[p.lat,p.lng])),{padding:[46,46],maxZoom:20});
-      else map.fitBounds(b);
-    }
-    setAreaBtn(); return;
-  }
   map.off("mousedown",dDown); drawing=false; drawMode=null; map.dragging.enable(); map.getContainer().style.cursor="";
   if(mode==="select"){   // select every visible dot inside the box so they can be dragged together
     if(!tiny){
@@ -3683,20 +3604,11 @@ function dUp(e){
           for(const f of cluster.getLeaves(c.properties.cluster_id,Infinity)) selSet.add(f.properties.pid);
         } } }catch(err){}
     }
-    setAreaBtn(); buildCluster(); renderClusters(); return;
   }
-  if(tiny){ setAreaBtn(); return; }
-  boxBounds=b; boxRect=L.rectangle(b,{color:"#e8b44a",weight:2,fill:false,dashArray:"6 4"}).addTo(map);
-  setAreaBtn(); buildCluster(); renderClusters(); updateGallery(); persistState();
+  setAreaBtn(); buildCluster(); renderClusters();
 }
-function clearArea(){ if(boxRect){map.removeLayer(boxRect);boxRect=null;} boxBounds=null; setAreaBtn(); buildCluster(); renderClusters(); updateGallery(); persistState(); }
 function setAreaBtn(){
   if(pickMode) updatePickBar();
-  if(boxBounds){ areaBtn.textContent="Clear area [F]"; areaBtn.classList.add("active"); }
-  else if(drawing&&drawMode==="filter"){ areaBtn.textContent="Cancel [F]"; areaBtn.classList.add("active"); }
-  else { areaBtn.textContent="Filter area [F]"; areaBtn.classList.remove("active"); }
-  if(drawing&&drawMode==="zoom"){ zoomBtn.textContent="Cancel [Z]"; zoomBtn.classList.add("active"); }
-  else { zoomBtn.textContent="Zoom window [Z]"; zoomBtn.classList.remove("active"); }
   if(drawing&&drawMode==="select"){ selBtn.textContent="Cancel [S]"; selBtn.classList.add("active"); }
   else if(selSet.size){ selBtn.textContent="Deselect ("+selSet.size+") [S]"; selBtn.classList.add("active"); }
   else { selBtn.textContent="Select area [S]"; selBtn.classList.remove("active"); }
@@ -3911,8 +3823,7 @@ function loadViewer(){
 function tagPillsHtml(folders, removable){
   let html="";
   for(const f of folders){ const on=tagFilters.has(f);
-    html+='<button class="ip-tag'+(on?" on":"")+'" data-folder="'+esc(f)+'" title="'+esc(f)+' — click to filter, × to remove">'+(removable?'<b class="tag-x" title="Remove this tag from the photo">&times;</b>':"")+esc(folderLabel(f))+'</button>'; }
-  if(tagFilters.size>1) html+='<button class="ip-tag clearall" title="Remove all tag filters">Clear filters &times;</button>';
+    html+='<button class="ip-tag'+(on?" on":"")+'" data-folder="'+esc(f)+'" title="'+esc(f)+'">'+(removable?'<b class="tag-x" title="Remove this tag from the photo">&times;</b>':"")+esc(folderLabel(f))+'</button>'; }
   return html;
 }
 function wireTagPills(el, removable){
@@ -3922,57 +3833,18 @@ function wireTagPills(el, removable){
       const p=curPhoto(); if(!p) return;
       const before=snapshotTags(p); setPhotoFolder(p,b.dataset.folder,false); recordTagChange(p,before); afterFolderChange(); return;
     }
-    toggleTagFilter(b.dataset.folder);
   }));
 }
 function refreshTagFilter(){ buildCluster(); renderClusters(); updateGallery(); renderPhotoTags(curPhoto()); }
-function toggleTagFilter(folder){
-  if(tagFilters.has(folder)) tagFilters.delete(folder); else tagFilters.add(folder);
-  refreshTagFilter();
-}
 function renderPhotoTags(p){
   const el=document.getElementById("lbTags"); if(!el) return;
   if(!p){ el.innerHTML=""; return; }
   const fset=new Set(); for(const pa of pathsOf(p)) for(const c of expandFolders(pa)) fset.add(c);
   const folders=[...fset].sort((a,b)=>a.localeCompare(b));
   el.innerHTML=tagPillsHtml(folders,true);   // viewer pills carry the × so tags can be de-allocated in place
-  el.classList.toggle("filtered",tagFilters.size>0);
   wireTagPills(el,true);
 }
-/* Tag rail on the MAP (bottom-left): only the ACTIVE tag filters show as pills; below them sit the
-   Search tag button (filter-only popup) and the "Actions only" map filter. */
-let mapTagPopShown=false, mtQuery="";
-function renderMapTags(){
-  let el=document.getElementById("mapTags");
-  if(!el){ el=document.createElement("div"); el.id="mapTags"; el.className="map-tags"; map.getContainer().appendChild(el);
-    ["mousedown","pointerdown","dblclick","wheel","contextmenu"].forEach(ev=>el.addEventListener(ev,e=>e.stopPropagation())); }
-  const folders=allFolders();
-  if(!folders.length&&!actions.length&&!actOnlyMap){ el.style.display="none"; return; }
-  el.style.display="";
-  const active=folders.filter(f=>tagFilters.has(f));
-  el.innerHTML='<div class="mt-pills">'+(active.length?tagPillsHtml(active):"")+'</div>'
-    +'<div class="mt-btnrow"><button class="mt-btn'+(mapTagPopShown?' on':'')+'" id="mtSearch" type="button" title="Search tags to filter the map">Search tag ▴</button></div>'
-    +'<div class="mt-pop" id="mtPop"></div>';
-  el.classList.toggle("filtered",tagFilters.size>0);
-  if(active.length) wireTagPills(el);
-  document.getElementById("mtSearch").addEventListener("click",e=>{ e.stopPropagation(); mapTagPopShown=!mapTagPopShown; if(!mapTagPopShown) mtQuery=""; renderMapTags(); if(mapTagPopShown){ const i=document.getElementById("mtQ"); if(i) i.focus(); } });
-  if(mapTagPopShown) fillMapTagPop();
-}
-function fillMapTagPop(){
-  const pop=document.getElementById("mtPop"); if(!pop) return;
-  pop.style.display="flex";
-  const q=mtQuery.trim().toLowerCase();
-  const folders=allFolders();
-  const matches=q?folders.filter(f=>folderLabel(f).toLowerCase().includes(q)||f.toLowerCase().includes(q)).slice(0,40)
-                 :folders.filter(f=>tagFilters.has(f)).concat(recentTags.filter(f=>folders.includes(f)&&!tagFilters.has(f))).slice(0,8);
-  pop.innerHTML='<input type="text" id="mtQ" placeholder="Type to find a tag…" autocomplete="off" />'
-    +'<div class="mt-results">'+(matches.length?matches.map(f=>'<button type="button" class="mt-item'+(tagFilters.has(f)?' on':'')+'" data-f="'+esc(f)+'" title="'+esc(f)+'">'+esc(folderLabel(f))+'</button>').join("")
-      :'<div class="ipa-none">'+(q?'No matching tags.':'Type to search all tags.')+'</div>')+'</div>';
-  const inp=document.getElementById("mtQ"); inp.value=mtQuery;
-  inp.addEventListener("input",()=>{ mtQuery=inp.value; fillMapTagPop(); const i2=document.getElementById("mtQ"); if(i2){ i2.focus(); i2.setSelectionRange(i2.value.length,i2.value.length); } });
-  pop.querySelectorAll(".mt-item").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); toggleTagFilter(b.dataset.f); }));
-}
-document.addEventListener("mousedown",e=>{ if(mapTagPopShown && !e.target.closest("#mapTags")){ mapTagPopShown=false; mtQuery=""; renderMapTags(); uiClickT=Date.now(); } },true);
+function renderMapTags(){}
 function showPreview(p,keepView){
   if(curUrl){ URL.revokeObjectURL(curUrl); curUrl=null; }
   let s=p.preview||p.thumb||"";
@@ -4132,7 +4004,7 @@ document.addEventListener("keydown",e=>{
   if(!e.ctrlKey&&!e.metaKey){ const map={p:"pen",l:"poly",a:"arrow",r:"rect",o:"oval",t:"text",q:"call",e:"erase"}; const k=e.key.toLowerCase(); if(map[k]){ e.preventDefault(); setMarkTool(map[k]===markTool?"none":map[k]); } }
 });
 /* Delete key: the selected photo dots (Select area), or else the photo open in the viewer, leave the
-   project — after a yes/no; Ctrl+Z brings them back. A selected drawing on the photo is deleted first. */
+   project straight away (no warning); Ctrl+Z brings them back. A selected drawing on the photo is deleted first. */
 document.addEventListener("keydown",async e=>{
   if(e.key!=="Delete"||e.defaultPrevented||e.ctrlKey||e.metaKey||e.altKey||document.body.classList.contains("mobile")) return;   // already used (e.g. deleting a selected drawing)
   const t=e.target, tag=((t&&t.tagName)||"").toLowerCase();
@@ -4143,7 +4015,6 @@ document.addEventListener("keydown",async e=>{
   if(!list.length) return;
   e.preventDefault(); if(roBlock()) return;
   const n=list.length, what=n===1?"\u201c"+list[0].name+"\u201d":n+" photos";
-  if(!(await askYesNo("Delete "+(n===1?"this photo":n+" photos")+"?","Delete "+what+" from the project"+((list.some(p=>(p.acts||[]).length))?" (and from the actions it\u2019s on)":"")+".\n\nCtrl+Z brings "+(n===1?"it":"them")+" back.","Yes, delete",true))) return;
   removePhotos(list); clearSel();
   loadNote("Deleted "+what+" \u2014 Ctrl+Z undoes"); setTimeout(()=>loadNote(""),3500);
 });
@@ -4464,9 +4335,7 @@ document.addEventListener("keydown",e=>{
   if(document.activeElement===tbText) return;
   if(e.key==="Escape"){ if(drawing) stopDraw(); else if(measuring) stopMeasure(); else if(pickMode) endPickMode(false); else if(selSet.size) clearSel(); else if(selActs.size) clearActSel(); return; }
   if(e.ctrlKey||e.metaKey||e.altKey||e.repeat||(e.target&&e.target.isContentEditable)) return;   // Ctrl+F is browser find, not the area filter
-  if(e.key==="z"||e.key==="Z"){ toggleZoom(); }
-  else if(e.key==="f"||e.key==="F"){ toggleFilter(); }
-  else if(e.key==="m"||e.key==="M"){ toggleMeasure(); }
+  if(e.key==="m"||e.key==="M"){ toggleMeasure(); }
   else if(e.key==="s"||e.key==="S"){ toggleSelect(); }
 });
 
@@ -4840,8 +4709,7 @@ function clearAll(redraw){
   selSet.clear(); dotMarkers.clear(); setAreaBtn(); if(typeof closeCtx==="function") closeCtx();
   actions=[]; nextActId=1; selActs.clear(); actionFilter=null; renderActions(); renderIpActions();
   if(measuring) stopMeasure();
-  dateMin=dateMax=dateLo=dateHi=null; document.getElementById("datebar").classList.add("hidden");
-  altMinV=altMaxV=altLo=altHi=null; document.getElementById("altbar").classList.add("hidden");
+  dateMin=dateMax=dateLo=dateHi=null; altMinV=altMaxV=altLo=altHi=null;
   if(redraw){ updateStats(); document.getElementById("galCount").textContent="0 shown"; document.getElementById("stView").textContent="0";
     document.getElementById("galleryBody").innerHTML='<div class="empty-msg"><b>Project closed.</b><br/>Open one from File → Projects…</div>'; persistState(); }
 }
@@ -5037,9 +4905,8 @@ function uiSettings(){ return { baseLayer: map.hasLayer(google)?"google":map.has
       thumb:getComputedStyle(document.documentElement).getPropertyValue("--thumb").trim(),
       sideW:getComputedStyle(document.documentElement).getPropertyValue("--side-w").trim(),
       actW:getComputedStyle(document.documentElement).getPropertyValue("--act-w").trim()||null,
-      covW:getComputedStyle(document.documentElement).getPropertyValue("--cov-w").trim()||null, dateLo, dateHi,
-      box: boxBounds?[boxBounds.getSouth(),boxBounds.getWest(),boxBounds.getNorth(),boxBounds.getEast()]:null,
-      recentTags: recentTags.slice(0,10), rightTab, actShowOpenOnly, hideDoneSteps, actOnlyMap, altLo, altHi, altBlank, dateBlank, clusterSens,
+      covW:getComputedStyle(document.documentElement).getPropertyValue("--cov-w").trim()||null,
+      recentTags: recentTags.slice(0,10), rightTab, actShowOpenOnly, hideDoneSteps, actOnlyMap, clusterSens,
       view:{ center:[map.getCenter().lat, map.getCenter().lng], zoom:map.getZoom() } }; }   // this device's view of the project (layout, filters, map view) — never shared
 function serializeState(includeImages){
   return {
@@ -5105,13 +4972,8 @@ function applyUiSettings(s){ s=s||{};
   if(Array.isArray(s.recentTags)) recentTags=s.recentTags.slice(0,10);
   actShowOpenOnly=!!s.actShowOpenOnly; hideDoneSteps=s.hideDoneSteps!==false; actOnlyMap=false; setTab(s.rightTab==="gallery"?"gallery":"photo"); renderActions();
   currentSort=s.sortBy||"date_desc"; document.getElementById("sortSel").value=currentSort;
-  buildDateFilter(); if(s.dateLo!=null&&dateMin!=null){ dateLo=s.dateLo; dateHi=s.dateHi; syncSliderUI(); }
-  altBlank=(s.altBlank!==false); document.getElementById("altBlank").checked=altBlank;
-  dateBlank=(s.dateBlank!==false); document.getElementById("dateBlank").checked=dateBlank;
   clusterSens=(typeof s.clusterSens==="number"?Math.max(0,Math.min(100,s.clusterSens)):50);
-  if(s.altLo!=null&&altMinV!=null){ altLo=Math.max(altMinV,s.altLo); altHi=Math.min(altMaxV,(s.altHi!=null?s.altHi:altMaxV)); syncAltUI(); }
   if(boxRect){map.removeLayer(boxRect);boxRect=null;} boxBounds=null;
-  if(s.box){ boxBounds=L.latLngBounds([s.box[0],s.box[1]],[s.box[2],s.box[3]]); boxRect=L.rectangle(boxBounds,{color:"#e8b44a",weight:2,fill:false,dashArray:"6 4"}).addTo(map); }
   setAreaBtn();
   buildCluster(); renderClusters(); updateStats(); updateGallery(); map.invalidateSize();
   if(s.view && Array.isArray(s.view.center)) map.setView(s.view.center, (s.view.zoom!=null?s.view.zoom:map.getZoom()));
