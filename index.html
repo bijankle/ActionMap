@@ -750,6 +750,69 @@
   .about-rows .k{font-size:var(--fl);color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
   .about-rows .v{color:var(--ink);min-width:0;overflow-wrap:anywhere;}
   .about-rows .v button{margin-left:8px;font:600 var(--fl) var(--font);border:1.5px solid var(--line);background:#fff;border-radius:7px;padding:2px 8px;cursor:pointer;}
+
+  /* ===================== Design system A — one look for every control type =====================
+     Surfaces: white + 1.5px slate outline, 8px corners. ON / selected: gold edge + cream fill.
+     Tabs: gold underline. Fields: gold edge while typing. Primary buttons: gold. One font, 3 sizes. */
+  :root{ --ctl-bd:1.5px solid var(--line); --ctl-r:8px; --ctl-on-bg:#fdf6e6; --ctl-on:inset 0 0 0 1px var(--gold); }
+  /* toggles (on/off) */
+  .act-tgl,.ipa-tgl,.lb-fullchk,.lb-textbtn,.mt-btn,.areabtn{background:#fff!important;border:var(--ctl-bd)!important;border-radius:var(--ctl-r)!important;color:var(--ink)!important;backdrop-filter:none!important;font-weight:600;}
+  .act-tgl.on,.ipa-tgl.on,.lb-textbtn.on,.mt-btn.on,.areabtn.active,.lb-fullchk:has(input:checked){background:var(--ctl-on-bg)!important;border-color:var(--gold)!important;box-shadow:var(--ctl-on)!important;color:var(--ink)!important;}
+  .act-tgl:hover,.ipa-tgl:hover,.lb-fullchk:hover,.lb-textbtn:hover,.mt-btn:hover,.areabtn:hover{border-color:var(--gold)!important;}
+  .lb-fullchk input{display:none;}
+  .ipa-tgl{font-size:var(--fl);padding:3px 8px;}
+  /* switches: settings + View menu checkboxes */
+  .set-ctl input[type=checkbox],.mi-chk input{appearance:none;-webkit-appearance:none;width:34px;height:20px;border-radius:999px;background:#d9dee5;position:relative;cursor:pointer;flex:none;margin:0;transition:background .15s;}
+  .set-ctl input[type=checkbox]::after,.mi-chk input::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0003;transition:left .15s;}
+  .set-ctl input[type=checkbox]:checked,.mi-chk input:checked{background:var(--gold);}
+  .set-ctl input[type=checkbox]:checked::after,.mi-chk input:checked::after{left:17px;}
+  /* tabs: underline (vertical settings tabs: a gold bar on the side) */
+  .set-tab{border-radius:0!important;border-left:3px solid transparent!important;color:var(--muted)!important;background:none!important;}
+  .set-tab:hover{color:var(--ink)!important;}
+  .set-tab.on{border-left-color:var(--gold)!important;color:var(--ink)!important;font-weight:700;}
+  /* search + text fields */
+  .hsearch input,.act-new input,.st-new,.act-edit,.mt-pop input,.folder-pop .fp-search,#ipaNew,.ctl-row input[type=text],.ctl-row select,.set-ctl input[type=text],.set-ctl input[type=password],.m-none{background-color:#fff!important;border:var(--ctl-bd)!important;border-radius:var(--ctl-r)!important;color:var(--ink);}
+  .hsearch input:focus,.act-new input:focus,.st-new:focus,.act-edit:focus,.mt-pop input:focus,.folder-pop .fp-search:focus,#ipaNew:focus,.ctl-row input[type=text]:focus,.ctl-row select:focus,.set-ctl input[type=text]:focus,.set-ctl input[type=password]:focus{border-color:var(--gold)!important;box-shadow:var(--ctl-on)!important;outline:none;}
+  .act-new input.arm{border-color:var(--gold)!important;box-shadow:var(--ctl-on)!important;}
+  .ctl-row select{font-size:var(--fb);}
+  /* dropdown menus */
+  .mb-drop,#ctxmenu,.hs-drop,.mt-pop,.pj-win,.yn-win{border:var(--ctl-bd)!important;}
+  .mb-drop,#ctxmenu,.hs-drop,.mt-pop{border-radius:var(--ctl-r)!important;}
+  .mb-btn:hover,.mb.open .mb-btn,.mi:hover,#ctxmenu .ci:hover,.hs-row.on,.hs-row:hover{background:#f3f4f6!important;color:var(--ink)!important;}
+  /* buttons: primary gold, secondary outlined */
+  .yn-yes,.btn.primary,.btn.grpL,#pickbar .pb-ok,.act-note button,.lb-enhance,#updpill .updgo{background:var(--gold)!important;border:1.5px solid var(--gold)!important;color:var(--on-accent)!important;border-radius:var(--ctl-r)!important;box-shadow:none!important;}
+  .yn-yes.danger{background:var(--bad)!important;border-color:var(--bad)!important;color:#fff!important;}
+  .yn-no,.btn.ghost,.btn.grpR,.pj-row button,.about-rows .v button,.gal-more,.fs-exit,.lb-copyloc,.ab-read,#pickbar .pb-x{background:#fff!important;border:var(--ctl-bd)!important;color:var(--ink)!important;border-radius:var(--ctl-r)!important;box-shadow:none!important;}
+  .yn-yes:hover,.btn.primary:hover,.btn.grpL:hover,#pickbar .pb-ok:hover,.act-note button:hover,.lb-enhance:hover,#updpill .updgo:hover{background:var(--gold2)!important;border-color:var(--gold2)!important;}
+  .yn-no:hover,.btn.ghost:hover,.btn.grpR:hover,.pj-row button:hover,.about-rows .v button:hover,.gal-more:hover,.fs-exit:hover,.lb-copyloc:hover,.ab-read:hover,#pickbar .pb-x:hover{border-color:var(--gold)!important;}
+  /* icon buttons (toolbar, drawing tools, viewer) */
+  .ip-marktools .mk,.lb-btn,.ip-arrow{background:#fff!important;border:var(--ctl-bd)!important;color:var(--ink)!important;}
+  .ip-marktools .mk,.lb-btn{border-radius:var(--ctl-r)!important;}
+  .ip-marktools .mk.on{background:var(--ctl-on-bg)!important;border-color:var(--gold)!important;box-shadow:var(--ctl-on)!important;color:var(--ink)!important;}
+  .ip-marktools .mk.on .hk{color:var(--dim)!important;}
+  .ip-marktools .mk:hover,.lb-btn:hover,.ip-arrow:hover{border-color:var(--gold)!important;color:var(--ink)!important;}
+  .act-copy:hover,.act-exp:hover,.act-del:hover,.st-x:hover{color:var(--accent)!important;}
+  /* one-of choices: base map + settings radios become a segmented outline */
+  .leaflet-control-layers-base{display:flex;flex-direction:column;gap:4px;}
+  .leaflet-control-layers-base label{display:block;margin:0;}
+  .leaflet-control-layers-base label>span,.leaflet-control-layers-base label>div{display:flex;align-items:center;gap:0;border:var(--ctl-bd);border-radius:var(--ctl-r);padding:3px 10px;cursor:pointer;font-size:var(--fl);font-weight:600;color:var(--ink);background:#fff;}
+  .leaflet-control-layers-base input{display:none;}
+  .leaflet-control-layers-base label:has(input:checked)>span,.leaflet-control-layers-base label:has(input:checked)>div{background:var(--ctl-on-bg);border-color:var(--gold);box-shadow:var(--ctl-on);}
+  .set-radios{flex-direction:row!important;flex-wrap:wrap;gap:6px!important;}
+  .set-radios label{border:var(--ctl-bd);border-radius:var(--ctl-r);padding:4px 10px;font-size:var(--fl)!important;font-weight:600;color:var(--ink)!important;background:#fff;}
+  .set-radios label input{display:none;}
+  .set-radios label:has(input:checked){background:var(--ctl-on-bg);border-color:var(--gold);box-shadow:var(--ctl-on);}
+  /* checkboxes: complete / on-hold / sub-action ticks — same box, 5px corners */
+  .act-chk input,.act-hold input{width:18px!important;height:18px!important;border:1.5px solid #c3cad3!important;border-radius:5px!important;}
+  .st-chk{border:1.5px solid #c3cad3!important;border-radius:5px!important;}
+  .st-chk.on{background:var(--good)!important;border-color:var(--good)!important;}
+  /* sliders: gold track, white thumbs with a gold ring */
+  .slider-fill{background:var(--gold)!important;}
+  .slider-wrap input[type=range]::-webkit-slider-thumb{background:#fff!important;border:2px solid var(--gold)!important;box-shadow:0 1px 3px #0003!important;width:14px!important;height:14px!important;}
+  .slider-wrap input[type=range]::-moz-range-thumb{background:#fff!important;border:2px solid var(--gold)!important;}
+  input[type=range]{accent-color:var(--gold);}
+  /* map cards: white, slate outline, 8px corners */
+  .projhead,.datebar,.leaflet-control-layers,.leaflet-bar,.scalebar,.reconnect,#updpill,.hoverview,.areaprev,.measure-lbl{background:#fff!important;border:var(--ctl-bd)!important;border-radius:var(--ctl-r)!important;backdrop-filter:none!important;}
 </style>
 </head>
 <body>
