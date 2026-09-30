@@ -79,11 +79,11 @@
   .yn-no{background:var(--panel);color:var(--ink);border:1px solid var(--line2);}
   .yn-yes{background:var(--gold);color:var(--on-accent);border:1px solid var(--gold);}
   .yn-yes.danger{background:var(--bad);border-color:var(--bad);}
-  .hsearch{display:none;position:absolute;top:calc(100% - 6px);left:180px;width:460px;z-index:7100;background:var(--panel);border:1px solid var(--line2);border-radius:10px;box-shadow:0 12px 32px #1e1f2233;padding:8px;}
-  .hsearch.open{display:block;}
-  .hsearch .hs-drop{position:static;min-width:0;box-shadow:none;border:none;padding:4px 0 0;max-height:60vh;}
-  .hsearch input{width:100%;box-sizing:border-box;font:var(--fb) var(--font);color:var(--ink);background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:7px 11px;outline:none;}
-  .hsearch input:focus{border-color:var(--accent);background:var(--panel);box-shadow:0 0 0 3px var(--accent-tint);}
+  /* search lives IN the header: a real text field — click and type, results drop down beneath it (nothing moves) */
+  .hsearch{position:relative;flex:0 1 340px;min-width:170px;margin-left:10px;z-index:7100;}
+  .hsearch .hs-drop{position:absolute;top:calc(100% + 6px);left:0;width:max(100%,460px);max-height:65vh;}
+  .hsearch input{width:100%;box-sizing:border-box;height:34px;font:var(--fb) var(--font);color:var(--ink);background:var(--panel2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a8591' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='M15.5 15.5 21 21'/%3E%3C/svg%3E") 10px 50%/17px no-repeat;border:1.5px solid var(--line);border-radius:8px;padding:0 10px 0 34px;outline:none;}
+  .hsearch input:focus{border-color:var(--gold);background-color:var(--panel);box-shadow:inset 0 0 0 1px var(--gold);}
   .hs-drop{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;min-width:420px;max-height:70vh;overflow-y:auto;z-index:7000;background:var(--panel);border:1px solid var(--line2);border-radius:10px;box-shadow:0 12px 32px #1e1f2233;padding:4px;}
   .hs-drop.show{display:block;}
   .hs-row{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:7px;cursor:pointer;}
@@ -100,7 +100,7 @@
   .hs-empty{padding:12px;color:var(--dim);font-size:var(--fb);}
   .brand-t{display:flex;flex-direction:column;line-height:1.05;}
   .savestat{font:var(--fl) var(--font);color:var(--dim);white-space:nowrap;margin-top:2px;}
-  .savestat:empty{display:none;}
+  .savestat,.savestat:empty{display:none!important;}   /* status lives on the map label + Help → About */
   .savestat.busy{color:var(--dim);}
   .savestat.bad{color:#fff;background:var(--bad);padding:1px 6px;border-radius:4px;font-weight:700;}   /* a failed save must be impossible to miss */
   .brand .build{font-family:var(--font);font-size:var(--fl);color:var(--faint);margin-left:8px;align-self:flex-end;padding-bottom:2px;}
@@ -457,12 +457,12 @@
   .ipa-row .act-chk,.ipa-row .ipa-x,.ipa-row .act-exp{margin-top:1px;}
   .ipa-row .act-exp{font-size:14px;padding:2px 4px;}   /* strip rows are shorter — keep icons ~30% of THEIR collapsed height */
   .ipa-row .ipa-x{font-size:16px;padding:0 3px;}
-  .act-head{display:flex;align-items:center;flex-wrap:wrap;gap:6px 5px;padding:12px 12px 8px;}
+  .act-head{display:flex;align-items:center;flex-wrap:wrap;gap:6px 4px;padding:12px 12px 8px;}
   .act-head .title{font-weight:700;color:var(--ink);font-size:var(--fh);}
   .act-head .count{font-family:var(--font);font-size:var(--fl);color:var(--dim);flex:1;font-variant-numeric:tabular-nums}
-  .act-tgl{font-family:var(--font);font-size:var(--fl);white-space:nowrap;font-weight:600;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px 8px;cursor:pointer;}
-  .act-tgl:hover{border-color:var(--accent);color:var(--ink);}
-  .act-tgl.on{background:var(--accent-tint);border-color:var(--accent);color:var(--accent2);}
+  .act-tgl{font:600 var(--fl) var(--font);white-space:nowrap;color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:4px 6px;cursor:pointer;}
+  .act-tgl:hover{border-color:var(--gold);}
+  .act-tgl.on{background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);color:var(--ink);}   /* on: gold edge */
   .act-new{padding:0 12px 10px;}
   .act-new input{width:100%;box-sizing:border-box;font:inherit;font-size:var(--fb);color:var(--ink);background:var(--panel2);border:1px solid var(--line2);border-radius:9px;padding:8px 10px;outline:none;}
   .act-new input:focus{border-color:var(--accent);}
@@ -735,6 +735,21 @@
   #updpill .updgo:hover{background:var(--gold2);}
   #updpill .updx{border:none;background:none;color:var(--dim);font-size:16px;cursor:pointer;padding:2px 6px;line-height:1;}
   #updpill .updx:hover{color:var(--ink);}
+
+  /* photo toolbar: every control the same 32px outlined square, gold edge when on/hovered */
+  .ip-editbtn{width:32px!important;height:32px;padding:0!important;justify-content:center;border-radius:8px!important;background:#fff!important;border:1.5px solid var(--line)!important;box-shadow:0 2px 8px #1e1f221f;}
+  .ip-editbtn span{display:none;}
+  .ip-editbtn:hover,.ip-iconbtn:hover,.ip-close:hover,.fileinfo-btn:hover{border-color:var(--gold)!important;color:var(--ink)!important;}
+  .ip-editbtn.on{background:#fdf6e6!important;border-color:var(--gold)!important;box-shadow:inset 0 0 0 1px var(--gold),0 2px 8px #1e1f221f;color:var(--ink)!important;}
+  .ip-iconbtn,.ip-close{width:32px;height:32px;background:#fff;border:1.5px solid var(--line);border-radius:8px;}
+  .ip-close{font-size:20px;}
+  .ip-info{background:#fff;border:1.5px solid var(--line);padding:3px 3px 3px 12px;}
+  .fileinfo-btn{width:26px;height:26px;padding:0;display:inline-flex;align-items:center;justify-content:center;background:#fff;border:1.5px solid var(--line);border-radius:7px;color:var(--ink);}
+  .fileinfo-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;}
+  .about-rows{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:var(--fb);margin:6px 0 4px;align-items:center;}
+  .about-rows .k{font-size:var(--fl);color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
+  .about-rows .v{color:var(--ink);min-width:0;overflow-wrap:anywhere;}
+  .about-rows .v button{margin-left:8px;font:600 var(--fl) var(--font);border:1.5px solid var(--line);background:#fff;border-radius:7px;padding:2px 8px;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -768,9 +783,10 @@
     </div></div>
     <div class="mb"><button class="mb-btn" type="button">Help</button><div class="mb-drop">
       <button class="mi" id="miSearch" type="button" title="Find an action by its number, title, a sub-action or a photo note — active and completed actions.">Search…<span class="mk">Ctrl+K</span></button>
+      <button class="mi" id="miAbout" type="button" title="Save status, this project's link, the app version and where the data lives.">About…</button>
     </div></div>
   </nav>
-  <div class="hsearch" id="hsWrap"><input type="text" id="hSearch" placeholder="Find an action — number, title, sub-action or note" autocomplete="off" spellcheck="false" /><div class="hs-drop" id="hsDrop"></div></div>
+  <div class="hsearch" id="hsWrap"><input type="text" id="hSearch" placeholder="Search actions   Ctrl+K" title="Find an action by its number, title, a sub-action or a photo note — active and completed actions" autocomplete="off" spellcheck="false" /><div class="hs-drop" id="hsDrop"></div></div>
   <input id="folderInput" type="file" webkitdirectory directory multiple style="display:none" />
   <input id="origInput" type="file" webkitdirectory directory multiple style="display:none" />
   <input id="jsonInput" type="file" accept="application/json,.json" style="display:none" />
@@ -886,10 +902,10 @@
 <div class="main tab-photo" id="main">
   <aside class="actpanel" id="actPanel">
     <div class="act-head"><span class="title">Actions</span><span style="flex:1"></span>
-      <button class="act-tgl" id="actOpenOnly" title="Show only uncompleted actions in this list">Open only</button>
-      <button class="act-tgl" id="actDoneSteps" title="Show or hide ticked (completed) sub-actions">Show done</button>
-      <button class="act-tgl" id="actMapOnly" title="Show only photos with an uncompleted action on the map">Actions only</button>
-      <button class="act-tgl" id="actExpAll" title="Expand or collapse every action's details">Collapse all</button></div>
+      <button class="act-tgl" id="actOpenOnly" title="Open — show only uncompleted actions in this list (hides completed ones)">Open</button>
+      <button class="act-tgl" id="actDoneSteps" title="Done — also show ticked (completed) sub-actions under each action">Done</button>
+      <button class="act-tgl" id="actMapOnly" title="Actions — the map shows only photos that still have an uncompleted action">Actions</button>
+      <button class="act-tgl" id="actExpAll" title="Collapse or expand every action's sub-actions and notes">Collapse</button></div>
     <div class="act-new"><input type="text" id="actNewInput" placeholder="+ New action" autocomplete="off" /></div>
     <div class="act-list" id="actList"></div>
   </aside>
@@ -908,7 +924,7 @@
     <button class="ip-close" id="lbClose">&times;</button>
     <button class="ip-arrow left" id="lbPrev">&#8249;</button>
     <button class="ip-arrow right" id="lbNext">&#8250;</button>
-    <div class="ip-info"><span class="fn" id="lbName">&mdash;</span><button class="fileinfo-btn" id="fileInfoBtn">File info</button></div>
+    <div class="ip-info"><span class="fn" id="lbName">&mdash;</span><button class="fileinfo-btn" id="fileInfoBtn" title="File info — name, date, size, camera, location"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg></button></div>
     <div class="fileinfo-pop" id="fileInfo"></div>
     <div class="markpalette" id="markPalette">
       <button class="sw" data-c="#ff3b30" style="--c:#ff3b30" title="Red"></button>
@@ -926,7 +942,7 @@
       <div class="szb" title="Line weight — one weight for every line on this photo"><svg viewBox="0 0 24 24"><path d="M5 6h14" stroke-width="1.6"/><path d="M5 12h14" stroke-width="3.2"/><path d="M5 18h14" stroke-width="5"/></svg><input type="range" id="szLine" min="1" max="12" step="1" /></div>
       <div class="szb" title="Text size — one size for every text on this photo"><b class="a">A</b><input type="range" id="szText" min="12" max="90" step="2" /></div>
     </div>
-    <button class="ip-editbtn" id="lbEdit" title="Drawing tools"><svg viewBox="0 0 24 24"><path d="M4 20l3-.7L19 7.3 16.7 5 5 16.7 4 20z"/></svg><span>Edit</span></button>
+    <button class="ip-editbtn" id="lbEdit" title="Edit — drawing tools: pen, lines, arrows, shapes, text and callouts on the photo"><svg viewBox="0 0 24 24"><path d="M4 20l3-.7L19 7.3 16.7 5 5 16.7 4 20z"/></svg></button>
     <div class="ip-marktools">
       <button class="mk" data-tool="pen" title="Pen (P)"><svg viewBox="0 0 24 24"><path d="M4 20l3-.7L19 7.3 16.7 5 5 16.7 4 20z"/></svg><b class="hk">P</b></button>
       <button class="mk" data-tool="poly" title="Line / polyline — double click or right click to finish (L)"><svg viewBox="0 0 24 24"><path d="M4 18L11 9l4 4 5-8"/></svg><b class="hk">L</b></button>
@@ -1751,7 +1767,7 @@ function renderActions(){
   document.getElementById("actOpenOnly").classList.toggle("on",actShowOpenOnly);
   document.getElementById("actDoneSteps").classList.toggle("on",!hideDoneSteps);
   document.getElementById("actMapOnly").classList.toggle("on",actOnlyMap);
-  document.getElementById("actExpAll").textContent=actions.some(a=>!collActs.has(a.id))?"Collapse all":"Expand all";
+  document.getElementById("actExpAll").textContent=actions.some(a=>!collActs.has(a.id))?"Collapse":"Expand";
   const shown=(actShowOpenOnly?actions.filter(a=>!a.done):actions.slice()).sort((x,y)=>actRank(x)-actRank(y));   // on-hold then completed actions sink to the bottom (display only — stored order unchanged)
   if(!shown.length){ list.innerHTML=""; return; }
   const cp=lb.classList.contains("open")?curPhoto():null;   // the open photo's actions get a marker in this list
@@ -1911,8 +1927,8 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
    active AND completed actions; picking a result jumps to it (list + map). ---- */
 (function(){
   const inp=document.getElementById("hSearch"), drop=document.getElementById("hsDrop"), wrap=document.getElementById("hsWrap"); if(!inp) return;
-  const openS=()=>{ wrap.classList.add("open"); inp.focus(); inp.select(); if(inp.value.trim()) render(); };
-  const closeS=()=>{ wrap.classList.remove("open"); drop.classList.remove("show"); inp.blur(); };
+  const openS=()=>{ inp.focus(); inp.select(); if(inp.value.trim()) render(); };   // the field is always there: just put the cursor in it
+  const closeS=()=>{ drop.classList.remove("show"); inp.blur(); };
   document.getElementById("miSearch").addEventListener("click",()=>setTimeout(openS,0));
   let res=[], cur=-1;
   const hl=(txt,terms)=>{ let h=esc(txt); for(const t of terms){ if(!t) continue; h=h.replace(new RegExp("("+t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")","ig"),"<mark>$1</mark>"); } return h; };
@@ -1961,7 +1977,7 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
     else if(e.key==="Enter"){ e.preventDefault(); if(cur>=0) pick(cur); }
     else if(e.key==="Escape"){ inp.value=""; closeS(); } });
   drop.addEventListener("mousedown",e=>{ const r=e.target.closest(".hs-row"); if(r){ e.preventDefault(); pick(Number(r.dataset.i)); } });
-  document.addEventListener("mousedown",e=>{ if(!e.target.closest(".hsearch")&&!e.target.closest("#miSearch")) closeS(); },true);
+  document.addEventListener("mousedown",e=>{ if(!e.target.closest(".hsearch")&&!e.target.closest("#miSearch")) drop.classList.remove("show"); },true);
   window.addEventListener("keydown",e=>{ if((e.ctrlKey||e.metaKey)&&(e.key==="k"||e.key==="K")){ e.preventDefault(); e.stopPropagation(); openS(); } },true);
 })();
 /* yes/no confirmation for anything that closes, replaces or removes work. "No" is the default. */
@@ -2636,6 +2652,25 @@ let _legacyAvail=false;
 function roBlock(){ if(!isOnline()||canEdit()) return false;
   loadNote(ghRaw().token?"This access token can't change "+onRepo()+" — view only":"View only — add your access token in Tools → Settings to make changes"); setTimeout(()=>loadNote(""),4500); return true; }
 
+/* ---- Help > About: save status, project + link, access, app version, where the data lives ---- */
+function showAbout(){
+  renderSaveStatus();
+  let m=document.getElementById("aboutModal");
+  if(!m){ m=document.createElement("div"); m.id="aboutModal"; m.className="ynmodal"; document.body.appendChild(m); m.addEventListener("mousedown",e=>{ if(e.target===m) m.classList.remove("show"); }); }
+  const d=new Date(document.lastModified), on=isOnline(), st=(document.getElementById("saveStatus")||{}).textContent||"";
+  const row=(k,v)=>'<div class="k">'+k+'</div><div class="v">'+v+'</div>';
+  m.innerHTML='<div class="yn-win pj-win"><h3>About ActionMap</h3><div class="about-rows">'
+    +row("Saved",esc(st||(on?"Up to date":"Not saved \u2014 stored on this PC only")))
+    +row("Project",esc(on?(ON.name||ON.pid):(loadedJsonName||"None open")))
+    +(on?row("Link",'<span id="abLink">'+esc(shareLink())+'</span><button id="abCopy" type="button">Copy</button>'):"")
+    +(on?row("Access",canEdit()?"You can edit":"View only"+(ghRaw().token?" (this access token can\u2019t change it)":" \u2014 add your access token in Tools \u2192 Settings to edit")):"")
+    +row("Data",onRepo()?'<a href="https://github.com/'+esc(onRepo())+'" target="_blank" rel="noopener">github.com/'+esc(onRepo())+'</a>':"Not set up")
+    +row("Version",isNaN(d)?"\u2014":"Published "+d.toLocaleString(undefined,{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}))
+    +'</div><div class="yn-btns"><button class="yn-yes" id="abClose" type="button">Close</button></div></div>';
+  m.classList.add("show");
+  m.querySelector("#abClose").onclick=()=>m.classList.remove("show");
+  const c=m.querySelector("#abCopy"); if(c) c.onclick=()=>{ copyShareLink(); c.textContent="\u2713 Copied"; };
+}
 /* ---- Add photos (file picker) ---- */
 function addPhotosFlow(){ if(roBlock()) return; if(!isOnline()&&!photos.length&&!actions.length){ showProjectPicker("Open or create a project first, then add photos to it."); return; } document.getElementById("addPhotosInput").click(); }
 
@@ -3256,10 +3291,10 @@ function renderProjHead(){
     map.getContainer().appendChild(projHeadEl);
     const pr=document.getElementById("progress"); if(pr) projHeadEl.querySelector(".ph-track").appendChild(pr);   // the load bar lives just above the header text, sized to the callout
   }
-  const has=!!(loadedJsonName||folderName||photos.length||projLoadMsg);
+  const has=!!(loadedJsonName||folderName||photos.length||projLoadMsg||_stWarn);
   projHeadEl.classList.toggle("show",has); if(!has) return;
   projHeadEl.querySelector(".ph-name").textContent=loadedJsonName||folderName||"ActionMap";
-  projHeadEl.querySelector(".ph-saved").textContent=isOnline()?(ON.live&&!canEdit()?" (view only)":""):lastSavedAt?(" (last saved "+fmtDate(lastSavedAt)+")"):" (not saved yet)";
+  projHeadEl.querySelector(".ph-saved").textContent=_stWarn?(" \u2014 "+_stWarn):"";
   projHeadEl.querySelector(".ph-load").textContent=projLoadMsg?(" — "+projLoadMsg):"";
   projHeadEl.classList.toggle("loading",!!projLoadMsg);
 }
@@ -4699,6 +4734,7 @@ document.getElementById("miShare").addEventListener("click",()=>copyShareLink())
 document.getElementById("miAddPhotos").addEventListener("click",addPhotosFlow);
 document.getElementById("addPhotosInput").addEventListener("change",e=>{ const fs=Array.from(e.target.files||[]).filter(f=>/^image\//i.test(f.type||"")||IMG_RE.test(f.name||"")); e.target.value=""; if(fs.length) ingestAdhoc(fs.map(f=>({name:f.name,path:f.name,getFile:async()=>f}))); });
 document.getElementById("miBackup").addEventListener("click",downloadBackup);
+document.getElementById("miAbout").addEventListener("click",showAbout);
 document.getElementById("miMigrate").addEventListener("click",migrateToOnline);
 document.getElementById("btnClear").addEventListener("click",async()=>{
   if(photos.length||actions.length){
@@ -4775,11 +4811,17 @@ function renderSaveStatus(){ const el=document.getElementById("saveStatus"); if(
     else if(ON.err){ t="Not saved yet \u2014 retrying"; tip=String(ON.err.message||ON.err); cls="bad"; }
     else if(ON.at) t="Saved "+agoText(ON.at);
     else t="Up to date";
-    el.textContent=t; el.title=tip||("Saved online in "+onRepo()); el.className="savestat"+(cls?" "+cls:""); return; }
+    el.textContent=t; el.title=tip||("Saved online in "+onRepo()); el.className="savestat"+(cls?" "+cls:"");
+    setStatusWarn((ON.live&&(cls||ON.wait||upN))?t:""); return; }
   const {txt,cls}=_saveSt;
   let t=""; if(cls==="bad") t="Save failed \u2014 check the project file"; else if(cls==="busy") t="Saving\u2026"; else if(/pending/i.test(txt)) t="Not saved yet \u2014 click anywhere to save";
   else if(lastSavedAt&&(jsonHandle||saveFileHandle)) t="Updated "+agoText(lastSavedAt);
-  el.textContent=t; el.className="savestat"+(cls?" "+cls:""); }
+  el.textContent=t; el.className="savestat"+(cls?" "+cls:"");
+  setStatusWarn((cls==="bad"||/pending/i.test(txt))?t:""); }
+/* Only things that need attention appear on the map label (uploading, view only, not saved…);
+   the routine "Saved 2 mins ago" is in Help → About. */
+let _stWarn="";
+function setStatusWarn(t){ if(t===_stWarn) return; _stWarn=t; renderProjHead(); }
 setInterval(renderSaveStatus,30000);
 // Content signature excluding volatile fields (timestamp, map view) so only real changes trigger a write.
 function metaSignature(){ const st=serializeState(false); delete st.savedAt; if(st.settings) delete st.settings.view; return JSON.stringify(st); }
