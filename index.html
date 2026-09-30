@@ -1601,6 +1601,18 @@ function inlineEdit(el,value,multiline,onCommit){
   ["click","dblclick","mousedown","contextmenu"].forEach(ev=>inp.addEventListener(ev,e=>e.stopPropagation()));
 }
 function refreshActUI(){ renderActions(); renderIpActions(); }
+/* Typing fields inside a draggable row (an action being renamed, a sub-action, a note): press-and-drag
+   in the text selects text. The row stops being draggable for that press so the browser doesn't grab it. */
+document.addEventListener("mousedown",e=>{ const t=e.target;
+  if(!t||!t.closest||!t.closest("input,textarea,[contenteditable=true],[contenteditable='']")) return;
+  const rows=[]; let n=t.parentElement; while(n){ if(n.getAttribute&&n.getAttribute("draggable")==="true"){ n.setAttribute("draggable","false"); rows.push(n); } n=n.parentElement; }
+  if(!rows.length) return;
+  /* a field opened with its text all selected: pressing inside it would drag that text away (the browser's
+     text drag-and-drop); clearing the old selection first makes the drag select from where you pressed */
+  if(e.button===0&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA")&&t.selectionStart!==t.selectionEnd){ try{ t.setSelectionRange(t.selectionEnd,t.selectionEnd); }catch(_e){} }
+  const back=()=>{ document.removeEventListener("mouseup",back,true); setTimeout(()=>rows.forEach(r=>{ if(r.isConnected) r.setAttribute("draggable","true"); }),0); };
+  document.addEventListener("mouseup",back,true); },true);
+document.addEventListener("dragstart",e=>{ const t=e.target; if(t&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA"||(t.nodeType===3&&t.parentElement&&t.parentElement.closest("input,textarea")))) e.preventDefault(); },true);   // never drag text out of a field
 function startActEdit(a,row){
   inlineEdit(row.querySelector(".t"),a.text,false,v=>{
     const t=(v==null?"":v.trim());
@@ -1946,7 +1958,8 @@ function renderActions(){
     const rs=el.querySelector(".cov-rs");
     if(rs) rs.addEventListener("mousedown",e=>{ e.preventDefault(); e.stopPropagation(); covResizing=true; document.body.style.userSelect="none"; });
     /* priority drag & drop: the whole row is the handle (a drag begun on a sub-action's number stays a sub-action drag) */
-    el.addEventListener("dragstart",e=>{ if(dragStep) return;   // a sub-action drag already owns this gesture
+    el.addEventListener("dragstart",e=>{ if(el.querySelector(".act-edit")){ e.preventDefault(); return; }   // renaming: a drag in the field selects text
+      if(dragStep) return;   // a sub-action drag already owns this gesture
       if(covResizing||e.target.closest(".act-steps,.act-edit,.cov-rs,input,textarea")){ e.preventDefault(); return; }
       dragActId=a.id; e.dataTransfer.effectAllowed="move"; try{ e.dataTransfer.setData("text/plain","act:"+a.id); }catch(err){} });
     el.addEventListener("dragover",e=>{ if(dragActId==null||dragActId===a.id) return; e.preventDefault(); const r=el.getBoundingClientRect(); const before=(e.clientY-r.top)<r.height/2; el.classList.toggle("drop-b",before); el.classList.toggle("drop-a",!before); });
