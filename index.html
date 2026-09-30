@@ -276,7 +276,16 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .projhead.loading .ph-track{display:block;}
   .projhead .progress{position:static;display:block;height:100%;width:0;background:var(--gold);border-radius:3px;transition:width .15s;box-shadow:none;}
   .ph-line{font:600 var(--fb) var(--font);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .ph-name{font-size:var(--fb);}
+  .ph-name,.ph-caret{font-size:var(--fb);cursor:pointer;pointer-events:auto;}   /* the rest of the header lets the map drag through */
+  .ph-caret{color:var(--faint);margin-left:5px;font-size:12px;}
+  .ph-name:hover,.ph-name:hover+.ph-caret{color:var(--accent);}
+  .proj-drop{position:absolute;z-index:1400;transform:translateX(-50%);min-width:220px;max-width:340px;max-height:60vh;overflow-y:auto;background:#fff;border:var(--ctl-bd);border-radius:var(--ctl-r);box-shadow:0 8px 24px #1d243026;padding:4px;display:flex;flex-direction:column;}
+  .pd-row{display:flex;align-items:center;gap:6px;text-align:left;font:600 var(--fb) var(--font);color:var(--ink);background:none;border:0;border-radius:6px;padding:7px 10px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .pd-row:hover{background:#fdf6e6;}
+  .pd-row.on{color:var(--accent);}
+  .pd-tick{width:14px;flex:none;color:var(--accent);}
+  .pd-all{border-top:1px solid var(--line);border-radius:0 0 6px 6px;margin-top:2px;font-weight:500;color:var(--muted);}
+  .pd-note{padding:8px 10px;color:var(--muted);font:var(--fb) var(--font);}
   .ph-saved{color:var(--muted);font-weight:500;}
   .ph-load{color:var(--accent);}
   .progress{display:none;}
@@ -519,6 +528,15 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .num-dot{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f7a95a,#F28C28);border:2px solid #fff;box-sizing:border-box;color:#fff;font:700 12px var(--font);letter-spacing:.3px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px #3BA55C33,0 2px 8px #1e1f2233;}   /* identical to a numbered cluster bubble */
   body.mobile .num-dot{width:26px;height:26px;font:700 9px var(--mono);}   /* phone sizes were fine as they were */
   .act-hold{display:flex;align-items:center;padding-top:1px;cursor:pointer;margin-left:1px;}
+  /* per-action status: labelled tags, On hold above Done; filled in its colour when on */
+  .act-st{display:flex;flex-direction:column;gap:4px;flex:none;align-self:flex-start;}
+  .act-st button{font:600 var(--fl) var(--font);width:66px;padding:2px 0;border-radius:6px;border:1.5px solid;cursor:pointer;text-align:center;white-space:nowrap;}
+  .act-st .st-h{color:#9a5b00;border-color:#f0c77e;background:#fdf6e6;}
+  .act-st .st-h:hover{border-color:#E8A33D;}
+  .act-st .st-h.on{background:#E8A33D;border-color:#E8A33D;color:#fff;}
+  .act-st .st-d{color:#237042;border-color:#a9dbb8;background:#effaf3;}
+  .act-st .st-d:hover{border-color:#3BA55C;}
+  .act-st .st-d.on{background:#3BA55C;border-color:#3BA55C;color:#fff;}
   .act-hold input{background:#E8A33D33;}   /* faint amber: this is the ON-HOLD box */
   .act-chk input:checked{background:var(--good);border-color:var(--good);}
   .act-hold input:checked{background:#E8A33D;border-color:#E8A33D;}
@@ -1571,7 +1589,7 @@ function inlineEdit(el,value,multiline,onCommit){
      can fire — remember which row was hit and replay the selection, so one click does BOTH. */
   const md=ev=>{ if(ev.target===inp) return;
     const row=ev.target.closest("#actList .act-row");
-    if(row&&!ev.target.closest(".act-chk,.act-exp,.act-del,.act-steps,.act-edit")) clickRow=Number(row.dataset.aid); };
+    if(row&&!ev.target.closest(".act-chk,.act-st,.act-exp,.act-del,.act-steps,.act-edit")) clickRow=Number(row.dataset.aid); };
   document.addEventListener("mousedown",md,true);
   const finish=(commit)=>{ if(done) return; done=true; document.removeEventListener("mousedown",md,true);
     onCommit(commit?inp.value:null);
@@ -1900,8 +1918,8 @@ function renderActions(){
     const isCur=!!(cp&&Array.isArray(cp.acts)&&cp.acts.includes(a.id));
     const exp=!collActs.has(a.id);
     return '<div class="act-row'+(a.done?' done':'')+(a.hold?' hold':'')+(selActs.has(a.id)?' sel':'')+(isCur?' cur':'')+'" data-aid="'+a.id+'" draggable="true">'
-      +'<label class="act-chk" title="'+(a.done?'Reopen this action':'Mark completed')+'"><input type="checkbox"'+(a.done?' checked':'')+'/></label>'
-      +'<label class="act-hold" title="On hold — stays in this list but its photos leave the map"><input type="checkbox"'+(a.hold?' checked':'')+'/></label>'
+      +'<div class="act-st"><button type="button" class="st-h'+(a.hold?' on':'')+'" title="'+(a.hold?'Take this action off hold':'Put this action on hold')+'">On hold</button>'
+        +'<button type="button" class="st-d'+(a.done?' on':'')+'" title="'+(a.done?'Reopen this action':'Mark this action done')+'">Done</button></div>'
       +'<div class="act-body"><div class="bh"><div class="t"><span class="a-num">'+actNo(a)+'</span>'+esc(a.text)+'</div>'
         +'<button class="act-copy" type="button" title="Copy image: one portrait picture of this action (title, map, photos with markup) to paste into any chat or email"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg></button>'
         +expBtnHtml(a)+'<button class="ipa-x act-del" type="button" title="'+(isCur?'Remove this action from the open photo':'Delete this action')+'">&times;</button></div>'
@@ -1909,8 +1927,8 @@ function renderActions(){
       +'</div>'+cov+'</div>'; }).join("");
   list.querySelectorAll(".act-row").forEach(el=>{
     const a=actById(Number(el.dataset.aid)); if(!a) return;
-    el.querySelector(".act-chk input").addEventListener("click",e=>{ e.stopPropagation(); setActionDone(a,e.target.checked); });
-    el.querySelector(".act-hold input").addEventListener("click",e=>{ e.stopPropagation(); setActionHold(a,e.target.checked); });
+    el.querySelector(".act-st .st-d").addEventListener("click",e=>{ e.stopPropagation(); setActionDone(a,!a.done); });
+    el.querySelector(".act-st .st-h").addEventListener("click",e=>{ e.stopPropagation(); setActionHold(a,!a.hold); });
     el.querySelector(".act-del").addEventListener("click",e=>{ e.stopPropagation();
       const cp2=lb.classList.contains("open")?curPhoto():null;
       if(cp2&&Array.isArray(cp2.acts)&&cp2.acts.includes(a.id)) unassignAct(a,cp2);   // open photo is linked: X just removes that link
@@ -1920,10 +1938,10 @@ function renderActions(){
     /* single click selects/navigates (slightly delayed so a double-click can win); double click edits in place */
     /* selection is INSTANT; only the zoom waits briefly so a double-click (edit) can cancel it */
     { const cb=el.querySelector(".act-copy"); if(cb) cb.addEventListener("click",e=>{ e.stopPropagation(); copyActionForPhone(a,cb); }); }
-    el.addEventListener("click",e=>{ if(e.target.closest(".act-chk,.act-hold,.act-exp,.act-del,.act-copy,.act-steps,.act-notes")||el.querySelector(".act-edit")) return;
+    el.addEventListener("click",e=>{ if(e.target.closest(".act-chk,.act-hold,.act-st,.act-exp,.act-del,.act-copy,.act-steps,.act-notes")||el.querySelector(".act-edit")) return;
       clearTimeout(el._ct); clickAction(a,e,true);
       if(!e.ctrlKey&&!e.metaKey&&!e.shiftKey) el._ct=setTimeout(()=>actNavigate(a),260); });
-    el.addEventListener("dblclick",e=>{ if(e.target.closest(".act-chk,.act-exp,.act-del,.act-steps,.act-notes,.act-cover")||el.querySelector(".act-edit")) return; clearTimeout(el._ct); startActEdit(a,el); });
+    el.addEventListener("dblclick",e=>{ if(e.target.closest(".act-chk,.act-st,.act-exp,.act-del,.act-steps,.act-notes,.act-cover")||el.querySelector(".act-edit")) return; clearTimeout(el._ct); startActEdit(a,el); });
     el.addEventListener("contextmenu",e=>{ e.preventDefault(); e.stopPropagation(); openActMenu(a,e); });
     const rs=el.querySelector(".cov-rs");
     if(rs) rs.addEventListener("mousedown",e=>{ e.preventDefault(); e.stopPropagation(); covResizing=true; document.body.style.userSelect="none"; });
@@ -2417,7 +2435,7 @@ function applyOnline(st){
     const ids=Array.isArray(po)?po.map(h=>hId.get(h)).filter(x=>x!=null):[];
     if(ids.length) a.porder=ids; else delete a.porder; }
   projLog=Array.isArray(st.log)?st.log.slice(-3000):[];
-  if(st.name) ON.name=st.name; loadedJsonName=ON.name; folderName="";
+  if(st.name) ON.name=st.name; loadedJsonName=projNameOf(ON.pid)||ON.name; folderName="";
   if(st.mergedFrom){ try{ const k="pmMergedChanges:"+ON.pid, cur=localStorage.getItem(k)||""; if(st.mergedFrom>cur) localStorage.setItem(k,st.mergedFrom); }catch(e){} }   // phone acknowledgement travels with the project
 }
 /* Three-way merge of project documents: what this device changed since the last sync (base -> local)
@@ -2510,6 +2528,8 @@ function absorb(doc,sentLocal){
 let _pollBusy=false;
 async function onlinePoll(){
   if(!ON.pid||!ON.live||_pollBusy||ON.busy) return;
+  if(Date.now()-_pjT>60000){ _pjT=Date.now();   // a rename made elsewhere shows up within a minute
+    readProjects().then(()=>{ const n=projNameOf(ON.pid); if(n&&n!==loadedJsonName){ loadedJsonName=n; if(canEdit()&&ON.name!==n){ ON.name=n; persistState(); } renderProjHead(); } }).catch(()=>{}); }
   _pollBusy=true;
   try{
     const rd=await repoReadJson(statePath(),ON.etag); if(rd.same||!rd.obj) return;
@@ -2665,7 +2685,8 @@ function adoptLinkRepo(){ const lp=linkParams(); let r=lp.repo; if(!r&&siteRepo(
   if(r&&r!==ghRaw().repo){ try{ localStorage.setItem("pmGhRepo",r); }catch(e){} _branch=null; _imgHave=null; } }
 function projKeyMatch(list,key){ if(!key) return null; key=String(key).toLowerCase();
   return list.find(p=>p.id===key)||list.find(p=>slugify(p.name)===key)||list.find(p=>String(p.id).startsWith(key+"-"))||null; }
-let _projList=null;
+let _projList=null, _pjT=0;
+function projNameOf(pid){ const p=(_projList||[]).find(x=>x.id===pid); return p&&p.name?p.name:null; }   // the project list is the source of a project's name
 function shareLink(pid){ pid=pid||ON.pid;
   const base=location.origin+location.pathname.replace(/(index|Photo-Map)\.html$/i,""), list=_projList||[];
   const pr=list.find(p=>p.id===pid), nm=pr?pr.name:(pid===ON.pid?ON.name:""), sl=slugify(nm);
@@ -3404,8 +3425,10 @@ let projHeadEl=null, loadNoteTimer=null, projLoadMsg="";
 function renderProjHead(){
   if(!projHeadEl){
     projHeadEl=document.createElement("div"); projHeadEl.className="projhead";
-    projHeadEl.innerHTML='<div class="ph-track"></div><div class="ph-line"><span class="ph-name"></span><span class="ph-saved"></span><span class="ph-load"></span></div>';
+    projHeadEl.innerHTML='<div class="ph-track"></div><div class="ph-line"><span class="ph-name" title="Switch project"></span><span class="ph-caret" title="Switch project">\u25be</span><span class="ph-saved"></span><span class="ph-load"></span></div>';
     map.getContainer().appendChild(projHeadEl);
+    ["mousedown","pointerdown","dblclick","wheel","contextmenu","click"].forEach(ev=>projHeadEl.addEventListener(ev,e=>e.stopPropagation()));
+    projHeadEl.querySelectorAll(".ph-name,.ph-caret").forEach(el=>el.addEventListener("click",toggleProjDrop));
     const pr=document.getElementById("progress"); if(pr) projHeadEl.querySelector(".ph-track").appendChild(pr);   // the load bar lives just above the header text, sized to the callout
   }
   const has=!!(loadedJsonName||folderName||photos.length||projLoadMsg||_stWarn);
@@ -3415,6 +3438,25 @@ function renderProjHead(){
   projHeadEl.querySelector(".ph-load").textContent=projLoadMsg?(" — "+projLoadMsg):"";
   projHeadEl.classList.toggle("loading",!!projLoadMsg);
 }
+/* Project dropdown under the map header: every project in the data repo, the open one ticked. */
+function closeProjDrop(){ const d=document.getElementById("projDrop"); if(d) d.remove(); }
+async function toggleProjDrop(){
+  if(document.getElementById("projDrop")){ closeProjDrop(); return; }
+  const d=document.createElement("div"); d.id="projDrop"; d.className="proj-drop"; d.innerHTML='<div class="pd-note">Loading projects\u2026</div>';
+  ["mousedown","pointerdown","dblclick","wheel","contextmenu","click"].forEach(ev=>d.addEventListener(ev,e=>e.stopPropagation()));
+  map.getContainer().appendChild(d);
+  const r=projHeadEl.getBoundingClientRect(), mr=map.getContainer().getBoundingClientRect();
+  d.style.top=(r.bottom-mr.top+6)+"px"; d.style.left=(r.left-mr.left+r.width/2)+"px";
+  let list=[]; try{ list=onRepo()?await readProjects():[]; }catch(e){}
+  if(!document.getElementById("projDrop")) return;
+  const cur=ON.pid;
+  d.innerHTML=(list.length?list.map(p=>'<button type="button" class="pd-row'+(p.id===cur?' on':'')+'" data-id="'+esc(p.id)+'"><span class="pd-tick">'+(p.id===cur?'\u2713':'')+'</span>'+esc(p.name||p.id)+'</button>').join(""):'<div class="pd-note">No projects found.</div>')
+    +'<button type="button" class="pd-row pd-all"><span class="pd-tick"></span>All projects\u2026</button>';
+  d.querySelectorAll(".pd-row[data-id]").forEach(b=>b.addEventListener("click",()=>{ closeProjDrop(); if(b.dataset.id!==ON.pid) openProject(b.dataset.id); }));
+  d.querySelector(".pd-all").addEventListener("click",()=>{ closeProjDrop(); showProjectPicker(); });
+}
+document.addEventListener("mousedown",e=>{ if(!e.target.closest||(!e.target.closest("#projDrop")&&!e.target.closest(".projhead"))) closeProjDrop(); },true);
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeProjDrop(); });
 function loadNote(msg){ projLoadMsg=msg||""; clearTimeout(loadNoteTimer); renderProjHead(); }
 function flashLoadNote(msg,ms){ loadNote(msg); loadNoteTimer=setTimeout(()=>loadNote(""),ms||1400); }
 /* Learned-ETA progress: the app times every kind of load (full-quality read, folder scan, index,
