@@ -1752,8 +1752,7 @@ function renderActions(){
       +'<div class="act-body"><div class="bh"><div class="t"><span class="a-num">'+actNo(a)+'</span>'+esc(a.text)+'</div>'
         +'<button class="act-copy" type="button" title="Copy for phone: one portrait image — title, main photo, the rest below, with markup — ready to paste into Messenger"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.3h2"/></svg></button>'
         +expBtnHtml(a)+'<button class="ipa-x act-del" type="button" title="'+(isCur?'Remove this action from the open photo':'Delete this action')+'">&times;</button></div>'
-      +(exp?('<div class="asec">'+stepsHtml(a)+'</div>'
-        +((a.done&&a.doneAt)?('<div class="m">done '+fmtDate(a.doneAt)+'</div>'):'')):'')
+      +(exp?('<div class="asec">'+stepsHtml(a)+'</div>'):'')
       +'</div>'+cov+'</div>'; }).join("");
   list.querySelectorAll(".act-row").forEach(el=>{
     const a=actById(Number(el.dataset.aid)); if(!a) return;
