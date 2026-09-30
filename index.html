@@ -2514,7 +2514,7 @@ async function restoreUploadQueue(){   // photos that were still uploading when 
 }
 
 /* ---- projects: the index, open / new / rename, share link ---- */
-async function readProjects(){ try{ const rd=await repoReadJson("projects.json"); return (rd.obj&&Array.isArray(rd.obj.projects))?rd.obj.projects:[]; }catch(e){ return []; } }
+async function readProjects(){ try{ const rd=await repoReadJson("projects.json"); const l=(rd.obj&&Array.isArray(rd.obj.projects))?rd.obj.projects:[]; _projList=l; return l; }catch(e){ return []; } }
 async function updateProjects(mutate){
   for(let i=0;i<6;i++){ const rd=await repoReadJson("projects.json"); const cur=rd.obj&&Array.isArray(rd.obj.projects)?rd.obj:{v:1,projects:[]};
     const next=mutate(JSON.parse(JSON.stringify(cur))); if(!next) return;
@@ -2522,7 +2522,24 @@ async function updateProjects(mutate){
   throw new Error("Couldn't update the project list — try again");
 }
 function slugify(s){ return String(s||"project").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40)||"project"; }
-function shareLink(pid){ return location.origin+location.pathname.replace(/(index|Photo-Map)\.html$/i,"")+"?r="+encodeURIComponent(onRepo())+"&p="+encodeURIComponent(pid||ON.pid); }
+/* Neat links: on <account>.github.io the data repo is <account>/Action-Map, so a link only needs the
+   project — by name: https://<account>.github.io/ActionMap/?fim2 (old ?r=…&p=… links still work). */
+function siteRepo(){ const m=/^([a-z0-9-]+)\.github\.io$/i.exec(location.hostname||""); return m?m[1]+"/Action-Map":""; }
+function linkParams(){ const sp=new URLSearchParams(location.search); const r=sp.get("r"); let key=sp.get("p");
+  if(!key) for(const [k,v] of sp){ if(!v&&!["r","p","shared","v","upd","u","t"].includes(k)){ key=k; break; } }
+  return {repo:(r&&/^[\w.-]+\/[\w.-]+$/.test(r))?r:null,key:key||null}; }
+function adoptLinkRepo(){ const lp=linkParams(); let r=lp.repo; if(!r&&siteRepo()&&(lp.key||!ghRaw().repo)) r=siteRepo();
+  if(r&&r!==ghRaw().repo){ try{ localStorage.setItem("pmGhRepo",r); }catch(e){} _branch=null; _imgHave=null; } }
+function projKeyMatch(list,key){ if(!key) return null; key=String(key).toLowerCase();
+  return list.find(p=>p.id===key)||list.find(p=>slugify(p.name)===key)||list.find(p=>String(p.id).startsWith(key+"-"))||null; }
+let _projList=null;
+function shareLink(pid){ pid=pid||ON.pid;
+  const base=location.origin+location.pathname.replace(/(index|Photo-Map)\.html$/i,""), list=_projList||[];
+  const pr=list.find(p=>p.id===pid), nm=pr?pr.name:(pid===ON.pid?ON.name:""), sl=slugify(nm);
+  const key=(nm&&sl&&list.filter(p=>slugify(p.name)===sl).length<=1&&!list.some(p=>p.id!==pid&&p.id===sl))?sl:pid;   // the name reads better; the id when names clash
+  const q=[]; if(onRepo()&&onRepo()!==siteRepo()) q.push("r="+encodeURIComponent(onRepo()),"p="+encodeURIComponent(key)); else q.push(encodeURIComponent(key));
+  return base+"?"+q.join("&"); }
+function neatUrl(){ try{ if(isOnline()&&ON.live) history.replaceState(null,"",shareLink()); }catch(e){} }   // the address bar IS the share link
 async function createProject(name,seed){   // seed: a ready document (migration); otherwise an empty project
   name=String(name||"").trim()||"New project";
   const pid=(seed&&seed.id)||(slugify(name)+"-"+Math.random().toString(36).slice(2,6));
@@ -2540,7 +2557,7 @@ async function openProject(pid){
   Object.assign(ON,{pid,name:"",base:null,sha:null,etag:null,rawText:null,cleanJ:null,live:false,busy:false,again:false,err:null,at:0,denied:false});
   _imgHave=null; jsonHandle=null; saveFileHandle=null; dirHandle=null; fileLoadedOnce=true; hideBanner();
   try{ localStorage.setItem("pmProject",pid); }catch(e){}
-  try{ const u=new URL(location.href); if(u.searchParams.get("p")!==pid||u.searchParams.get("r")!==onRepo()){ u.searchParams.set("r",onRepo()); u.searchParams.set("p",pid); history.replaceState(null,"",u.toString()); } }catch(e){}   // the address bar IS the share link
+  readProjects().then(neatUrl);
   loadNote("Opening the project…"); renderSaveStatus(); syncMenus();
   let cached=null; try{ cached=await idbGet("on:"+onRepo()+"|"+pid); }catch(e){}
   if(cached&&cached.base){   // instant: this device's last copy, then catch up with what's online
@@ -2562,7 +2579,7 @@ function afterOpenUI(){
   let ui=null; try{ ui=JSON.parse(localStorage.getItem(uiSettingsKey())||"null"); }catch(e){}
   applyUiSettings(ui||{});
   if(!(ui&&ui.view)) fitToPhotos();
-  renderActions(); renderProjHead(); ensureThumbs(); renderSaveStatus(); syncMenus();
+  renderActions(); renderProjHead(); ensureThumbs(); renderSaveStatus(); syncMenus(); neatUrl();
 }
 
 /* ---- the project picker ---- */
@@ -2594,6 +2611,7 @@ function showProjectPicker(msg){
 async function renameProject(pid,name){
   await updateProjects(ix=>{ const p=ix.projects.find(x=>x.id===pid); if(!p||p.name===name) return null; p.name=name; return ix; });
   if(pid===ON.pid){ ON.name=name; loadedJsonName=name; logChange("Renamed the project to “"+name+"”"); persistState(); renderProjHead(); }
+  await readProjects(); neatUrl();
 }
 async function newProjectFlow(){
   if(!ghRaw().token||!onRepo()){ alert("Creating a project needs the data repository and your access token — Tools → Settings."); openSettings(); return; }
@@ -5267,6 +5285,11 @@ async function mLoadPack(silent){
   if(!ghRaw().repo&&ghRaw().token) await ghFindRepo();   // token saved but no repo: look it up
   const g=ghRaw(), cfg={token:g.token,repo:g.repo};
   if(!cfg.repo){ mShowSetup(g.token?"Couldn't find the data repository for this token \u2014 type it in (owner/name).":"Open the project link you were sent, or enter the data repository."); return; }
+  let lk=null; try{ lk=localStorage.getItem("pmProjectKey"); }catch(e){}
+  if(lk){ let list=[]; try{ const t=await ghGetRaw(cfg,"projects.json"); const j=t?JSON.parse(t):null; list=(j&&Array.isArray(j.projects))?j.projects:[]; }catch(e){}
+    const m=projKeyMatch(list,lk), id=m?m.id:(list.length?null:lk);
+    if(id&&id!==mPid){ mPid=id; mPack=null; mPackNext=null; mPackStale=false; _mpRaw=null; _mpObj=null; mUndoStack.length=0; mRedoStack.length=0; }
+    try{ if(id) localStorage.setItem("pmProject",id); localStorage.removeItem("pmProjectKey"); }catch(e){} }
   if(!mPid){ let list=[]; try{ const t=await ghGetRaw(cfg,"projects.json"); const j=t?JSON.parse(t):null; list=(j&&Array.isArray(j.projects))?j.projects:[]; }catch(e){}
     if(list.length===1){ mPid=list[0].id; try{ localStorage.setItem("pmProject",mPid);
         if(!localStorage.getItem(mFieldKey())&&localStorage.getItem("pmField")){ localStorage.setItem(mFieldKey(),localStorage.getItem("pmField")); localStorage.removeItem("pmField"); _mpRaw=null; _mpObj=null; } }catch(e){} }   // edits made before the project went online come along
@@ -6060,8 +6083,8 @@ async function mCheckFresh(force){
 }
 function mobileBoot(){
   document.body.classList.add("mobile");
-  { const qr=urlParam("r"), qp=urlParam("p");   // a shared link carries the data repo and the project
-    try{ if(qr&&/^[\w.-]+\/[\w.-]+$/.test(qr)) localStorage.setItem("pmGhRepo",qr); if(qp) localStorage.setItem("pmProject",qp); mPid=localStorage.getItem("pmProject")||null; }catch(e){} }
+  { adoptLinkRepo(); const lk=linkParams().key;   // a shared link names the project (and, off the usual site, the data repo)
+    try{ if(lk) localStorage.setItem("pmProjectKey",lk); mPid=localStorage.getItem("pmProject")||null; }catch(e){} }
   setInterval(()=>{ mPackPoll(); if(mChCount()) mSendChanges(); },30000);   // two-way auto sync heartbeat
   document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"){ mPackPoll(); mSendChanges(); } });
   window.addEventListener("online",()=>{ mPackPoll(); mSendChanges(); });
@@ -6314,9 +6337,10 @@ async function checkFieldChanges(){
   try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){}
   try{ if(typeof LZString!=="undefined" && parseShareHash()) return; }catch(e){}
   /* A link carries the data repo (?r=owner/repo) and the project (?p=id): opening it is all anyone needs. */
-  const qr=urlParam("r"), qp=urlParam("p");
-  if(qr&&/^[\w.-]+\/[\w.-]+$/.test(qr)&&qr!==ghRaw().repo){ try{ localStorage.setItem("pmGhRepo",qr); }catch(e){} }
-  let pid=qp; if(!pid){ try{ pid=localStorage.getItem("pmProject"); }catch(e){} }
+  adoptLinkRepo();
+  let pid=null; const lk=linkParams().key;
+  if(lk){ const m=projKeyMatch(await readProjects(),lk); pid=m?m.id:lk; }
+  if(!pid){ try{ pid=localStorage.getItem("pmProject"); }catch(e){} }
   _legacyAvail=await legacyExists();
   if(!pid&&_legacyAvail){ await bootLegacy();
     showBanner('This project is still stored only on this PC. <b>Move it online</b> so it can be shared by link \u2014 every photo comes along.',()=>{ hideBanner(); migrateToOnline(); },"Move online"); }
