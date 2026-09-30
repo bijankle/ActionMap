@@ -2240,24 +2240,19 @@ async function openPendingReport(){
   w.document.open(); w.document.write(html); w.document.close();
   logChange("Created the pending actions report ("+pend.length+" action"+(pend.length===1?"":"s")+")");
 }
-/* ---- Copy an action for a phone: ONE portrait image (1080x1920) — title (10%), main photo
-   (60%), the other photos tiled in the remaining 30% — with markup burned in, straight to the
-   clipboard for pasting into Messenger. ---- */
-const CARD_STYLE={bg:"#ffffff",titleColor:"#1e1f22",pad:28,gap:12,radius:18,mainBg:"#1e1f22",tileBg:"#e9ebee"};   // "clean white" — chosen for Messenger
+/* ---- Copy an action for a phone: ONE portrait image (2160x3840) — title + satellite map, the main
+   photo, the other photos tiled below — every photo whole (black around it, never cropped), from the
+   original where reachable, with markup burned in, straight to the clipboard for Messenger. ---- */
+const CARD_STYLE={bg:"#ffffff",titleColor:"#1e1f22",pad:28,gap:12,radius:18};   // "clean white" — chosen for Messenger
 function _rr(ctx,x,y,w,h,r){ ctx.beginPath(); if(ctx.roundRect&&r) ctx.roundRect(x,y,w,h,r); else ctx.rect(x,y,w,h); }
-function _drawImg(ctx,im,x,y,w,h,fit,bg,r){
-  ctx.save(); _rr(ctx,x,y,w,h,r); ctx.clip(); ctx.fillStyle=bg; ctx.fillRect(x,y,w,h);
-  if(im&&fit==="contain"){   // letterbox space is filled with a blurred, dimmed copy of the same photo — no dead black bars
-    const sc=Math.max(w/im.width,h/im.height); ctx.filter="blur(26px) brightness(.62) saturate(1.1)"; ctx.drawImage(im,x+(w-im.width*sc)/2-40,y+(h-im.height*sc)/2-40,im.width*sc+80,im.height*sc+80); ctx.filter="none"; }
-  if(im){ const s=fit==="cover"?Math.max(w/im.width,h/im.height):Math.min(w/im.width,h/im.height); const dw=im.width*s, dh=im.height*s; ctx.drawImage(im,x+(w-dw)/2,y+(h-dh)/2,dw,dh); }
-  ctx.restore(); }
 function _wrap(ctx,text,maxW,maxLines){ const words=String(text||"").split(/\s+/), lines=[]; let cur="";
   for(const w of words){ const t=cur?cur+" "+w:w; if(ctx.measureText(t).width<=maxW||!cur) cur=t; else { lines.push(cur); cur=w; } }
   if(cur) lines.push(cur);
   if(lines.length>maxLines){ const keep=lines.slice(0,maxLines); let last=keep[maxLines-1]; while(ctx.measureText(last+"…").width>maxW&&last.length>1) last=last.slice(0,-1); keep[maxLines-1]=last+"…"; keep.trunc=true; return keep; }
   return lines; }
-function _gridFor(m,W,H,gap){ let best=null;   // columns/rows that give the biggest near-square tiles
-  for(let c=1;c<=m;c++){ const r=Math.ceil(m/c), tw=(W-(c-1)*gap)/c, th=(H-(r-1)*gap)/r; const sc=Math.min(tw,th*1.35)*Math.min(th,tw);
+function _gridFor(ars,W,H,gap){ let best=null; const m=ars.length;   // columns/rows that show the MOST photo — every photo shown whole
+  for(let c=1;c<=m;c++){ const r=Math.ceil(m/c), tw=(W-(c-1)*gap)/c, th=(H-(r-1)*gap)/r; let sc=0;
+    for(const ar of ars){ const hh=Math.min(th,tw/ar); sc+=hh*hh*ar; }   // ar = width/height; area it gets when fitted whole
     if(!best||sc>best.sc) best={c,r,tw,th,sc}; }
   return best; }
 /* Satellite mini-map for the phone card: Esri World Imagery tiles (served with CORS, so they can
@@ -2299,7 +2294,7 @@ function _drawGeoPin(ctx,px,py,w){   // the same red YOU ARE HERE pin as the map
   ctx.font="800 10.5px Arial,Helvetica,sans-serif"; ctx.fillText("YOU",32,26); ctx.fillText("HERE",32,45);
   ctx.font="italic 700 8px Arial,Helvetica,sans-serif"; ctx.fillText("ARE",32,34.5);
   ctx.restore(); }
-async function drawMiniMap(ctx,x,y,w,h,pts,r,me){
+async function drawMiniMap(ctx,x,y,w,h,pts,r,me,hd){
   ctx.save(); _rr(ctx,x,y,w,h,r); ctx.clip(); ctx.fillStyle="#2a2d31"; ctx.fillRect(x,y,w,h);
   if(pts.length){
     const PIN=Math.round(Math.min(w,h)*0.22), PINH=PIN*80/64, PAD=24, DOT=20;
@@ -2310,8 +2305,9 @@ async function drawMiniMap(ctx,x,y,w,h,pts,r,me){
     let z=18; for(;z>3;z--){ const b=box(z); if(b.x2-b.x1<=w-2*PAD&&b.y2-b.y1<=h-2*PAD) break; }   // closest zoom where everything fits
     if(pts.length===1&&!me) z=17;
     const b=box(z), xs=pts.map(p=>_lx(p.lng,z)), ys=pts.map(p=>_ly(p.lat,z)), cx=(b.x1+b.x2)/2, cy=(b.y1+b.y2)/2, x0=cx-w/2, y0=cy-h/2, n=Math.pow(2,z), jobs=[];
-    for(let tx=Math.floor(x0/256);tx<=Math.floor((x0+w)/256);tx++) for(let ty=Math.floor(y0/256);ty<=Math.floor((y0+h)/256);ty++){ if(ty<0||ty>=n) continue;
-      jobs.push(loadMapTile(z,((tx%n)+n)%n,ty).then(im=>{ if(im) ctx.drawImage(im,x+tx*256-x0,y+ty*256-y0,256,256); })); }
+    const f=(hd&&z<19)?2:1, tz=z+(f===2?1:0), T=256/f, tn=n*f;   // hi-res card: tiles one zoom deeper, drawn at half size = native pixels
+    for(let tx=Math.floor(x0/T);tx<=Math.floor((x0+w)/T);tx++) for(let ty=Math.floor(y0/T);ty<=Math.floor((y0+h)/T);ty++){ if(ty<0||ty>=tn) continue;
+      jobs.push(loadMapTile(tz,((tx%tn)+tn)%tn,ty).then(im=>{ if(im) ctx.drawImage(im,x+tx*T-x0,y+ty*T-y0,T,T); })); }
     await Promise.all(jobs);
     for(let i=0;i<pts.length;i++){ const px=x+xs[i]-x0, py=y+ys[i]-y0; ctx.beginPath(); ctx.arc(px,py,13,0,Math.PI*2); ctx.fillStyle="#3BA55C"; ctx.fill(); ctx.lineWidth=5; ctx.strokeStyle="#fff"; ctx.stroke(); }
     if(me) _drawGeoPin(ctx,x+_lx(me.lng,z)-x0,y+_ly(me.lat,z)-y0,PIN);
@@ -2319,13 +2315,27 @@ async function drawMiniMap(ctx,x,y,w,h,pts,r,me){
   ctx.restore(); ctx.save(); _rr(ctx,x,y,w,h,r); ctx.lineWidth=3; ctx.strokeStyle="rgba(255,255,255,.9)"; ctx.stroke(); ctx.restore();
 }
 const CARD_LAYOUT={head:.20,main:.50,thumbs:.30,mapW:.50};   // chosen: header 20% (title | satellite map, half each) · main photo 50% · small photos 30%
-async function composeActionCard(a){   // 1080x1920 portrait: title | satellite mini-map · main photo · the rest tiled
-  const S=CARD_STYLE, Lo=CARD_LAYOUT, W=1080, H=1920, gap=S.gap;
-  const ps=actPhotos(a), ims=[];
-  for(const ph of ps){ try{ const src=await annotatedPreview(ph); ims.push(src?await loadImg(src):null); }catch(e){ ims.push(null); } }   // markup burned in
+const CARD_K=2;   // drawn at 2x (2160x3840): photos stay sharp when zoomed in Messenger (inside its HD size limit)
+const _within=(pr,ms)=>Promise.race([pr,new Promise(r=>setTimeout(()=>r(null),ms))]);
+async function cardImage(p){   // sharpest image reachable WITHOUT any prompt: the original (photo folder / phone upload), else the preview
+  let file=null; try{ file=await _within(getOriginalFileSilent(p),8000); }catch(e){}
+  if(file){ try{ const r=await displayURL(p,file); try{ return {im:await loadImg(r.url),url:r.url}; }catch(e){ URL.revokeObjectURL(r.url); } }catch(e){} }
+  const src=p.preview||p.thumb; if(!src) return null;
+  try{ return {im:await loadImg(src)}; }catch(e){ return null; }
+}
+function _drawPhoto(ctx,p,im,x,y,w,h,r){   // the WHOLE photo (never cropped) on black, markup drawn at full resolution
+  ctx.save(); _rr(ctx,x,y,w,h,r); ctx.clip(); ctx.fillStyle="#000"; ctx.fillRect(x,y,w,h);
+  if(im){ const s=Math.min(w/im.width,h/im.height), dw=im.width*s, dh=im.height*s, dx=x+(w-dw)/2, dy=y+(h-dh)/2;
+    ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality="high"; ctx.drawImage(im,dx,dy,dw,dh);
+    if(p&&p.marks&&p.marks.length) paintMarks(ctx,dx,dy,dw,dh,Math.min(dw,dh)*0.0012,p.marks,(p.mkw!=null?p.mkw:null),(p.mth!=null?p.mth:null)); }
+  ctx.restore(); }
+async function composeActionCard(a){   // portrait card: title | satellite mini-map · main photo · the rest tiled
+  const S=CARD_STYLE, Lo=CARD_LAYOUT, W=1080, H=1920, gap=S.gap, K=CARD_K;   // laid out in 1080x1920 units, rendered at K x
+  const ps=actPhotos(a), ars=[];
+  for(const ph of ps){ let ar=4/3; try{ const src=ph.preview||ph.thumb; if(src){ const im=await loadImg(src); if(im.width&&im.height) ar=im.width/im.height; } }catch(e){} ars.push(ar); }   // shapes only, for the layout
   const pts=ps.filter(p=>isFinite(p.lat)&&isFinite(p.lng)&&p.lat!=null).map(p=>({lat:+p.lat,lng:+p.lng}));   // every dot on the map, incl. placed (noGps) ones
   if(a.loc&&isFinite(a.loc.lat)&&isFinite(a.loc.lng)) pts.push({lat:+a.loc.lat,lng:+a.loc.lng});
-  const c=document.createElement("canvas"); c.width=W; c.height=H; const ctx=c.getContext("2d");
+  const c=document.createElement("canvas"); c.width=W*K; c.height=H*K; const ctx=c.getContext("2d"); ctx.scale(K,K);
   ctx.fillStyle=S.bg; ctx.fillRect(0,0,W,H);
   const X=S.pad, IW=W-2*S.pad, mapRight=pts.length>0, headH=Math.round(H*(mapRight?Lo.head:0.10)), mapW=mapRight?Math.round(IW*Lo.mapW):0;   // no located photos: a slim title-only header, photos get the room
   const tW=IW-(mapRight?mapW+gap*2:0)-8;
@@ -2333,13 +2343,17 @@ async function composeActionCard(a){   // 1080x1920 portrait: title | satellite 
   let px=headH>250?76:64, lines; for(;px>=30;px-=2){ ctx.font=font(px); lines=_wrap(ctx,a.text,tW,headH>250?6:4); if(!lines.trunc&&lines.length*px*1.18<=headH-gap-8) break; }   // largest size that shows the WHOLE title
   ctx.fillStyle=S.titleColor; ctx.textBaseline="middle"; const lh=px*1.18, top=S.pad+(headH-gap-lines.length*lh)/2+lh/2;
   lines.forEach((l,i)=>ctx.fillText(l,X+4,top+i*lh));
-  if(mapRight) await drawMiniMap(ctx,X+IW-mapW,S.pad,mapW,headH-gap,pts,S.radius,await currentPos());   // zoomed to show the spots AND where you are
-  const mainY=S.pad+headH, rest=ims.slice(1);
-  const mainH=(rest.length?Math.round(H*(Lo.main+Lo.head)-headH):H-S.pad-mainY)-gap;   // small photos always keep their 30%   // a lone photo takes all the space below the header
-  _drawImg(ctx,ims[0]||null,X,mainY,IW,mainH,ims[0]?"contain":"cover",S.mainBg,S.radius);
-  if(rest.length){ const Y=mainY+mainH+gap, TH=H-S.pad-Y, gr=_gridFor(rest.length,IW,TH,gap);
-    rest.forEach((im,i)=>{ const col=i%gr.c, row=Math.floor(i/gr.c);
-      _drawImg(ctx,im,X+col*(gr.tw+gap),Y+row*(gr.th+gap),gr.tw,gr.th,"cover",S.tileBg,12); }); }
+  if(mapRight) await drawMiniMap(ctx,X+IW-mapW,S.pad,mapW,headH-gap,pts,S.radius,await currentPos(),K>1);   // zoomed to show the spots AND where you are
+  const mainY=S.pad+headH, nRest=Math.max(0,ps.length-1);
+  const mainH=(nRest?Math.round(H*(Lo.main+Lo.head)-headH):H-S.pad-mainY)-gap;   // small photos always keep their 30%; a lone photo takes all the space below the header
+  const boxes=[{x:X,y:mainY,w:IW,h:mainH,r:S.radius}];
+  if(nRest){ const Y=mainY+mainH+gap, TH=H-S.pad-Y, gr=_gridFor(ars.slice(1),IW,TH,gap);
+    for(let i=0;i<nRest;i++){ const col=i%gr.c, row=Math.floor(i/gr.c), inRow=Math.min(gr.c,nRest-row*gr.c), off=(gr.c-inRow)*(gr.tw+gap)/2;   // a short last row is centred
+      boxes.push({x:X+off+col*(gr.tw+gap),y:Y+row*(gr.th+gap),w:gr.tw,h:gr.th,r:12}); } }
+  if(!ps.length){ const b=boxes[0]; _drawPhoto(ctx,null,null,b.x,b.y,b.w,b.h,b.r); }
+  for(let i=0;i<ps.length;i++){ const b=boxes[i], src=await cardImage(ps[i]);   // one at a time: originals are big
+    _drawPhoto(ctx,ps[i],src&&src.im,b.x,b.y,b.w,b.h,b.r);
+    if(src&&src.url) URL.revokeObjectURL(src.url); }
   return c;
 }
 async function copyActionForPhone(a,btn){
