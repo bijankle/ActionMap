@@ -315,7 +315,7 @@
   .slider-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;pointer-events:auto;width:13px;height:13px;border-radius:50%;background:var(--gold);border:2px solid #fff;cursor:grab;box-shadow:0 0 0 1px var(--gold2),0 1px 4px #1e1f2233;}
   .slider-wrap input[type=range]::-moz-range-thumb{pointer-events:auto;width:11px;height:11px;border-radius:50%;background:var(--gold);border:2px solid #fff;cursor:grab;}
 
-  .cl-bubble{display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle at 35% 30%,#6cc588,#3BA55C);color:#fff;font-family:var(--font);font-weight:700;border:2px solid #fff;box-shadow:0 0 0 4px #1d243033,0 2px 8px #1e1f2233;cursor:pointer;}   /* bold, open numerals — as the phone renders them */
+  .cl-bubble{display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f7a95a,#F28C28);color:#fff;font-family:var(--font);font-weight:700;border:2px solid #fff;box-shadow:0 0 0 4px #1d243033,0 2px 8px #1e1f2233;cursor:pointer;}   /* bold, open numerals — as the phone renders them */
   .cl-bubble.cl-hl{animation:clpulse 1.2s ease-in-out infinite;}   /* the whole cluster flashes when it holds a selected photo */
   @keyframes clpulse{0%,100%{box-shadow:0 0 0 6px rgba(232,180,74,.95),0 2px 8px #1e1f2233;}50%{box-shadow:0 0 0 6px rgba(232,180,74,.2),0 2px 8px #1e1f2233;}}
   .leaflet-interactive.photo-dot{cursor:pointer;}
@@ -489,13 +489,13 @@
   .act-chk input,.act-hold input{appearance:none;-webkit-appearance:none;width:15px;height:15px;margin:0;border:1px solid var(--line2);border-radius:3px;cursor:pointer;position:relative;}
   .act-chk input{background:#3BA55C33;}   /* faint green: this is the COMPLETE box */
   .a-num{color:var(--accent2);font-family:var(--font);font-weight:700;margin-right:5px;}
-  .cl-bubble.cl-g{background:radial-gradient(circle at 35% 30%,#6cc588,#3BA55C);color:#fff;box-shadow:0 0 0 4px #3BA55C33,0 2px 8px #1e1f2233;}   /* holds photos on an action */
-  .cl-bubble.cl-y{background:radial-gradient(circle at 35% 30%,#f7d86a,#F2C230);color:#3d3000;box-shadow:0 0 0 4px #F2C23040,0 2px 8px #1e1f2233;}   /* photos not on any action */
+  .cl-bubble.cl-g{background:radial-gradient(circle at 35% 30%,#f7a95a,#F28C28);color:#fff;box-shadow:0 0 0 4px #F28C2840,0 2px 8px #1e1f2233;}   /* mostly photos on an action (ties count here) */
+  .cl-bubble.cl-y{background:radial-gradient(circle at 35% 30%,#ffffff,#e9ecef);color:#1d2430;border-color:#4a5563;box-shadow:0 0 0 4px #ffffff55,0 2px 8px #1e1f2233;}   /* mostly photos not on any action */
   .act-pin{width:46px;height:40px;display:flex;justify-content:center;filter:drop-shadow(0 2px 3px #1e1f2255);cursor:pointer;}
-  .act-pin span{position:relative;background:#3BA55C;color:#fff;border:2px solid #fff;border-radius:7px;font:700 12px var(--font);padding:4px 6px;height:fit-content;}
+  .act-pin span{position:relative;background:#F28C28;color:#fff;border:2px solid #fff;border-radius:7px;font:700 12px var(--font);padding:4px 6px;height:fit-content;}
   .act-pin span::after{content:"";position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);border:7px solid transparent;border-top-color:#3BA55C;border-bottom:0;}
   body.mobile .act-pin span{font:700 9px var(--mono);padding:3px 5px;}
-  .num-dot{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#6cc588,#3BA55C);border:2px solid #fff;box-sizing:border-box;color:#fff;font:700 12px var(--font);letter-spacing:.3px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px #3BA55C33,0 2px 8px #1e1f2233;}   /* identical to a numbered cluster bubble */
+  .num-dot{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f7a95a,#F28C28);border:2px solid #fff;box-sizing:border-box;color:#fff;font:700 12px var(--font);letter-spacing:.3px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px #3BA55C33,0 2px 8px #1e1f2233;}   /* identical to a numbered cluster bubble */
   body.mobile .num-dot{width:26px;height:26px;font:700 9px var(--mono);}   /* phone sizes were fine as they were */
   .act-hold{display:flex;align-items:center;padding-top:1px;cursor:pointer;margin-left:1px;}
   .act-hold input{background:#E8A33D33;}   /* faint amber: this is the ON-HOLD box */
@@ -884,10 +884,6 @@
           <div class="set-lbl">List: open actions only<span class="set-sub">Hide completed actions in the Actions panel.</span></div>
           <div class="set-ctl"><input type="checkbox" id="setActOpen" /></div>
         </div>
-        <div class="set-row">
-          <div class="set-lbl">Map: actions only<span class="set-sub">Show only photos that still have an uncompleted action.</span></div>
-          <div class="set-ctl"><input type="checkbox" id="setActMap" /></div>
-        </div>
       </div>
     </div>
   </div>
@@ -904,7 +900,6 @@
     <div class="act-head"><span class="title">Actions</span><span style="flex:1"></span>
       <button class="act-tgl" id="actOpenOnly" title="Open — show only uncompleted actions in this list (hides completed ones)">Open</button>
       <button class="act-tgl" id="actDoneSteps" title="Done — also show ticked (completed) sub-actions under each action">Done</button>
-      <button class="act-tgl" id="actMapOnly" title="Actions — the map shows only photos that still have an uncompleted action">Actions</button>
       <button class="act-tgl" id="actExpAll" title="Collapse or expand every action's sub-actions and notes">Collapse</button></div>
     <div class="act-new"><input type="text" id="actNewInput" placeholder="+ New action" autocomplete="off" /></div>
     <div class="act-list" id="actList"></div>
@@ -1159,7 +1154,7 @@ function renderClusters(){
           if(st.size){ const arr=[...st].sort((x,y)=>x-y); label=actNo(arr[0])+(arr.length>1?"\u2026":""); size=34; fs=arr.length>1?11:12; }   // same size/font as a single numbered dot
         }catch(err){} }
       const grabbable=(c.properties.sel||0)>0&&selSet.size>0;   // holds selected photos: dragging the bubble moves the whole selection
-      const icon=L.divIcon({className:"",html:'<div class="cl-bubble '+(c.properties.asg?'cl-g':'cl-y')+(c.properties.hl?' cl-hl':'')+'" style="width:'+size+'px;height:'+size+'px;font-size:'+fs+'px'+(grabbable?';cursor:move':'')+'">'+label+'</div>',iconSize:[size,size],iconAnchor:[size/2,size/2]});
+      const icon=L.divIcon({className:"",html:'<div class="cl-bubble '+(c.properties.asg*2>=c.properties.point_count?'cl-g':'cl-y')+(c.properties.hl?' cl-hl':'')+'" style="width:'+size+'px;height:'+size+'px;font-size:'+fs+'px'+(grabbable?';cursor:move':'')+'">'+label+'</div>',iconSize:[size,size],iconAnchor:[size/2,size/2]});
       const m=L.marker([lat,lng],{icon}); const cid=c.properties.cluster_id;
       let ring=null;
       if(grabbable) m.on("mousedown",e=>{ const oe=e.originalEvent; if(oe&&oe.button===0){ L.DomEvent.stop(oe); startClusterDrag(m,ring); } });
@@ -1390,7 +1385,7 @@ function reorderActPhoto(a,dragId,targetId,before){   // gallery drag: photo ord
   const b=actState(a); a.porder=ids; recordActEdit(a,b); afterFolderChange();
 }
 function hasOpenAct(p){ return Array.isArray(p.acts)&&p.acts.some(id=>{ const a=actById(id); return a&&!a.done&&!a.hold; }); }
-const DOT_COL={none:["#F2C230","#A8840F"],open:["#3BA55C","#27713F"],hold:["#3BA55C","#27713F"],done:["#3BA55C","#27713F"]};   // yellow = not on an action, green = on an action
+const DOT_COL={none:["#ffffff","#4a5563"],open:["#F28C28","#9A520B"],hold:["#F28C28","#9A520B"],done:["#F28C28","#9A520B"]};   // white = not on an action, orange = on an action
 function photoStatus(p){   // open beats on-hold beats complete, when a photo belongs to several actions
   if(!Array.isArray(p.acts)||!p.acts.length) return "none";
   let hold=false,done=false,any=false;
@@ -1398,7 +1393,9 @@ function photoStatus(p){   // open beats on-hold beats complete, when a photo be
   return !any?"none":hold?"hold":done?"done":"none"; }
 function heldHidden(p){ if(!Array.isArray(p.acts)||!p.acts.length) return false;   /* on-hold: photo leaves the map only when EVERY action it belongs to is held */
   let held=false; for(const id of p.acts){ const a=actById(id); if(!a) continue; if(a.hold&&!selActs.has(a.id)) held=true; else return false; } return held; }
-function passActs(p){ if(heldHidden(p)) return false; if(!actOnlyMap) return true; if(selActs.size&&Array.isArray(p.acts)&&p.acts.some(id=>selActs.has(id))) return true; return hasOpenAct(p); }
+function allDoneHidden(p){ if(!Array.isArray(p.acts)||!p.acts.length) return false; let any=false;   /* every action this photo is on is completed (and none is selected) */
+  for(const id of p.acts){ const a=actById(id); if(!a) continue; any=true; if(!a.done||selActs.has(a.id)) return false; } return any; }
+function passActs(p){ return !heldHidden(p)&&!allDoneHidden(p); }
 function normActs(list){ let mx=0; const out=(list||[]).map(a=>{
   const parts=[];   // retired fields (description, note lists, action-level note): stash for migration into a photo note
   if(a.desc&&String(a.desc).trim()) parts.push(String(a.desc).trim());
@@ -1766,7 +1763,7 @@ function renderActions(){
   const list=document.getElementById("actList"); if(!list) return;
   document.getElementById("actOpenOnly").classList.toggle("on",actShowOpenOnly);
   document.getElementById("actDoneSteps").classList.toggle("on",!hideDoneSteps);
-  document.getElementById("actMapOnly").classList.toggle("on",actOnlyMap);
+
   document.getElementById("actExpAll").textContent=actions.some(a=>!collActs.has(a.id))?"Collapse":"Expand";
   const shown=(actShowOpenOnly?actions.filter(a=>!a.done):actions.slice()).sort((x,y)=>actRank(x)-actRank(y));   // on-hold then completed actions sink to the bottom (display only — stored order unchanged)
   if(!shown.length){ list.innerHTML=""; return; }
@@ -1829,7 +1826,7 @@ function renderIpActions(){   // the strip under the photo holds ONLY the photo 
 }
 document.getElementById("actOpenOnly").addEventListener("click",()=>{ actShowOpenOnly=!actShowOpenOnly; renderActions(); persistState(); });
 document.getElementById("actDoneSteps").addEventListener("click",()=>{ hideDoneSteps=!hideDoneSteps; renderActions(); persistState(); });
-document.getElementById("actMapOnly").addEventListener("click",()=>{ actOnlyMap=!actOnlyMap; buildCluster(); renderClusters(); updateGallery(); renderActions(); renderMapTags(); persistState(); });
+document.getElementById("actMapOnly")?.addEventListener("click",()=>{ actOnlyMap=!actOnlyMap; buildCluster(); renderClusters(); updateGallery(); renderActions(); renderMapTags(); persistState(); });
 document.getElementById("actExpAll").addEventListener("click",()=>{ if(actions.some(a=>!collActs.has(a.id))) actions.forEach(a=>collActs.add(a.id)); else collActs.clear(); renderActions(); });
 /* Right-click "New action" on photos doesn't pop a dialog: it ARMS this input — type the action
    and Enter creates it already assigned to those photos. Escape disarms. */
@@ -2009,7 +2006,7 @@ function syncSettingsUI(){
   document.getElementById("setNoGeo").checked=showNoGeo;
   document.getElementById("setThumb").value=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--thumb"))||120;
   document.getElementById("setActOpen").checked=actShowOpenOnly;
-  document.getElementById("setActMap").checked=actOnlyMap;
+
   { let n=""; try{ n=localStorage.getItem("pmUserName")||""; }catch(e){} document.getElementById("setUserName").value=n; }
   const g=ghRaw(); document.getElementById("setGhRepo").value=g.repo; document.getElementById("setGhToken").value=g.token;
   let le=0; try{ le=+localStorage.getItem("pmLastExport")||0; }catch(e){}
@@ -3126,7 +3123,7 @@ document.getElementById("setGhToken").addEventListener("change",e=>{ try{ localS
   ON.denied=false; syncMenus(); renderSaveStatus(); renderProjHead(); if(isOnline()){ onlinePoll(); if(canEdit()){ pumpUploads(); scheduleOnlineSave(500); } }   // a token turns view-only into editing straight away
   ghFindRepo().then(r=>{ const el=document.getElementById("setGhRepo"); if(r&&el&&!el.value) el.value=r; }); });
 document.getElementById("setUserName").addEventListener("input",e=>{ try{ localStorage.setItem("pmUserName",e.target.value.trim()); }catch(err){} });
-document.getElementById("setActMap").addEventListener("change",e=>{ actOnlyMap=e.target.checked; buildCluster(); renderClusters(); updateGallery(); renderActions(); persistState(); });
+document.getElementById("setActMap")?.addEventListener("change",e=>{ actOnlyMap=e.target.checked; buildCluster(); renderClusters(); updateGallery(); renderActions(); persistState(); });
 
 /* right-click: on/near a dot -> the DOT menu; only genuinely empty map gets the general commands */
 function dotAtPoint(pt){
@@ -5041,7 +5038,7 @@ function applyUiSettings(s){ s=s||{};
   if(s.baseLayer==="esri"){ map.removeLayer(google); esri.addTo(map); } else if(s.baseLayer==="none"){ map.removeLayer(google); map.removeLayer(esri); } else if(s.baseLayer==="google"&&!map.hasLayer(google)){ map.removeLayer(esri); google.addTo(map); }
   showNoGeo=!!s.showNoGeo; document.getElementById("showNoGeo").checked=showNoGeo;
   if(Array.isArray(s.recentTags)) recentTags=s.recentTags.slice(0,10);
-  actShowOpenOnly=!!s.actShowOpenOnly; hideDoneSteps=s.hideDoneSteps!==false; actOnlyMap=!!s.actOnlyMap; setTab(s.rightTab==="gallery"?"gallery":"photo"); renderActions();
+  actShowOpenOnly=!!s.actShowOpenOnly; hideDoneSteps=s.hideDoneSteps!==false; actOnlyMap=false; setTab(s.rightTab==="gallery"?"gallery":"photo"); renderActions();
   currentSort=s.sortBy||"date_desc"; document.getElementById("sortSel").value=currentSort;
   buildDateFilter(); if(s.dateLo!=null&&dateMin!=null){ dateLo=s.dateLo; dateHi=s.dateHi; syncSliderUI(); }
   altBlank=(s.altBlank!==false); document.getElementById("altBlank").checked=altBlank;
