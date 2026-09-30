@@ -3411,8 +3411,18 @@ function afterMarkChange(){ const ms=curMarks(); if(ms.length&&!ms[ms.length-1].
 function logAnnot(p){ if(!p) return; const last=projLog[projLog.length-1], by=_logBy||userName();   // a burst of strokes on one photo is ONE history line
   if(last&&last.k==="annot"&&last.pid===p.id&&last.by===by&&Date.now()-last.t<180000){ last.n=(last.n||1)+1; last.t=Date.now(); last.d="Annotated "+p.name+" ("+last.n+" marks)"; if(rightTab==="history") renderHistory(); return; }
   logChange("Annotated "+p.name,null,"annot"); projLog[projLog.length-1].pid=p.id; }   // stamp marks so undo can interleave chronologically with tag edits
-function setColor(c){ markColor=c; document.querySelectorAll("#markPalette .sw").forEach(b=>b.classList.toggle("on",b.dataset.c===c)); if(selMark){ selMark.c=c; tbText.style.color=c; tbText.style.borderColor=c; } if(selObj){ selObj.c=c; redrawMarks(); persistState(); } }
-document.querySelectorAll("#markPalette .sw").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation(); setColor(b.dataset.c); }));
+/* The colour palette shows while drawing AND whenever an existing object is selected — picking a colour
+   then recolours that object (one undo step). With nothing selected it sets the colour for new marks. */
+function syncPalette(){ const pal=document.getElementById("markPalette"); if(!pal) return; const sel=selObj||selMark;
+  pal.classList.toggle("show",markTool!=="none"||!!sel);
+  const c=sel?(sel.c||markColor):markColor; pal.querySelectorAll(".sw").forEach(b=>b.classList.toggle("on",b.dataset.c===c)); }
+function setColor(c){ markColor=c;
+  const sel=selObj||selMark, p=selMark?selPhoto:curPhoto();
+  if(sel&&p&&p.marks&&(sel.c||"")!==c){ const before=cpMarks(p.marks); sel.c=c; pushMarksSnap(p,before,cpMarks(p.marks)); logAnnot(p); persistState(); ensureAnnotThumb(p); }
+  if(selMark){ tbText.style.color=c; tbText.style.borderColor=c; }
+  redrawMarks(); syncPalette(); }
+document.querySelectorAll("#markPalette .sw").forEach(b=>{ b.addEventListener("mousedown",e=>{ e.preventDefault(); e.stopPropagation(); });   // keeps the selection (and text caret) while picking
+  b.addEventListener("click",e=>{ e.stopPropagation(); setColor(b.dataset.c); }); });
 /* Universal sizing: ONE line weight (p.mkw) and ONE text size (p.mth) per photo — the vertical
    sliders next to the tools set them for every object on the image at once. */
 const szLine=document.getElementById("szLine"), szText=document.getElementById("szText");
@@ -3426,7 +3436,7 @@ szText.addEventListener("input",()=>{ const p=curPhoto(); if(!p) return; sizeSna
 szText.addEventListener("change",sizeSnapEnd);
 ["mousedown","pointerdown","dblclick"].forEach(ev=>document.getElementById("ipSizebars").addEventListener(ev,e=>e.stopPropagation()));
 setColor(markColor);
-function setMarkTool(t){ if(selMark) deselectText(); if(selObj){ selObj=null; } markTool=t; draft=null; polyPrev=null; lbStage.classList.toggle("drawing",t!=="none"); document.getElementById("markPalette").classList.toggle("show",t!=="none"); document.querySelectorAll(".ip-marktools .mk[data-tool]").forEach(b=>b.classList.toggle("on",b.dataset.tool===t));
+function setMarkTool(t){ if(selMark) deselectText(); if(selObj){ selObj=null; } markTool=t; draft=null; polyPrev=null; lbStage.classList.toggle("drawing",t!=="none"); syncPalette(); document.querySelectorAll(".ip-marktools .mk[data-tool]").forEach(b=>b.classList.toggle("on",b.dataset.tool===t));
   if(t!=="none") setEditOpen(true);   // selecting a tool (e.g. via hotkey) reveals the tool column
   redrawMarks(); }
 function setEditOpen(open){ lb.classList.toggle("edit-open",open); const eb=document.getElementById("lbEdit"); if(eb) eb.classList.toggle("on",open); if(!open&&markTool!=="none") setMarkTool("none"); }
@@ -3473,7 +3483,7 @@ function paintLabel(ctx,m,PX,PY,sy,col,lw,thAll){
   ctx.fillStyle=col; for(let i=0;i<lines.length;i++) ctx.fillText(lines[i],bx+padx,by+pady+i*lh);
   ctx.restore();
 }
-function redrawMarks(){
+function redrawMarks(){ queueMicrotask(syncPalette);
   if(!lbMark.width) return; markCtx.clearRect(0,0,lbMark.width,lbMark.height);
   const p=curPhoto(); if(!p) return;
   const lwBase=Math.min(fitW,fitH)*0.0012;
@@ -3890,7 +3900,7 @@ function applyUndoEntry(a,dir){   // dir: "before" (undo) or "after" (redo)
     rebuildSizeIndex(); buildDateFilter(); updateStats();
   }
   if(a.order){ const want=undo?a.order.before:a.order.after; actions.sort((x,y)=>{ let ix=want.indexOf(x.id), iy=want.indexOf(y.id); if(ix<0)ix=1e9; if(iy<0)iy=1e9; return ix-iy; }); }
-  if(a.marksSnap){ const p=photoById(a.marksSnap.id); if(p){ p.marks=cpMarks(undo?a.marksSnap.before:a.marksSnap.after); if(selObj&&!p.marks.includes(selObj)) selObj=null; if(curPhoto()===p&&lb.classList.contains("open")) redrawMarks(); ensureAnnotThumb(p); } }
+  if(a.marksSnap){ const p=photoById(a.marksSnap.id); if(p){ p.marks=cpMarks(undo?a.marksSnap.before:a.marksSnap.after); if(selObj&&!p.marks.includes(selObj)) selObj=null; if(selMark&&selPhoto===p&&!p.marks.includes(selMark)){ selMark=null; selPhoto=null; tbEditor.style.display="none"; } if(curPhoto()===p&&lb.classList.contains("open")) redrawMarks(); ensureAnnotThumb(p); } }
   if(a.sizeSnap){ const p=photoById(a.sizeSnap.id); if(p){ const s=undo?a.sizeSnap.before:a.sizeSnap.after; p.mkw=(s.mkw==null?null:s.mkw); p.mth=(s.mth==null?null:s.mth); if(curPhoto()===p&&lb.classList.contains("open")){ redrawMarks(); syncSizeBars(); if(selMark) positionEditor(); } } }
   if(a.rot){ const p=photoById(a.rot.id); if(p){ const d=((a.rot.delta%360)+360)%360; applyRotation(p,undo?(360-d)%360:d).catch(()=>{}); } }
   const its=a.items?a.items:(a.id!=null?[{id:a.id,before:a.before,after:a.after}]:[]);
