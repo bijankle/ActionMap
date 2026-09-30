@@ -950,6 +950,7 @@
   <aside class="actpanel" id="actPanel">
     <div class="act-head"><span class="title">Actions</span><span style="flex:1"></span>
       <button class="act-tgl" id="actOpenOnly" title="Open — show only uncompleted actions in this list (hides completed ones)">Open</button>
+      <button class="act-tgl" id="actHoldOnly" title="On hold — show only the actions that are on hold">On hold</button>
       <button class="act-tgl" id="actDoneSteps" title="Done — also show ticked (completed) sub-actions under each action">Done</button>
       <button class="act-tgl" id="actExpAll" title="Collapse or expand every action's sub-actions and notes">Collapse</button></div>
     <div class="act-new"><input type="text" id="actNewInput" placeholder="+ New action" autocomplete="off" /></div>
@@ -1399,7 +1400,7 @@ map.on("click",e=>{
    An action is a task with a tick box (tick = completed). Actions link to photos (one action to
    many photos, or many actions to one photo). Stored in the .json like tags; photos untouched. */
 let actions=[], nextActId=1, selActs=new Set(), actionFilter=null;
-let actShowOpenOnly=false, actOnlyMap=false, rightTab="photo";
+let actShowOpenOnly=false, actShowHoldOnly=false, actOnlyMap=false, rightTab="photo";
 let _aIdx=null,_aArr=null;
 function actById(id){
   if(_aIdx&&_aArr===actions){ const i=_aIdx.get(id); if(i!=null){ const a=actions[i]; if(a&&a.id===id) return a; } }
@@ -1471,6 +1472,7 @@ function createAction(text,pids,loc){
 }
 function stepLetter(i){ let t=""; do{ t=String.fromCharCode(97+(i%26))+t; i=Math.floor(i/26)-1; }while(i>=0); return t; }   /* a..z, aa, ab… */
 function actNo(a){ return String(a&&a.id!=null?a.id:a).padStart(3,"0"); }   /* the action NUMBER: creation-sequential id, 001-style */
+function actsShown(){ return actions.filter(a=>actShowHoldOnly?(a.hold&&!a.done):(!actShowOpenOnly||!a.done)).sort((x,y)=>actRank(x)-actRank(y)); }   // the list as rendered: filtered by the Open / On hold pills
 function actRank(a){ return a.done?2:(a.hold?1:0); }   // list order: open, then on hold, then completed (display only — stored order unchanged)
 function setActionDone(a,done){ const before=actState(a); a.done=!!done; a.doneAt=a.done?Date.now():null; recordActEdit(a,before); afterFolderChange(); }
 function setActionHold(a,hold){ const before=actState(a); a.hold=!!hold; recordActEdit(a,before); afterFolderChange(); }
@@ -1670,7 +1672,7 @@ function clickAction(a,ev,deferNav){
   if(pickMode) return;   // while picking photos, the panel stays put
   const ctrl=!!(ev&&(ev.ctrlKey||ev.metaKey)), shift=!!(ev&&ev.shiftKey);
   if(shift&&lastActClick!=null){
-    const shown=(actShowOpenOnly?actions.filter(x=>!x.done):actions.slice()).sort((x,y)=>actRank(x)-actRank(y)).map(x=>x.id);   // same order as the rendered list
+    const shown=actsShown().map(x=>x.id);   // same order as the rendered list
     const i1=shown.indexOf(lastActClick), i2=shown.indexOf(a.id);
     if(i1>=0&&i2>=0) selActs=new Set(shown.slice(Math.min(i1,i2),Math.max(i1,i2)+1));
     else { selActs=new Set([a.id]); lastActClick=a.id; }
@@ -1802,11 +1804,12 @@ async function maybeStartGeo(){
 /* Zoom to a set of photos, at MINIMUM deep enough that none of them is hidden inside a cluster. */
 function renderActions(){
   const list=document.getElementById("actList"); if(!list) return;
-  document.getElementById("actOpenOnly").classList.toggle("on",actShowOpenOnly);
+  document.getElementById("actOpenOnly").classList.toggle("on",actShowOpenOnly&&!actShowHoldOnly);
+  document.getElementById("actHoldOnly").classList.toggle("on",actShowHoldOnly);
   document.getElementById("actDoneSteps").classList.toggle("on",!hideDoneSteps);
 
   document.getElementById("actExpAll").textContent=actions.some(a=>!collActs.has(a.id))?"Collapse":"Expand";
-  const shown=(actShowOpenOnly?actions.filter(a=>!a.done):actions.slice()).sort((x,y)=>actRank(x)-actRank(y));   // on-hold then completed actions sink to the bottom (display only — stored order unchanged)
+  const shown=actsShown();   // on-hold then completed actions sink to the bottom (display only — stored order unchanged)
   if(!shown.length){ list.innerHTML=""; return; }
   const cp=lb.classList.contains("open")?curPhoto():null;   // the open photo's actions get a marker in this list
   const byAct=new Map();   // one pass over the photos for every row (actPhotos per row rescanned them all each time)
@@ -1865,7 +1868,8 @@ function renderIpActions(){   // the strip under the photo holds ONLY the photo 
   pnEl.innerHTML=pNoteHtml(p);
   wirePNote(pnEl,p);
 }
-document.getElementById("actOpenOnly").addEventListener("click",()=>{ actShowOpenOnly=!actShowOpenOnly; renderActions(); persistState(); });
+document.getElementById("actOpenOnly").addEventListener("click",()=>{ actShowOpenOnly=actShowHoldOnly?true:!actShowOpenOnly; actShowHoldOnly=false; renderActions(); persistState(); });
+document.getElementById("actHoldOnly").addEventListener("click",()=>{ actShowHoldOnly=!actShowHoldOnly; renderActions(); persistState(); });   // Open and On hold are either/or
 document.getElementById("actDoneSteps").addEventListener("click",()=>{ hideDoneSteps=!hideDoneSteps; renderActions(); persistState(); });
 document.getElementById("actMapOnly")?.addEventListener("click",()=>{ actOnlyMap=!actOnlyMap; buildCluster(); renderClusters(); updateGallery(); renderActions(); renderMapTags(); persistState(); });
 document.getElementById("actExpAll").addEventListener("click",()=>{ if(actions.some(a=>!collActs.has(a.id))) actions.forEach(a=>collActs.add(a.id)); else collActs.clear(); renderActions(); });
@@ -1890,6 +1894,7 @@ document.getElementById("actNewInput").addEventListener("keydown",e=>{
   const loc=pendingActLoc;
   const pids=loc?null:(pendingActPhotos||(selSet.size?[...selSet]:((lb.classList.contains("open")&&curPhoto())?[curPhoto().id]:null)));
   armNewAction(null);
+  actShowHoldOnly=false;   // a new action is open, so it must show in the list
   createAction(v,pids,loc);
   document.getElementById("actNewInput").focus();   // keep typing to add the next one
 });
@@ -2001,6 +2006,7 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
   function pick(i){ const r=res[i]; if(!r) return; const a=r.a;
     inp.value=""; closeS();
     if(a.done&&actShowOpenOnly){ actShowOpenOnly=false; }   // a completed hit must be visible in the list
+    if(actShowHoldOnly&&!(a.hold&&!a.done)) actShowHoldOnly=false;
     collActs.delete(a.id);
     selActs=new Set([a.id]); lastActClick=a.id; if(typeof rebuildActionFilter==="function") rebuildActionFilter();
     renderActions(); buildCluster(); renderClusters();
@@ -4906,7 +4912,7 @@ function uiSettings(){ return { baseLayer: map.hasLayer(google)?"google":map.has
       sideW:getComputedStyle(document.documentElement).getPropertyValue("--side-w").trim(),
       actW:getComputedStyle(document.documentElement).getPropertyValue("--act-w").trim()||null,
       covW:getComputedStyle(document.documentElement).getPropertyValue("--cov-w").trim()||null,
-      recentTags: recentTags.slice(0,10), rightTab, actShowOpenOnly, hideDoneSteps, actOnlyMap, clusterSens,
+      recentTags: recentTags.slice(0,10), rightTab, actShowOpenOnly, actShowHoldOnly, hideDoneSteps, actOnlyMap, clusterSens,
       view:{ center:[map.getCenter().lat, map.getCenter().lng], zoom:map.getZoom() } }; }   // this device's view of the project (layout, filters, map view) — never shared
 function serializeState(includeImages){
   return {
@@ -4970,7 +4976,7 @@ function applyUiSettings(s){ s=s||{};
   if(s.baseLayer==="esri"){ map.removeLayer(google); esri.addTo(map); } else if(s.baseLayer==="none"){ map.removeLayer(google); map.removeLayer(esri); } else if(s.baseLayer==="google"&&!map.hasLayer(google)){ map.removeLayer(esri); google.addTo(map); }
   showNoGeo=!!s.showNoGeo; document.getElementById("showNoGeo").checked=showNoGeo;
   if(Array.isArray(s.recentTags)) recentTags=s.recentTags.slice(0,10);
-  actShowOpenOnly=!!s.actShowOpenOnly; hideDoneSteps=s.hideDoneSteps!==false; actOnlyMap=false; setTab(s.rightTab==="gallery"?"gallery":"photo"); renderActions();
+  actShowOpenOnly=!!s.actShowOpenOnly; actShowHoldOnly=!!s.actShowHoldOnly; hideDoneSteps=s.hideDoneSteps!==false; actOnlyMap=false; setTab(s.rightTab==="gallery"?"gallery":"photo"); renderActions();
   currentSort=s.sortBy||"date_desc"; document.getElementById("sortSel").value=currentSort;
   clusterSens=(typeof s.clusterSens==="number"?Math.max(0,Math.min(100,s.clusterSens)):50);
   if(boxRect){map.removeLayer(boxRect);boxRect=null;} boxBounds=null;
