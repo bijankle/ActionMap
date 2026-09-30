@@ -223,7 +223,7 @@
   .szb .a{font-weight:700;color:var(--muted);font-size:14px;line-height:16px;}
   .szb input[type=range]{-webkit-appearance:slider-vertical;appearance:slider-vertical;width:20px;height:104px;accent-color:var(--accent);}
   .markpalette.show{display:flex;}
-  .markpalette .sw{width:24px;height:24px;border-radius:50%;background:var(--c);border:2px solid #00000022;cursor:pointer;padding:0;}
+  .markpalette .sw{width:21px;height:21px;flex-shrink:0;border-radius:50%;background:var(--c);border:2px solid #00000022;cursor:pointer;padding:0;}
   .markpalette .sw:hover{border-color:#00000044;}
   .markpalette .sw.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent),0 0 8px var(--accent-tint);}
   .markpalette .thick{-webkit-appearance:slider-vertical;appearance:slider-vertical;writing-mode:vertical-lr;direction:rtl;width:22px;height:90px;margin-top:3px;accent-color:var(--accent);cursor:pointer;}
@@ -898,8 +898,13 @@
     <div class="fileinfo-pop" id="fileInfo"></div>
     <div class="markpalette" id="markPalette">
       <button class="sw" data-c="#ff3b30" style="--c:#ff3b30" title="Red"></button>
+      <button class="sw" data-c="#ff9500" style="--c:#ff9500" title="Orange"></button>
+      <button class="sw" data-c="#ffd60a" style="--c:#ffd60a" title="Yellow"></button>
       <button class="sw" data-c="#34c759" style="--c:#34c759" title="Green"></button>
       <button class="sw" data-c="#2d7dff" style="--c:#2d7dff" title="Blue"></button>
+      <button class="sw" data-c="#af52de" style="--c:#af52de" title="Purple"></button>
+      <button class="sw" data-c="#ff2d92" style="--c:#ff2d92" title="Pink"></button>
+      <button class="sw" data-c="#8e5b3a" style="--c:#8e5b3a" title="Brown"></button>
       <button class="sw" data-c="#ffffff" style="--c:#ffffff" title="White"></button>
       <button class="sw" data-c="#111111" style="--c:#111111" title="Black"></button>
     </div>
