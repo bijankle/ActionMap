@@ -774,8 +774,12 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-fab{width:52px;height:52px;box-sizing:border-box;border-radius:12px;background:#fff;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink);box-shadow:0 2px 8px #1d243020;padding:0;font:inherit;flex-shrink:0;}
   .ma-fab svg{width:24px;height:24px;}
   .ma-peek{position:absolute;left:12px;right:12px;bottom:16px;z-index:500;background:#fff;border:0;border-radius:16px;box-shadow:0 4px 18px #1d243033;padding:14px;display:flex;align-items:center;gap:14px;text-align:left;font:inherit;color:var(--ink);box-sizing:border-box;}
-  .ma-peek .ma-th{width:84px;height:84px;border-radius:10px;}
-  .ma-peek .t{font-size:18px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .ma-peek{cursor:pointer;padding:10px 12px;gap:12px;}
+  .ma-peek .ma-th{width:56px;height:56px;border-radius:10px;}
+  .ma-peek .t{font-size:17px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;}   /* two lines still fit beside the small photo */
+  .ma-peek .ma-rt{min-width:0;}
+  .ma-view{flex-shrink:0;height:44px;padding:0 18px;border-radius:12px;border:0;background:var(--gold);color:#1a1307;box-shadow:inset 0 0 0 1.5px #c9952e;font:inherit;font-size:16px;font-weight:700;}
+  .ma-cl.focus,.ma-dot.focus{transform:scale(1.2);box-shadow:0 0 0 3px #e8b44a,0 0 0 9px #e8b44a55,0 3px 8px #0006;}
   .ma-peek .m{font-size:15px;color:var(--muted);margin-top:6px;}
   .ma-dot{width:44px;height:44px;box-sizing:border-box;border-radius:50%;background:#F28C28;border:3px solid #fff;box-shadow:0 0 0 1.5px #9A520B,0 3px 8px #0006;color:#fff;font:800 14px/38px var(--font);text-align:center;letter-spacing:-.2px;}
   .ma-dot.hold{background:#fff;color:#9A520B;border:0;box-shadow:0 0 0 2.5px #F28C28,0 3px 8px #0006;line-height:44px;}
@@ -5738,7 +5742,7 @@ function mShowList(){
     const pk=mPeekAct(acts);
     mScr(mTopStrip()+'<div class="ma-mapwrap" id="mList"><div class="ma-map" id="mHomeMap"></div>'+mFltHtml()
       +'<div class="ma-north" title="North is up">'+NORTH_SVG(30,36)+'</div>'
-      +(pk?'<button class="ma-peek" id="mPeek" type="button" data-k="'+mCardKey(pk)+'">'+mThumbOf(pk)+'<div class="ma-rt"><div class="t">'+mActLine(pk)+'</div>'+mMetaDiv(pk)+'</div><span class="ma-chev">›</span></button>':'')+'</div>'+mNavHtml("map"));
+      +(pk?'<div class="ma-peek" id="mPeek" role="button" tabindex="0" data-k="'+mCardKey(pk)+'">'+mThumbOf(pk)+'<div class="ma-rt"><div class="t">'+mActLine(pk)+'</div>'+mMetaDiv(pk)+'</div><button class="ma-view" id="mViewB" type="button">View</button></div>':'')+'</div>'+mNavHtml("map"));
   } else {
     const shown=acts.filter(a=>{ const st=mStatus(a); return st==="open"||(st==="hold"&&mShowHold)||(st==="done"&&mShowDone); });
     mScr(mTopStrip()+'<div class="ma-lwrap"><div class="ma-ptr" id="mPtr">'+MI.sync+'<span>Pull to refresh</span></div>'+mFltHtml()+'<div class="ma-lhead"><label class="ma-search">'+MI.search+'<input id="mQ" type="search" placeholder="Search actions" autocomplete="off" value="'+esc(mLQ)+'" /></label></div>'
@@ -5751,7 +5755,9 @@ function mShowList(){
   document.getElementById("mShowH").addEventListener("click",()=>{ mShowHold=!mShowHold; try{ localStorage.setItem("pmMHold",mShowHold?"1":"0"); }catch(e){} mShowList(); });   // one setting for the map and the list
   document.getElementById("mShowD").addEventListener("click",()=>{ mShowDone=!mShowDone; try{ localStorage.setItem("pmMDone",mShowDone?"1":"0"); }catch(e){} mShowList(); });
   if(mTab==="map"){
-    const pb=document.getElementById("mPeek"); if(pb) pb.addEventListener("click",()=>mOpenAct(pb.dataset.k));
+    const pb=document.getElementById("mPeek");   // tap the card: find its dot on the map; View opens it
+    if(pb){ pb.addEventListener("click",()=>mFocusDot(pb.dataset.k));
+      document.getElementById("mViewB").addEventListener("click",e=>{ e.stopPropagation(); mOpenAct(pb.dataset.k); }); }
     mBuildHomeMap(acts);
   } else {
     const q=document.getElementById("mQ");
@@ -5765,6 +5771,20 @@ function mShowList(){
   }
 }
 /* the card under the map: the open action nearest to you (else the first open one on the map) */
+/* the map card was tapped: zoom to that action's dot (ringed in gold), in the clear space above the card */
+let mFocusK=null;
+function mFocusDot(k){
+  const m2=mHomeMap; if(!m2||!m2._pts) return;
+  const fp=m2._pts.filter(p=>p.k===String(k)); if(!fp.length) return;
+  mFocusK=String(k); mHomeTouched=true;
+  const fb=L.latLngBounds(fp.map(p=>[p.lat,p.lng])), others=m2._pts.filter(p=>p.k!==String(k));
+  let z=19;   // close enough that the dot stands on its own (not merged into a neighbour's bubble)
+  for(;z<22;z++){ const near=fp.some(p=>{ const a=m2.project([p.lat,p.lng],z); return others.some(o=>{ const b=m2.project([o.lat,o.lng],z); return Math.hypot(a.x-b.x,a.y-b.y)<50; }); }); if(!near) break; }
+  if(fp.length>1) m2.fitBounds(fb,{padding:[70,70],maxZoom:Math.max(z,19),animate:false}); else m2.setView(fb.getCenter(),z,{animate:false});
+  const mc=m2.getContainer().getBoundingClientRect(), card=document.getElementById("mPeek"), flt=document.querySelector(".ma-mapwrap .ma-flt");
+  const top=flt?flt.getBoundingClientRect().bottom-mc.top:0, bot=card?card.getBoundingClientRect().top-mc.top:mc.height;
+  const cp=m2.latLngToContainerPoint(fb.getCenter()); m2.panBy([0,cp.y-(top+bot)/2],{animate:false});
+  m2._draw(); }
 function mPeekAct(acts){ let best=null,bd=Infinity;
   for(const a of acts){ if(mDone(a)||mHold(a)) continue;
     const loc=a._new?(mNewActs()[a._ni]||{}).loc:a.loc; if(!loc&&!(a.photos||[]).some(p=>p.lat!=null)) continue;
@@ -6056,10 +6076,10 @@ function mBuildHomeMap(acts){
       for(const g of groups){ const ks=[...new Set(g.items.map(p=>p.k))], ll=m2.unproject([g.x,g.y],z);
         if(ks.length===1){ const a=g.items[0].a;
           const st=mStatus(a);
-          L.marker(ll,{zIndexOffset:st==="open"?300:st==="hold"?100:0,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(a._new?' new':st==="open"?'':' '+st)+'">'+(a._new?'•':actNo(a))+'</div>',iconSize:[44,44],iconAnchor:[22,22]})})
+          L.marker(ll,{zIndexOffset:ks[0]===mFocusK?800:st==="open"?300:st==="hold"?100:0,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(a._new?' new':st==="open"?'':' '+st)+(ks[0]===mFocusK?' focus':'')+'">'+(a._new?'•':actNo(a))+'</div>',iconSize:[44,44],iconAnchor:[22,22]})})
             .on("click",()=>mOpenAct(ks[0])).addTo(lay); }
         else { const sts=g.items.map(p=>mStatus(p.a)), cs=sts.includes("open")?"":sts.includes("hold")?" hold":" done";
-          L.marker(ll,{zIndexOffset:500,icon:L.divIcon({className:"",html:'<div class="ma-cl'+cs+'">'+ks.length+'</div>',iconSize:[50,50],iconAnchor:[25,25]})})
+          L.marker(ll,{zIndexOffset:500,icon:L.divIcon({className:"",html:'<div class="ma-cl'+cs+(ks.includes(mFocusK)?' focus':'')+'">'+ks.length+'</div>',iconSize:[50,50],iconAnchor:[25,25]})})
             .on("click",()=>mShowGroup(ks.map(k=>g.items.find(p=>p.k===k).a))).addTo(lay); } } };
     m2.on("contextmenu",e=>{   // long-press the map: a new action at that spot
       if(mRoBlock()) return;
@@ -6069,7 +6089,7 @@ function mBuildHomeMap(acts){
     const bb=pts.length?L.latLngBounds(pts.map(p=>[p.lat,p.lng])):null;
     const me=(mGeo&&!ignoreLoc)?mGeo:null;   // Ignore my location: no YOU ARE HERE, and the view fits the actions only
     if(me){ m2._geoPin=L.marker([me.lat,me.lng],{icon:youAreHereIcon(30),interactive:false,zIndexOffset:900}).addTo(m2); if(bb) bb.extend([me.lat,me.lng]); }
-    mHomeMap=m2; mHomeBB=bb;
+    mHomeMap=m2; mHomeBB=bb; m2._pts=pts; m2._draw=draw;
     const fit=()=>{ m2.invalidateSize();
       if(mHomeFocus!=null){ const fp=pts.filter(p=>p.k===String(mHomeFocus)); mHomeFocus=null;
         if(fp.length){ mHomeTouched=true; const fb=L.latLngBounds(fp.map(p=>[p.lat,p.lng])); if(fp.length>1) m2.fitBounds(fb,{padding:[60,60],maxZoom:19}); else m2.setView(fb.getCenter(),19); return; } }
