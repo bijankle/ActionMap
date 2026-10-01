@@ -3250,18 +3250,22 @@ let _tileProv=null;   // decided once per session: "google" if its tiles are COR
 /* Fetched fresh (cache:"no-store") in CORS mode: the main map has usually already loaded the SAME tiles
    without CORS, and reusing that cached copy is what left the card's map blank for the action being
    looked at. A successful CORS fetch is always drawable into a copyable image. */
-function _fetchTile(url){ const ctl=new AbortController(), t=setTimeout(()=>ctl.abort(),10000);
-  return fetch(url,{mode:"cors",cache:"no-store",credentials:"omit",signal:ctl.signal})
-    .then(r=>r.ok?r.blob():null).then(b=>b&&b.size?createImageBitmap(b):null).catch(()=>null).finally(()=>clearTimeout(t)); }
+let _tileRun=0; const _tileWait=[];   // a few tiles at a time: a phone on mobile data firing dozens at once timed most of them out
+function _fetchTile(url,ms){ return new Promise(res=>{ const go=()=>{ _tileRun++; const ctl=new AbortController(), t=setTimeout(()=>ctl.abort(),ms||15000);
+    fetch(url,{mode:"cors",cache:"no-store",credentials:"omit",signal:ctl.signal})
+      .then(r=>r.ok?r.blob():null).then(b=>b&&b.size?createImageBitmap(b):null).catch(()=>null)
+      .then(v=>{ clearTimeout(t); _tileRun--; if(_tileWait.length) _tileWait.shift()(); res(v); }); };
+    if(_tileRun<6) go(); else _tileWait.push(go); }); }
 async function tileProvider(){ if(_tileProv) return _tileProv;
   return (_tileProv=(await _fetchTile(TILE_SRC.google(3,6,4)))?"google":"esri"); }
-async function loadMapTile(z,x,y){ const prov=await tileProvider();
-  return (await _fetchTile(TILE_SRC[prov](z,x,y)))||(await _fetchTile(TILE_SRC[prov==="google"?"esri":"google"](z,x,y)));   // a failed tile tries the other source rather than leaving a hole
+async function loadMapTile(z,x,y){ const prov=await tileProvider(), other=prov==="google"?"esri":"google";
+  return (await _fetchTile(TILE_SRC[prov](z,x,y)))||(await _fetchTile(TILE_SRC[other](z,x,y)))   // a failed tile tries the other source…
+    ||(await _fetchTile(TILE_SRC[prov](z,x,y),25000));   // …then once more, slower, rather than leaving a hole
 }
 /* Where the user is right now (desktop YOU ARE HERE marker, else a quick one-off fix) — null if unknown/blocked. */
 async function currentPos(){
+  if(ignoreLoc) return null;   // Ignore my location (phone and desktop): the card leaves you out, and its map fits the action only
   try{ if(document.body.classList.contains("mobile")&&mGeo) return {lat:mGeo.lat,lng:mGeo.lng}; }catch(e){}
-  if(!document.body.classList.contains("mobile")&&ignoreLoc) return null;   // Ignore my location: the copied image leaves you out too
   try{ if(geoMarker){ const l=geoMarker.getLatLng(); return {lat:l.lat,lng:l.lng}; } }catch(e){}
   let pref=null; try{ pref=localStorage.getItem("pmGeoOn"); }catch(e){}
   if(pref==="0"||!navigator.geolocation) return null;
@@ -3290,9 +3294,15 @@ async function drawMiniMap(ctx,x,y,w,h,pts,r,me,hd){
     if(pts.length===1&&!me) z=17;
     const b=box(z), xs=pts.map(p=>_lx(p.lng,z)), ys=pts.map(p=>_ly(p.lat,z)), cx=(b.x1+b.x2)/2, cy=(b.y1+b.y2)/2, x0=cx-w/2, y0=cy-h/2, n=Math.pow(2,z), jobs=[];
     const f=(hd&&z<19)?2:1, tz=z+(f===2?1:0), T=256/f, tn=n*f;   // hi-res card: tiles one zoom deeper, drawn at half size = native pixels
+    const holes=[];
     for(let tx=Math.floor(x0/T);tx<=Math.floor((x0+w)/T);tx++) for(let ty=Math.floor(y0/T);ty<=Math.floor((y0+h)/T);ty++){ if(ty<0||ty>=tn) continue;
-      jobs.push(loadMapTile(tz,((tx%tn)+tn)%tn,ty).then(im=>{ if(im) ctx.drawImage(im,x+tx*T-x0,y+ty*T-y0,T,T); })); }
+      jobs.push(loadMapTile(tz,((tx%tn)+tn)%tn,ty).then(im=>{ if(im) ctx.drawImage(im,x+tx*T-x0,y+ty*T-y0,T,T); else holes.push([tx,ty]); })); }
     await Promise.all(jobs);
+    for(const [tx,ty] of holes){   // still missing: fill from the tile one or two zooms out (a little softer, never a dark square)
+      for(let up=1;up<=3;up++){ const k=Math.pow(2,up), pn=tn/k, px=Math.floor(tx/k), py=Math.floor(ty/k);
+        const im=await loadMapTile(tz-up,((px%pn)+pn)%pn,py); if(!im) continue;
+        const s=256/k, sx=(((tx%k)+k)%k)*s, sy=(((ty%k)+k)%k)*s;
+        ctx.drawImage(im,sx,sy,s,s,x+tx*T-x0,y+ty*T-y0,T,T); break; } }
     for(let i=0;i<pts.length;i++){ const px=x+xs[i]-x0, py=y+ys[i]-y0; ctx.beginPath(); ctx.arc(px,py,13,0,Math.PI*2); ctx.fillStyle="#3BA55C"; ctx.fill(); ctx.lineWidth=5; ctx.strokeStyle="#fff"; ctx.stroke(); }
     if(me) _drawGeoPin(ctx,x+_lx(me.lng,z)-x0,y+_ly(me.lat,z)-y0,PIN);
   }
