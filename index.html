@@ -169,7 +169,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
 
   .main{display:flex;height:calc(100% - var(--header-h));position:relative;}
   #map{flex:1 1 auto;height:100%;background:#f3f4f6;z-index:1;}
-  .imgpanel{position:relative;display:none;flex:0 0 var(--side-w);width:var(--side-w);min-width:240px;max-width:82vw;height:100%;background:#ECEEF1;align-items:center;justify-content:center;overflow:hidden;z-index:2;}
+  .imgpanel{position:relative;box-sizing:border-box;display:none;flex:0 0 var(--side-w);width:var(--side-w);min-width:240px;max-width:82vw;height:100%;background:#ECEEF1;align-items:center;justify-content:center;overflow:hidden;z-index:2;}
   .imgpanel.open{display:flex;}
   .imgsplit{display:none;}
   .imgpanel.open + .imgsplit{display:block;}
@@ -572,8 +572,22 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ip-empty{display:none;place-items:center;width:100%;height:100%;color:var(--dim);font-size:var(--fb);text-align:center;padding:20px;line-height:1.6;}
 
   /* actions strip under the open photo */
-  .ip-actions{position:absolute;left:50%;transform:translateX(-50%);bottom:12px;width:min(46%,430px);max-height:36%;z-index:40;
-    display:flex;flex-direction:column;gap:6px;background:#ffffffef;backdrop-filter:blur(8px);border:1px solid var(--line2);border-radius:12px;padding:8px 10px;box-shadow:0 8px 24px #1e1f2226;}
+  /* photo note under the photo + a strip of the action's other photos with the start of their notes */
+  .ip-actions{position:absolute;left:12px;right:12px;top:0;z-index:40;display:flex;flex-direction:column;gap:8px;}
+  .ip-actions #ipaPnote .nt-box{background:#fff;border:1.5px solid var(--gold);box-shadow:inset 0 0 0 1px var(--gold);border-radius:10px;padding:9px 34px 9px 11px;font:var(--fb)/1.4 var(--font);color:var(--ink);cursor:text;position:relative;white-space:pre-wrap;max-height:22vh;overflow:auto;}
+  .ip-actions #ipaPnote .nt-box::after{content:"";position:absolute;right:11px;top:11px;width:15px;height:15px;opacity:.45;background:no-repeat center/15px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231d2430' stroke-width='1.9' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L19 9l-4-4L4 16v4Z'/%3E%3C/svg%3E");}
+  .ip-actions #ipaPnote .nt-newp{width:100%;box-sizing:border-box;background:#fff;border:1.5px dashed var(--line2);border-radius:10px;padding:9px 11px;font:var(--fb) var(--font);color:var(--ink);outline:none;}
+  .ip-actions #ipaPnote .nt-newp:focus{border-style:solid;border-color:var(--gold);}
+  .ip-actions #ipaPnote textarea,.ip-actions #ipaPnote input:not(.nt-newp){width:100%;box-sizing:border-box;font:var(--fb)/1.4 var(--font);border:1.5px solid var(--gold);border-radius:10px;padding:9px 11px;outline:none;}
+  .ipn-strip{display:flex;gap:8px;overflow-x:auto;scrollbar-width:thin;}
+  .ipn-strip:empty{display:none;}
+  .ipn-it{flex:1 0 84px;max-width:140px;min-width:0;background:none;border:0;padding:0;text-align:left;cursor:pointer;font:inherit;}
+  .ipn-it .th{height:58px;border-radius:7px;background:#dfe3e8 center/cover no-repeat;}
+  .ipn-it.cur .th{box-shadow:0 0 0 2.5px var(--gold);}
+  .ipn-it:hover .th{box-shadow:0 0 0 2px var(--line2);}
+  .ipn-it.cur:hover .th{box-shadow:0 0 0 2.5px var(--gold);}
+  .ipn-it .nn{font:var(--fl) var(--font);color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ipn-it .nn.none{color:var(--faint);font-style:italic;}
   .ipa-head{display:flex;align-items:center;justify-content:space-between;}
   .ipa-head .t{font-family:var(--font);font-weight:700;font-size:var(--fl);letter-spacing:.6px;text-transform:uppercase;color:var(--muted);}
   .ipa-tgl{font-family:var(--font);font-size:var(--fl);color:var(--muted);background:none;border:1px solid var(--line2);border-radius:999px;padding:2px 8px;cursor:pointer;font-variant-numeric:tabular-nums}
@@ -1103,8 +1117,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
       <label class="lb-fullchk" id="lbFullWrap"><input type="checkbox" id="lbFull" /><span>Full quality</span></label>
     </div>
     <div class="ip-actions" id="ipActions">
-      <div class="ipa-head"><span class="t">Photo notes</span></div>
-      <div class="asec" id="ipaPnote" style="margin-top:0;"></div>
+      <div id="ipaPnote"></div>
+      <div class="ipn-strip" id="ipnStrip"></div>
     </div>
     <div class="folder-pop" id="folderPop"></div>
     <div class="tbed" id="tbEditor" style="display:none">
@@ -1655,7 +1669,7 @@ function setPhotoNote(p,v){
   afterFolderChange();
 }
 function pNoteHtml(p){
-  if(!p.note) return '<input class="st-new nt-newp" type="text" placeholder="+ photo note" autocomplete="off" />';
+  if(!p.note) return '<input class="st-new nt-newp" type="text" placeholder="+ Add a note about this photo" autocomplete="off" />';
   return '<div class="d nt-box" title="Click to edit">'+esc(p.note)+'</div>';
 }
 function wirePNote(el,p){
@@ -1969,7 +1983,27 @@ function renderIpActions(){   // the strip under the photo holds ONLY the photo 
   const pnEl=document.getElementById("ipaPnote");
   pnEl.innerHTML=pNoteHtml(p);
   wirePNote(pnEl,p);
+  /* the strip: every photo on this photo's action (the selected one if it's on several), the open one ringed */
+  const st=document.getElementById("ipnStrip");
+  const ids=Array.isArray(p.acts)?p.acts:[]; const aid=ids.find(id=>selActs.has(id))||ids.find(id=>actById(id));
+  const a=aid!=null?actById(aid):null, ps=a?actPhotos(a):[];
+  st.innerHTML=ps.length>1?ps.map(q=>'<button type="button" class="ipn-it'+(q===p?' cur':'')+'" data-pid="'+q.id+'" title="'+esc(q.note||q.name||"")+'"><div class="th" style="background-image:url(\''+(thumbSrc(q)||"")+'\')"></div><div class="nn'+(q.note?'':' none')+'">'+esc(q.note||"No note")+'</div></button>').join(""):"";
+  st.querySelectorAll(".ipn-it").forEach(b=>{ b.addEventListener("mousedown",e=>e.stopPropagation()); b.addEventListener("click",e=>{ e.stopPropagation(); const q=photoById(Number(b.dataset.pid)); if(q&&q!==p) openViewer(q); }); });
+  ipLayoutNotes();
 }
+/* Room for the note block: the photo is fitted into what's left above it, and the block sits right
+   under the photo (never over the tag buttons at the bottom). */
+let _ipReserve=0;
+function ipLayoutNotes(){
+  const box=document.getElementById("ipActions"); if(!box||box.style.display==="none"){ if(_ipReserve){ _ipReserve=0; lb.style.paddingBottom=""; if(lb.classList.contains("open")) refit(); } return; }
+  const pr=lb.getBoundingClientRect(); let tagTop=pr.bottom;
+  lb.querySelectorAll(".ip-tagcol,.ip-fullbox").forEach(el=>{ const r=el.getBoundingClientRect(); if(r.height) tagTop=Math.min(tagTop,r.top); });
+  const need=Math.round(box.offsetHeight+(pr.bottom-tagTop)+22);
+  if(Math.abs(need-_ipReserve)>2){ _ipReserve=need; lb.style.paddingBottom=need+"px"; if(lb.classList.contains("open")&&lbImg.naturalWidth) setupFit(lbImg.naturalWidth,lbImg.naturalHeight,true); }
+  ipPlaceNotes(); }
+function ipPlaceNotes(){ const box=document.getElementById("ipActions"); if(!box) return;
+  const pr=lb.getBoundingClientRect(), sr=lbStage.getBoundingClientRect(); box.style.top=Math.round(sr.bottom-pr.top+10)+"px";
+  const mid=Math.round((sr.top+sr.bottom)/2-pr.top)+"px"; ["lbPrev","lbNext"].forEach(id=>{ const b=document.getElementById(id); if(b) b.style.top=mid; }); }   // ‹ › centred on the photo, not the panel
 function actFilterChanged(){ renderActions(); buildCluster(); renderClusters(); updateGallery(); persistState(); }   // the pills filter the list AND the map
 document.getElementById("actShowHold").addEventListener("click",()=>{ actShowHold=!actShowHold; actFilterChanged(); });
 document.getElementById("actShowDone").addEventListener("click",()=>{ actShowDone=!actShowDone; actFilterChanged(); });
@@ -4083,7 +4117,7 @@ async function showFull(p){
 }
 function setupFit(natW,natH,keepView){
   const pad=12;
-  const maxW=Math.max(40,(lb.clientWidth||window.innerWidth)-pad*2), maxH=Math.max(40,(lb.clientHeight||window.innerHeight)-pad*2);
+  const maxW=Math.max(40,(lb.clientWidth||window.innerWidth)-pad*2), maxH=Math.max(40,(lb.clientHeight||window.innerHeight)-pad*2-(typeof _ipReserve==="number"?_ipReserve:0));   // the note block's room is kept free
   const scale=Math.min(maxW/natW,maxH/natH);
   fitW=Math.max(1,Math.round(natW*scale)); fitH=Math.max(1,Math.round(natH*scale));
   lbStage.style.width=fitW+"px"; lbStage.style.height=fitH+"px"; lbImg.style.width=fitW+"px"; lbImg.style.height=fitH+"px";
@@ -4091,6 +4125,7 @@ function setupFit(natW,natH,keepView){
   const refH=Math.round(REF_W*fitH/fitW); lbRef.style.width=REF_W+"px"; lbRef.style.height=refH+"px"; lbRefImg.style.width=REF_W+"px"; lbRefImg.style.height=refH+"px";
   if(!keepView){ vScale=1; vTx=0; vTy=0; }
   applyView();
+  if(typeof ipPlaceNotes==="function") requestAnimationFrame(ipPlaceNotes);
 }
 function clampPan(){ const mtx=fitW*(1-vScale),mty=fitH*(1-vScale); if(vTx>0)vTx=0; if(vTx<mtx)vTx=mtx; if(vTy>0)vTy=0; if(vTy<mty)vTy=mty; }
 function applyView(){
