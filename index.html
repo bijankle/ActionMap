@@ -888,6 +888,12 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-cl2 .s2row.s2insb{box-shadow:0 2px 0 var(--accent);}
   .ma-cl2 .s2new{margin-top:12px;}
   .ma-cl2 .s2x{font-size:24px;padding:0 4px 0 10px;}
+  .ma-fl{position:absolute;right:12px;bottom:12px;z-index:5;display:flex;flex-direction:column;gap:10px;}   /* gallery · camera · share, floating on the photo */
+  .ma-fl button{width:50px;height:50px;border-radius:50%;border:0;padding:0;background:#ffffffee;color:var(--ink);box-shadow:0 2px 8px #0005;display:flex;align-items:center;justify-content:center;}
+  .ma-fl button.g{background:var(--gold);color:#1a1307;} .ma-fl svg{width:24px;height:24px;}
+  .ma-fl button.busy{opacity:.6;}
+  .ma-car0{background:none;aspect-ratio:auto;padding:0 16px;margin-top:16px;} .ma-car0 .ma-first{margin:0;width:100%;height:150px;box-sizing:border-box;justify-content:flex-start;padding-left:20px;}
+  .ma-car0 .ma-fl{flex-direction:row;right:30px;bottom:auto;top:50px;}   /* no photos yet: the three sit in a row inside the empty box */
   .ma-bar{flex-shrink:0;display:flex;gap:10px;padding:12px 16px 12px;border-top:1px solid var(--line);background:#fff;}
   .ma-btn{box-sizing:border-box;height:56px;border-radius:12px;background:#fff;border:1.5px solid var(--line);font:inherit;font-size:17px;font-weight:600;color:var(--ink);display:flex;align-items:center;justify-content:center;gap:8px;flex:1;padding:0 14px;white-space:nowrap;}
   .ma-btn.pri{flex:1.6;background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);font-weight:700;}
@@ -6531,14 +6537,14 @@ function mShowDetail(ai,keepScroll){
     +'<div class="ma-strow" id="mState">'+[["open","Open"],["hold","On hold"],["done","Done"]].map(([k,t])=>'<button type="button" class="ma-chip'+(stNow()===k?" on":"")+'" data-s="'+k+'">'+t+'</button>').join("")
       +(onMap?'<button type="button" class="ma-dist" id="mDistB">'+MI.pin+'Show on map</button>':'')+'</div></div>'
     +(photos.length?'<div class="ma-car"><div class="ma-hs" id="mHsnap">'+photos.map(p=>'<div class="m-hpage">'+(p.img?'<img src="'+p.img+'" alt="'+esc(p.name||"photo")+'" />':'')+'</div>').join("")+'</div>'
-        +(photos.length>1?'<div class="ma-cnt" id="mCnt">1 / '+photos.length+'</div>':'')+'</div>'
+        +(photos.length>1?'<div class="ma-cnt" id="mCnt">1 / '+photos.length+'</div>':'')+'<div class="ma-fl"><button type="button" id="mGalAct" aria-label="Add photos from the gallery">'+MI.gal+'</button><button type="button" id="mCamAct2" aria-label="Take a photo">'+MI.cam+'</button><button type="button" class="g" id="mCopyB" aria-label="Share">'+MI.share+'</button></div>'+'</div>'
         +'<div class="ma-note"><textarea id="mNin" rows="1" placeholder="Add a note about this photo" enterkeyhint="done"></textarea>'+MI.pen+'</div>'
         +'<div class="ma-thumbs" id="mThumbs">'+(photos.length>1?photos.map((p,i)=>'<button type="button" class="tb'+(i?'':' cur')+'" data-i="'+i+'" style="background-image:url(\''+(p.img||'')+'\')" aria-label="Photo '+(i+1)+'"></button>').join(""):'')
         +'</div>'
-      :'<div class="ma-first">'+MI.cam+'No photos yet</div>')
+      :'<div class="ma-car ma-car0"><div class="ma-first">'+MI.cam+'No photos yet</div>'+'<div class="ma-fl"><button type="button" id="mGalAct" aria-label="Add photos from the gallery">'+MI.gal+'</button><button type="button" id="mCamAct2" aria-label="Take a photo">'+MI.cam+'</button><button type="button" class="g" id="mCopyB" aria-label="Share">'+MI.share+'</button></div>'+'</div>')
     +'<div class="ma-sech"><b>Checklist</b><span id="mStCnt"></span></div><div class="ma-cl2" id="mSub2"></div>'
     +'</div>'
-    +'<div class="ma-bar"><button type="button" class="ma-btn" id="mCamAct2">'+MI.cam+'Photo</button><button type="button" class="ma-btn pri" id="mCopyB">'+MI.share+'Share</button></div>'+mNavHtml(mTab));
+    +mNavHtml(mTab));
   document.getElementById("mBack").addEventListener("click",mExitDetail);
   mWireNav(true);
   mWireUndo();
@@ -6548,7 +6554,9 @@ function mShowDetail(ai,keepScroll){
   const db=document.getElementById("mDistB"); if(db) db.addEventListener("click",()=>{ mHomeFocus=key; mFocusK=String(key); mFlashK=String(key); clearTimeout(mFlashT); mFlashT=setTimeout(()=>{ mFlashK=null; },2500); mSetTab("map"); mExitDetail(); });   // the map opens on it, its dot flashing   // show this action on the map
   { const lk=a._new?{au:(mNewActs()[a._ni]||{}).u}:{act:a.id};   // shots taken here are linked to THIS action on the desktop
     const go=()=>{ mTakePhoto(lk); };   // progress shows once a photo is actually taken (the outbox toasts)
-    ["mCamAct","mCamAct2"].forEach(id=>{ const b=document.getElementById(id); if(b) b.addEventListener("click",e=>{ e.stopPropagation(); go(); }); }); }
+    ["mCamAct","mCamAct2"].forEach(id=>{ const b=document.getElementById(id); if(b) b.addEventListener("click",e=>{ e.stopPropagation(); go(); }); });
+    const gb=document.getElementById("mGalAct"); if(gb) gb.addEventListener("click",e=>{ e.stopPropagation(); if(mRoBlock()) return;   // gallery (phone photos / Google Photos) straight into this action
+      mCollect=fs=>mUploadPhotos(fs,null,lk); mUpInput().click(); window.mPickT=Date.now(); }); }
   document.getElementById("mCopyB").addEventListener("click",e=>mShareCard(a,e.currentTarget));
   setTimeout(()=>{ if(document.getElementById("mCopyB")) mCardBlob(a).catch(()=>{}); },700);   // built ahead, so Share opens the moment it's tapped
   /* the note under the photo belongs to the photo being viewed; an edit is kept before swapping */
