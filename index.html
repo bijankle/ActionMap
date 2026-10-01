@@ -3025,6 +3025,7 @@ let _expBusy=false,_expAgain=false,_expT=null;
 let _expBackoffUntil=0;
 function scheduleAutoExport(delay){ let d=delay==null?8000:delay; const w=_expBackoffUntil-Date.now(); if(w>d) d=w; clearTimeout(_expT); _expT=setTimeout(()=>exportMobile(false),d); }
 async function exportMobile(manual){
+  if(mIsEngPhone()) return;
   const st=document.getElementById("mobExpStatus"), btn=document.getElementById("btnMobileExport");
   if(!ghCfg().token&&ghRaw().token) await ghFindRepo();
   const cfg=ghCfg();
@@ -5499,6 +5500,8 @@ async function mLoadPack(silent){
   if(!silent) mScr('<div class="m-head"><div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div></div><div class="m-body"><div class="m-note" style="padding-top:40px">Loading the latest pack…</div></div>');
   try{
     const text=await ghGetRaw(cfg,mP("pack.json"));
+    if(!text&&!silent&&await mEngineStart()){   // no phone copy published yet: build it from the live project
+      mPack={v:2,eng:true,project:"",actions:[]}; mApplyPack(mPackFromEngine()); mStartGeo(); mShowList(); return; }
     if(!text){ if(!silent) mShowSetup(mPid?"This project has no phone copy yet \u2014 open it once on a desktop with the access token (it syncs to phones by itself).":"No pack.json in "+cfg.repo+" yet — open the project on the desktop once (it syncs to the phone automatically)."); return; }
     const np=JSON.parse(text);
     await mHydrateImages(cfg,np,silent);   // previews live as img/<hash>.jpg — fetched once, then from the device cache
@@ -5506,6 +5509,7 @@ async function mLoadPack(silent){
     mApplyPack(np);
     mStartGeo();
     mShowList();
+    mEngineStart().then(ok=>{ if(!ok) return; mEngineRefresh(false); const p=mPend(); if(p.sentUpd&&!(mPack&&mPack.mergedFrom&&mPack.mergedFrom>=p.sentUpd)) mEngineMerge(); });   // the live project takes over
     if(keepScroll!=null){ const l2=document.getElementById("mList"); if(l2) l2.scrollTop=keepScroll; }
     if(silent) mToast("\u21bb Updated from the desktop");
     if(mChCount()) mAutoSendSoon(800);   // anything still unsent goes straight out
@@ -5536,8 +5540,14 @@ function mApplyPack(np){
   let p=mPend();
   /* ack: the desktop stamps each pack with the last phone batch it MERGED. Only then do sent edits
      become part of the pack and get released here (a pack from an unrelated desktop edit doesn't count). */
-  if(p.sentUpd&&np.mergedFrom&&np.mergedFrom>=p.sentUpd){ p=mDropSent(p); mUndoStack.length=0; mRedoStack.length=0; }
+  const acked=!!(p.sentUpd&&np.mergedFrom&&np.mergedFrom>=p.sentUpd), sentSnap=p.sentSnap;
+  if(acked) p=mDropSent(p);
   if(old) p=mRemapPending(old,np,p);   // pending edits referred to the OLD pack's step/action positions
+  /* undo/redo steps are snapshots of the pending edits: drop what is now part of the project from them
+     too and re-point them, so Undo keeps working for anything not yet merged (merged edits stay put) */
+  const fix=raw=>{ let o={}; try{ o=JSON.parse(raw)||{}; }catch(e){} if(acked){ o.sentSnap=sentSnap; o=mDropSent(o); } if(old) o=mRemapPending(old,np,o); return JSON.stringify(o); };
+  const dedupe=st=>st.filter((x,i)=>i===0||x!==st[i-1]);
+  if(acked||old){ const u=dedupe(mUndoStack.map(fix)), r=dedupe(mRedoStack.map(fix)); mUndoStack.length=0; mUndoStack.push(...u); mRedoStack.length=0; mRedoStack.push(...r); }
   _mpQuiet=true; mPendSave(p); _mpQuiet=false;
 }
 /* Re-point pending edits from the old pack's positions to the new pack's, via permanent ids. */
@@ -5846,7 +5856,7 @@ function mToast(t,sticky){   // progress that survives screen changes — the bu
   mToastEl.textContent=t||""; mToastEl.style.display=t?"block":"none";
   clearTimeout(mToastT); if(t&&!sticky) mToastT=setTimeout(()=>{ mToastEl.style.display="none"; },6000);
 }
-function mWatchReceipt(paths,count){   // \u2713 only when the DESKTOP has actually taken the photos
+function mWatchReceipt(paths,count){   // \u2713 only when the photos are actually in the project
   if(mRcptT){ clearInterval(mRcptT); mRcptT=null; }
   const cfg=ghCfg(), t0=Date.now();
   const setB=t=>{ const b=document.getElementById("mUpBtn"); if(b&&!mUpBusy) b.textContent=t; };
@@ -5857,7 +5867,7 @@ function mWatchReceipt(paths,count){   // \u2713 only when the DESKTOP has actua
       const left=new Set(((j&&j.items)||[]).map(it=>it&&it.f));
       if(!paths.some(pp=>left.has(pp))){
         clearInterval(mRcptT); mRcptT=null;
-        setB("\u2713 On the desktop map ("+count+")"); mToast("\u2713 On the desktop map ("+count+")");
+        setB("\u2713 Added to the project ("+count+")"); mToast("\u2713 Added to the project ("+count+")");
         try{ if(navigator.vibrate) navigator.vibrate([20,60,20]); }catch(e){}
         setTimeout(()=>setB("Upload photos to the map"),6000);
       }
@@ -5911,14 +5921,16 @@ async function mUploadPhotos(files,fixed,link){
       const base=rawName.replace(/\.[^.]+$/,"").replace(/[^\w\- ]+/g,"").slice(0,40)||("photo"+(i+1));
       const path="uploads/"+batch+"-"+(i+1)+"-"+base+ext;
       await ghPutB64(cfg,path,b64,"Photo upload from phone",false,true);   // fresh name: no sha lookup
-      entries.push(Object.assign({f:path,n:batch+"-"+(i+1)+"-"+base+ext,lat,lng,alt,t,src,ts:Date.now(),by:mUserName()},link&&link.act!=null?{act:link.act}:{},link&&link.au?{au:link.au}:{}));
+      mLocalUp.set(path,f);
+      entries.push(Object.assign({f:path,n:batch+"-"+(i+1)+"-"+base+ext,lat,lng,alt,t,src,ts:Date.now(),by:mUserName(),dev:mDeviceId(),self:mEng.on?Date.now():0},link&&link.act!=null?{act:link.act}:{},link&&link.au?{au:link.au}:{}));
     }
     if(!entries.length) throw new Error(tooBig?"photos over 25 MB can\u2019t be sent":"no readable images");
     setB("Registering\u2026",true); mToast("Registering\u2026",true);
     await mRegisterUploads(cfg,entries);
     const g0=entries.filter(en=>en.lat==null).length;
     mUpBusy=false;
-    setB("\u2713 Uploaded "+entries.length+" \u2014 sending to desktop\u2026"); mToast("\u2713 Uploaded "+entries.length+" \u2014 sending to desktop\u2026",true);
+    setB("\u2713 Uploaded "+entries.length+" \u2014 adding to the project\u2026"); mToast("\u2713 Uploaded "+entries.length+" \u2014 adding to the project\u2026",true);
+    mEngineMerge();   // the phone adds them itself (3000px copy + thumbnail) — no desktop needed
     const note=document.getElementById("mSendNote");
     if(note&&(g0||tooBig)) note.textContent=(g0?g0+" photo"+(g0===1?"":"s")+" without a position \u2014 use \ud83d\udcf7 Take photo on site to pin them. ":"")+(tooBig?tooBig+" skipped (over 25 MB).":"");
     mWatchReceipt(entries.map(en=>en.f),entries.length);
@@ -6009,7 +6021,7 @@ async function mSendChanges(){
     const payload={v:2,updatedAt:new Date().toISOString(),project:mPack.project||null,packAt:mPack.exportedAt||null,changes:payloadSrc.changes||{},photoNotes:payloadSrc.pnotes||{},
       newActs:(payloadSrc.newActs||[]).map(x=>({u:x.u||null,loc:x.loc||null,text:x.text,steps:(x.steps||[]).map(s=>({t:s.t,d:!!s.d,u:s.u||null})),done:!!x.done,doneAt:x.doneAt||null,hold:!!x.hold})),
       actOrder:(Array.isArray(payloadSrc.actOrder)&&payloadSrc.actOrder.length)?mActOrder().map(i=>(mPack.actions[i]||{}).id).filter(x=>x!=null):[]};
-    payload.device=mDeviceId(); payload.by=mUserName();
+    payload.device=mDeviceId(); payload.by=mUserName(); if(mEng.on) payload.self=Date.now();   // the phone merges this batch itself
     payload.changes=Object.assign({},payload.changes);   // reverts below must not leak into the sent-snapshot bookkeeping
     /* undo removes keys; the desktop needs explicit values to take a sent edit back */
     try{ const S=JSON.parse(p.sentSnap||"null"); if(S&&S.c) for(const id of Object.keys(S.c)){
@@ -6035,9 +6047,96 @@ async function mSendChanges(){
       return out; },"Field changes from phone");   // resends are idempotent on the desktop
     const p2=mPend(); p2.sentAt=Date.now(); p2.sentUpd=payload.updatedAt; p2.sentSnap=mPendSnap(payloadSrc); _mpQuiet=true; mPendSave(p2); _mpQuiet=false;   // snapshot what WAS sent (edits made mid-send stay unsent)
     mSyncState="idle"; mSyncErr="";
+    mEngineMergeSoon();   // into the project once you pause (keeps a window for Undo) — no desktop needed
   }catch(err){ mSyncState="error"; mSyncErr=String(err&&err.message||err); mAutoSendSoon(30000); }
   _msBusy=false; mSyncUI();
   if(_msAgain){ _msAgain=false; mAutoSendSoon(500); }
+}
+/* ---- Phone engine: the phone runs the same online sync as a desktop, out of sight ----
+   Phone edits and phone photos go straight into the project file (merged exactly like two desktops'
+   edits), and what the phone shows is rebuilt from that file, so nothing waits for a desktop to be
+   open. The published pack is still used for its marked-up preview images and a fast first screen. */
+const mEng={on:false,starting:null,busy:false,again:false};
+const mLocalUp=new Map();   // uploads/<file> -> the File still on this phone (never downloaded back)
+function mIsEngPhone(){ return document.body.classList.contains("mobile"); }
+async function mEngineStart(){
+  if(mEng.on) return true;
+  if(mEng.starting) return mEng.starting;
+  if(!mPid||!ghRaw().repo) return false;
+  mEng.starting=(async()=>{
+    try{
+      Object.assign(ON,{pid:mPid,name:"",base:null,sha:null,etag:null,rawText:null,cleanJ:null,live:false,busy:false,again:false,err:null,at:0,denied:false});
+      try{ await readProjects(); }catch(e){}
+      const rd=await repoReadJson(statePath());
+      if(!rd||!rd.obj){ ON.pid=null; return false; }
+      ON.base=rd.obj; ON.sha=rd.sha||null; ON.etag=rd.etag||null; ON.rawText=rd.text||null;
+      applyOnline(rd.obj); ON.live=true; ON.cleanJ=canonJ(serializeOnline());
+      mEng.on=true;
+      if(canEdit()){ try{ await restoreUploadQueue(); }catch(e){} pumpUploads(); }
+      return true;
+    }catch(e){ console.warn("phone engine",e); ON.pid=null; return false; }
+    finally{ mEng.starting=null; }
+  })();
+  return mEng.starting;
+}
+/* the phone's screens read a "pack"; build it from the live project, keeping the marked-up preview
+   images (and photo ids) the published pack already has */
+function mPackFromEngine(){
+  const old=mPack||{actions:[]}, byKey=new Map();
+  for(const a of (old.actions||[])) for(const ph of (a.photos||[])) if(ph&&ph.k) byKey.set(ph.k,ph);
+  let mf=null; try{ mf=localStorage.getItem(mfKey())||null; }catch(e){}
+  const pk={v:2,eng:true,exportedAt:old.exportedAt||null,project:loadedJsonName||ON.name||old.project||"Project",pid:ON.pid,mergedFrom:mf,actions:[]};
+  const need=[];
+  for(const a of actions){
+    const ps=[];
+    for(const p of actPhotos(a)){ const k=metaKey(p), o=byKey.get(k);
+      const img=(o&&o.img)||p.preview||p.thumb||null;
+      if(!img&&p.h) need.push(p);
+      ps.push({id:o?o.id:("h"+String(p.h||p.id)),k,name:p.name,note:p.note||"",lat:(p.lat!=null?p.lat:null),lng:(p.lng!=null?p.lng:null),img,h:o?o.h:null}); }
+    pk.actions.push({id:a.id,text:a.text,hold:!!a.hold,done:!!a.done,doneAt:a.doneAt||null,fu:a.fu||null,loc:a.loc||null,steps:(a.steps||[]).map(stepCopy),photos:ps});
+  }
+  if(need.length) mEngineThumbs(need);
+  return pk;
+}
+let _mThT=null;
+function mEngineThumbs(list){   // thumbnails for photos the published pack doesn't have yet, then a quiet refresh
+  for(const p of list) if(p.h&&!p.thumb&&!p._thq&&!(p._thFail&&Date.now()-p._thFail<60000)){ p._thq=1; _thQ.push(p); }
+  while(_thRun<6&&_thQ.length){ _thRun++; thumbWorker(); }
+  clearTimeout(_mThT); _mThT=setTimeout(()=>mEngineRefresh(false),2500);
+}
+/* show the live project on the phone: straight away on the map/list, after you leave an action otherwise */
+function mEngineRefresh(force){
+  if(!mEng.on||!mPack) return;
+  const np=mPackFromEngine();
+  if(JSON.stringify(np.actions)===JSON.stringify(mPack.actions)&&np.mergedFrom===mPack.mergedFrom&&np.project===mPack.project) return;
+  if(!force&&!mSafeToSwap()){ mPackNext=np; mPackStale=true; return; }
+  mApplyPack(np);
+  if(document.getElementById("mList")) mShowList(); else if(mSoftRefresh) mSoftRefresh();
+}
+/* the phone's own batch (changes.json) and photos (uploads.json) go into the project now */
+async function mEngineMerge(){
+  if(!(await mEngineStart())||!canEdit()) return;
+  if(mEng.busy){ mEng.again=true; return; }
+  mEng.busy=true;
+  try{
+    _chMerging=false; await checkFieldChanges();
+    await checkPhotoUploads();
+    clearTimeout(persistTimer); clearTimeout(ON.saveT);
+    for(let i=0;i<20&&ON.busy;i++) await sleep(250);
+    await onlineSave();
+    mEngineRefresh(false);
+  }catch(e){ console.warn("phone merge",e); }
+  finally{ mEng.busy=false; if(mEng.again){ mEng.again=false; setTimeout(mEngineMerge,300); } }
+}
+/* edits go in ~8 s after the last one: Undo on the phone works until then (merged edits can't be undone here) */
+let _mMergeT=null;
+function mEngineMergeSoon(ms){ clearTimeout(_mMergeT); _mMergeT=setTimeout(()=>{ _mMergeT=null; mEngineMerge(); },ms==null?8000:ms); }
+/* everyone else's changes, every few seconds while the app is on screen */
+async function mEnginePoll(){
+  if(!mEng.on) return;
+  const before=ON.sha; await onlinePoll();
+  if(ON.sha!==before) mEngineRefresh(false);
+  else if(mPackStale&&mPackNext&&mSafeToSwap()){ const np=mPackNext; mApplyPack(np); mShowList(); }
 }
 /* desktop -> phone: watch the tiny stamp; pull the pack when it moves */
 let _mppBusy=false;
@@ -6268,9 +6367,11 @@ function mobileBoot(){
   document.body.classList.add("mobile");
   { adoptLinkRepo(); const lk=linkParams().key;   // a shared link names the project (and, off the usual site, the data repo)
     try{ if(lk) localStorage.setItem("pmProjectKey",lk); mPid=localStorage.getItem("pmProject")||null; }catch(e){} }
-  setInterval(()=>{ mPackPoll(); if(mChCount()) mSendChanges(); },30000);   // two-way auto sync heartbeat
-  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"){ mPackPoll(); mSendChanges(); } });
-  window.addEventListener("online",()=>{ mPackPoll(); mSendChanges(); });
+  setInterval(()=>{ if(mChCount()) mSendChanges(); if(!mEng.on) mPackPoll(); },30000);   // fallback heartbeat
+  setInterval(()=>{ if(document.visibilityState!=="visible"||!mEng.on) return;   // every 5 s while on screen: everyone's changes, and a retry of our own
+    mEnginePoll(); const p=mPend(); if(p.sentUpd&&!(mPack&&mPack.mergedFrom&&mPack.mergedFrom>=p.sentUpd)&&!_mMergeT) mEngineMergeSoon(); },5000);
+  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"){ if(mEng.on) mEnginePoll(); else mPackPoll(); mSendChanges(); } });
+  window.addEventListener("online",()=>{ if(mEng.on) mEnginePoll(); else mPackPoll(); mSendChanges(); });
   const sharedIn=/[?&]shared=/.test(location.search);
   if(!sharedIn) mCheckFresh();   // never self-reload while shared photos are waiting to upload
   mSetupShare();
@@ -6322,7 +6423,9 @@ async function checkPhotoUploads(){   // polled: phone uploads auto-merge as soo
   _upMerging=true;
   try{
     const {obj:man}=await ghReadJson(cfg,repoP("uploads.json"));
-    const items=Array.isArray(man&&man.items)?man.items.filter(it=>it&&it.f):[];
+    const onPhone=mIsEngPhone(), fresh=it=>it.self&&Date.now()-it.self<120000;
+    /* a phone adds its own photos; a desktop takes over only what a phone left for over 2 minutes */
+    const items=Array.isArray(man&&man.items)?man.items.filter(it=>it&&it.f&&(onPhone?(it.dev===mDeviceId()||!fresh(it)):!fresh(it))):[];
     if(!items.length) return;
     loadNote("Photo dump from the phone — downloading "+items.length+" photo"+(items.length===1?"":"s")+"…");
     const fin=x=>typeof x==="number"&&isFinite(x);
@@ -6342,7 +6445,7 @@ async function checkPhotoUploads(){   // polled: phone uploads auto-merge as soo
         if(dupe){ const la=resolveLinkAct(it); if(la&&!(dupe.acts||[]).includes(la.id)){ const before=snapshotTags(dupe); dupe.acts=(dupe.acts||[]).concat([la.id]); healed.push({id:dupe.id,before,after:snapshotTags(dupe)}); } }   // an earlier phone photo lost its original: this upload becomes it
         handled.add(it.f); continue;
       }
-      let bytes; try{ bytes=await ghGetBin(cfg,it.f); }catch(e){ continue; }   // transient failure: stays listed for the next poll
+      let bytes; try{ const lf=mLocalUp.get(it.f); bytes=lf?new Uint8Array(await lf.arrayBuffer()):await ghGetBin(cfg,it.f); }catch(e){ continue; }   // transient failure: stays listed for the next poll (a phone uses its own copy)
       if(!bytes){ handled.add(it.f); continue; }   // file is gone: drop its entry
       const file=new File([bytes],nm,{type:(/\.(heic|heif)$/i.test(nm)?"image/heic":/\.png$/i.test(nm)?"image/png":"image/jpeg")});
       metaByName.set(nm,it); if(fin(it.t)) queued.add(base+"|"+Math.round(it.t/1000));
@@ -6356,7 +6459,7 @@ async function checkPhotoUploads(){   // polled: phone uploads auto-merge as soo
       if(m2){   // the file's own EXIF wins; the manifest only fills gaps (the phone's trail / live fix)
       if(ph.lat==null&&fin(m2.lat)&&fin(m2.lng)){ ph.lat=m2.lat; ph.lng=m2.lng; ph.noGps=false; }
       if(ph.time==null&&m2.t) ph.time=m2.t; if(ph.alt==null&&fin(m2.alt)) ph.alt=m2.alt; } }
-    const c=map.getCenter();
+    const c=(mIsEngPhone()&&mGeo)?{lat:mGeo.lat,lng:mGeo.lng}:map.getCenter();   // on a phone: where you stand
     for(const ph of added){ if(ph.lat==null){ ph.noGps=true; ph.lat=c.lat; ph.lng=c.lng; } }
     /* if the site folder is already writable, also keep a real copy next to the other photos
        (new files only — nothing existing is touched); those no longer need the repo copy */
@@ -6414,6 +6517,7 @@ async function checkFieldChanges(){
     let lastB=null; try{ lastB=JSON.parse(localStorage.getItem(lmKey)||"null"); }catch(e){}
     let merged=""; try{ merged=localStorage.getItem(mfKey())||""; }catch(e){}
     if(raw.updatedAt&&raw.updatedAt===merged) return;   // already merged this batch
+    if(!mIsEngPhone()&&raw.self&&Date.now()-raw.self<120000) return;   // the phone that sent it is merging it itself
     const data=batchDiff(raw,lastB);
     _logBy=String(raw.by||"Phone");   // History credits the phone's user
     const ch=data.changes||{}, pnCh=data.photoNotes||{};
@@ -6531,6 +6635,7 @@ async function checkFieldChanges(){
     if(pid) await openProject(pid); else showProjectPicker();
   }
   syncMenus();
+  setInterval(()=>{ if(isOnline()&&document.visibilityState==="visible") onlinePoll(); },5000);   // everyone's edits within ~5 s while the window is on screen
   setInterval(()=>{ if(isOnline()){ onlinePoll(); if(canEdit()){ pumpUploads(); syncTick(); } } else syncTick(); },15000);   // everyone's edits arrive by themselves
   window.addEventListener("focus",()=>{ if(isOnline()){ onlinePoll(); if(canEdit()) syncTick(); } else syncTick(); });
   document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&isOnline()) onlinePoll(); });
