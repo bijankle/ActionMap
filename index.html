@@ -2796,7 +2796,10 @@ function afterOpenUI(){
   applyUiSettings(ui||{});
   if(!(ui&&ui.view)) fitToPhotos();
   renderActions(); renderProjHead(); ensureThumbs(); renderSaveStatus(); syncMenus(); neatUrl();
+  if(_topShownFor!==ON.pid){ _topShownFor=ON.pid;   // opening a project starts on the top action of the list, as if clicked
+    setTimeout(()=>{ const top=actsShown()[0]; if(top&&!selActs.size&&!lb.classList.contains("open")&&!pickMode) clickAction(top); },350); }
 }
+let _topShownFor=null;
 
 /* ---- the project picker ---- */
 function showProjectPicker(msg){
@@ -3220,8 +3223,9 @@ async function composeActionCard(a,psIn){   // psIn: the phone passes its own ph
   ctx.fillStyle=S.bg; ctx.fillRect(0,0,W,H);
   const X=S.pad, IW=W-2*S.pad, mapRight=pts.length>0, headH=Math.round(H*(mapRight?Lo.head:0.10)), mapW=mapRight?Math.round(IW*Lo.mapW):0;   // no located photos: a slim title-only header, photos get the room
   const tW=IW-(mapRight?mapW+gap*2:0)-8;
+  const num=a.num!==undefined?a.num:(a.id!=null?actNo(a):null), cardTitle=(num?num+" | ":"")+String(a.text||"");   // e.g. "016 | guard design too low…"
   const font=px=>"700 "+px+"px 'Segoe UI',Aptos,system-ui,-apple-system,Roboto,sans-serif";
-  let px=headH>250?76:64, lines; for(;px>=30;px-=2){ ctx.font=font(px); lines=_wrap(ctx,a.text,tW,headH>250?6:4); if(!lines.trunc&&lines.length*px*1.18<=headH-gap-8) break; }   // largest size that shows the WHOLE title
+  let px=headH>250?76:64, lines; for(;px>=30;px-=2){ ctx.font=font(px); lines=_wrap(ctx,cardTitle,tW,headH>250?6:4); if(!lines.trunc&&lines.length*px*1.18<=headH-gap-8) break; }   // largest size that shows the WHOLE title
   ctx.fillStyle=S.titleColor; ctx.textBaseline="middle"; const lh=px*1.18, top=S.pad+(headH-gap-lines.length*lh)/2+lh/2;
   lines.forEach((l,i)=>ctx.fillText(l,X+4,top+i*lh));
   if(mapRight) await drawMiniMap(ctx,X+IW-mapW,S.pad,mapW,headH-gap,pts,S.radius,await currentPos(),K>1);   // zoomed to show the spots AND where you are
@@ -6274,7 +6278,7 @@ function mCardBlob(a){
   const photos=(a.photos||[]).filter(p=>p.img);
   const key=mCardKey(a)+"|"+mTitle(a)+"|"+photos.map(p=>p.id).join(",");
   if(mCardJob&&mCardJob.key===key) return mCardJob.p;
-  const act={text:mTitle(a),loc:a._new?(mNewActs()[a._ni]||{}).loc:a.loc};
+  const act={text:mTitle(a),num:a._new?null:actNo(a),loc:a._new?(mNewActs()[a._ni]||{}).loc:a.loc};
   const ps=photos.map(p=>({preview:p.img,lat:p.lat,lng:p.lng,_phone:true}));
   const p=(async()=>{ const cv=await composeActionCard(act,ps); return await new Promise((res,rej)=>cv.toBlob(b=>b?res(b):rej(new Error("image failed")),"image/png")); })();
   mCardJob={key,p}; p.catch(()=>{ if(mCardJob&&mCardJob.p===p) mCardJob=null; });
