@@ -2089,6 +2089,7 @@ function armNewAction(pids){
 document.getElementById("actNewInput").addEventListener("keydown",e=>{
   if(e.key==="Escape"&&(pendingActPhotos||pendingActLoc)){ e.stopPropagation(); armNewAction(null); return; }
   if(e.key!=="Enter") return; const v=e.target.value.trim(); if(!v) return;
+  if(ON.pid&&!ON.live){ loadNote(ON.tokenBad?TOKEN_BAD:"The project is still opening \u2014 try again in a moment"); setTimeout(()=>loadNote(""),4000); return; }   // nothing to save it into yet
   e.target.value="";
   // Assign to whatever is current: armed photos > map selection > the photo open in the viewer > nothing.
   const loc=pendingActLoc;
@@ -2312,7 +2313,13 @@ async function ghReadJson(cfg,path){
   if(r.status===404) return {obj:null,sha:null};
   if(!r.ok) throw new Error("GitHub says "+r.status+" reading "+path);
   const j=await r.json();
-  let obj=null; try{ obj=JSON.parse(decodeURIComponent(escape(atob(String(j.content||"").replace(/\s/g,""))))); }catch(e){ obj=null; }
+  let b64=String(j.content||"");
+  if(!b64.trim()&&j.sha&&j.size){   // over 1 MB: the contents API leaves content out — read the blob instead
+    const br=await fetch("https://api.github.com/repos/"+cfg.repo+"/git/blobs/"+j.sha,{cache:"no-store",headers:ghHeaders(cfg.token)});
+    if(!br.ok) throw new Error("GitHub says "+br.status+" reading "+path);
+    b64=String((await br.json()).content||""); }
+  let obj=null; try{ obj=JSON.parse(decodeURIComponent(escape(atob(b64.replace(/\s/g,""))))); }
+  catch(e){ if(j.size) throw new Error("Couldn\u2019t read "+path+" \u2014 left untouched"); }   // unreadable is NOT "empty": never let a writer replace it
   return {obj,sha:j.sha||null};
 }
 async function ghUpdateJson(cfg,path,mutate,msg){   // mutate(current|null) -> new object, or null to leave the file alone
@@ -2410,6 +2417,7 @@ async function repoBranch(){ if(_branch) return _branch;
   return "main"; }
 /* Read a JSON file. With a token: fresh from the API, with its sha (needed to write back safely).
    Without one: the public raw copy. A matching ETag answers "unchanged" for free. */
+const TOKEN_BAD="Your access token was rejected or has expired \u2014 paste a new one in Tools \u2192 Settings";
 async function repoReadJson(path,etag){
   const tok=ghRaw().token;
   if(tok&&!ON.denied){
@@ -2423,9 +2431,10 @@ async function repoReadJson(path,etag){
       return {obj,sha:j.sha,etag:r.headers.get("etag"),text}; }
     if(r.status!==401&&r.status!==403) throw await ghErr(r,"reading "+path);
     ON.denied=true;   // token without access to this repo: fall back to viewing
+    if(r.status===401) ON.tokenBad=true;   // expired / revoked: say so, don't pretend the project is gone
   }
   const r=await fetch(rawURL(path)+"?t="+Date.now(),{cache:"no-store"});
-  if(r.status===404) return {obj:null,sha:null};
+  if(r.status===404){ if(ON.tokenBad) throw new Error(TOKEN_BAD); return {obj:null,sha:null}; }
   if(!r.ok) throw new Error("Couldn't read "+path+" ("+r.status+") — is the data repo public?");
   const text=await r.text(); if(text===ON.rawText&&path===statePath()) return {same:true};
   let obj=null; try{ obj=JSON.parse(text); }catch(e){}
@@ -2435,7 +2444,7 @@ async function repoWriteJson(path,obj,sha,msg){
   const body={message:msg,content:utf8ToB64(JSON.stringify(obj))}; if(sha) body.sha=sha;
   const r=await ghApi("repos/"+onRepo()+"/contents/"+path,{method:"PUT",body});
   if(r.status===409||r.status===422) return {conflict:true};   // someone saved first (or it exists): re-read, merge, retry
-  if(r.status===401||r.status===403||r.status===404){ ON.denied=true; throw new Error("This access token can't change "+onRepo()+" — viewing only"); }
+  if(r.status===401||r.status===403||r.status===404){ ON.denied=true; if(r.status===401) ON.tokenBad=true; const e=new Error(r.status===401?TOKEN_BAD:"This access token can only view "+onRepo()+" \u2014 your change wasn\u2019t saved"); e.denied=true; throw e; }
   if(!r.ok) throw await ghErr(r,"saving "+path);
   const j=await r.json(); return {sha:j.content&&j.content.sha};
 }
@@ -2444,7 +2453,7 @@ async function repoCommitFiles(files,msg,onWait){
   const repo=onRepo(), br=await repoBranch(), shas=[];
   for(const f of files){
     const r=await ghApi("repos/"+repo+"/git/blobs",{method:"POST",body:{content:bytesToB64(f.bytes),encoding:"base64"},onWait});
-    if(r.status===401||r.status===403||r.status===404){ ON.denied=true; throw new Error("This access token can't add photos to "+repo); }
+    if(r.status===401||r.status===403||r.status===404){ ON.denied=true; if(r.status===401) ON.tokenBad=true; throw new Error(r.status===401?TOKEN_BAD:"This access token can't add photos to "+repo); }
     if(!r.ok) throw await ghErr(r,"uploading a photo");
     shas.push((await r.json()).sha); }
   for(let attempt=0;attempt<8;attempt++){
@@ -2603,22 +2612,31 @@ function onLocalChanged(){
   onCacheLocal(); scheduleOnlineSave(1200); pumpUploads(); scheduleAutoExport();
 }
 function scheduleOnlineSave(ms){ clearTimeout(ON.saveT); ON.saveT=setTimeout(onlineSave,ms==null?1200:ms); }
+let _fieldAck=null, _saveGen=0;   // a phone batch merged in memory, acknowledged once a save that includes it lands
+function runFieldAck(upTo){ if(_fieldAck&&_fieldAck.gen<=upTo){ const a=_fieldAck; _fieldAck=null; a.run().catch(e=>console.warn("batch ack",e)); } }
 async function onlineSave(){
   if(!canEdit()) return;
   if(ON.busy){ ON.again=true; return; }
-  const local=serializeOnline(); if(canonJ(local)===ON.cleanJ) return;
+  const g0=_saveGen, pid0=ON.pid, sp=statePath();   // this save belongs to THIS project, even if another is opened meanwhile
+  const local=serializeOnline(); if(canonJ(local)===ON.cleanJ){ runFieldAck(g0); return; }
   ON.busy=true; renderSaveStatus();
   try{
     let sha=ON.sha, remote=null, doc=local;
     for(let i=0;i<8;i++){
-      if(i>0){ const rd=await repoReadJson(statePath()); remote=rd.obj; sha=rd.sha; ON.etag=rd.etag||null; doc=remote?merge3(ON.base,local,remote):local; }
+      if(i>0){ const rd=await repoReadJson(sp); if(ON.pid!==pid0) return; remote=rd.obj; sha=rd.sha; ON.etag=rd.etag||null; doc=remote?merge3(ON.base,local,remote):local; }
       doc.updatedAt=new Date().toISOString(); doc.by=userName();
-      const w=await repoWriteJson(statePath(),doc,sha,"ActionMap: "+(ON.name||"project")+" — "+userName());
+      const w=await repoWriteJson(sp,doc,sha,"ActionMap: "+(ON.name||"project")+" — "+userName());
+      if(ON.pid!==pid0) return;   // another project was opened while this was sending: never fold this one into it
       if(w.conflict){ await sleep(300+Math.random()*700); continue; }
       ON.sha=w.sha; ON.etag=null; absorb(doc,local); ON.at=Date.now(); ON.err=null; lastSavedAt=ON.at;
+      runFieldAck(g0);
       break; }
-  }catch(e){ ON.err=e; console.warn("online save failed",e); scheduleOnlineSave(20000); }
-  finally{ ON.busy=false; renderSaveStatus(); onCacheLocal(); if(ON.again){ ON.again=false; scheduleOnlineSave(600); } }
+  }catch(e){ if(ON.pid!==pid0) return;
+    if(e&&e.denied){   // this token can't write: the change can't be kept — show the saved version and say why (it used to sit there looking saved)
+      ON.err=null; if(ON.base){ applyOnline(ON.base); onRefreshUI(); ON.cleanJ=canonJ(serializeOnline()); }
+      syncMenus(); showBanner(esc(e.message),()=>{ hideBanner(); openSettings(); },"Settings"); return; }
+    ON.err=e; console.warn("online save failed",e); scheduleOnlineSave(20000); }
+  finally{ if(ON.pid===pid0){ ON.busy=false; renderSaveStatus(); onCacheLocal(); if(ON.again){ ON.again=false; scheduleOnlineSave(600); } } }
 }
 /* A synced document arrives (our own merged save, or someone else's): adopt it, but keep any edit
    made on this device while it was in flight. */
@@ -2811,9 +2829,16 @@ async function createProject(name,seed){   // seed: a ready document (migration)
   return pid;
 }
 async function openProject(pid){
+  if(ON.pid&&ON.pid!==pid&&isOnline()&&canEdit()){   // finish saving the project being left before switching
+    if(persistTimer){ clearTimeout(persistTimer); persistTimer=null; try{ onLocalChanged(); }catch(e){} }
+    clearTimeout(ON.saveT);
+    for(let i=0;i<60&&ON.busy;i++) await sleep(250);
+    try{ await Promise.race([onlineSave(),sleep(15000)]); }catch(e){}
+  }
+  clearTimeout(ON.saveT);
   if(lb.classList.contains("open")) closeViewer();
   clearAll(false);
-  Object.assign(ON,{pid,name:"",base:null,sha:null,etag:null,rawText:null,cleanJ:null,live:false,busy:false,again:false,err:null,at:0,denied:false});
+  Object.assign(ON,{pid,name:"",base:null,sha:null,etag:null,rawText:null,cleanJ:null,live:false,busy:false,again:false,err:null,at:0,denied:false,tokenBad:false});
   _imgHave=null; jsonHandle=null; saveFileHandle=null; dirHandle=null; fileLoadedOnce=true; hideBanner();
   try{ localStorage.setItem("pmProject",pid); }catch(e){}
   readProjects().then(neatUrl);
@@ -2823,7 +2848,7 @@ async function openProject(pid){
     ON.base=cached.base; ON.sha=cached.sha||null; applyOnline(cached.local||cached.base); ON.live=true;
     ON.cleanJ=(cached.local&&canonJ(cached.local)!==canonJ(cached.base))?"":canonJ(serializeOnline());
     afterOpenUI(); }
-  let rd=null; try{ rd=await repoReadJson(statePath()); }catch(e){ if(!ON.live){ loadNote(""); showBanner("Couldn't open this project: "+esc(e.message||String(e)),()=>openProject(pid),"Try again"); return; } }
+  let rd=null; try{ rd=await repoReadJson(statePath()); }catch(e){ if(!ON.live){ loadNote(""); renderSaveStatus(); showBanner("Couldn't open this project: "+esc(e.message||String(e)),()=>ON.tokenBad?openSettings():openProject(pid),ON.tokenBad?"Settings":"Try again"); return; } renderSaveStatus(); }
   if(rd&&rd.obj){
     if(!ON.live){ ON.base=rd.obj; ON.sha=rd.sha||null; ON.etag=rd.etag||null; ON.rawText=rd.text||null; applyOnline(rd.obj); ON.live=true; ON.cleanJ=canonJ(serializeOnline()); afterOpenUI(); }
     else { const local=serializeOnline(), dirty=ON.cleanJ!==canonJ(local);
@@ -3375,7 +3400,7 @@ async function exportActionsXlsx(){
 document.getElementById("setGhRepo").addEventListener("change",e=>{ try{ localStorage.setItem("pmGhRepo",e.target.value.trim()); }catch(err){} _branch=null; _imgHave=null; syncMenus(); });
 document.getElementById("saveStatus").addEventListener("click",()=>{ if(isOnline()&&ON.live&&!canEdit()) openSettings(); });
 document.getElementById("setGhToken").addEventListener("change",e=>{ try{ localStorage.setItem("pmGhToken",e.target.value.trim()); }catch(err){}
-  ON.denied=false; syncMenus(); renderSaveStatus(); renderProjHead(); if(isOnline()){ onlinePoll(); if(canEdit()){ pumpUploads(); scheduleOnlineSave(500); } }   // a token turns view-only into editing straight away
+  ON.denied=false; ON.tokenBad=false; syncMenus(); renderSaveStatus(); renderProjHead(); if(isOnline()){ onlinePoll(); if(canEdit()){ pumpUploads(); scheduleOnlineSave(500); } }   // a token turns view-only into editing straight away
   ghFindRepo().then(r=>{ const el=document.getElementById("setGhRepo"); if(r&&el&&!el.value) el.value=r; }); });
 document.getElementById("setUserName").addEventListener("input",e=>{ try{ localStorage.setItem("pmUserName",e.target.value.trim()); }catch(err){} });
 document.getElementById("setActMap")?.addEventListener("change",e=>{ actOnlyMap=e.target.checked; buildCluster(); renderClusters(); updateGallery(); renderActions(); persistState(); });
@@ -4220,9 +4245,11 @@ function closeViewer(){ if(!lb.classList.contains("open")) return; if(selMark) d
 document.getElementById("lbClose").addEventListener("click",closeViewer);
 document.getElementById("lbPrev").addEventListener("click",e=>{e.stopPropagation();vStep(-1);});
 document.getElementById("lbNext").addEventListener("click",e=>{e.stopPropagation();vStep(1);});
+function viewerShown(){ return lb.classList.contains("open")&&rightTab==="photo"; }   // open AND on screen (Gallery/History tabs hide it)
 document.addEventListener("keydown",e=>{
-  if(!lb.classList.contains("open"))return;
+  if(!viewerShown())return;
   if(document.activeElement===tbText){ if(e.key==="Escape"){ e.preventDefault(); const m=selMark; deselectText(); if(m&&curMarks().includes(m)){ selObj=m; redrawMarks(); } } else if(e.key==="Enter"){ e.preventDefault(); document.execCommand("insertText",false,"\n"); } return; }
+  { const tag=((e.target&&e.target.tagName)||"").toLowerCase(); if(tag==="input"||tag==="select"||tag==="textarea"||(e.target&&e.target.isContentEditable)) return; }   // keys typed in other fields (e.g. + New action) aren't the viewer's
   if(e.key==="Escape"){
     if(selMark){ deselectText(); return; }
     if(draft&&draft.t==="poly"){ endPoly(false); return; }
@@ -4234,7 +4261,6 @@ document.addEventListener("keydown",e=>{
   }
   if(e.key==="Enter"&&selObj&&(selObj.t==="text"||selObj.t==="call")&&curMarks().includes(selObj)){ e.preventDefault(); const m=selObj; selObj=null; selectText(m); return; }   // Enter: type in the selected text box
   if(e.key==="Enter"){ if(markTool==="poly"&&draft&&draft.t==="poly"&&draft.p.length>=2){ curMarks().push({t:"poly",p:draft.p,c:draft.c,k:draft.k}); draft=null; polyPrev=null; afterMarkChange(); } return; }
-  const tag=((e.target&&e.target.tagName)||"").toLowerCase(); if(tag==="input"||tag==="select"||tag==="textarea"||(e.target&&e.target.isContentEditable)) return;
   if(e.key==="ArrowLeft"){ e.preventDefault(); vStep(-1); return; }
   if(e.key==="ArrowRight"){ e.preventDefault(); vStep(1); return; }
   if((e.key==="Delete"||e.key==="Backspace")&&selObj){ e.preventDefault(); const p=curPhoto();
@@ -4249,8 +4275,8 @@ document.addEventListener("keydown",async e=>{
   const t=e.target, tag=((t&&t.tagName)||"").toLowerCase();
   if(tag==="input"||tag==="select"||tag==="textarea"||(t&&t.isContentEditable)) return;
   if(document.querySelector(".ynmodal.show")) return;
-  if(lb.classList.contains("open")&&(selObj||selMark||draft||markTool!=="none")) return;   // the drawing tools own Delete while they're in use
-  const list=selSet.size?[...selSet].map(photoById).filter(Boolean):(lb.classList.contains("open")&&curPhoto()?[curPhoto()]:[]);
+  if(viewerShown()&&(selObj||selMark||draft||markTool!=="none")) return;   // the drawing tools own Delete while they're in use
+  const list=selSet.size?[...selSet].map(photoById).filter(Boolean):(viewerShown()&&curPhoto()?[curPhoto()]:[]);   // never a photo hidden behind the Gallery/History tab
   if(!list.length) return;
   e.preventDefault(); if(roBlock()) return;
   const n=list.length, what=n===1?"\u201c"+list[0].name+"\u201d":n+" photos";
@@ -5000,7 +5026,8 @@ function agoText(t){ const s2=Math.max(0,(Date.now()-t)/1000); if(s2<60) return 
 function renderSaveStatus(){ const el=document.getElementById("saveStatus"); if(!el) return;
   if(isOnline()){ let t="",cls="",tip="";
     const upN=photos.filter(p=>!p.h&&!p._upDead).length;
-    if(!ON.live) t="Opening\u2026";
+    if(ON.tokenBad){ t="Access token rejected"; tip=TOKEN_BAD; cls="bad"; }
+    else if(!ON.live) t="Opening\u2026";
     else if(!canEdit()){ t="View only"; tip=ghRaw().token?"This access token can't change "+onRepo()+".":"Add your access token in Tools \u2192 Settings to make changes."; cls="ro"; }
     else if(ON.wait){ t="GitHub is pacing uploads \u2014 resuming in "+Math.max(1,Math.ceil((ON.wait-Date.now())/60000))+" min"; }
     else if(upN) t="Uploading "+upN+" photo"+(upN===1?"":"s")+"\u2026";
@@ -5548,7 +5575,7 @@ async function mLoadPack(silent){
   try{
     const text=await ghGetRaw(cfg,mP("pack.json"));
     if(!text&&!silent&&await mEngineStart()){   // no phone copy published yet: build it from the live project
-      mPack={v:2,eng:true,project:"",actions:[]}; mApplyPack(mPackFromEngine()); mStartGeo(); mShowList(); return; }
+      mPack={v:2,eng:true,project:"",actions:[]}; mApplyPack(mPackFromEngine()); mStartGeo(); mShowList(); mOutResume(); return; }
     if(!text){ if(!silent) mShowSetup(mPid?"This project has no phone copy yet \u2014 open it once on a desktop with the access token (it syncs to phones by itself).":"No pack.json in "+cfg.repo+" yet — open the project on the desktop once (it syncs to the phone automatically)."); return; }
     const np=JSON.parse(text);
     await mHydrateImages(cfg,np,silent);   // previews live as img/<hash>.jpg — fetched once, then from the device cache
@@ -5556,6 +5583,7 @@ async function mLoadPack(silent){
     mApplyPack(np);
     mStartGeo();
     mShowList();
+    mOutResume();
     mEngineStart().then(ok=>{ if(!ok) return; mEngineRefresh(false); const p=mPend(); if(p.sentUpd&&!(mPack&&mPack.mergedFrom&&mPack.mergedFrom>=p.sentUpd)) mEngineMerge(); });   // the live project takes over
     if(keepScroll!=null){ const l2=document.getElementById("mList"); if(l2) l2.scrollTop=keepScroll; }
     if(silent) mToast("\u21bb Updated from the desktop");
@@ -5692,6 +5720,7 @@ function mHeadSub(){ if(!mPack) return "";
   const n=mChCount();
   if(n&&mSyncState==="error") return "⚠ "+n+" change"+(n===1?"":"s")+" waiting to sync";
   if(n||mSyncState==="sending") return "↻ Syncing…";
+  if(mOutN) return "\ud83d\udcf7 "+mOutN+" photo"+(mOutN===1?"":"s")+" waiting to send";
   return mRO()?"View only":""; }
 function mMeta(a){ const out=[];   // cards stay clean: just the title, plus a word when it's new or on hold
   if(a._new) out.push('<span style="color:var(--accent);font-weight:600">New · on this phone</span>');
@@ -5983,72 +6012,92 @@ function mWatchReceipt(paths,count){   // \u2713 only when the photos are actual
 /* Photo dump: pick or take photos on the phone; each is resized to a 2048px JPEG and pushed to
    the private data repo with its GPS/time carried in uploads.json. Assigning to actions stays a
    desktop job — these arrive there as ordinary unassigned photos. */
+/* Phone photos go through an OUTBOX: each picked or taken photo is first kept on the phone
+   (IndexedDB, with its position and action link), then sent. A photo leaves the outbox only once
+   it is uploaded AND registered, so a dead signal, a closed app or a second photo taken mid-send
+   never loses anything — the outbox is retried on a timer, when the signal returns and on start. */
+async function mPhotoMeta(f,fixed,crumbs){
+  let lat=null,lng=null,alt=null,t=null;
+  const ok=(x)=>typeof x==="number"&&isFinite(x);   // exifr can return NaN from redacted 0/0 GPS rationals — JSON turns NaN into null downstream
+  const take=(la,lo)=>{ if(ok(la)&&ok(lo)&&(la!==0||lo!==0)){ lat=la; lng=lo; } };
+  try{ const g=await exifr.gps(f); if(g) take(g.latitude,g.longitude); }catch(e){}
+  let ex=null; try{ ex=await exifr.parse(f,{tiff:true,ifd0:true,exif:true,gps:true}); }catch(e){}
+  if(ex){
+    if(lat==null) take(ex.latitude,ex.longitude);
+    if(lat==null&&Array.isArray(ex.GPSLatitude)&&Array.isArray(ex.GPSLongitude)){   // manual deg/min/sec as the last resort
+      const dms=a=>{ const d=+a[0]||0,mi=+a[1]||0,se=+a[2]||0; const v=d+mi/60+se/3600; return isFinite(v)?v:null; };
+      const la=dms(ex.GPSLatitude), lo=dms(ex.GPSLongitude);
+      if(la!=null&&lo!=null&&(la!==0||lo!==0))
+        take(String(ex.GPSLatitudeRef||"N").toUpperCase().indexOf("S")===0?-la:la,
+             String(ex.GPSLongitudeRef||"E").toUpperCase().indexOf("W")===0?-lo:lo);
+    }
+    const dt=ex.DateTimeOriginal||ex.CreateDate||ex.ModifyDate; if(dt instanceof Date&&!isNaN(dt)) t=dt.getTime();
+    const a2=altFromExif(ex); if(ok(a2)) alt=a2;
+  }
+  let src=lat!=null?"exif":null;
+  if(!t&&f.lastModified) t=f.lastModified;   // camera files: file time ≈ taken time
+  if(lat==null&&fixed){ lat=fixed.lat; lng=fixed.lng; src="live"; }   // camera-button shot: pinned where you stand
+  if(lat==null&&t){ const cr=mCrumbAt(t,crumbs); if(cr){ lat=cr.lat; lng=cr.lng; src="track"; } }
+  return {lat,lng,alt,t,src};
+}
+const mOutKey=()=>"mOut:"+(mPid||"");
+let mOutSeq=1+Math.floor(Math.random()*9000);   // file numbers stay unique even for two batches in the same second
+let mOutMem=null, mOutN=0, mOutBusy=false, mOutAgain=false, mOutT=null, mOutFails=0;
+async function mOutLoad(){ if(mOutMem&&mOutMem.k===mOutKey()) return mOutMem.items;
+  let items=[]; try{ items=(await idbGet(mOutKey()))||[]; }catch(e){}
+  mOutMem={k:mOutKey(),items}; mOutN=items.length; return items; }
+async function mOutSave(items){ mOutMem={k:mOutKey(),items}; mOutN=items.length; try{ await idbSet(mOutKey(),items); }catch(e){ console.warn("outbox save",e); } mSyncUI(); }
 async function mUploadPhotos(files,fixed,link){
-  const orig="Upload photos to the map";
-  const setB=(t,dis)=>{ const b=document.getElementById("mUpBtn"); if(b){ b.textContent=t; b.disabled=!!dis; } };
   const cfg=ghCfg();
-  if(!cfg.token){ setB("Set the repo + token first (REFRESH screen)"); mToast("No repo token on this phone \u2014 open the app and set it up first"); setTimeout(()=>setB(orig),3000); return; }
-  if(mUpBusy) return;
-  mUpBusy=true; setB("Starting\u2026",true);
+  if(!cfg.token){ mToast("No access token on this phone — Settings → Data repository and access token"); return; }
   const d0=new Date(), pd=n2=>String(n2).padStart(2,"0");
   const batch=""+d0.getFullYear()+pd(d0.getMonth()+1)+pd(d0.getDate())+"-"+pd(d0.getHours())+pd(d0.getMinutes())+pd(d0.getSeconds());
-  const entries=[], crumbs=mCrumbs(); let tooBig=0;   // trail parsed once per batch, not once per photo
+  const crumbs=mCrumbs(), add=[]; let tooBig=0;   // trail parsed once per batch, not once per photo
+  for(let i=0;i<files.length;i++){ const f=files[i];
+    if(f.size>25*1024*1024){ tooBig++; continue; }   // sanity cap for the GitHub contents API
+    const meta=await mPhotoMeta(f,fixed,crumbs);
+    add.push(Object.assign({id:mUid(),batch,idx:mOutSeq++,name:String(f.name||("photo"+(i+1))),blob:f,link:link||null,f:null},meta)); }
+  if(!add.length){ mToast(tooBig?"Photos over 25 MB can’t be sent":"No readable images"); return; }
+  const items=await mOutLoad(); await mOutSave(items.concat(add));   // kept on the phone before anything is sent
+  if(tooBig) mToast(tooBig+" skipped (over 25 MB)");
+  mPumpOutbox();
+}
+function mOutResume(){ mOutMem=null; mOutLoad().then(()=>{ mSyncUI(); if(mOutN) mPumpOutbox(); }).catch(()=>{}); }   // photos left from last time go out now
+async function mPumpOutbox(){
+  if(mOutBusy){ mOutAgain=true; return; }
+  const cfg=ghCfg(); if(!cfg.token) return;
+  let items=await mOutLoad(); if(!items.length){ mOutFails=0; return; }
+  mOutBusy=true; mUpBusy=true; clearTimeout(mOutT);
+  const total=items.length; let sent=0;
   try{
-    for(let i=0;i<files.length;i++){
-      setB("Uploading "+(i+1)+" / "+files.length+"\u2026",true); mToast("Uploading "+(i+1)+" / "+files.length+"\u2026",true);
-      const f=files[i];
-      let lat=null,lng=null,alt=null,t=null;
-      const ok=(x)=>typeof x==="number"&&isFinite(x);   // exifr can return NaN from redacted 0/0 GPS rationals — JSON turns NaN into null downstream
-      const take=(la,lo)=>{ if(ok(la)&&ok(lo)&&(la!==0||lo!==0)){ lat=la; lng=lo; } };
-      try{ const g=await exifr.gps(f); if(g) take(g.latitude,g.longitude); }catch(e){}
-      let ex=null; try{ ex=await exifr.parse(f,{tiff:true,ifd0:true,exif:true,gps:true}); }catch(e){}
-      if(ex){
-        if(lat==null) take(ex.latitude,ex.longitude);
-        if(lat==null&&Array.isArray(ex.GPSLatitude)&&Array.isArray(ex.GPSLongitude)){   // manual deg/min/sec as the last resort
-          const dms=a=>{ const d=+a[0]||0,mi=+a[1]||0,se=+a[2]||0; const v=d+mi/60+se/3600; return isFinite(v)?v:null; };
-          const la=dms(ex.GPSLatitude), lo=dms(ex.GPSLongitude);
-          if(la!=null&&lo!=null&&(la!==0||lo!==0))
-            take(String(ex.GPSLatitudeRef||"N").toUpperCase().indexOf("S")===0?-la:la,
-                 String(ex.GPSLongitudeRef||"E").toUpperCase().indexOf("W")===0?-lo:lo);
-        }
-        const dt=ex.DateTimeOriginal||ex.CreateDate||ex.ModifyDate; if(dt instanceof Date&&!isNaN(dt)) t=dt.getTime();
-        const a2=altFromExif(ex); if(ok(a2)) alt=a2;
-      }
-      let src=lat!=null?"exif":null;
-      if(!t&&f.lastModified) t=f.lastModified;   // camera files: file time \u2248 taken time
-      if(lat==null&&fixed){ lat=fixed.lat; lng=fixed.lng; src="live"; }   // camera-button shot: pinned where you stand
-      if(lat==null&&t){ const cr=mCrumbAt(t,crumbs); if(cr){ lat=cr.lat; lng=cr.lng; src="track"; } }
-      /* ORIGINAL bytes, untouched: the EXIF GPS stays inside the file and the DESKTOP reads it —
-         the same proven path as an emailed copy. No resizing, no phone-side parsing to trust. */
-      if(f.size>25*1024*1024){ tooBig++; continue; }   // sanity cap for the GitHub contents API
-      const b64=await new Promise((res,rej)=>{ const rd=new FileReader(); rd.onload=()=>res(String(rd.result).split(",")[1]); rd.onerror=rej; rd.readAsDataURL(f); });
-      const rawName=String(f.name||("photo"+(i+1)));
-      const extM=rawName.match(/\.[A-Za-z0-9]+$/); const ext=extM?extM[0].toLowerCase():".jpg";
-      const base=rawName.replace(/\.[^.]+$/,"").replace(/[^\w\- ]+/g,"").slice(0,40)||("photo"+(i+1));
-      const path="uploads/"+batch+"-"+(i+1)+"-"+base+ext;
-      await ghPutB64(cfg,path,b64,"Photo upload from phone",false,true);   // fresh name: no sha lookup
-      mLocalUp.set(path,f);
-      entries.push(Object.assign({f:path,n:batch+"-"+(i+1)+"-"+base+ext,lat,lng,alt,t,src,ts:Date.now(),by:mUserName(),dev:mDeviceId(),self:mEng.on?Date.now():0},link&&link.act!=null?{act:link.act}:{},link&&link.au?{au:link.au}:{}));
-    }
-    if(!entries.length) throw new Error(tooBig?"photos over 25 MB can\u2019t be sent":"no readable images");
-    setB("Registering\u2026",true); mToast("Registering\u2026",true);
+    for(const it of items){
+      if(it.f) continue;   // already uploaded, waiting to be registered
+      mToast("Sending photo "+(++sent)+" / "+total+"…",true);
+      const b64=await new Promise((res,rej)=>{ const rd=new FileReader(); rd.onload=()=>res(String(rd.result).split(",")[1]); rd.onerror=rej; rd.readAsDataURL(it.blob); });
+      const extM=it.name.match(/\.[A-Za-z0-9]+$/); const ext=extM?extM[0].toLowerCase():".jpg";
+      const base=it.name.replace(/\.[^.]+$/,"").replace(/[^\w\- ]+/g,"").slice(0,40)||("photo"+it.idx);
+      const path="uploads/"+it.batch+"-"+it.idx+"-"+base+ext;
+      await Promise.race([ghPutB64(cfg,path,b64,"Photo upload from phone",false,true),   // fresh name: no sha lookup
+        new Promise((_,rej)=>setTimeout(()=>rej(new Error("sending timed out")),120000))]);   // a stalled connection is retried, not waited on forever
+      mLocalUp.set(path,it.blob); it.f=path; it.n=path.slice(8);
+      await mOutSave(await mOutLoad()); }   // the CURRENT outbox (same item objects): photos added meanwhile stay in it
+    const ready=items.filter(it=>it.f);
+    const entries=ready.map(it=>Object.assign({f:it.f,n:it.n,lat:it.lat,lng:it.lng,alt:it.alt,t:it.t,src:it.src,ts:Date.now(),by:mUserName(),dev:mDeviceId(),self:mEng.on?Date.now():0},
+      it.link&&it.link.act!=null?{act:it.link.act}:{},it.link&&it.link.au?{au:it.link.au}:{}));
+    mToast("Adding "+entries.length+" photo"+(entries.length===1?"":"s")+" to the project…",true);
     await mRegisterUploads(cfg,entries);
+    const done=new Set(ready.map(it=>it.id)); items=(await mOutLoad()).filter(it=>!done.has(it.id)); await mOutSave(items);   // only now do they leave the phone's outbox
+    mOutFails=0; mUpBusy=false;
     const g0=entries.filter(en=>en.lat==null).length;
-    mUpBusy=false;
-    setB("\u2713 Uploaded "+entries.length+" \u2014 adding to the project\u2026"); mToast("\u2713 Uploaded "+entries.length+" \u2014 adding to the project\u2026",true);
+    mToast("✓ Sent "+entries.length+" photo"+(entries.length===1?"":"s")+(g0?" — "+g0+" without a position":""),false);
     mEngineMerge();   // the phone adds them itself (3000px copy + thumbnail) — no desktop needed
-    const note=document.getElementById("mSendNote");
-    if(note&&(g0||tooBig)) note.style.display="", note.textContent=(g0?g0+" photo"+(g0===1?"":"s")+" without a position \u2014 use \ud83d\udcf7 Take photo on site to pin them. ":"")+(tooBig?tooBig+" skipped (over 25 MB).":"");
     mWatchReceipt(entries.map(en=>en.f),entries.length);
   }catch(err){
-    mUpBusy=false;
-    if(entries.length){   // photos that DID upload before the failure still get registered, so none are stranded
-      try{ await mRegisterUploads(cfg,entries); mWatchReceipt(entries.map(en=>en.f),entries.length);
-        setB("Sent "+entries.length+" of "+files.length+" \u2014 tap to retry the rest"); mToast("Sent "+entries.length+" of "+files.length+" \u2014 retry the rest"); return; }catch(e2){}
-    }
-    setB("Upload failed \u2014 tap to retry"); mToast("Upload failed: "+String(err&&err.message||err).slice(0,80));
+    mOutFails++; const wait=Math.min(300000,15000*Math.pow(2,mOutFails-1));   // 15 s, 30 s, 1 min … 5 min
+    mToast("📷 "+mOutN+" photo"+(mOutN===1?"":"s")+" kept on this phone — "+(navigator.onLine===false?"no signal, ":"")+"will send automatically");
+    mOutT=setTimeout(mPumpOutbox,wait);
     try{ console.warn("upload",err); }catch(e){}
-  }
+  }finally{ mOutBusy=false; mUpBusy=false; mSyncUI(); if(mOutAgain){ mOutAgain=false; setTimeout(mPumpOutbox,300); } }
 }
 async function mRegisterUploads(cfg,entries){
   await ghUpdateJson(cfg,mP("uploads.json"),cur=>{ const its=Array.isArray(cur&&cur.items)?cur.items:[]; const have=new Set(its.map(it=>it&&it.f));
@@ -6172,7 +6221,8 @@ async function mEngineStart(){
   if(!mPid||!ghRaw().repo) return false;
   mEng.starting=(async()=>{
     try{
-      Object.assign(ON,{pid:mPid,name:"",base:null,sha:null,etag:null,rawText:null,cleanJ:null,live:false,busy:false,again:false,err:null,at:0,denied:false});
+      _fieldAck=null;
+      Object.assign(ON,{pid:mPid,name:"",base:null,sha:null,etag:null,rawText:null,cleanJ:null,live:false,busy:false,again:false,err:null,at:0,denied:false,tokenBad:false});
       try{ await readProjects(); }catch(e){}
       const rd=await repoReadJson(statePath());
       if(!rd||!rd.obj){ ON.pid=null; return false; }
@@ -6244,6 +6294,8 @@ async function mEnginePoll(){
   const before=ON.sha; await onlinePoll();
   if(ON.sha!==before) mEngineRefresh(false);
   else if(mPackStale&&mPackNext&&mSafeToSwap()){ const np=mPackNext; mApplyPack(np); mShowList(); }
+  const p=mPend();   // a batch this phone sent that never made it into the project (failed save, app closed…): merge it again
+  if(p.sentUpd&&!(mPack&&mPack.mergedFrom&&mPack.mergedFrom>=p.sentUpd)&&!_mMergeT&&!mEng.busy&&!_fieldAck&&Date.now()-(mEng.lastTry||0)>20000){ mEng.lastTry=Date.now(); mEngineMerge(); }
 }
 /* desktop -> phone: watch the tiny stamp; pull the pack when it moves */
 let _mppBusy=false;
@@ -6302,7 +6354,7 @@ function mShowDetail(ai,keepScroll){
   document.querySelectorAll("#mState .ma-chip").forEach(b=>b.addEventListener("click",()=>{ mSetState(a,b.dataset.s); paintState(); }));
   const db=document.getElementById("mDistB"); if(db) db.addEventListener("click",()=>{ mHomeFocus=key; mSetTab("map"); mExitDetail(); });   // show this action on the map
   { const lk=a._new?{au:(mNewActs()[a._ni]||{}).u}:{act:a.id};   // shots taken here are linked to THIS action on the desktop
-    const go=()=>{ mTakePhoto(lk); mToast("Photo will be linked to "+(a._new?"this new action":"action "+actNo(a))+" — it appears here after the desktop syncs"); };
+    const go=()=>{ mTakePhoto(lk); };   // progress shows once a photo is actually taken (the outbox toasts)
     ["mCamAct","mCamAct2"].forEach(id=>{ const b=document.getElementById(id); if(b) b.addEventListener("click",e=>{ e.stopPropagation(); go(); }); }); }
   document.getElementById("mCopyB").addEventListener("click",e=>mShareCard(a,e.currentTarget));
   setTimeout(()=>{ if(document.getElementById("mCopyB")) mCardBlob(a).catch(()=>{}); },700);   // built ahead, so Share opens the moment it's tapped
@@ -6478,8 +6530,8 @@ function mobileBoot(){
   setInterval(()=>{ if(mChCount()) mSendChanges(); if(!mEng.on) mPackPoll(); },30000);   // fallback heartbeat
   setInterval(()=>{ if(document.visibilityState!=="visible"||!mEng.on) return;   // every 5 s while on screen: everyone's changes, and a retry of our own
     mEnginePoll(); const p=mPend(); if(p.sentUpd&&!(mPack&&mPack.mergedFrom&&mPack.mergedFrom>=p.sentUpd)&&!_mMergeT) mEngineMergeSoon(); },5000);
-  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"){ if(mEng.on) mEnginePoll(); else mPackPoll(); mSendChanges(); } });
-  window.addEventListener("online",()=>{ if(mEng.on) mEnginePoll(); else mPackPoll(); mSendChanges(); });
+  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"){ if(mEng.on) mEnginePoll(); else mPackPoll(); mSendChanges(); mPumpOutbox(); } });
+  window.addEventListener("online",()=>{ if(mEng.on) mEnginePoll(); else mPackPoll(); mSendChanges(); mPumpOutbox(); });
   const sharedIn=/[?&]shared=/.test(location.search);
   if(!sharedIn) mCheckFresh();   // never self-reload while shared photos are waiting to upload
   mSetupShare();
@@ -6625,6 +6677,7 @@ async function checkFieldChanges(){
     let lastB=null; try{ lastB=JSON.parse(localStorage.getItem(lmKey)||"null"); }catch(e){}
     let merged=""; try{ merged=localStorage.getItem(mfKey())||""; }catch(e){}
     if(raw.updatedAt&&raw.updatedAt===merged) return;   // already merged this batch
+    if(_fieldAck&&_fieldAck.raw.updatedAt===raw.updatedAt) return;   // merged here already, waiting for its save to land
     if(!mIsEngPhone()&&raw.self&&Date.now()-raw.self<120000) return;   // the phone that sent it is merging it itself
     const data=batchDiff(raw,lastB);
     _logBy=String(raw.by||"Phone");   // History credits the phone's user
@@ -6711,10 +6764,13 @@ async function checkFieldChanges(){
     }
     if(items.length) pushUndo({items});
     afterFolderChange();
-    try{ localStorage.setItem(mfKey(),raw.updatedAt||String(Date.now())); if(isOnline()) persistState(); localStorage.setItem(lmKey,JSON.stringify(raw)); }catch(e){}
-    scheduleAutoExport(1500);   // the acknowledgement (pack.mergedFrom) reaches the phone promptly
-    await ghUpdateJson(cfg,repoP("changes.json"),now=>{ if(!now||now.updatedAt!==raw.updatedAt) return null;   // the phone sent something newer meanwhile: leave it for the next poll
-      return {v:2,changes:{},photoNotes:{},newActs:[],actOrder:[],clearedAt:new Date().toISOString(),mergedFrom:raw.updatedAt}; },"Field changes merged on desktop");
+    const ack=async()=>{   // the batch is marked merged and changes.json cleared…
+      try{ localStorage.setItem(mfKey(),raw.updatedAt||String(Date.now())); if(isOnline()) persistState(); localStorage.setItem(lmKey,JSON.stringify(raw)); }catch(e){}
+      scheduleAutoExport(1500);   // the acknowledgement (pack.mergedFrom) reaches the phone promptly
+      await ghUpdateJson(cfg,repoP("changes.json"),now=>{ if(!now||now.updatedAt!==raw.updatedAt) return null;   // the phone sent something newer meanwhile: leave it for the next poll
+        return {v:2,changes:{},photoNotes:{},newActs:[],actOrder:[],clearedAt:new Date().toISOString(),mergedFrom:raw.updatedAt}; },"Field changes merged on desktop"); };
+    if(mIsEngPhone()) _fieldAck={raw,run:ack,gen:++_saveGen};   // …on the phone only once the project file with them is SAVED (else a failed save + closed app lost them)
+    else await ack();
     const n=ids.length+pids.length+newN+(ordIds.length>1?1:0);
     if(n) loadNote("Merged "+n+" field change"+(n===1?"":"s")+" from the phone ✓ — Ctrl+Z undoes"); setTimeout(()=>loadNote(""),3500);
   }catch(e){ console.warn("field-changes check failed",e); }
