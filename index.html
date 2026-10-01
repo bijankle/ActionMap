@@ -781,6 +781,15 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-peek.done .t,.ma-grow.done .t{text-decoration:line-through;color:var(--muted);}   /* completed / on hold actions shown by the filters */
   .ma-peek.hold .m,.ma-grow.hold .m{color:#7A5C00;font-weight:600;}
   .ma-grow{cursor:pointer;gap:12px;padding:10px 16px;}.ma-grow .ma-view{height:40px;padding:0 16px;font-size:15px;}
+  .ma-peeks{position:absolute;left:0;right:0;bottom:12px;z-index:500;display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 16px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  .ma-peeks::-webkit-scrollbar{display:none;}
+  .ma-peeks .ma-peek{position:relative;left:auto;right:auto;bottom:auto;flex:0 0 calc(100% - 32px);scroll-snap-align:center;box-shadow:0 3px 12px #1d243030;padding:8px 10px;gap:10px;}
+  .ma-peeks .ma-peek .ma-th{width:48px;height:48px;}
+  .ma-peeks .ma-peek .t{font-size:15px;line-height:1.25;-webkit-line-clamp:3;}   /* room for the title: up to three short lines */
+  .ma-peeks .ma-peek .ma-view{height:40px;padding:0 13px;font-size:15px;}
+  .ma-peeks .ma-peek.on{box-shadow:0 0 0 2.5px var(--gold),0 3px 12px #1d243030;}
+  .ma-peek.done .ma-th{filter:grayscale(1);opacity:.75;}
+  .ma-peek.hold .m,.ma-peek.done .m{color:#9a5b00;}
   .ma-peek .ma-th{width:56px;height:56px;border-radius:10px;}
   .ma-peek .t{font-size:17px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;}   /* two lines still fit beside the small photo */
   .ma-peek .ma-rt{min-width:0;}
@@ -5872,10 +5881,11 @@ function mShowList(){
   mRerender=mShowList;
   const acts=mHomeActs();
   if(mTab==="map"){
-    const pk=mPeekAct(acts);
+    const pks=mMapCards(acts);
     mScr(mTopStrip()+'<div class="ma-mapwrap" id="mList"><div class="ma-map" id="mHomeMap"></div>'+mFltHtml()
       +'<div class="ma-north" title="North is up">'+NORTH_SVG(30,36)+'</div>'
-      +(pk?'<div class="ma-peek'+(mStatus(pk)==="open"?'':' '+mStatus(pk))+'" id="mPeek" role="button" tabindex="0" data-k="'+mCardKey(pk)+'">'+mThumbOf(pk)+'<div class="ma-rt"><div class="t">'+mActLine(pk)+'</div>'+mMetaDiv(pk)+'</div><button class="ma-view" id="mViewB" type="button">View</button></div>':'')+'</div>'+mNavHtml("map"));
+      +(pks.length?'<div class="ma-peeks" id="mPeeks">'+pks.map(a=>{ const st=mStatus(a);   // one card per action on the map, in Actions-list order: swipe through them
+          return '<div class="ma-peek'+(st==="open"?"":" "+st)+'" role="button" tabindex="0" data-k="'+mCardKey(a)+'">'+mThumbOf(a)+'<div class="ma-rt"><div class="t">'+mActLine(a)+'</div>'+mMetaDiv(a)+'</div><button class="ma-view" type="button">View</button></div>'; }).join("")+'</div>':'')+'</div>'+mNavHtml("map"));
   } else {
     const shown=acts.filter(a=>{ const st=mStatus(a); return st==="open"||(st==="hold"&&mShowHold)||(st==="done"&&mShowDone); });
     mScr(mTopStrip()+'<div class="ma-lwrap"><div class="ma-ptr" id="mPtr">'+MI.sync+'<span>Pull to refresh</span></div>'+mFltHtml()+'<div class="ma-lhead"><label class="ma-search">'+MI.search+'<input id="mQ" type="search" placeholder="Search actions" autocomplete="off" value="'+esc(mLQ)+'" /></label></div>'
@@ -5888,11 +5898,18 @@ function mShowList(){
   document.getElementById("mShowH").addEventListener("click",()=>{ mShowHold=!mShowHold; try{ localStorage.setItem("pmMHold",mShowHold?"1":"0"); }catch(e){} mShowList(); });   // one setting for the map and the list
   document.getElementById("mShowD").addEventListener("click",()=>{ mShowDone=!mShowDone; try{ localStorage.setItem("pmMDone",mShowDone?"1":"0"); }catch(e){} mShowList(); });
   if(mTab==="map"){
-    const pb=document.getElementById("mPeek");   // tap the card: find its dot on the map; View opens it
-    if(pb){ pb.addEventListener("click",()=>mFocusDot(pb.dataset.k));
-      document.getElementById("mViewB").addEventListener("click",e=>{ e.stopPropagation(); mOpenAct(pb.dataset.k); }); }
+    const row=document.getElementById("mPeeks");   // tap a card (or swipe to it): its dot is found on the map; View opens it under Actions
+    if(row){
+      row.querySelectorAll(".ma-peek").forEach(c=>{ c.addEventListener("click",()=>mFocusCard(c.dataset.k));
+        c.querySelector(".ma-view").addEventListener("click",e=>{ e.stopPropagation(); mSetTab("list"); mOpenAct(c.dataset.k); }); });
+      const cur=mFocusK!=null&&row.querySelector('.ma-peek[data-k="'+mFocusK+'"]');
+      if(cur){ row.scrollLeft=cur.offsetLeft-(row.clientWidth-cur.offsetWidth)/2; cur.classList.add("on"); }   // back on the map: the same card, map view unchanged
+      let st=null; row.addEventListener("scroll",()=>{ if(mCardScrolling) return; clearTimeout(st); st=setTimeout(()=>{   // the map follows the card you swipe to
+        const mid=row.scrollLeft+row.clientWidth/2; let best=null,bd=1e9;
+        row.querySelectorAll(".ma-peek").forEach(c=>{ const d=Math.abs(c.offsetLeft+c.offsetWidth/2-mid); if(d<bd){ bd=d; best=c; } });
+        if(best&&best.dataset.k!==mFocusK) mFocusCard(best.dataset.k,true); },140); },{passive:true}); }
     mBuildHomeMap(acts);
-    mWarmCards([mPeekAct(acts)]);
+    mWarmCards(mMapCards(acts).slice(0,2));
   } else {
     const q=document.getElementById("mQ");
     const applyQ=()=>{ const v=mLQ.trim().toLowerCase(); document.querySelectorAll("#mList .m-card").forEach(el=>{ el.style.display=(!v||el.dataset.s.includes(v))?"":"none"; }); };
@@ -5917,22 +5934,21 @@ function mFocusDot(k){
   let z=19;   // close enough that the dot stands on its own (not merged into a neighbour's bubble)
   for(;z<22;z++){ const near=fp.some(p=>{ const a=m2.project([p.lat,p.lng],z); return others.some(o=>{ const b=m2.project([o.lat,o.lng],z); return Math.hypot(a.x-b.x,a.y-b.y)<50; }); }); if(!near) break; }
   if(fp.length>1) m2.fitBounds(fb,{padding:[70,70],maxZoom:Math.max(z,19),animate:false}); else m2.setView(fb.getCenter(),z,{animate:false});
-  const mc=m2.getContainer().getBoundingClientRect(), card=document.getElementById("mPeek"), flt=document.querySelector(".ma-mapwrap .ma-flt");
+  const mc=m2.getContainer().getBoundingClientRect(), card=document.getElementById("mPeeks"), flt=document.querySelector(".ma-mapwrap .ma-flt");
   const top=flt?flt.getBoundingClientRect().bottom-mc.top:0, bot=card?card.getBoundingClientRect().top-mc.top:mc.height;
   const cp=m2.latLngToContainerPoint(fb.getCenter()); m2.panBy([0,cp.y-(top+bot)/2],{animate:false});
   m2._draw(); }
-let mPeekK=null;   // the action the map card shows: the one you picked on the map, else the nearest one shown
-const mShown=a=>{ const st=mStatus(a); return st==="open"||(st==="hold"&&mShowHold)||(st==="done"&&mShowDone); };
-function mHasPlace(a){ const loc=a._new?(mNewActs()[a._ni]||{}).loc:a.loc; return !!loc||(a.photos||[]).some(p=>p.lat!=null); }
-function mPeekAct(acts){
-  if(mPeekK!=null){ const a=acts.find(x=>mCardKey(x)===mPeekK); if(a&&mShown(a)&&mHasPlace(a)) return a; mPeekK=null; }
-  // the nearest open action; with On hold / Done showing and nothing open on the map, the nearest of those
-  return mNearest(acts.filter(a=>mStatus(a)==="open"))||mNearest(acts.filter(mShown)); }
-function mNearest(acts){ let best=null,bd=Infinity;
-  for(const a of acts){
-    if(!mHasPlace(a)) continue;
-    const d=mDist(a); const v=d==null?1e12:d; if(!best||v<bd){ best=a; bd=v; } }
-  return best; }
+function mMapCards(acts){   // the actions with a dot on the map, as the filters show them, in Actions-list order
+  return acts.filter(a=>{ const st=mStatus(a); if((st==="hold"&&!mShowHold)||(st==="done"&&!mShowDone)) return false;
+    const loc=a._new?(mNewActs()[a._ni]||{}).loc:a.loc; return !!loc||(a.photos||[]).some(p=>p.lat!=null); }); }
+let mCardScrolling=false;
+function mFocusCard(k,fromSwipe){   // bring the card up (unless the swipe already did) and find its dot
+  k=String(k); const row=document.getElementById("mPeeks"), c=row&&row.querySelector('.ma-peek[data-k="'+k+'"]');
+  if(row) row.querySelectorAll(".ma-peek.on").forEach(x=>x.classList.remove("on"));
+  if(c){ c.classList.add("on");
+    if(!fromSwipe){ mCardScrolling=true; row.scrollTo({left:c.offsetLeft-(row.clientWidth-c.offsetWidth)/2,behavior:"smooth"}); setTimeout(()=>{ mCardScrolling=false; },600); } }
+  mFocusDot(k);
+  const a=mHomeActs().find(x=>mCardKey(x)===k); if(a) mWarmCards([a]); }
 function mShowAdd(){
   if(mRoBlock()) return;
   mSheet('<div class="ma-shh"><b>Add</b></div><div class="ma-sbtns">'
@@ -6017,12 +6033,11 @@ function mShowGroup(list){   // a bunch of dots: tap a row to find it on the map
   mSheet('<div class="ma-shh"><b>'+list.length+' actions here</b></div><div class="m-note" style="padding:0 20px 10px;text-align:left">Tap one to find it on the map, View to open it</div>'
     +list.map(a=>{ const st=mStatus(a); return '<div class="ma-row ma-grow'+(st==="open"?'':' '+st)+'" role="button" tabindex="0" data-k="'+mCardKey(a)+'">'+mThumbOf(a)+'<div class="ma-rt"><div class="t">'+mActLine(a)+'</div>'+mMetaDiv(a)+'</div><button class="ma-view" type="button">View</button></div>'; }).join(""));
   document.querySelectorAll("#mSheet .ma-row[data-k]").forEach(b=>{
-    b.addEventListener("click",()=>{ mCloseSheet(); mPickAct(b.dataset.k); });
-    b.querySelector(".ma-view").addEventListener("click",e=>{ e.stopPropagation(); mCloseSheet(); mOpenAct(b.dataset.k); }); });
+    b.addEventListener("click",()=>{ mCloseSheet(); mFocusCard(b.dataset.k); });
+    b.querySelector(".ma-view").addEventListener("click",e=>{ e.stopPropagation(); mCloseSheet(); mSetTab("list"); mOpenAct(b.dataset.k); }); });
 }
 /* one tap on an action on the map (its dot, or a row of a bunch): it becomes the card under the map and the map
    zooms to it; only View opens it */
-function mPickAct(k){ mPeekK=String(k); mShowList(); requestAnimationFrame(()=>mFocusDot(k)); }
 function mActOrder(){ const n=(mPack&&mPack.actions||[]).length; const seen=new Set(); const o=[];
   for(const i of (mPend().actOrder||[])){ const j=+i; if(j>=0&&j<n&&!seen.has(j)){ seen.add(j); o.push(j); } }
   for(let i=0;i<n;i++) if(!seen.has(i)) o.push(i);
@@ -6246,7 +6261,7 @@ function mBuildHomeMap(acts){
         if(ks.length===1){ const a=g.items[0].a;
           const st=mStatus(a);
           L.marker(ll,{zIndexOffset:ks[0]===mFocusK?800:st==="open"?300:st==="hold"?100:0,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(a._new?' new':st==="open"?'':' '+st)+(ks[0]===mFocusK?' focus':'')+'">'+(a._new?'•':actNo(a))+'</div>',iconSize:[44,44],iconAnchor:[22,22]})})
-            .on("click",()=>mPickAct(ks[0])).addTo(lay); }
+            .on("click",()=>mFocusCard(ks[0])).addTo(lay); }   // a dot brings its card up; View opens it
         else { const sts=g.items.map(p=>mStatus(p.a)), cs=sts.includes("open")?"":sts.includes("hold")?" hold":" done";
           L.marker(ll,{zIndexOffset:500,icon:L.divIcon({className:"",html:'<div class="ma-cl'+cs+(ks.includes(mFocusK)?' focus':'')+'">'+ks.length+'</div>',iconSize:[50,50],iconAnchor:[25,25]})})
             .on("click",()=>mShowGroup(ks.map(k=>g.items.find(p=>p.k===k).a))).addTo(lay); } } };
