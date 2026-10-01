@@ -987,6 +987,9 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .hsearch input:focus,.act-new input:focus,.st-new:focus,.act-edit:focus,.mt-pop input:focus,.folder-pop .fp-search:focus,#ipaNew:focus,.ctl-row input[type=text]:focus,.ctl-row select:focus,.set-ctl input[type=text]:focus,.set-ctl input[type=password]:focus{border-color:var(--gold)!important;box-shadow:var(--ctl-on)!important;outline:none;}
   .act-new input.arm{border-color:var(--gold)!important;box-shadow:var(--ctl-on)!important;}
   .ctl-row select{font-size:var(--fb);}
+  /* gallery Sort / Search / Size: labels in one column, so the three controls start on one line; Sort and Search the same box */
+  .gallery .controls .ctl-row label{flex:0 0 62px;}.gallery .controls .ctl-row input[type=range]{margin:0;}
+  .gallery .controls .ctl-row select,.gallery .controls .ctl-row input[type=text]{height:32px;box-sizing:border-box;margin:0;font-size:var(--fb)!important;padding:4px 10px!important;}
   /* dropdown menus */
   .mb-drop,#ctxmenu,.hs-drop,.mt-pop,.pj-win,.yn-win{border:var(--ctl-bd)!important;}
   .mb-drop,#ctxmenu,.hs-drop,.mt-pop{border-radius:var(--ctl-r)!important;}
