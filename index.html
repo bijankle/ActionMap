@@ -325,7 +325,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .leftstack.onmap{display:flex;flex-direction:column;gap:5px;align-items:flex-start;
     position:absolute !important;top:10px !important;left:10px !important;right:auto !important;bottom:auto !important;z-index:1200;}
   .toolstack.onmap{display:flex;flex-direction:column;gap:5px;align-items:stretch;
-    position:absolute !important;right:10px !important;bottom:76px !important;left:auto !important;top:auto !important;z-index:1200;}
+    position:absolute !important;left:10px !important;bottom:14px !important;right:auto !important;top:auto !important;z-index:1200;}
+  .north-arrow{background:#fff;border:var(--ctl-bd);border-radius:var(--ctl-r);padding:5px 8px 3px;box-shadow:0 6px 18px #1e1f2222;line-height:0;}
   .areabtn{font-family:var(--font);font-size:var(--fb);font-weight:600;color:var(--text);background:#ffffffe8;backdrop-filter:blur(8px);border:1px solid var(--line2);border-radius:8px;padding:6px 9px;cursor:pointer;box-shadow:0 4px 14px #1e1f221f;white-space:nowrap;}
   .areabtn:hover{border-color:var(--accent);color:var(--accent);}
   .areabtn.active{background:var(--gold);color:var(--on-accent);border-color:var(--gold);}
@@ -1138,7 +1139,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   <div class="progress" id="progress"></div>
   <div class="leftstack" id="leftstack">
   </div>
-  <div class="toolstack" id="toolstack"><button class="areabtn" id="selBtn">Select area</button><button class="areabtn" id="measureBtn">Measure</button></div>
+  <div class="toolstack" id="toolstack"><button class="areabtn" id="selBtn">Select area</button><button class="areabtn" id="measureBtn">Measure</button><button class="areabtn" id="ignoreLocBtn" title="Hide YOU ARE HERE, and zoom to the actions only (never to where you are)">Ignore my location</button></div>
   <div class="splitter" id="splitter"></div>
   <aside class="gallery">
     <div class="controls">
@@ -1198,7 +1199,10 @@ const dotRenderer=L.canvas({padding:0.5});   // photo dots on ONE canvas instead
 const google=L.tileLayer("https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",{subdomains:["mt0","mt1","mt2","mt3"],maxZoom:24,maxNativeZoom:21,attribution:"Imagery &copy; Google"}).addTo(map);
 const esri=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:24,maxNativeZoom:19,attribution:"Imagery &copy; Esri, Maxar, Earthstar Geographics"});
 const none=L.layerGroup();
-L.control.layers({ "Google":google, "Esri":esri, "None":none },null,{position:"topright",collapsed:false}).addTo(map);
+L.control.layers({ "Google":google, "Esri":esri, "None":none },null,{position:"topleft",collapsed:false}).addTo(map);
+{ const nc=L.control({position:"topright"}); nc.onAdd=()=>{ const d=L.DomUtil.create("div","north-arrow"); d.title="North is up";
+    d.innerHTML='<svg viewBox="0 0 40 48" width="34" height="41"><path d="M20 4 30 34 20 28 10 34Z" fill="#1d2430"/><path d="M20 4 20 28 10 34Z" fill="#7a8591"/><text x="20" y="46" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="800" fill="#1d2430">N</text></svg>';
+    L.DomEvent.disableClickPropagation(d); return d; }; nc.addTo(map); }
 /* USGS-style scale bar on a white pad: alternating black/white segments with 0 / ¼ / ½ / full
    labels. Meters, switching to kilometers once the bar total reaches 1000 m. */
 (function(){
@@ -1880,7 +1884,7 @@ function actNavigate(a,refitOnly){
       if(x.loc) ctx.push({lat:x.loc.lat,lng:x.loc.lng}); }
     const all=ctx.length?ctx:geo;
     const bb=L.latLngBounds(all.map(p=>[p.lat,p.lng]));
-    if(geoMarker) bb.extend(geoMarker.getLatLng());   // keep yourself in the picture
+    if(myLoc()) bb.extend(myLoc());   // keep yourself in the picture (unless Ignore my location is on)
     /* asymmetric padding: enough headroom above the dots for the area previews to sit centred */
     const fitOpts={paddingTopLeft:[150,310],paddingBottomRight:[150,80],maxZoom:19};
     /* already showing this view? flying to it anyway makes the map do a zoom-out-in "shake" */
@@ -1898,6 +1902,11 @@ function actNavigate(a,refitOnly){
    The browser remembers the Allow per site (the app is served over https), so after the first
    grant we start silently on every load; an explicit Block is respected and never re-nagged. */
 let geoMarker=null, geoWatchId=null;
+let ignoreLoc=(()=>{ try{ return localStorage.getItem("pmIgnoreLoc")!=="0"; }catch(e){ return true; } })();   // on unless switched off   // Ignore my location: no YOU ARE HERE, fits ignore where you are
+function myLoc(){ return (geoMarker&&!ignoreLoc)?geoMarker.getLatLng():null; }
+function setIgnoreLoc(on){ ignoreLoc=!!on; try{ localStorage.setItem("pmIgnoreLoc",ignoreLoc?"1":"0"); }catch(e){}
+  if(geoMarker){ if(ignoreLoc) map.removeLayer(geoMarker); else geoMarker.addTo(map); }
+  const b=document.getElementById("ignoreLocBtn"); if(b) b.classList.toggle("active",ignoreLoc); }
 function youAreHereIcon(w){   // the red YOU ARE HERE pin, tip anchored on the position (desktop map + phone)
   const h=Math.round(w*80/64);
   return L.divIcon({className:"",html:'<div class="geo-pin"><svg viewBox="0 0 64 80" width="'+w+'" height="'+h+'">'
@@ -1913,7 +1922,7 @@ function startGeoWatch(){
   geoWatchId=navigator.geolocation.watchPosition(pos=>{
     try{ localStorage.setItem("pmGeoOn","1"); }catch(e){}
     const ll=[pos.coords.latitude,pos.coords.longitude];
-    if(!geoMarker) geoMarker=L.marker(ll,{icon:youAreHereIcon(60),interactive:false,zIndexOffset:900}).addTo(map);
+    if(!geoMarker){ geoMarker=L.marker(ll,{icon:youAreHereIcon(60),interactive:false,zIndexOffset:900}); if(!ignoreLoc) geoMarker.addTo(map); }
     else geoMarker.setLatLng(ll);
   },err=>{ if(err&&err.code===1){ try{ localStorage.setItem("pmGeoOn","0"); }catch(e){} } geoWatchId=null; },
   {enableHighAccuracy:true,maximumAge:15000,timeout:20000});
@@ -3148,6 +3157,7 @@ async function loadMapTile(z,x,y){ const prov=await tileProvider();
 /* Where the user is right now (desktop YOU ARE HERE marker, else a quick one-off fix) — null if unknown/blocked. */
 async function currentPos(){
   try{ if(document.body.classList.contains("mobile")&&mGeo) return {lat:mGeo.lat,lng:mGeo.lng}; }catch(e){}
+  if(!document.body.classList.contains("mobile")&&ignoreLoc) return null;   // Ignore my location: the copied image leaves you out too
   try{ if(geoMarker){ const l=geoMarker.getLatLng(); return {lat:l.lat,lng:l.lng}; } }catch(e){}
   let pref=null; try{ pref=localStorage.getItem("pmGeoOn"); }catch(e){}
   if(pref==="0"||!navigator.geolocation) return null;
@@ -3793,6 +3803,8 @@ setAreaBtn();
 /* measure tool */
 const measureBtn=document.getElementById("measureBtn");
 measureBtn.addEventListener("click",toggleMeasure);
+document.getElementById("ignoreLocBtn").addEventListener("click",()=>setIgnoreLoc(!ignoreLoc));
+setIgnoreLoc(ignoreLoc);
 function setMeasureBtn(){ if(measuring){ measureBtn.textContent="Finish [M]"; measureBtn.classList.add("active"); } else { measureBtn.textContent="Measure [M]"; measureBtn.classList.remove("active"); } }
 function toggleMeasure(){ if(measuring){ stopMeasure(); return; } if(drawing) stopDraw(); startMeasure(); }
 function startMeasure(){ measuring=true; measurePts=[]; if(measureLayer){map.removeLayer(measureLayer);} measureLayer=L.layerGroup().addTo(map); map.getContainer().style.cursor="crosshair"; map.dragging.disable(); map.doubleClickZoom.disable(); map.on("mouseup",mAdd); map.on("mousemove",mMove); map.on("dblclick",mFinish); setMeasureBtn(); }
