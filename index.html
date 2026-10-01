@@ -489,6 +489,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ipa-row .act-chk,.ipa-row .ipa-x,.ipa-row .act-exp{margin-top:1px;}
   .ipa-row .act-exp{font-size:14px;padding:2px 4px;}   /* strip rows are shorter — keep icons ~30% of THEIR collapsed height */
   .ipa-row .ipa-x{font-size:16px;padding:0 3px;}
+  .act-empty{padding:18px 16px;color:var(--muted);font-size:var(--fb);line-height:1.5;}
   .act-head{display:flex;align-items:center;flex-wrap:wrap;gap:6px 4px;padding:12px 12px 8px;}
   .act-head .title{font-weight:700;color:var(--ink);font-size:var(--fh);}
   .act-head .count{font-family:var(--font);font-size:var(--fl);color:var(--dim);flex:1;font-variant-numeric:tabular-nums}
@@ -522,6 +523,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .act-chk input{background:#3BA55C33;}   /* faint green: this is the COMPLETE box */
   .a-num{color:var(--accent2);font-family:var(--font);font-weight:700;margin-right:5px;}
   .cl-bubble.cl-g{background:radial-gradient(circle at 35% 30%,#f7a95a,#F28C28);color:#fff;box-shadow:0 0 0 4px #F28C2840,0 2px 8px #1e1f2233;}   /* mostly photos on an action (ties count here) */
+  .cl-bubble.cl-h{background:#fff;color:#9A520B;border:3px solid #F28C28;box-shadow:0 0 0 4px #F28C2830,0 2px 8px #1e1f2233;}   /* mostly on-hold photos */
+  .cl-bubble.cl-d{background:radial-gradient(circle at 35% 30%,#8a939d,#6b7580);color:#fff;box-shadow:0 0 0 4px #3f475030,0 2px 8px #1e1f2233;}   /* mostly completed */
   .cl-bubble.cl-y{background:radial-gradient(circle at 35% 30%,#ffffff,#e9ecef);color:#1d2430;border-color:#4a5563;box-shadow:0 0 0 4px #ffffff55,0 2px 8px #1e1f2233;}   /* mostly photos not on any action */
   .act-pin{width:46px;height:40px;display:flex;justify-content:center;filter:drop-shadow(0 2px 3px #1e1f2255);cursor:pointer;}
   .act-pin span{position:relative;background:#F28C28;color:#fff;border:2px solid #fff;border-radius:7px;font:700 12px var(--font);padding:4px 6px;height:fit-content;}
@@ -1326,8 +1329,8 @@ function passSearch(p){
 function passTags(p){ return true; }
 function buildCluster(){
   const hl=hlPhotoSet();   // clusters aggregate how many highlighted photos they contain, so the BUBBLE can flash
-  const feats=photos.filter(p=>p.lat!=null && passDate(p) && passSearch(p) && passTags(p) && passActs(p) && passAlt(p) && (!boxBounds||boxBounds.contains([p.lat,p.lng]))).map(p=>({type:"Feature",properties:{pid:p.id,hl:hl.has(p.id)?1:0,sel:selSet.has(p.id)?1:0,asg:photoStatus(p)==="none"?0:1},geometry:{type:"Point",coordinates:[p.lng,p.lat]}}));
-  cluster=new Supercluster(Object.assign({maxZoom:21,map:pr=>({hl:pr.hl||0,sel:pr.sel||0,asg:pr.asg||0}),reduce:(acc,pr)=>{acc.hl+=pr.hl;acc.sel+=pr.sel;acc.asg+=pr.asg;}},clusterOpts()));
+  const feats=photos.filter(p=>p.lat!=null && passDate(p) && passSearch(p) && passTags(p) && passActs(p) && passAlt(p) && (!boxBounds||boxBounds.contains([p.lat,p.lng]))).map(p=>({type:"Feature",properties:{pid:p.id,hl:hl.has(p.id)?1:0,sel:selSet.has(p.id)?1:0,...(st=>({asg:st==="open"?1:0,hld:st==="hold"?1:0,dn:st==="done"?1:0}))(photoStatus(p))},geometry:{type:"Point",coordinates:[p.lng,p.lat]}}));
+  cluster=new Supercluster(Object.assign({maxZoom:21,map:pr=>({hl:pr.hl||0,sel:pr.sel||0,asg:pr.asg||0,hld:pr.hld||0,dn:pr.dn||0}),reduce:(acc,pr)=>{acc.hl+=pr.hl;acc.sel+=pr.sel;acc.asg+=pr.asg;acc.hld+=pr.hld;acc.dn+=pr.dn;}},clusterOpts()));
   cluster.load(feats);
 }
 /* Cluster sensitivity (Settings): 0% = dots never merge, 50% = the classic radius, 100% = merge very easily. */
@@ -1358,7 +1361,7 @@ function renderClusters(){
           if(st.size){ const arr=[...st].sort((x,y)=>x-y); label=actNo(arr[0])+(arr.length>1?"\u2026":""); size=34; fs=arr.length>1?11:12; }   // same size/font as a single numbered dot
         }catch(err){} }
       const grabbable=(c.properties.sel||0)>0&&selSet.size>0;   // holds selected photos: dragging the bubble moves the whole selection
-      const icon=L.divIcon({className:"",html:'<div class="cl-bubble '+(c.properties.asg*2>=c.properties.point_count?'cl-g':'cl-y')+(c.properties.hl?' cl-hl':'')+'" style="width:'+size+'px;height:'+size+'px;font-size:'+fs+'px'+(grabbable?';cursor:move':'')+'">'+label+'</div>',iconSize:[size,size],iconAnchor:[size/2,size/2]});
+      const icon=L.divIcon({className:"",html:'<div class="cl-bubble '+clClass(c.properties)+(c.properties.hl?' cl-hl':'')+'" style="width:'+size+'px;height:'+size+'px;font-size:'+fs+'px'+(grabbable?';cursor:move':'')+'">'+label+'</div>',iconSize:[size,size],iconAnchor:[size/2,size/2]});
       const m=L.marker([lat,lng],{icon}); const cid=c.properties.cluster_id;
       let ring=null;
       if(grabbable) m.on("mousedown",e=>{ const oe=e.originalEvent; if(oe&&oe.button===0){ L.DomEvent.stop(oe); startClusterDrag(m,ring); } });
@@ -1589,6 +1592,9 @@ function reorderActPhoto(a,dragId,targetId,before){   // gallery drag: photo ord
   const b=actState(a); a.porder=ids; recordActEdit(a,b); afterFolderChange();
 }
 function hasOpenAct(p){ return Array.isArray(p.acts)&&p.acts.some(id=>{ const a=actById(id); return a&&!a.done&&!a.hold; }); }
+function clClass(pr){   // a bubble takes the colour most of its photos have — same as their dots (open orange, on hold ringed, done grey, none white)
+  const n=pr.point_count||1, op=pr.asg||0, h=pr.hld||0, d=pr.dn||0, none=n-op-h-d;
+  const top=Math.max(op,h,d,none); return op===top?"cl-g":h===top?"cl-h":d===top?"cl-d":"cl-y"; }
 const DOT_COL={none:["#ffffff","#4a5563"],open:["#F28C28","#9A520B"],hold:["#ffffff","#F28C28"],done:["#6b7580","#3f4750"]};   // white = not on an action, orange = open, white with an orange ring = on hold, grey = done (same as the phone)
 function photoStatus(p){   // open beats on-hold beats complete, when a photo belongs to several actions
   if(!Array.isArray(p.acts)||!p.acts.length) return "none";
@@ -1634,8 +1640,12 @@ function stepLetter(i){ let t=""; do{ t=String.fromCharCode(97+(i%26))+t; i=Math
 function actNo(a){ return String(a&&a.id!=null?a.id:a).padStart(3,"0"); }   /* the action NUMBER: creation-sequential id, 001-style */
 function actsShown(){ return actions.filter(a=>a.done?actShowDone:a.hold?actShowHold:true).sort((x,y)=>actRank(x)-actRank(y)); }   // the list as rendered: open, plus on hold / done when their pill is on
 function actRank(a){ return a.done?2:(a.hold?1:0); }   // list order: open, then on hold, then completed (display only — stored order unchanged)
-function setActionDone(a,done){ const before=actState(a); a.done=!!done; a.doneAt=a.done?Date.now():null; recordActEdit(a,before); afterFolderChange(); }
-function setActionHold(a,hold){ const before=actState(a); a.hold=!!hold; recordActEdit(a,before); afterFolderChange(); }
+function setActionDone(a,done){ const before=actState(a); a.done=!!done; a.doneAt=a.done?Date.now():null; recordActEdit(a,before); afterFolderChange(); dropIfHidden(a,"done"); }
+function setActionHold(a,hold){ const before=actState(a); a.hold=!!hold; recordActEdit(a,before); afterFolderChange(); dropIfHidden(a,"on hold"); }
+function dropIfHidden(a,what){   // its card just left the list (that filter is off): let go of it everywhere else too, and say where it went
+  if(a.done?actShowDone:a.hold?actShowHold:true) return;
+  if(selActs.has(a.id)){ selActs.delete(a.id); rebuildActionFilter(); if(typeof clearAreaPreviews==="function"&&!selActs.size) clearAreaPreviews(); renderActions(); drawActionRings(); updateGallery(); buildCluster(); renderClusters(); }
+  loadNote(actNo(a)+" marked "+what+" \u2014 hidden from the list (turn on "+(a.done?"Done":"On hold")+" to see it) \u00b7 Ctrl+Z undoes"); setTimeout(()=>loadNote(""),4500); }
 /* Inline editing (titles and descriptions, in both the Actions panel and the under-photo strip):
    double-click the text to edit in place. Enter (Shift+Enter = new line in a description) or
    clicking away commits; Escape cancels. */
@@ -1986,7 +1996,8 @@ function renderActions(){
 
   document.getElementById("actExpAll").textContent=actions.some(a=>!collActs.has(a.id))?"Collapse":"Expand";
   const shown=actsShown();   // on-hold then completed actions sink to the bottom (display only — stored order unchanged)
-  if(!shown.length){ list.innerHTML=""; return; }
+  if(!shown.length){ const nh=actions.filter(a=>!a.done&&a.hold).length, nd=actions.filter(a=>a.done).length;   // say why the list is empty
+    list.innerHTML=actions.length?'<div class="act-empty">'+[nh?nh+" on hold":"",nd?nd+" done":""].filter(Boolean).join(" and ")+' \u2014 turn on <b>'+(nh&&nd?"On hold / Done":nh?"On hold":"Done")+'</b> above to see '+((nh+nd)===1?"it":"them")+'.</div>':""; return; }
   const cp=lb.classList.contains("open")?curPhoto():null;   // the open photo's actions get a marker in this list
   const byAct=new Map();   // one pass over the photos for every row (actPhotos per row rescanned them all each time)
   for(const ph of photos) if(Array.isArray(ph.acts)) for(const id of ph.acts){ let l=byAct.get(id); if(!l) byAct.set(id,l=[]); if(l[l.length-1]!==ph) l.push(ph); }
@@ -2208,7 +2219,7 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
     if(a.done) actShowDone=true; else if(a.hold) actShowHold=true;   // a search hit must be visible in the list
     collActs.delete(a.id);
     selActs=new Set([a.id]); lastActClick=a.id; if(typeof rebuildActionFilter==="function") rebuildActionFilter();
-    renderActions(); buildCluster(); renderClusters();
+    renderActions(); buildCluster(); renderClusters(); drawActionRings(); updateGallery(); persistState();   // gallery follows the pick (and a turned-on filter is remembered)
     const row=document.querySelector('#actList .act-row[data-aid="'+a.id+'"]'); if(row){ row.scrollIntoView({block:"center",behavior:"smooth"}); }
     actNavigate(a);
   }
@@ -2655,7 +2666,9 @@ async function onlinePoll(){
     readProjects().then(()=>{ const n=projNameOf(ON.pid); if(n&&n!==loadedJsonName){ loadedJsonName=n; if(canEdit()&&ON.name!==n){ ON.name=n; persistState(); } renderProjHead(); } }).catch(()=>{}); }
   _pollBusy=true;
   try{
+    const pid0=ON.pid, sha0=ON.sha;
     const rd=await repoReadJson(statePath(),ON.etag); if(rd.same||!rd.obj) return;
+    if(ON.pid!==pid0||ON.busy||ON.sha!==sha0) return;   // a save landed (or another project opened) while this was reading: it's older than what we have
     if(rd.sha&&rd.sha===ON.sha){ ON.etag=rd.etag||ON.etag; return; }
     if(userTyping()) return;   // try again next tick — never yank a half-typed edit
     if(rd.text!=null) ON.rawText=rd.text;
@@ -3878,8 +3891,11 @@ const measureBtn=document.getElementById("measureBtn");
 measureBtn.addEventListener("click",toggleMeasure);
 document.getElementById("setIgnoreLoc").addEventListener("change",e=>setIgnoreLoc(e.target.checked));
 setIgnoreLoc(ignoreLoc);
-function setMeasureBtn(){ if(measuring){ measureBtn.textContent="Finish [M]"; measureBtn.classList.add("active"); } else { measureBtn.textContent="Measure [M]"; measureBtn.classList.remove("active"); } }
-function toggleMeasure(){ if(measuring){ stopMeasure(); return; } if(drawing) stopDraw(); startMeasure(); }
+function setMeasureBtn(){ if(measuring){ measureBtn.textContent="Finish [M]"; measureBtn.classList.add("active"); } else { measureBtn.textContent=measureLayer?"Clear measure [M]":"Measure [M]"; measureBtn.classList.remove("active"); } }
+function toggleMeasure(){   // Measure → Finish (keeps the line) → Clear measure
+  if(measuring){ if(measurePts.length>=2) mFinish(); else stopMeasure(); return; }
+  if(measureLayer){ stopMeasure(); return; }
+  if(drawing) stopDraw(); startMeasure(); }
 function startMeasure(){ measuring=true; measurePts=[]; if(measureLayer){map.removeLayer(measureLayer);} measureLayer=L.layerGroup().addTo(map); map.getContainer().style.cursor="crosshair"; map.dragging.disable(); map.doubleClickZoom.disable(); map.on("mouseup",mAdd); map.on("mousemove",mMove); map.on("dblclick",mFinish); setMeasureBtn(); }
 function stopMeasure(){ measuring=false; map.off("mouseup",mAdd); map.off("mousemove",mMove); map.off("dblclick",mFinish); map.dragging.enable(); map.doubleClickZoom.enable(); map.getContainer().style.cursor=""; if(measureLayer){ map.removeLayer(measureLayer); measureLayer=null; } measurePts=[]; setMeasureBtn(); }
 function mFinish(e){ if(e&&e.originalEvent) L.DomEvent.stop(e.originalEvent); map.off("mouseup",mAdd); map.off("mousemove",mMove); map.off("dblclick",mFinish); map.dragging.enable(); map.doubleClickZoom.enable(); map.getContainer().style.cursor=""; measuring=false; drawMeasure(); setMeasureBtn(); }
@@ -4306,7 +4322,7 @@ function applyMoveMark(m,orig,dx,dy){
 }
 function curPhoto(){ return lightboxList[lightboxIndex]; }
 function curMarks(){ const p=curPhoto(); if(!p)return []; if(!p.marks)p.marks=[]; return p.marks; }
-function afterMarkChange(){ const ms=curMarks(); if(ms.length&&!ms[ms.length-1]._t) ms[ms.length-1]._t=Date.now(); redoMarks=[]; logAnnot(curPhoto()); redrawMarks(); persistState(); ensureAnnotThumb(curPhoto()); }
+function afterMarkChange(){ const ms=curMarks(); if(ms.length&&!ms[ms.length-1]._t) ms[ms.length-1]._t=Date.now(); redoMarks=[]; tagRedoStack=[]; logAnnot(curPhoto()); redrawMarks(); persistState(); ensureAnnotThumb(curPhoto()); }   // a new edit ends BOTH redo trails
 function logAnnot(p){ if(!p) return; const last=projLog[projLog.length-1], by=_logBy||userName();   // a burst of strokes on one photo is ONE history line
   if(last&&last.k==="annot"&&last.pid===p.id&&last.by===by&&Date.now()-last.t<180000){ last.n=(last.n||1)+1; last.t=Date.now(); last.d="Annotated "+p.name+" ("+last.n+" marks)"; if(rightTab==="history") renderHistory(); return; }
   logChange("Annotated "+p.name,null,"annot"); projLog[projLog.length-1].pid=p.id; }   // stamp marks so undo can interleave chronologically with tag edits
@@ -4420,9 +4436,12 @@ function positionEditor(){ if(!selMark)return; const sx=fitW*vScale, sy=fitH*vSc
   tbText.style.font="600 "+fpx+"px 'Aptos',sans-serif"; tbText.style.lineHeight=(fpx*1.2)+"px";
   tbText.style.padding=(fpx*0.3)+"px "+(fpx*0.42)+"px"; tbText.style.borderWidth=bl+"px"; tbText.style.minHeight=(fpx*1.2)+"px";
   tbEditor.style.left=(lbStage.offsetLeft+vTx+selMark.x*sx-bl)+"px"; tbEditor.style.top=(lbStage.offsetTop+vTy+selMark.y*sy-bl)+"px"; }
-function selectText(m){ if(selMark&&selMark!==m) deselectText(); selMark=m; selPhoto=curPhoto(); tbText.textContent=m.s||""; tbText.style.color=m.c||markColor; tbText.style.borderColor=m.c||markColor; tbEditor.style.display="block"; positionEditor(); redrawMarks(); setTimeout(()=>{ tbText.focus(); const r=document.createRange(); r.selectNodeContents(tbText); r.collapse(false); const s=getSelection(); s.removeAllRanges(); s.addRange(r); },0); }
-function deselectText(){ if(!selMark)return; const m=selMark, ph=selPhoto; const txt=tbText.innerText.replace(/\u00a0/g," ").replace(/\s+$/,"").replace(/^\s+/,""); m.s=txt; selMark=null; selPhoto=null; tbEditor.style.display="none"; if(!txt&&ph&&ph.marks){ const i=ph.marks.indexOf(m); if(i>=0) ph.marks.splice(i,1); } redrawMarks(); persistState(); }
-function newText(n){ const p=curPhoto(); const m={t:"text",x:Math.min(0.96,Math.max(0,n.x)),y:Math.min(0.96,Math.max(0,n.y)),s:"",th:(p&&p.mth!=null)?p.mth:DEF_MTH,c:markColor}; curMarks().push(m); selectText(m); }
+let tbSnap=null;   // the photo's drawings when a text box session began: one undo step for create / type / move
+function selectText(m){ if(selMark&&selMark!==m) deselectText(); selMark=m; selPhoto=curPhoto(); if(!tbSnap&&selPhoto) tbSnap={p:selPhoto,before:cpMarks(selPhoto.marks)}; tbText.textContent=m.s||""; tbText.style.color=m.c||markColor; tbText.style.borderColor=m.c||markColor; tbEditor.style.display="block"; positionEditor(); redrawMarks(); setTimeout(()=>{ tbText.focus(); const r=document.createRange(); r.selectNodeContents(tbText); r.collapse(false); const s=getSelection(); s.removeAllRanges(); s.addRange(r); },0); }
+function deselectText(){ if(!selMark)return; const m=selMark, ph=selPhoto; const txt=tbText.innerText.replace(/\u00a0/g," ").replace(/\s+$/,"").replace(/^\s+/,""); m.s=txt; selMark=null; selPhoto=null; tbEditor.style.display="none"; if(!txt&&ph&&ph.marks){ const i=ph.marks.indexOf(m); if(i>=0) ph.marks.splice(i,1); }
+  const sn=tbSnap; tbSnap=null; if(sn&&sn.p===ph&&ph){ redoMarks=[]; pushMarksSnap(ph,sn.before,cpMarks(ph.marks)); logAnnot(ph); }   // Ctrl+Z undoes the text box, not something older
+  redrawMarks(); persistState(); }
+function newText(n){ const p=curPhoto(); if(p&&!tbSnap) tbSnap={p,before:cpMarks(p.marks)}; const m={t:"text",x:Math.min(0.96,Math.max(0,n.x)),y:Math.min(0.96,Math.max(0,n.y)),s:"",th:(p&&p.mth!=null)?p.mth:DEF_MTH,c:markColor}; curMarks().push(m); selectText(m); }
 /* the text box's edge, all the way round, is its handle: drag it to move (Ctrl+drag drops a copy);
    inside the edge is for typing */
 function tbOnEdge(e){ const r=tbText.getBoundingClientRect(), g=Math.max(7,parseFloat(tbText.style.borderWidth)||2)+3;
@@ -4626,7 +4645,7 @@ document.addEventListener("keydown",e=>{
   const tag=((e.target&&e.target.tagName)||"").toLowerCase();
   if(tag==="input"||tag==="select"||tag==="textarea") return;
   if(document.activeElement===tbText) return;
-  if(e.key==="Escape"){ if(drawing) stopDraw(); else if(measuring) stopMeasure(); else if(pickMode) endPickMode(false); else if(selSet.size) clearSel(); else if(selActs.size) clearActSel(); return; }
+  if(e.key==="Escape"){ if(drawing) stopDraw(); else if(measuring||measureLayer) stopMeasure(); else if(pickMode) endPickMode(false); else if(selSet.size) clearSel(); else if(selActs.size) clearActSel(); return; }
   if(e.ctrlKey||e.metaKey||e.altKey||e.repeat||(e.target&&e.target.isContentEditable)) return;   // Ctrl+F is browser find, not the area filter
   if(e.key==="m"||e.key==="M"){ toggleMeasure(); }
   else if(e.key==="s"||e.key==="S"){ toggleSelect(); }
@@ -4717,7 +4736,7 @@ function snapshotTags(p){ return {paths:physPaths(p).slice(), vpaths:virtPaths(p
 /* EVERY data change goes through pushUndo so Ctrl+Z always works — keep it that way for new features.
    Entry fields (any combination): items (photo snapshots), act (deleted action), actCreate (new action),
    actEdit (title/description/done change), marksSnap (a photo's whole markup array), rot (rotation). */
-function pushUndo(entry){ entry.t=Date.now(); tagUndoStack.push(entry); if(tagUndoStack.length>200) tagUndoStack.shift(); tagRedoStack=[];
+function pushUndo(entry){ entry.t=Date.now(); tagUndoStack.push(entry); if(tagUndoStack.length>200) tagUndoStack.shift(); tagRedoStack=[]; redoMarks=[];
   try{ for(const e of describeEntry(entry)) logChange(e.d,e.a); }catch(err){} }   // every data change passes here, so the History tab sees all of it
 /* ---- History: who changed what, and when. Saved inside the project file (newest 3000). ---- */
 let projLog=[], _logBy=null, _histT=null;
@@ -4780,7 +4799,7 @@ function renderHistory(){
   body.innerHTML=html;
 }
 document.getElementById("histBody").addEventListener("click",e=>{ const r=e.target.closest(".hist-row.link"); if(!r) return; const a=actById(Number(r.dataset.a)); if(!a) return;
-  selActs=new Set([a.id]); lastActClick=a.id; if(typeof rebuildActionFilter==="function") rebuildActionFilter(); refreshActSelClasses(); buildCluster(); renderClusters(); actNavigate(a,true); });
+  selActs=new Set([a.id]); lastActClick=a.id; if(typeof rebuildActionFilter==="function") rebuildActionFilter(); refreshActSelClasses(); buildCluster(); renderClusters(); drawActionRings(); updateGallery(); actNavigate(a,true); });
 document.getElementById("histFilter").addEventListener("input",()=>{ clearTimeout(_histT); _histT=setTimeout(renderHistory,120); });
 wireClearX(document.getElementById("histFilter"));
 function pushTagAction(items){   // one undo step, possibly touching many photos (e.g. a multi-selection move)
@@ -5529,16 +5548,18 @@ function mToggleHold(a){ mMutate(()=>{ const p=mPend();
   else{ const c=(p.changes=p.changes||{})[a.id]||(p.changes[a.id]={}); c.hold=!mHold(a); }
   mPendSave(p); }); }
 function mStepDone(a,i){ if(a._new){ const x=mNewActs()[a._ni]; return !!(x&&x.steps&&x.steps[i]&&x.steps[i].d); } const c=mCh(a.id); return (c.steps&&(String(i) in c.steps))?!!c.steps[String(i)]:!!(a.steps[i]&&a.steps[i].d); }
-function mScr(html){ if(mHomeMap){ try{ mHomeMap.remove(); }catch(e){} } mHomeMap=null; mHomeBB=null; mSoftRefresh=null; document.getElementById("mroot").innerHTML='<div class="m-scr">'+html+'</div>'; if(mToastEl) document.getElementById("mroot").appendChild(mToastEl); }
+let mStepFlush=null;
+function mScr(html){ if(mStepFlush){ const f=mStepFlush; mStepFlush=null; try{ f(); }catch(e){} } if(mHomeMap){ try{ mHomeMap.remove(); }catch(e){} } mHomeMap=null; mHomeBB=null; mSoftRefresh=null; document.getElementById("mroot").innerHTML='<div class="m-scr">'+html+'</div>'; if(mToastEl) document.getElementById("mroot").appendChild(mToastEl); }
 function mShowSetup(msg){
-  const g=ghRaw();
-  mScr('<div class="m-head"><div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div></div>'
+  const g=ghRaw(); mScrPush();
+  mScr('<div class="m-head">'+mScrBackHtml()+'<div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div></div>'
     +'<div class="m-body"><div class="m-sec"><div class="m-lab">DATA REPOSITORY</div><input class="m-in" id="mRepo" value="'+esc(g.repo||siteRepo())+'" placeholder="found automatically from the token" autocomplete="off" />'
     +'<div class="m-lab">ACCESS TOKEN (TO EDIT \u2014 LEAVE EMPTY TO JUST VIEW)</div><input class="m-in secret" id="mTok" type="text" autocomplete="off" data-lpignore="true" data-1p-ignore spellcheck="false" placeholder="github_pat_…" value="'+esc(g.token)+'" />'
     +'<div class="m-lab">YOUR NAME (FOR THE CHANGE HISTORY)</div><input class="m-in" id="mWhoIn" placeholder="e.g. Sam" value="'+esc(mUserName(true))+'" autocomplete="off" />'
     +(msg?'<div class="m-err">'+esc(msg)+'</div>':'')
     +'</div></div>'
     +'<div class="m-foot"><button class="m-btn" id="mGo">Load actions</button><div class="m-note">One-time setup — remembered on this phone</div></div>');
+  mWireScrBack();
   document.getElementById("mGo").addEventListener("click",()=>{
     try{ localStorage.setItem("pmGhRepo",document.getElementById("mRepo").value.trim()); localStorage.setItem("pmGhToken",document.getElementById("mTok").value.trim()); localStorage.setItem("pmUserName",document.getElementById("mWhoIn").value.trim()); }catch(e){}
     mLoadPack();
@@ -5548,10 +5569,12 @@ function mShowSetup(msg){
 async function mChooseProject(list){
   const g=ghRaw(), cfg={token:g.token,repo:g.repo};
   if(!list){ try{ const t=await ghGetRaw(cfg,"projects.json"); const j=t?JSON.parse(t):null; list=(j&&Array.isArray(j.projects))?j.projects:[]; }catch(e){ list=[]; } }
-  mScr('<div class="m-head"><div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div></div>'
+  mScrPush();
+  mScr('<div class="m-head">'+mScrBackHtml()+'<div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div></div>'
     +'<div class="m-body"><div class="m-lab">PROJECTS IN '+esc(cfg.repo||"")+'</div>'
     +(list.length?list.map(p=>'<button class="m-btn ghost m-pj" data-id="'+esc(p.id)+'" style="text-align:left;padding:0 16px;'+(p.id===mPid?'border-color:var(--accent);':'')+'">'+esc(p.name||p.id)+'</button>').join(''):'<div class="m-note" style="padding-top:20px">No projects found.</div>')
     +'</div><div class="m-foot"><button class="m-btn ghost" id="mPjSet">Settings</button></div>');
+  mWireScrBack();
   document.querySelectorAll(".m-pj").forEach(b=>b.addEventListener("click",()=>{ const id=b.dataset.id;
     if(id!==mPid){ mPid=id; try{ localStorage.setItem("pmProject",id); }catch(e){} mPack=null; mPackNext=null; mPackStale=false; _mpRaw=null; _mpObj=null; mUndoStack.length=0; mRedoStack.length=0; }
     mLoadPack(); }));
@@ -5564,7 +5587,7 @@ async function mLoadPack(silent){
   let lk=null; try{ lk=localStorage.getItem("pmProjectKey"); }catch(e){}
   if(lk){ let list=[]; try{ const t=await ghGetRaw(cfg,"projects.json"); const j=t?JSON.parse(t):null; list=(j&&Array.isArray(j.projects))?j.projects:[]; }catch(e){}
     const m=projKeyMatch(list,lk), id=m?m.id:(list.length?null:lk);
-    if(id&&id!==mPid){ mPid=id; mPack=null; mPackNext=null; mPackStale=false; _mpRaw=null; _mpObj=null; mUndoStack.length=0; mRedoStack.length=0; }
+    if(id&&id!==mPid){ mPid=id; mListScroll=0; mPack=null; mPackNext=null; mPackStale=false; _mpRaw=null; _mpObj=null; mUndoStack.length=0; mRedoStack.length=0; }
     try{ if(id) localStorage.setItem("pmProject",id); localStorage.removeItem("pmProjectKey"); }catch(e){} }
   if(!mPid){ let list=[]; try{ const t=await ghGetRaw(cfg,"projects.json"); const j=t?JSON.parse(t):null; list=(j&&Array.isArray(j.projects))?j.projects:[]; }catch(e){}
     if(list.length===1){ mPid=list[0].id; try{ localStorage.setItem("pmProject",mPid);
@@ -5573,7 +5596,9 @@ async function mLoadPack(silent){
   const lst=document.getElementById("mList"), keepScroll=(silent&&lst)?lst.scrollTop:null;
   if(!silent) mScr('<div class="m-head"><div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div></div><div class="m-body"><div class="m-note" style="padding-top:40px">Loading the latest pack…</div></div>');
   try{
-    const text=await ghGetRaw(cfg,mP("pack.json"));
+    let text, offline=false;
+    try{ text=await ghGetRaw(cfg,mP("pack.json")); if(text) idbSet("mPackTxt:"+mPid,text).catch(()=>{}); }   // the last copy stays on the phone…
+    catch(err){ let c=null; try{ c=await idbGet("mPackTxt:"+mPid); }catch(e){} if(!c) throw err; text=c; offline=true; }   // …and opens when there's no signal
     if(!text&&!silent&&await mEngineStart()){   // no phone copy published yet: build it from the live project
       mPack={v:2,eng:true,project:"",actions:[]}; mApplyPack(mPackFromEngine()); mStartGeo(); mShowList(); mOutResume(); return; }
     if(!text){ if(!silent) mShowSetup(mPid?"This project has no phone copy yet \u2014 open it once on a desktop with the access token (it syncs to phones by itself).":"No pack.json in "+cfg.repo+" yet — open the project on the desktop once (it syncs to the phone automatically)."); return; }
@@ -5584,6 +5609,7 @@ async function mLoadPack(silent){
     mStartGeo();
     mShowList();
     mOutResume();
+    if(offline) mToast("No signal \u2014 showing the last copy on this phone. Your changes are kept and sent later.");
     mEngineStart().then(ok=>{ if(!ok) return; mEngineRefresh(false); const p=mPend(); if(p.sentUpd&&!(mPack&&mPack.mergedFrom&&mPack.mergedFrom>=p.sentUpd)) mEngineMerge(); });   // the live project takes over
     if(keepScroll!=null){ const l2=document.getElementById("mList"); if(l2) l2.scrollTop=keepScroll; }
     if(silent) mToast("\u21bb Updated from the desktop");
@@ -5678,10 +5704,22 @@ function mGeoLive(refit){
 }
 /* Android back gesture: viewing an action pushes ONE history entry, so swiping back returns to
    the actions list instead of leaving the app. Backing out of the list exits normally. */
-let mNavDepth=false;
-function mNavPush(){ if(!mNavDepth){ try{ history.pushState({m:"act"},""); mNavDepth=true; }catch(e){} } }
-function mExitDetail(){ if(mNavDepth){ try{ history.back(); return; }catch(e){} } mShowList(); }
+/* Every layer — the action screen, a sheet, Setup / Switch project — adds ONE history entry, so the
+   phone's Back closes the top layer instead of leaving the app. Closing a layer in the app quietly
+   pops its entry (and anything pushed meanwhile waits for that pop to land). */
+let mNavDepth=false, mSheetHist=false, mScrHist=null, mBackPending=0;
+const mAfterBack=[];
+function mPush(st){ const f=()=>{ try{ history.pushState(st,""); }catch(e){} }; if(mBackPending) mAfterBack.push(f); else f(); }
+function mPopQuiet(){ mBackPending++; try{ history.back(); }catch(e){ mBackPending--; } }
+function mNavPush(){ if(!mNavDepth){ mNavDepth=true; mPush({m:"act"}); } }
+function mExitDetail(){ if(mNavDepth){ mNavDepth=false; mPopQuiet(); } mShowList(); }
+function mScrPush(){ if(mPack&&!mScrHist){ mScrHist=true; mPush({m:"scr"}); } }   // Setup / Switch project opened from inside the app
+function mScrBackHtml(){ return mPack?'<button class="ma-back" id="mScrBack" type="button">'+MI.back+'Back</button>':''; }
+function mWireScrBack(){ const b=document.getElementById("mScrBack"); if(b) b.addEventListener("click",()=>mShowList()); }
 window.addEventListener("popstate",()=>{ if(!document.body.classList.contains("mobile")) return;
+  if(mBackPending){ mBackPending--; mAfterBack.splice(0).forEach(f=>f()); return; }   // our own quiet pop
+  if(document.getElementById("mSheet")){ mSheetHist=false; mDropSheet(); return; }
+  if(mScrHist){ mScrHist=null; mShowList(); return; }
   if(mNavDepth){ mNavDepth=false; mShowList(); } });
 /* Phone home (layout "A"): the MAP fills the screen by default; the top-right toggle swaps to the
    LIST. Tapping an action (a dot, a list card, a row in a group) opens it on its own full screen.
@@ -5705,7 +5743,7 @@ const MI={
 let mShowHold=(()=>{ try{ return localStorage.getItem("pmMHold")==="1"; }catch(e){ return false; } })();
 let mShowDone=(()=>{ try{ return localStorage.getItem("pmMDone")==="1"; }catch(e){ return false; } })();
 let mTab=(()=>{ try{ return localStorage.getItem("pmMTab")==="list"?"list":"map"; }catch(e){ return "map"; } })();
-let mLQ="", mHomeView=null, mHomeTouched=false, mHomeFocus=null;
+let mListScroll=0, mLQ="", mHomeView=null, mHomeTouched=false, mHomeFocus=null;
 function mSetTab(t){ mTab=t; try{ localStorage.setItem("pmMTab",t); }catch(e){} }
 function mHomeActs(){
   const packActs=mActOrder().map(i=>(mPack.actions||[])[i]).filter(Boolean);   /* priority order: pack order with the phone's pending reorder applied */
@@ -5757,12 +5795,15 @@ function mNavHtml(on){
     +tab("mRefB","sync","Refresh",false,"ma-ref"+(mRefBusy?" spin":""))+tab("mNavS","gear","Settings")+'</nav>';
 }
 /* bottom sheets: one at a time, dropped by a tap on the dimmed map/list behind them */
-function mSheet(html){ mCloseSheet(); if(mToastEl&&!mUpBusy) mToastEl.style.display="none"; const root=document.getElementById("mroot");
+function mSheet(html){ mDropSheet(); if(!mSheetHist){ mSheetHist=true; mPush({m:"sheet"}); } if(mToastEl&&!mUpBusy) mToastEl.style.display="none"; const root=document.getElementById("mroot");
   const ov=document.createElement("div"); ov.className="ma-ov"; ov.id="mOv"; ov.addEventListener("click",mCloseSheet);
   const sh=document.createElement("div"); sh.className="ma-sheet"; sh.id="mSheet"; sh.innerHTML='<div class="ma-handle"></div>'+html;
   root.appendChild(ov); root.appendChild(sh); return sh; }
-function mCloseSheet(){ ["mOv","mSheet"].forEach(id=>{ const e=document.getElementById(id); if(e) e.remove(); }); }
+function mDropSheet(){ ["mOv","mSheet"].forEach(id=>{ const e=document.getElementById(id); if(e) e.remove(); }); }
+function mCloseSheet(){ mDropSheet(); if(mSheetHist){ mSheetHist=false; mPopQuiet(); } }
 function mShowList(){
+  if(mScrHist){ mScrHist=null; mPopQuiet(); }   // back from Setup / Switch project
+  if(mNavDepth){ mNavDepth=false; mPopQuiet(); }   // e.g. the action on screen vanished (undone)
   if(!mPack){ mLoadPack(); return; }
   if(mPackStale){ mPackStale=false; if(mPackNext){ const np=mPackNext; setTimeout(()=>{ if(mSafeToSwap()){ mApplyPack(np); mShowList(); mToast("↻ Updated from the desktop"); } else { mPackNext=np; mPackStale=true; } },0); } else setTimeout(()=>mLoadPack(true),0); }
   mRerender=mShowList;
@@ -5793,6 +5834,7 @@ function mShowList(){
     const applyQ=()=>{ const v=mLQ.trim().toLowerCase(); document.querySelectorAll("#mList .m-card").forEach(el=>{ el.style.display=(!v||el.dataset.s.includes(v))?"":"none"; }); };
     q.addEventListener("input",()=>{ mLQ=q.value; applyQ(); });
     mWirePull(document.getElementById("mList"),document.getElementById("mPtr"));
+    { const l=document.getElementById("mList"); if(mListScroll) l.scrollTop=mListScroll; l.addEventListener("scroll",()=>{ mListScroll=l.scrollTop; },{passive:true}); }   // a refresh or a trip into an action keeps your place
     q.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter") q.blur(); });
     applyQ();
     document.querySelectorAll("#mList .m-card").forEach(el=>el.addEventListener("click",()=>{ if(Date.now()-mCardDropT<500) return; mOpenAct(el.dataset.k); }));
@@ -6401,6 +6443,8 @@ function mShowDetail(ai,keepScroll){
     const ninp=sub2.querySelector(".s2new");
     ninp.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key!=="Enter") return; const v=ninp.value.trim(); if(!v) return;
       mAddStep(a,v); fill(true); });
+    mStepFlush=()=>{ const v=ninp.value.trim(); if(!v) return false; ninp.value=""; mAddStep(a,v); return true; };   // a typed step isn't lost by leaving without Enter
+    ninp.addEventListener("blur",()=>{ if(ninp.isConnected&&mStepFlush&&mStepFlush()) fill(); });
     if(focusNew){ const n2=sub2.querySelector(".s2new"); if(n2) n2.focus(); }
   };
   fill();
@@ -6510,6 +6554,8 @@ function mWirePinch(hs){
 }
 /* The mobile UI has no update pill, so a stale cached copy could linger forever: on boot,
    compare this file's timestamp with the server's and force ONE clean reload when behind. */
+let mUsedYet=false;
+["pointerdown","keydown"].forEach(ev=>window.addEventListener(ev,()=>{ mUsedYet=true; },{capture:true,once:true,passive:true}));
 async function mCheckFresh(force){
   try{
     if(!force&&sessionStorage.getItem("pmMobUpd")) return;
@@ -6517,6 +6563,7 @@ async function mCheckFresh(force){
     const lm=r.headers.get("last-modified"); if(!lm){ if(force) mToast("Could not check for updates"); return; }
     const srv=Date.parse(lm), mine=Date.parse(document.lastModified);
     if(isNaN(srv)||isNaN(mine)||srv-mine<90000){ if(force) mToast("\u2713 App is up to date (build "+new Date(mine).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})+")"); return; }
+    if(!force&&mUsedYet){ mToast("A newer version of the app is ready \u2014 tap Refresh to load it"); return; }   // never reload under someone mid-task
     if(force) mToast("Updating to the latest build\u2026",true);
     sessionStorage.setItem("pmMobUpd","1");
     try{ await fetch(location.pathname,{cache:"reload"}); }catch(e){}
@@ -6531,7 +6578,7 @@ function mobileBoot(){
   setInterval(()=>{ if(document.visibilityState!=="visible"||!mEng.on) return;   // every 5 s while on screen: everyone's changes, and a retry of our own
     mEnginePoll(); const p=mPend(); if(p.sentUpd&&!(mPack&&mPack.mergedFrom&&mPack.mergedFrom>=p.sentUpd)&&!_mMergeT) mEngineMergeSoon(); },5000);
   document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible"){ if(mEng.on) mEnginePoll(); else mPackPoll(); mSendChanges(); mPumpOutbox(); } });
-  window.addEventListener("online",()=>{ if(mEng.on) mEnginePoll(); else mPackPoll(); mSendChanges(); mPumpOutbox(); });
+  window.addEventListener("online",()=>{ if(mEng.on) mEnginePoll(); else if(mPack) mLoadPack(true); else mPackPoll(); mSendChanges(); mPumpOutbox(); });   // opened offline: the live project takes over once the signal is back
   const sharedIn=/[?&]shared=/.test(location.search);
   if(!sharedIn) mCheckFresh();   // never self-reload while shared photos are waiting to upload
   mSetupShare();

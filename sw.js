@@ -4,8 +4,9 @@
    2. network first for the app's own files, with the last good copy as the offline fallback.
       Online you always get the newest version; the fallback is what lets the phone install it
       as a real app. */
-const SW_VER = "8";
-const APP_CACHE = "am-app-1";
+const SW_VER = "9";
+const APP_CACHE = "am-app-2";
+const LIB_CACHE = "am-libs-1";   // versioned map / photo libraries from the CDNs: kept so the app also opens offline
 const CORE = ["./", "index.html", "manifest.json", "icon-192.png", "icon-512.png", "icon-maskable-512.png", "apple-touch-icon.png"];
 self.addEventListener("install", e => {
   e.waitUntil(Promise.all([
@@ -15,15 +16,20 @@ self.addEventListener("install", e => {
   self.skipWaiting();
 });
 self.addEventListener("activate", e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== APP_CACHE && k !== "pm-shared").map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== APP_CACHE && k !== LIB_CACHE && k !== "pm-shared").map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 self.addEventListener("fetch", e => {
   const u = new URL(e.request.url);
   if (e.request.method === "GET" && u.origin === self.location.origin) {   // only this site's own files; GitHub API / photos / map tiles go straight through
     e.respondWith(fetch(e.request).then(r => {
-      if (r.ok && r.status === 200 && r.type === "basic") { const copy = r.clone(); caches.open(APP_CACHE).then(c => c.put(e.request, copy)).catch(() => {}); }
+      if (r.ok && r.status === 200 && r.type === "basic") { const copy = r.clone(); const key = e.request.mode === "navigate" ? "./" : e.request;   // the page is kept ONCE (not once per ?link)
+        caches.open(APP_CACHE).then(c => c.put(key, copy)).catch(() => {}); }
       return r;
-    }).catch(() => caches.match(e.request, { ignoreSearch: true }).then(hit => hit || caches.match("./"))));
+    }).catch(() => (e.request.mode === "navigate" ? caches.match("./") : caches.match(e.request, { ignoreSearch: true })).then(hit => hit || caches.match("./"))));
+    return;
+  }
+  if (e.request.method === "GET" && /^(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com)$/.test(u.hostname) && /@\d|\/\d+\.\d+/.test(u.pathname)) {   // pinned versions never change: cache first
+    e.respondWith(caches.open(LIB_CACHE).then(c => c.match(e.request).then(hit => hit || fetch(e.request).then(r => { if (r.ok || r.type === "opaque") c.put(e.request, r.clone()).catch(() => {}); return r; }))));
     return;
   }
   if (e.request.method === "POST" && (u.pathname.endsWith("/share-target") || u.pathname.endsWith("/Photo-Map.html") || u.pathname.endsWith("/index.html") || u.pathname.endsWith("/"))) {
