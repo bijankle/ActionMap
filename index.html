@@ -1853,9 +1853,9 @@ function showAreaPreviews(a){
     el.querySelector(".ap-tail").style.left=Math.max(14,Math.min(w-14,Math.round(g.cx-x)))+"px";   // tail points at the dot even if the card was clamped at an edge
     const mm=L.map(el.querySelector(".ap-map"),{zoomControl:false,attributionControl:false,dragging:false,touchZoom:false,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false});
     L.tileLayer("https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",{subdomains:["mt0","mt1","mt2","mt3"],maxZoom:22,maxNativeZoom:21}).addTo(mm);
-    for(const p of g.ps) L.circleMarker([p.lat,p.lng],{radius:8,color:"#ffffff",weight:3,fillColor:"#3BA55C",fillOpacity:.95,className:"hl-dot",interactive:false}).addTo(mm);
+    for(const p of g.ps) L.circleMarker([p.lat,p.lng],{radius:8,color:"#ffffff",weight:3,fillColor:"#FFD21F",fillOpacity:1,className:"hl-dot",interactive:false}).addTo(mm);   // yellow: the spot this photo was taken
     const bb=L.latLngBounds(g.ps.map(p=>[p.lat,p.lng]));
-    setTimeout(()=>{ try{ mm.invalidateSize(); if(g.ps.length>1) mm.fitBounds(bb,{padding:[26,26],maxZoom:19}); else mm.setView([g.ps[0].lat,g.ps[0].lng],18); }catch(e){} },60);
+    setTimeout(()=>{ try{ mm.invalidateSize(); if(g.ps.length>1) mm.fitBounds(bb,{padding:[26,26],maxZoom:20}); else mm.setView([g.ps[0].lat,g.ps[0].lng],20); }catch(e){} },60);
     areaPrevs.push({el,map:mm});
   }
   if(areaPrevs.length) setTimeout(()=>{ if(!areaPrevs.length) return;   // arm dismissal once our own flight has settled
