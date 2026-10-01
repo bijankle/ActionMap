@@ -1865,7 +1865,7 @@ function clickAction(a,ev,deferNav){
     selActs=new Set([a.id]);   // plain click always selects — re-clicking a selected action just re-navigates to its photos
     lastActClick=a.id;
   }
-  rebuildActionFilter(); refreshActSelClasses(); drawActionRings(); updateGallery();
+  rebuildActionFilter(); refreshActSelClasses(); drawActionRings(); updateGallery(); warmCards(true);
   if(!selActs.has(a.id)||ctrl||shift) return;   // multi-select gestures only change the selection — no navigation
   if(!deferNav) actNavigate(a);
 }
@@ -1991,6 +1991,7 @@ async function maybeStartGeo(){
 /* Zoom to a set of photos, at MINIMUM deep enough that none of them is hidden inside a cluster. */
 function renderActions(){
   const list=document.getElementById("actList"); if(!list) return;
+  warmCards();
   document.getElementById("actShowHold").classList.toggle("on",actShowHold);
   document.getElementById("actShowDone").classList.toggle("on",actShowDone);
 
@@ -3351,9 +3352,35 @@ async function composeActionCard(a,psIn){   // psIn: the phone passes its own ph
     if(src&&src.url) URL.revokeObjectURL(src.url); }
   return c;
 }
+/* Share images are made AHEAD of time and kept on this device (memory + IndexedDB), keyed by what
+   they show — so Copy / Share is instant, and an unchanged action is never drawn twice. */
+const _cardMem=new Map(), CARD_KEEP=24;
+function cardCached(sig,make){
+  if(_cardMem.has(sig)){ const p=_cardMem.get(sig); _cardMem.delete(sig); _cardMem.set(sig,p); return p; }
+  const p=(async()=>{ const k="card:"+sig; try{ const b=await idbGet(k); if(b&&b.size) return b; }catch(e){}
+    const cv=await make(); const b=await new Promise((res,rej)=>cv.toBlob(x=>x?res(x):rej(new Error("image failed")),"image/png"));
+    idbSet(k,b).catch(()=>{}); try{ let ks=JSON.parse(localStorage.getItem("pmCardKeys")||"[]").filter(x=>x!==k); ks.push(k); while(ks.length>CARD_KEEP) idbDel(ks.shift()).catch(()=>{}); localStorage.setItem("pmCardKeys",JSON.stringify(ks)); }catch(e){}
+    return b; })();
+  _cardMem.set(sig,p); p.catch(()=>{ if(_cardMem.get(sig)===p) _cardMem.delete(sig); });
+  while(_cardMem.size>8) _cardMem.delete(_cardMem.keys().next().value);
+  return p; }
+function cardMeSig(){ if(ignoreLoc) return "x"; try{ const l=geoMarker&&geoMarker.getLatLng(); if(l) return l.lat.toFixed(3)+","+l.lng.toFixed(3); }catch(e){} return "?"; }
+function deskCardBlob(a){
+  const sig=[CARD_LAYOUT.head,CARD_K,actNo(a),a.text||"",a.loc?a.loc.lat+","+a.loc.lng:"",cardMeSig()].concat(actPhotos(a).map(p=>lookSig(p)+"@"+(p.lat!=null?(+p.lat).toFixed(5)+","+(+p.lng).toFixed(5):""))).join("|");
+  let x=0; for(let i=0;i<sig.length;i++) x=(x*31+sig.charCodeAt(i))|0;
+  return cardCached("d"+(ON.pid||"")+"."+a.id+"."+(x>>>0).toString(36)+"."+sig.length,()=>composeActionCard(a)); }
+var _warmT=null, _warmBusy=false;   // var: renderActions runs before this line during start-up
+function warmCards(soon){   // the selected action(s) first, then the top of the list — one at a time, when the app is idle
+  if(document.body.classList.contains("mobile")) return;
+  clearTimeout(_warmT); _warmT=setTimeout(async()=>{
+    if(_warmBusy||document.visibilityState!=="visible"||!actions.length||document.body.classList.contains("mobile")) return; _warmBusy=true;   // (the phone makes its own, see mWarmCards)
+    try{ const want=[...selActs].map(actById).filter(Boolean).concat(actsShown().filter(a=>!a.done).slice(0,4));
+      for(const a of [...new Set(want)]){ if(document.visibilityState!=="visible") break; try{ await deskCardBlob(a); }catch(e){} await sleep(300); } }
+    finally{ _warmBusy=false; } },soon?400:3000); }
+setInterval(()=>warmCards(true),20000);   // catches changes that don't redraw the list (a photo finishing its upload, markup, a moved dot); free when nothing changed
 async function copyActionForPhone(a,btn){
   if(btn) btn.classList.add("busy");
-  const blobP=(async()=>{ const cv=await composeActionCard(a); return await new Promise((res,rej)=>cv.toBlob(b=>b?res(b):rej(new Error("image failed")),"image/png")); })();
+  const blobP=deskCardBlob(a);
   try{
     try{ await navigator.clipboard.write([new ClipboardItem({"image/png":blobP})]); }   // promise form keeps the click's permission while the image renders
     catch(e1){ const b=await blobP; await navigator.clipboard.write([new ClipboardItem({"image/png":b})]); }
@@ -5858,11 +5885,13 @@ function mShowList(){
     if(pb){ pb.addEventListener("click",()=>mFocusDot(pb.dataset.k));
       document.getElementById("mViewB").addEventListener("click",e=>{ e.stopPropagation(); mOpenAct(pb.dataset.k); }); }
     mBuildHomeMap(acts);
+    mWarmCards([mPeekAct(acts)]);
   } else {
     const q=document.getElementById("mQ");
     const applyQ=()=>{ const v=mLQ.trim().toLowerCase(); document.querySelectorAll("#mList .m-card").forEach(el=>{ el.style.display=(!v||el.dataset.s.includes(v))?"":"none"; }); };
     q.addEventListener("input",()=>{ mLQ=q.value; applyQ(); });
     mWirePull(document.getElementById("mList"),document.getElementById("mPtr"));
+    mWarmCards(acts.filter(a=>mStatus(a)==="open").slice(0,2));
     { const l=document.getElementById("mList"); if(mListScroll) l.scrollTop=mListScroll; l.addEventListener("scroll",()=>{ mListScroll=l.scrollTop; },{passive:true}); }   // a refresh or a trip into an action keeps your place
     q.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter") q.blur(); });
     applyQ();
@@ -6501,18 +6530,18 @@ function mShowDetail(ai,keepScroll){
    YOU ARE HERE, main photo, the rest below), handed to the phone's share sheet so it goes straight
    into any chat, email or the gallery. Phones only open the share sheet right after a tap, so the
    card is built in the background when the action opens and is ready when Share is pressed. */
-let mCardJob=null;   // {key,p}: the card being built (or built) for the action on screen
 function mCardName(a){ return (a._new?"":actNo(a)+" ")+String(mTitle(a)||"action").replace(/[\\/:*?"<>|]+/g,"").slice(0,60)+".png"; }
-function mCardBlob(a){
+function mCardBlob(a){   // kept on the phone (see cardCached): Share is instant, even after the app was closed
   const photos=(a.photos||[]).filter(p=>p.img);
-  const key=mCardKey(a)+"|"+mTitle(a)+"|"+photos.map(p=>p.id).join(",");
-  if(mCardJob&&mCardJob.key===key) return mCardJob.p;
   const act={text:mTitle(a),num:a._new?null:actNo(a),loc:a._new?(mNewActs()[a._ni]||{}).loc:a.loc};
+  const me=(ignoreLoc||!mGeo)?"x":mGeo.lat.toFixed(3)+","+mGeo.lng.toFixed(3);
+  const sig=[CARD_LAYOUT.head,CARD_K,mCardKey(a),act.num,act.text,act.loc?act.loc.lat+","+act.loc.lng:"",me].concat(photos.map(p=>(p.h||p.id)+"@"+p.lat+","+p.lng)).join("|");
+  let x=0; for(let i=0;i<sig.length;i++) x=(x*31+sig.charCodeAt(i))|0;
   const ps=photos.map(p=>({preview:p.img,lat:p.lat,lng:p.lng,_phone:true}));
-  const p=(async()=>{ const cv=await composeActionCard(act,ps); return await new Promise((res,rej)=>cv.toBlob(b=>b?res(b):rej(new Error("image failed")),"image/png")); })();
-  mCardJob={key,p}; p.catch(()=>{ if(mCardJob&&mCardJob.p===p) mCardJob=null; });
-  return p;
-}
+  return cardCached("m"+(mPid||"")+"."+(x>>>0).toString(36)+"."+sig.length,()=>composeActionCard(act,ps)); }
+var _mWarmT=null;
+function mWarmCards(list){   // the map card's action (and the top of the list) get their images made while you look
+  clearTimeout(_mWarmT); _mWarmT=setTimeout(async()=>{ for(const a of list.filter(Boolean).slice(0,3)){ if(document.visibilityState!=="visible") break; try{ await mCardBlob(a); }catch(e){} } },1500); }
 function mSaveBlob(blob,name){ const u=URL.createObjectURL(blob), dl=document.createElement("a"); dl.href=u; dl.download=name; document.body.appendChild(dl); dl.click(); dl.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); }
 function mShareNow(blob,name,onBlocked){
   const file=new File([blob],name,{type:"image/png"});
