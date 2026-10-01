@@ -47,6 +47,9 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
     --header-h:58px; --gallery-w:360px; --thumb:120px; --img-w:42%; --side-w:380px;
   }
   *{box-sizing:border-box;}
+  /* tokens are masked text boxes, not password fields, so the browser's password manager never saves the repo + token as a login and types them into other boxes */
+  input.secret{-webkit-text-security:disc;text-security:disc;font-family:monospace,var(--font);}
+  #hSearch::-webkit-search-cancel-button,#hSearch::-webkit-search-decoration{-webkit-appearance:none;display:none;}
   /* scroll bars: barely there until hovered, gold while dragging */
   ::-webkit-scrollbar{width:10px;height:10px;}
   ::-webkit-scrollbar-track,::-webkit-scrollbar-corner{background:transparent;}
@@ -961,7 +964,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
       <button class="mi" id="miAbout" type="button" title="Save status, this project's link, the app version and where the data lives.">About…</button>
     </div></div>
   </nav>
-  <div class="hsearch" id="hsWrap"><input type="text" id="hSearch" placeholder="Search actions   Ctrl+K" title="Find an action by its number, title, a sub-action or a photo note — active and completed actions" autocomplete="off" spellcheck="false" /><div class="hs-drop" id="hsDrop"></div></div>
+  <div class="hsearch" id="hsWrap"><input type="search" id="hSearch" name="am-action-search" data-lpignore="true" data-1p-ignore placeholder="Search actions   Ctrl+K" title="Find an action by its number, title, a sub-action or a photo note — active and completed actions" autocomplete="off" spellcheck="false" /><div class="hs-drop" id="hsDrop"></div></div>
   <input id="folderInput" type="file" webkitdirectory directory multiple style="display:none" />
   <input id="origInput" type="file" webkitdirectory directory multiple style="display:none" />
   <input id="jsonInput" type="file" accept="application/json,.json" style="display:none" />
@@ -1023,14 +1026,14 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
         <h3>Online</h3>
         <div class="set-row">
           <div class="set-lbl">Data repository<span class="set-sub">The GitHub repo that holds every project and photo (owner/name). Filled in by itself from a shared link or from your token.</span></div>
-          <div class="set-ctl"><input type="text" id="setGhRepo" placeholder="found from the token" style="width:200px;font:inherit;font-size:var(--fb);padding:6px 8px;border:1px solid var(--line2);border-radius:8px;" /></div>
+          <div class="set-ctl"><input type="text" id="setGhRepo" placeholder="found from the token" autocomplete="off" data-lpignore="true" data-1p-ignore spellcheck="false" style="width:200px;font:inherit;font-size:var(--fb);padding:6px 8px;border:1px solid var(--line2);border-radius:8px;" /></div>
         </div>
         <div class="set-row">
           <div class="set-lbl">Access token<span class="set-sub">Needed to EDIT (viewing needs none). Fine-grained GitHub token with Contents read/write on that repo only. Stored only in this browser, never online.</span></div>
-          <div class="set-ctl"><input type="password" id="setGhToken" placeholder="github_pat_&hellip;" style="width:200px;font:inherit;font-size:var(--fb);padding:6px 8px;border:1px solid var(--line2);border-radius:8px;" /></div>
+          <div class="set-ctl"><input type="text" class="secret" id="setGhToken" placeholder="github_pat_&hellip;" autocomplete="off" data-lpignore="true" data-1p-ignore spellcheck="false" style="width:200px;font:inherit;font-size:var(--fb);padding:6px 8px;border:1px solid var(--line2);border-radius:8px;" /></div>
         </div>
         <div class="set-row">
-          <div class="set-lbl">Phone sync<span class="set-sub">Automatic: the OPEN actions, their steps and preview photos are pushed to the project a few seconds after any change, and the phone picks them up by itself.</span></div>
+          <div class="set-lbl">Phone sync<span class="set-sub">Automatic: every action (open, on hold and done), its steps and preview photos are pushed to the project a few seconds after any change, and the phone picks them up by itself.</span></div>
           <div class="set-ctl" style="flex-direction:column;align-items:flex-start;gap:6px;">
             
             <span id="mobExpStatus" style="font-size:var(--fl);color:var(--dim);"></span>
@@ -2188,7 +2191,7 @@ function syncSettingsUI(){
   document.getElementById("setThumb").value=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--thumb"))||120;
 
   { let n=""; try{ n=localStorage.getItem("pmUserName")||""; }catch(e){} document.getElementById("setUserName").value=n; }
-  const g=ghRaw(); document.getElementById("setGhRepo").value=g.repo; document.getElementById("setGhToken").value=g.token;
+  const g=ghRaw(); document.getElementById("setGhRepo").value=g.repo||(typeof siteRepo==="function"?siteRepo():"")||""; document.getElementById("setGhToken").value=g.token;   // the repo in use shows even when it came from the link
   let le=0; try{ le=+localStorage.getItem("pmLastExport")||0; }catch(e){}
   document.getElementById("mobExpStatus").textContent=le?("Last export: "+new Date(le).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})):"";
 }
@@ -5432,8 +5435,8 @@ function mScr(html){ if(mHomeMap){ try{ mHomeMap.remove(); }catch(e){} } mHomeMa
 function mShowSetup(msg){
   const g=ghRaw();
   mScr('<div class="m-head"><div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div></div>'
-    +'<div class="m-body"><div class="m-sec"><div class="m-lab">DATA REPOSITORY</div><input class="m-in" id="mRepo" value="'+esc(g.repo)+'" placeholder="found automatically from the token" autocomplete="off" />'
-    +'<div class="m-lab">ACCESS TOKEN (TO EDIT \u2014 LEAVE EMPTY TO JUST VIEW)</div><input class="m-in" id="mTok" type="password" placeholder="github_pat_…" value="'+esc(g.token)+'" />'
+    +'<div class="m-body"><div class="m-sec"><div class="m-lab">DATA REPOSITORY</div><input class="m-in" id="mRepo" value="'+esc(g.repo||siteRepo())+'" placeholder="found automatically from the token" autocomplete="off" />'
+    +'<div class="m-lab">ACCESS TOKEN (TO EDIT \u2014 LEAVE EMPTY TO JUST VIEW)</div><input class="m-in secret" id="mTok" type="text" autocomplete="off" data-lpignore="true" data-1p-ignore spellcheck="false" placeholder="github_pat_…" value="'+esc(g.token)+'" />'
     +'<div class="m-lab">YOUR NAME (FOR THE CHANGE HISTORY)</div><input class="m-in" id="mWhoIn" placeholder="e.g. Sam" value="'+esc(mUserName(true))+'" autocomplete="off" />'
     +(msg?'<div class="m-err">'+esc(msg)+'</div>':'')
     +'</div></div>'
