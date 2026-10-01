@@ -782,6 +782,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-peek.hold .m{color:#7A5C00;font-weight:600;}
   .ma-peeks{position:absolute;left:0;right:0;bottom:12px;z-index:500;display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 16px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
   .ma-peeks::-webkit-scrollbar{display:none;}
+  .ma-peeks .ma-peek.off,.ma-peeks.none{display:none;}   /* only the actions whose dots are on screen */
   .ma-peeks .ma-peek{position:relative;left:auto;right:auto;bottom:auto;flex:0 0 calc(100% - 32px);scroll-snap-align:center;box-shadow:0 3px 12px #1d243030;padding:8px 10px;gap:10px;}
   .ma-peeks .ma-peek .ma-th{width:48px;height:48px;}
   .ma-peeks .ma-peek .t{font-size:15px;line-height:1.25;-webkit-line-clamp:3;}   /* room for the title: up to three short lines */
@@ -5905,9 +5906,9 @@ function mShowList(){
       if(cur){ row.scrollLeft=cur.offsetLeft-(row.clientWidth-cur.offsetWidth)/2; cur.classList.add("on"); }   // back on the map: the same card, map view unchanged
       let st=null; row.addEventListener("scroll",()=>{ if(mCardScrolling) return; clearTimeout(st); st=setTimeout(()=>{   // the map follows the card you swipe to
         const mid=row.scrollLeft+row.clientWidth/2; let best=null,bd=1e9;
-        row.querySelectorAll(".ma-peek").forEach(c=>{ const d=Math.abs(c.offsetLeft+c.offsetWidth/2-mid); if(d<bd){ bd=d; best=c; } });
+        row.querySelectorAll(".ma-peek:not(.off)").forEach(c=>{ const d=Math.abs(c.offsetLeft+c.offsetWidth/2-mid); if(d<bd){ bd=d; best=c; } });
         if(best&&best.dataset.k!==mFocusK) mFocusCard(best.dataset.k,true); },140); },{passive:true}); }
-    mBuildHomeMap(acts);
+    mBuildHomeMap(acts); requestAnimationFrame(()=>mSyncCards());
     mWarmCards(mMapCards(acts).slice(0,2));
   } else {
     const q=document.getElementById("mQ");
@@ -5925,6 +5926,16 @@ function mShowList(){
 /* the card under the map: the open action nearest to you (else the first open one on the map) */
 /* the map card was tapped: zoom to that action's dot (ringed in gold), in the clear space above the card */
 let mFocusK=null;
+/* the cards list only the actions whose dots are on screen right now (re-checked whenever the map stops moving) */
+function mSyncCards(){
+  const m2=mHomeMap, row=document.getElementById("mPeeks"); if(!m2||!m2._pts||!row) return;
+  const mc=m2.getContainer().getBoundingClientRect(), flt=document.querySelector(".ma-mapwrap .ma-flt");
+  const rr=row.getBoundingClientRect(), top=flt?flt.getBoundingClientRect().top-mc.top:0, bot=rr.height?rr.top-mc.top+20:mc.height-90, W=mc.width;   // (a hidden row has no size: assume a card's height)
+  const seen=new Set(); for(const p of m2._pts){ const c=m2.latLngToContainerPoint([p.lat,p.lng]); if(c.x>=-10&&c.x<=W+10&&c.y>=top&&c.y<=bot) seen.add(p.k); }
+  let any=false; row.querySelectorAll(".ma-peek").forEach(c=>{ const on=seen.has(c.dataset.k); c.classList.toggle("off",!on); if(on) any=true; });
+  row.classList.toggle("none",!any);
+  const cur=row.querySelector(".ma-peek.on:not(.off)")||row.querySelector(".ma-peek:not(.off)");
+  if(cur){ mCardScrolling=true; row.scrollLeft=cur.offsetLeft-(row.clientWidth-cur.offsetWidth)/2; setTimeout(()=>{ mCardScrolling=false; },250); } }
 function mFlyTo(pts,z){   // glide to these points at zoom z, landing them in the clear space between the filters and the cards
   const m2=mHomeMap; const fb=L.latLngBounds(pts.map(p=>[p.lat,p.lng]));
   if(pts.length>1) z=Math.min(z,m2.getBoundsZoom(fb.pad(0.25),false));
@@ -6285,6 +6296,7 @@ function mBuildHomeMap(acts){
       else if(me) m2.setView([me.lat,me.lng],16); else m2.setView([0,0],2); };
     fit(); draw();
     m2.on("zoomend",draw);
+    m2.on("moveend",()=>mSyncCards());
     m2.on("moveend",()=>{ mHomeView={c:m2.getCenter(),z:m2.getZoom()}; });
     m2.on("dragstart",()=>{ mHomeTouched=true; });
     hm.addEventListener("touchstart",e=>{ if(e.touches.length>1) mHomeTouched=true; },{passive:true});   // a pinch is the user's view too
