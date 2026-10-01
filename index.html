@@ -819,6 +819,20 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-th{width:60px;height:60px;border-radius:10px;background:#dfe3e8 center/cover no-repeat;flex-shrink:0;}
   .ma-chev{color:var(--faint);font-size:26px;line-height:1;}
   .ma-sbtns{display:flex;flex-direction:column;gap:10px;padding:0 20px;}
+  .ma-add2{display:flex;flex-direction:column;gap:10px;padding:0 20px 6px;}
+  .ma-tiles{display:flex;gap:10px;}
+  .ma-tile{flex:1;height:84px;border-radius:14px;border:1.5px dashed #b9c0c8;background:#fafbfc;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font:inherit;font-size:15px;font-weight:600;color:var(--muted);}
+  .ma-tile svg{width:26px;height:26px;}
+  .ma-athumbs{display:flex;gap:8px;flex-wrap:wrap;} .ma-athumbs:empty{display:none;}
+  .ma-ath{position:relative;width:62px;height:62px;border-radius:10px;background:#ddd center/cover;}
+  .ma-ath button{position:absolute;top:-7px;right:-7px;width:26px;height:26px;border-radius:13px;border:0;background:var(--ink);color:#fff;font-size:16px;line-height:26px;padding:0;}
+  .ma-astep{display:flex;align-items:center;gap:10px;padding:6px 2px;border-bottom:1px solid #eef0f3;font-size:16px;}
+  .ma-astep i{width:20px;height:20px;border:1.5px solid #9aa3ad;border-radius:5px;flex-shrink:0;}
+  .ma-astep span{flex:1;min-width:0;} .ma-astep button{border:0;background:none;color:var(--faint);font-size:22px;width:40px;height:36px;}
+  .m-in.need{border-color:#e8b44a;box-shadow:0 0 0 2px #e8b44a55;}
+  .ma-link{background:none;border:0;color:var(--muted);text-decoration:underline;font:inherit;font-size:14px;padding:6px;}
+  #mNewGo{flex:none;min-height:52px;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--gold);border-color:#c9952e;color:#1a1307;font-size:17px;}
+  .ma-add2 .m-in{flex:none;}
   .ma-sbtns .ma-btn{flex:none;}
   .ma-lwrap{flex:1;min-height:0;display:flex;flex-direction:column;background:#f3f4f6;}
   .ma-lhead{display:flex;gap:10px;align-items:center;padding:14px 16px 10px;}
@@ -5808,6 +5822,8 @@ const MI={
   pen:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/></svg>',
   pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
   share:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.4M8.2 13.2l7.6 4.4"/></svg>',
+  gal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.7"/><path d="M4 17l5-5 4 4 3-3 4 4"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   folder:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
   gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>',
   sync:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.6-4.5M4 4v3.5h3.5M4 13a8 8 0 0 0 14.6 4.5M20 20v-3.5h-3.5"/></svg>',
@@ -5976,23 +5992,48 @@ function mFocusCard(k,fromSwipe){   // bring the card up (unless the swipe alrea
   if(fromSwipe){ mFocusK=k; mFlashK=k; if(mHomeMap&&mHomeMap._draw) mHomeMap._draw(); clearTimeout(mFlashT); mFlashT=setTimeout(()=>{ mFlashK=null; },1600); }   // swiping: the map stays put, its dot flashes
   else mFocusDot(k);   // a tap: glide to it
   const a=mHomeActs().find(x=>mCardKey(x)===k); if(a) mWarmCards([a]); }
+/* + New action: photos (camera / gallery) on top, then the title and its sub-actions — any order, photos
+   optional. The draft survives popping out to the camera or gallery (and closing the sheet by mistake). */
+let mAddDraft=null, mCollect=null;
 function mShowAdd(){
   if(mRoBlock()) return;
-  mSheet('<div class="ma-shh"><b>Add</b></div><div class="ma-sbtns">'
-    +'<div style="display:flex;gap:8px"><input class="m-in" id="mNewAct" placeholder="New action" autocomplete="off" enterkeyhint="done" /><button class="ma-btn pri" id="mNewGo" type="button" style="flex:0 0 auto">Add</button></div>'
-    +'<button class="ma-btn" id="mCamNewBtn" type="button">'+MI.cam+'New action from a photo</button>'
-    +'<button class="ma-btn" id="mCamBtn" type="button">'+MI.cam+'Photo only (no action)</button>'
-    +'<button class="ma-btn" id="mUpBtn" type="button">'+MI.up+'Upload photos to the map</button>'
-    +'<div class="m-note" style="padding-top:4px">Tip: long-press the map to add an action at that spot.</div></div>');
-  const inp=document.getElementById("mNewAct");
-  const go=()=>{ const v=inp.value.trim(); if(!v){ inp.focus(); return; }
-    mMutate(()=>{ const p=mPend(); p.newActs=(p.newActs||[]).concat([{text:v,steps:[],done:false,u:mUid()}]); mPendSave(p); });
-    mCloseSheet(); mShowList(); mToast("Added “"+v+"”"); };
-  inp.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"){ e.preventDefault(); go(); } });
-  document.getElementById("mNewGo").addEventListener("click",go);
-  document.getElementById("mCamNewBtn").addEventListener("click",()=>{ mCloseSheet(); mTakePhoto({newAction:true}); });
-  document.getElementById("mCamBtn").addEventListener("click",()=>{ mCloseSheet(); mTakePhoto(null); });
-  document.getElementById("mUpBtn").addEventListener("click",()=>{ mCloseSheet(); mUpInput().click(); window.mPickT=Date.now(); });
+  const d=mAddDraft||(mAddDraft={t:"",steps:[],files:[]});
+  mSheet('<div class="ma-shh"><b>New action</b></div><div class="ma-add2">'
+    +'<div class="ma-tiles"><button class="ma-tile" id="mAddCam" type="button">'+MI.cam+'Take a photo</button><button class="ma-tile" id="mAddGal" type="button">'+MI.gal+'From gallery</button></div>'
+    +'<div class="ma-athumbs" id="mAddTh"></div>'
+    +'<input class="m-in" id="mNewAct" placeholder="What needs doing?" autocomplete="off" enterkeyhint="next" value="'+esc(d.t)+'" />'
+    +'<div id="mAddSteps"></div>'
+    +'<input class="m-in" id="mAddStep" placeholder="+ Add sub-action" autocomplete="off" enterkeyhint="next" />'
+    +'<button class="ma-btn pri" id="mNewGo" type="button">'+MI.check+'Create action</button>'
+    +'<button class="ma-link" id="mAddLoose" type="button">Add photos without an action</button></div>');
+  const inp=document.getElementById("mNewAct"), sin=document.getElementById("mAddStep");
+  const thumbs=()=>{ const el=document.getElementById("mAddTh"); if(!el) return;
+    el.innerHTML=d.files.map((f,i)=>'<span class="ma-ath" style="background-image:url(\''+f.url+'\')"><button type="button" data-i="'+i+'" aria-label="Remove photo">×</button></span>').join("");
+    el.querySelectorAll("button[data-i]").forEach(b=>b.addEventListener("click",()=>{ const f=d.files.splice(+b.dataset.i,1)[0]; if(f) URL.revokeObjectURL(f.url); thumbs(); })); };
+  const steps=()=>{ const el=document.getElementById("mAddSteps"); if(!el) return;
+    el.innerHTML=d.steps.map((t,i)=>'<div class="ma-astep"><i></i><span>'+esc(t)+'</span><button type="button" data-i="'+i+'" aria-label="Remove">×</button></div>').join("");
+    el.querySelectorAll("button[data-i]").forEach(b=>b.addEventListener("click",()=>{ d.steps.splice(+b.dataset.i,1); steps(); })); };
+  thumbs(); steps();
+  inp.addEventListener("input",()=>{ d.t=inp.value; });
+  inp.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"){ e.preventDefault(); if(inp.value.trim()) sin.focus(); } });   // Enter confirms the title, on to sub-actions
+  const addStep=()=>{ const v=sin.value.trim(); if(!v) return false; d.steps.push(v); sin.value=""; steps(); return true; };
+  sin.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"){ e.preventDefault(); addStep(); } });   // Enter adds it, ready for the next
+  const pick=(input)=>{ d.t=inp.value; mCollect=(fs,fixed)=>{ for(const f of fs) d.files.push({file:f,fixed,url:URL.createObjectURL(f)}); thumbs(); };
+    input.click(); window.mPickT=Date.now(); };
+  document.getElementById("mAddCam").addEventListener("click",()=>pick(mCamInput()));
+  document.getElementById("mAddGal").addEventListener("click",()=>pick(mUpInput()));
+  document.getElementById("mAddLoose").addEventListener("click",()=>{ mCloseSheet(); mCollect=null; mUpInput().click(); window.mPickT=Date.now(); });
+  document.getElementById("mNewGo").addEventListener("click",()=>{
+    addStep(); const v=inp.value.trim();
+    if(!v){ inp.placeholder="Name the action first"; inp.classList.add("need"); inp.focus(); return; }
+    const u=mUid(), cam=d.files.find(f=>f.fixed);
+    const loc=cam?cam.fixed:(!d.files.length&&mGeo?{lat:mGeo.lat,lng:mGeo.lng}:null);   // where the photo was taken, else where you stand
+    mMutate(()=>{ const p=mPend(); p.newActs=(p.newActs||[]).concat([{text:v,steps:d.steps.map(t=>({t,d:false,u:mUid()})),done:false,u,loc}]); mPendSave(p); });
+    const files=d.files.slice(); mAddDraft=null; mCloseSheet(); mShowList(); mToast("Added “"+v+"”");
+    for(const f of files.filter(x=>x.fixed)) mUploadPhotos([f.file],f.fixed,{au:u});   // camera shots: pinned where each was taken
+    const gal=files.filter(x=>!x.fixed).map(x=>x.file); if(gal.length) mUploadPhotos(gal,null,{au:u});
+    setTimeout(()=>files.forEach(f=>URL.revokeObjectURL(f.url)),60000); });
+  if(!d.t&&!d.files.length) setTimeout(()=>{ try{ inp.focus(); }catch(e){} },250);
 }
 function mInstalled(){ try{ return matchMedia("(display-mode: standalone)").matches||matchMedia("(display-mode: fullscreen)").matches||navigator.standalone===true; }catch(e){ return false; } }
 function mInstallRow(){ if(mInstalled()) return "";
@@ -6098,6 +6139,7 @@ function mCamInput(){
     if(!fs.length) return;
     const fixed=mGeo?{lat:mGeo.lat,lng:mGeo.lng}:null;   // where you are standing right now = where the photo was taken
     if(!fixed) mToast("No GPS fix yet \u2014 photo will place from your trail if possible",true);
+    if(mCollect){ const f=mCollect; mCollect=null; f(fs,fixed); return; }   // into the + New action draft
     let link=mCamLink; mCamLink=null;
     if(link&&link.newAction){   // "New action from a photo": name it, create it, link the shot to it
       const v=prompt("Name the new action for this photo:","");
@@ -6113,13 +6155,13 @@ function mTakePhoto(link){ if(mRoBlock()) return; mCamLink=link||null; mCamInput
 function mUpInput(){
   let el=document.getElementById("mUpFileG");
   if(el) return el;
-  el=document.createElement("input"); el.type="file"; el.multiple=true; el.id="mUpFileG"; el.style.display="none";
+  el=document.createElement("input"); el.type="file"; el.multiple=true; el.accept="image/*"; el.id="mUpFileG"; el.style.display="none";   // image/*: Android opens its photo picker (phone photos + Google Photos)
   document.body.appendChild(el);
   el.addEventListener("change",e=>{
     const all=Array.from(e.target.files||[]); e.target.value="";
     const fs=all.filter(f=>/^image\//i.test(f.type||"")||IMG_RE.test(f.name||""));
-    const b=document.getElementById("mUpBtn");
-    if(!fs.length){ if(all.length&&b){ b.textContent="Those weren't images \u2014 try again"; setTimeout(()=>{ const b2=document.getElementById("mUpBtn"); if(b2) b2.textContent="Upload photos to the map"; },2500); } return; }
+    if(!fs.length){ if(all.length) mToast("Those weren't images \u2014 try again"); return; }
+    if(mCollect){ const f=mCollect; mCollect=null; f(fs,null); return; }   // into the + New action draft
     mUploadPhotos(fs);
   });
   return el;
