@@ -741,23 +741,23 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-map{position:absolute;inset:0;background:#e9ecef;}
   .ma-fabs{position:absolute;top:14px;right:14px;z-index:500;display:flex;flex-direction:column;gap:10px;}
   .ma-nav{flex-shrink:0;display:flex;background:#fff;border-top:1px solid var(--line);padding:0 4px env(safe-area-inset-bottom);position:relative;z-index:700;}
-  .ma-nav button{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 2px 9px;background:none;border:0;border-radius:0;font:inherit;font-size:13px;font-weight:600;color:var(--muted);box-shadow:none;}
+  .ma-nav button{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 2px 9px;background:none;border:0;border-radius:0;font:inherit;font-size:12px;font-weight:600;color:var(--muted);box-shadow:none;}
   .ma-nav button span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .ma-nav button svg{width:24px;height:24px;flex-shrink:0;}
   .ma-nav button.on{color:var(--ink);box-shadow:inset 0 3px 0 var(--gold);}
-  .ma-flt{display:flex;flex-wrap:wrap;align-items:center;gap:8px;}
-  .ma-mapwrap .ma-flt{position:absolute;z-index:600;top:calc(12px + env(safe-area-inset-top));left:12px;right:74px;}
-  .ma-lwrap .ma-flt{padding:calc(12px + env(safe-area-inset-top)) 16px 0;}
-  .ma-flt button,.ma-cs{height:40px;box-sizing:border-box;display:flex;align-items:center;gap:7px;padding:0 13px;border-radius:20px;background:#fff;border:1.5px solid var(--line);font:inherit;font-size:15px;font-weight:600;color:var(--ink);white-space:nowrap;}
-  .ma-mapwrap .ma-flt button,.ma-mapwrap .ma-cs{box-shadow:0 2px 8px #1d243020;}
-  .ma-flt button span{color:var(--muted);font-weight:500;}
-  .ma-flt button.on{background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);}
-  .ma-flt .ma-sym{width:14px;height:14px;}
-  .ma-flt .ma-ref{width:40px;padding:0;justify-content:center;margin-left:auto;}
-  .ma-mapwrap .ma-flt .ma-refmap{position:absolute;right:-60px;top:61px;width:53px;height:48px;border-radius:12px;}   /* the column under the north arrow */
-  .ma-flt .ma-ref svg{width:20px;height:20px;}
-  .ma-cs{font-size:14px;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;}
-  .ma-cs.warn{color:#9a5b00;border-color:#e8b44a;}
+  .ma-top2{flex-shrink:0;display:flex;align-items:center;gap:12px;background:#fff;border-bottom:1px solid var(--line);padding:calc(10px + env(safe-area-inset-top)) 14px 10px;position:relative;z-index:700;}
+  .ma-pname{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px;background:none;border:0;padding:0;font:inherit;text-align:left;color:var(--ink);}
+  .ma-pname .nm{font-size:22px;font-weight:800;line-height:1.15;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;}
+  .ma-pname .nm i{font-style:normal;color:var(--faint);font-size:14px;font-weight:400;margin-left:5px;}
+  .ma-cs{font-size:13px;color:var(--muted);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ma-cs.warn{color:#9a5b00;}
+  .ma-stk{display:flex;flex-direction:column;gap:6px;flex-shrink:0;}
+  .ma-stk button{height:38px;min-width:118px;box-sizing:border-box;display:flex;align-items:center;gap:7px;padding:0 12px;border-radius:19px;background:#fff;border:1.5px solid var(--line);font:inherit;font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;}
+  .ma-stk button span{margin-left:auto;padding-left:6px;color:var(--muted);font-weight:500;}
+  .ma-stk button.on{background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);}
+  .ma-stk .ma-sym{width:13px;height:13px;}
+  .ma-nav .ma-navadd{flex:0 0 50px;height:50px;align-self:center;margin:0 6px;padding:0;border-radius:50%;background:var(--gold);color:#1a1307;box-shadow:inset 0 0 0 1.5px #c9952e;justify-content:center;}
+  .ma-nav .ma-navadd svg{width:28px;height:28px;}
   .ma-ref.spin svg,.ma-ptr.spin svg{animation:maspin .9s linear infinite;}
   @keyframes maspin{to{transform:rotate(360deg);}}
   .ma-ptr{height:0;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--muted);font-size:14px;font-weight:600;transition:height .2s;flex-shrink:0;}
@@ -765,14 +765,11 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-ptr svg{width:20px;height:20px;}
   .ma-ptr.ready{color:#7a5a12;}
   .ma-north{position:absolute;top:calc(12px + env(safe-area-inset-top));right:14px;z-index:500;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:6px 10px 4px;line-height:0;box-shadow:0 2px 8px #1d243020;pointer-events:none;}
-  .ma-ign{position:absolute;left:14px;bottom:16px;z-index:500;min-height:56px;max-width:calc(100% - 190px);box-sizing:border-box;padding:6px 14px;border-radius:12px;background:#fff;border:1.5px solid var(--line);box-shadow:0 2px 10px #1d243020;font:inherit;font-size:16px;font-weight:600;line-height:1.15;color:var(--ink);text-align:left;}
+  .ma-ign{position:absolute;left:14px;bottom:16px;z-index:500;min-height:56px;width:max-content;max-width:62%;box-sizing:border-box;padding:6px 14px;border-radius:12px;background:#fff;border:1.5px solid var(--line);box-shadow:0 2px 10px #1d243020;font:inherit;font-size:16px;font-weight:600;line-height:1.15;color:var(--ink);text-align:left;}
   .ma-ign.on{background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold),0 2px 10px #1d243020;}
   .ma-ign.up{bottom:146px;}
-  @media (max-width:300px){ .ma-ign{left:auto;right:14px;max-width:calc(100% - 28px);bottom:84px;} .ma-ign.up{bottom:214px;} }   /* big app sizes: above Add, so it never squeezes into a narrow box */
   .ma-fab{width:52px;height:52px;box-sizing:border-box;border-radius:12px;background:#fff;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink);box-shadow:0 2px 8px #1d243020;padding:0;font:inherit;flex-shrink:0;}
   .ma-fab svg{width:24px;height:24px;}
-  .ma-add{position:absolute;right:14px;bottom:16px;z-index:500;height:56px;padding:0 20px;border-radius:12px;background:#fff;border:1.5px solid var(--line);box-shadow:0 2px 10px #1d243020;font:inherit;font-size:18px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:8px;}
-  .ma-add.up{bottom:146px;}
   .ma-peek{position:absolute;left:12px;right:12px;bottom:16px;z-index:500;background:#fff;border:0;border-radius:16px;box-shadow:0 4px 18px #1d243033;padding:14px;display:flex;align-items:center;gap:14px;text-align:left;font:inherit;color:var(--ink);box-sizing:border-box;}
   .ma-peek .ma-th{width:84px;height:84px;border-radius:10px;}
   .ma-peek .t{font-size:18px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
@@ -871,8 +868,10 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
     .ma-show .sw{display:none;} .ma-show .sn{display:inline;}
     .ma-show button{font-size:16px;gap:8px;}
     .ma-chips .ma-chip,.ma-strow .ma-chip{padding:0 12px;}
-    .ma-flt button,.ma-cs{font-size:14px;padding:0 10px;gap:6px;}
-    .ma-nav button{font-size:12px;}
+    .ma-stk button{min-width:0;font-size:13px;padding:0 10px;gap:6px;}
+    .ma-pname .nm{font-size:19px;}
+    .ma-nav button{font-size:10.5px;padding-left:0;padding-right:0;}
+    .ma-nav .ma-navadd{flex-basis:44px;height:44px;margin:0 3px;}
     .ma-strow .ma-dist{margin-left:0;flex:0 0 100%;justify-content:flex-start;height:32px;}
   }
   body.mobile .m-in{font-size:17px;padding:12px 14px;border-radius:12px;}
@@ -5691,26 +5690,29 @@ function mMetaDiv(a){ const m=mMeta(a); return m?'<div class="m">'+m+'</div>':''
 function mThumbOf(a){ const p=(a.photos||[]).find(x=>x.img); return p?'<div class="ma-th" style="background-image:url(\''+p.img+'\')"></div>':''; }
 function mActLine(a){ return (a._new?'':'<span class="m-anum">'+actNo(a)+'</span> ')+esc(mTitle(a)); }
 function mStatus(a){ return mDone(a)?"done":mHold(a)?"hold":"open"; }
-/* Home screens (map / list): no header. The filters, sync state and Refresh sit at the top of the
-   map or list; Project · Map · Actions · Settings live in the bar along the bottom. */
-function mFltHtml(onMap){
+/* Home screens (map / list): a slim top strip (project name → project menu, On hold / Done stacked
+   beside it) and the bar along the bottom: Map · Actions · + · Refresh · Settings. */
+function mTopStrip(){
   let nh=0,nd=0; for(const a of mHomeActs()){ if(mDone(a)) nd++; else if(mHold(a)) nh++; }
   const st=mHeadSub();
-  return '<div class="ma-flt"><button type="button" id="mShowH" class="'+(mShowHold?"on":"")+'" aria-pressed="'+mShowHold+'"><i class="ma-sym hold"></i>On hold <span>'+nh+'</span></button>'
-    +'<button type="button" id="mShowD" class="'+(mShowDone?"on":"")+'" aria-pressed="'+mShowDone+'"><i class="ma-sym done"></i>Done <span>'+nd+'</span></button>'
-    +'<span class="ma-ps ma-cs" id="mSendNote"'+(st?'':' style="display:none"')+'>'+esc(st)+'</span>'
-    +'<button type="button" class="ma-ref'+(onMap?' ma-refmap':'')+'" id="mRefB" aria-label="Refresh" title="Refresh: send your changes, get the latest actions and the newest app">'+MI.sync+'</button></div>';   // on the map it sits under the north arrow
+  return '<div class="ma-top2"><button type="button" class="ma-pname" id="mProjB"><span class="nm">'+esc(mPack.project||"Project")+'<i>▾</i></span>'
+    +'<span class="ma-ps ma-cs" id="mSendNote"'+(st?'':' style="display:none"')+'>'+esc(st)+'</span></button>'
+    +'<div class="ma-stk"><button type="button" id="mShowH" class="'+(mShowHold?"on":"")+'" aria-pressed="'+mShowHold+'"><i class="ma-sym hold"></i>On hold<span>'+nh+'</span></button>'
+    +'<button type="button" id="mShowD" class="'+(mShowDone?"on":"")+'" aria-pressed="'+mShowDone+'"><i class="ma-sym done"></i>Done<span>'+nd+'</span></button></div></div>';
 }
 function mWireNav(inDetail){   // the bar stays on the action screen too: Map / Actions go back to that view
   const go=t=>{ if(!inDetail&&t===mTab) return; mSetTab(t); if(inDetail) mExitDetail(); else mShowList(); };
   document.getElementById("mNavM").addEventListener("click",()=>go("map"));
   document.getElementById("mNavL").addEventListener("click",()=>go("list"));
-  document.getElementById("mNavP").addEventListener("click",()=>mShowMenu("project"));
+  document.getElementById("mAddB").addEventListener("click",mShowAdd);
+  document.getElementById("mRefB").addEventListener("click",mRefresh);
   document.getElementById("mNavS").addEventListener("click",()=>mShowMenu("settings"));
 }
 function mNavHtml(on){
-  const tab=(id,ic,label,isOn)=>'<button type="button" id="'+id+'" class="'+(isOn?"on":"")+'"'+(isOn?' aria-current="page"':'')+'>'+MI[ic]+'<span>'+label+'</span></button>';
-  return '<nav class="ma-nav">'+tab("mNavP","folder","Project")+tab("mNavM","map","Map",on==="map")+tab("mNavL","list","Actions",on==="list")+tab("mNavS","gear","Settings")+'</nav>';
+  const tab=(id,ic,label,isOn,cls)=>'<button type="button" id="'+id+'" class="'+(isOn?"on":"")+(cls?" "+cls:"")+'"'+(isOn?' aria-current="page"':'')+'>'+MI[ic]+'<span>'+label+'</span></button>';
+  return '<nav class="ma-nav">'+tab("mNavM","map","Map",on==="map")+tab("mNavL","list","Actions",on==="list")
+    +'<button type="button" class="ma-navadd" id="mAddB" aria-label="Add">'+MI.plus+'</button>'
+    +tab("mRefB","sync","Refresh",false,"ma-ref"+(mRefBusy?" spin":""))+tab("mNavS","gear","Settings")+'</nav>';
 }
 /* bottom sheets: one at a time, dropped by a tap on the dimmed map/list behind them */
 function mSheet(html){ mCloseSheet(); if(mToastEl&&!mUpBusy) mToastEl.style.display="none"; const root=document.getElementById("mroot");
@@ -5725,21 +5727,19 @@ function mShowList(){
   const acts=mHomeActs();
   if(mTab==="map"){
     const pk=mPeekAct(acts);
-    mScr('<div class="ma-mapwrap" id="mList"><div class="ma-map" id="mHomeMap"></div>'+mFltHtml(true)
+    mScr(mTopStrip()+'<div class="ma-mapwrap" id="mList"><div class="ma-map" id="mHomeMap"></div>'
       +'<div class="ma-north" title="North is up">'+NORTH_SVG(30,36)+'</div>'
       +'<button class="ma-ign'+(ignoreLoc?" on":"")+(pk?" up":"")+'" id="mIgnB" type="button" aria-pressed="'+ignoreLoc+'" title="Hide YOU ARE HERE, and zoom to the actions only (never to where you are)">Ignore my location</button>'
-      +'<button class="ma-add'+(pk?" up":"")+'" id="mAddB" type="button">'+MI.plus+'Add</button>'
       +(pk?'<button class="ma-peek" id="mPeek" type="button" data-k="'+mCardKey(pk)+'">'+mThumbOf(pk)+'<div class="ma-rt"><div class="t">'+mActLine(pk)+'</div>'+mMetaDiv(pk)+'</div><span class="ma-chev">›</span></button>':'')+'</div>'+mNavHtml("map"));
   } else {
     const shown=acts.filter(a=>{ const st=mStatus(a); return st==="open"||(st==="hold"&&mShowHold)||(st==="done"&&mShowDone); });
-    mScr('<div class="ma-lwrap"><div class="ma-ptr" id="mPtr">'+MI.sync+'<span>Pull to refresh</span></div>'+mFltHtml()+'<div class="ma-lhead"><label class="ma-search">'+MI.search+'<input id="mQ" type="search" placeholder="Search actions" autocomplete="off" value="'+esc(mLQ)+'" /></label><button class="ma-fab" id="mAddB" type="button" aria-label="Add">'+MI.plus+'</button></div>'
+    mScr(mTopStrip()+'<div class="ma-lwrap"><div class="ma-ptr" id="mPtr">'+MI.sync+'<span>Pull to refresh</span></div><div class="ma-lhead"><label class="ma-search">'+MI.search+'<input id="mQ" type="search" placeholder="Search actions" autocomplete="off" value="'+esc(mLQ)+'" /></label></div>'
       +'<div class="ma-list" id="mList">'+(shown.length?shown.map(a=>{ const done=mDone(a), hold=!done&&mHold(a);
           return '<div class="m-card'+(done?' done':'')+(hold?' hold':'')+'" data-k="'+mCardKey(a)+'" data-s="'+esc(((a._new?'':actNo(a)+' ')+mTitle(a)).toLowerCase())+'"><div class="ma-rt"><div class="t">'+mActLine(a)+'</div>'+mMetaDiv(a)+'</div>'+mThumbOf(a)+'</div>'; }).join("")
         :'<div class="ma-empty">No open actions.</div>')+'</div></div>'+mNavHtml("list"));
   }
   mWireNav(false);
-  document.getElementById("mRefB").addEventListener("click",mRefresh);
-  document.getElementById("mAddB").addEventListener("click",mShowAdd);
+  document.getElementById("mProjB").addEventListener("click",()=>mShowMenu("project"));
   document.getElementById("mShowH").addEventListener("click",()=>{ mShowHold=!mShowHold; try{ localStorage.setItem("pmMHold",mShowHold?"1":"0"); }catch(e){} mShowList(); });   // one setting for the map and the list
   document.getElementById("mShowD").addEventListener("click",()=>{ mShowDone=!mShowDone; try{ localStorage.setItem("pmMDone",mShowDone?"1":"0"); }catch(e){} mShowList(); });
   if(mTab==="map"){
