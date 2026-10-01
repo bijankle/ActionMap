@@ -697,7 +697,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   /* ---- mobile field UI (phone-sized touch screens get this instead of the desktop app) ---- */
   #mroot{display:none;position:fixed;inset:0;z-index:9000;background:#f3f4f6;overflow:hidden;font-family:var(--font);}
   body.mobile #mroot{display:block;}
-  body.mobile>*:not(#mroot){display:none!important;}
+  body.mobile>*:not(#mroot):not(#mVw){display:none!important;}
   .m-scr{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;background:#fff;}
   .m-head{background:#fff;border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
   .m-brand{font-size:15px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px;}
@@ -892,8 +892,22 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-fl button{width:50px;height:50px;border-radius:50%;border:0;padding:0;background:#ffffffee;color:var(--ink);box-shadow:0 2px 8px #0005;display:flex;align-items:center;justify-content:center;}
   .ma-fl button.g{background:var(--gold);color:#1a1307;} .ma-fl svg{width:24px;height:24px;}
   .ma-fl button.busy{opacity:.6;}
-  .ma-car0{background:none;aspect-ratio:auto;padding:0 16px;margin-top:16px;} .ma-car0 .ma-first{margin:0;width:100%;height:150px;box-sizing:border-box;justify-content:flex-start;padding-left:20px;}
-  .ma-car0 .ma-fl{flex-direction:row;right:30px;bottom:auto;top:50px;}   /* no photos yet: the three sit in a row inside the empty box */
+  .ma-car0{background:none;aspect-ratio:auto;padding:0 16px;margin-top:16px;} .ma-car0 .ma-first{margin:0;width:100%;height:150px;box-sizing:border-box;align-items:flex-start;padding-top:26px;}
+  .ma-car0 .ma-fl{flex-direction:row;right:30px;bottom:14px;}   /* no photos yet: the buttons sit along the bottom of the empty box */
+  .ma-pinb{position:absolute;left:12px;bottom:12px;z-index:5;width:50px;height:50px;border-radius:50%;border:0;padding:0;background:#ffffffee;color:var(--ink);box-shadow:0 2px 8px #0005;display:flex;align-items:center;justify-content:center;}
+  .ma-pinb svg{width:24px;height:24px;} .ma-car0 .ma-pinb{left:30px;bottom:14px;border:1.5px solid var(--line);box-shadow:none;}
+  /* full-screen photo viewer */
+  .mvw{position:fixed;inset:0;z-index:9700;background:#000;color:#fff;touch-action:none;}
+  .mvw-hs{position:absolute;inset:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;}
+  .mvw-hs::-webkit-scrollbar{display:none;}
+  .mvw-hs .m-hpage{position:relative;flex:0 0 100%;height:100%;scroll-snap-align:start;overflow:hidden;}
+  .mvw-hs .m-hpage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
+  .mvw-top{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:12px;padding:calc(12px + env(safe-area-inset-top)) 14px 24px;background:linear-gradient(#000b,#0000);pointer-events:none;}
+  .mvw-top b{flex:1;font-size:17px;font-weight:600;}
+  .mvw-top button{pointer-events:auto;width:46px;height:46px;border-radius:23px;border:0;padding:0;background:#ffffff26;color:#fff;display:flex;align-items:center;justify-content:center;}
+  .mvw-top svg{width:24px;height:24px;}
+  .mvw-bot{position:absolute;left:0;right:0;bottom:0;padding:30px 18px calc(16px + env(safe-area-inset-bottom));background:linear-gradient(#0000,#000c);font-size:16px;line-height:1.45;pointer-events:none;}
+  .mvw-bot .dots{display:flex;gap:6px;justify-content:center;margin-top:12px;} .mvw-bot .dots i{width:7px;height:7px;border-radius:4px;background:#fff6;} .mvw-bot .dots i.on{width:18px;background:#fff;}
   .ma-bar{flex-shrink:0;display:flex;gap:10px;padding:12px 16px 12px;border-top:1px solid var(--line);background:#fff;}
   .ma-btn{box-sizing:border-box;height:56px;border-radius:12px;background:#fff;border:1.5px solid var(--line);font:inherit;font-size:17px;font-weight:600;color:var(--ink);display:flex;align-items:center;justify-content:center;gap:8px;flex:1;padding:0 14px;white-space:nowrap;}
   .ma-btn.pri{flex:1.6;background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);font-weight:700;}
@@ -5810,6 +5824,7 @@ function mScrBackHtml(){ return mPack?'<button class="ma-back" id="mScrBack" typ
 function mWireScrBack(){ const b=document.getElementById("mScrBack"); if(b) b.addEventListener("click",()=>mShowList()); }
 window.addEventListener("popstate",()=>{ if(!document.body.classList.contains("mobile")) return;
   if(mBackPending){ mBackPending--; mAfterBack.splice(0).forEach(f=>f()); return; }   // our own quiet pop
+  if(document.getElementById("mVw")){ mVwHist=false; mCloseViewer(true); return; }   // Back closes the photo viewer first
   if(document.getElementById("mSheet")){ mSheetHist=false; mDropSheet(); return; }
   if(mScrHist){ mScrHist=null; mShowList(); return; }
   if(mNavDepth){ mNavDepth=false; mShowList(); } });
@@ -6535,13 +6550,13 @@ function mShowDetail(ai,keepScroll){
     +'<div class="ma-dbody" id="mSnap">'
     +'<div class="ma-dpad"><div class="ma-title">'+mActLine(a)+'</div>'
     +'<div class="ma-strow" id="mState">'+[["open","Open"],["hold","On hold"],["done","Done"]].map(([k,t])=>'<button type="button" class="ma-chip'+(stNow()===k?" on":"")+'" data-s="'+k+'">'+t+'</button>').join("")
-      +(onMap?'<button type="button" class="ma-dist" id="mDistB">'+MI.pin+'Show on map</button>':'')+'</div></div>'
+      +'</div></div>'
     +(photos.length?'<div class="ma-car"><div class="ma-hs" id="mHsnap">'+photos.map(p=>'<div class="m-hpage">'+(p.img?'<img src="'+p.img+'" alt="'+esc(p.name||"photo")+'" />':'')+'</div>').join("")+'</div>'
-        +(photos.length>1?'<div class="ma-cnt" id="mCnt">1 / '+photos.length+'</div>':'')+'<div class="ma-fl"><button type="button" id="mGalAct" aria-label="Add photos from the gallery">'+MI.gal+'</button><button type="button" id="mCamAct2" aria-label="Take a photo">'+MI.cam+'</button><button type="button" class="g" id="mCopyB" aria-label="Share">'+MI.share+'</button></div>'+'</div>'
+        +(photos.length>1?'<div class="ma-cnt" id="mCnt">1 / '+photos.length+'</div>':'')+(onMap?'<button type="button" class="ma-pinb" id="mDistB" aria-label="Show on map">'+MI.pin+'</button>':'')+'<div class="ma-fl"><button type="button" id="mGalAct" aria-label="Add photos from the gallery">'+MI.gal+'</button><button type="button" id="mCamAct2" aria-label="Take a photo">'+MI.cam+'</button><button type="button" class="g" id="mCopyB" aria-label="Share">'+MI.share+'</button></div>'+'</div>'
         +'<div class="ma-note"><textarea id="mNin" rows="1" placeholder="Add a note about this photo" enterkeyhint="done"></textarea>'+MI.pen+'</div>'
         +'<div class="ma-thumbs" id="mThumbs">'+(photos.length>1?photos.map((p,i)=>'<button type="button" class="tb'+(i?'':' cur')+'" data-i="'+i+'" style="background-image:url(\''+(p.img||'')+'\')" aria-label="Photo '+(i+1)+'"></button>').join(""):'')
         +'</div>'
-      :'<div class="ma-car ma-car0"><div class="ma-first">'+MI.cam+'No photos yet</div>'+'<div class="ma-fl"><button type="button" id="mGalAct" aria-label="Add photos from the gallery">'+MI.gal+'</button><button type="button" id="mCamAct2" aria-label="Take a photo">'+MI.cam+'</button><button type="button" class="g" id="mCopyB" aria-label="Share">'+MI.share+'</button></div>'+'</div>')
+      :'<div class="ma-car ma-car0"><div class="ma-first">'+MI.cam+'No photos yet</div>'+(onMap?'<button type="button" class="ma-pinb" id="mDistB" aria-label="Show on map">'+MI.pin+'</button>':'')+'<div class="ma-fl"><button type="button" id="mGalAct" aria-label="Add photos from the gallery">'+MI.gal+'</button><button type="button" id="mCamAct2" aria-label="Take a photo">'+MI.cam+'</button><button type="button" class="g" id="mCopyB" aria-label="Share">'+MI.share+'</button></div>'+'</div>')
     +'<div class="ma-sech"><b>Checklist</b><span id="mStCnt"></span></div><div class="ma-cl2" id="mSub2"></div>'
     +'</div>'
     +mNavHtml(mTab));
@@ -6582,6 +6597,7 @@ function mShowDetail(ai,keepScroll){
       if(th) th.querySelectorAll(".tb[data-i]").forEach(b=>b.classList.toggle("cur",Number(b.dataset.i)===i)); }); });
     if(th) th.querySelectorAll(".tb[data-i]").forEach(b=>b.addEventListener("click",()=>hsEl.scrollTo({left:Number(b.dataset.i)*hsEl.clientWidth,behavior:"smooth"})));
     mWirePinch(hsEl);
+    hsEl.addEventListener("click",()=>{ const i=Math.round(hsEl.scrollLeft/Math.max(1,hsEl.clientWidth)); ninCommit(); mOpenViewer(a,photos,i,j=>{ hsEl.scrollLeft=j*hsEl.clientWidth; }); });   // a tap opens the full-screen viewer
   }
   /* checklist: tick the box, tap the text to edit it, × deletes (undoable), drag the letter to reorder */
   const sub2=document.getElementById("mSub2"), stCnt=document.getElementById("mStCnt");
@@ -6673,6 +6689,38 @@ async function mShareCard(a,btn){
 /* Pinch-zoom and pan on the action's photos. The transform lives on the IMG alone. While zoomed,
    one-finger pans move the image; only a pan that pushes PAST the image edge is released to the
    photo strip, so the view never springs back mid-photo. */
+/* Full-screen photo viewer: black, ✕ / counter / share on top, the photo's note at the bottom; swipe for the
+   next photo, pinch to zoom, swipe down (or Back, or ✕) to close. */
+let mVwHist=false;
+function mOpenViewer(a,photos,i,onClose){
+  mCloseViewer(true);
+  const X='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  const note=p=>{ const pend=p?mPn(p.id):null; return p?((pend!=null)?pend:(p.note||"")):""; };
+  const el=document.createElement("div"); el.className="mvw"; el.id="mVw";
+  el.innerHTML='<div class="mvw-hs" id="mVwHs">'+photos.map(p=>'<div class="m-hpage">'+(p.img?'<img src="'+p.img+'" alt="'+esc(p.name||"photo")+'" />':'')+'</div>').join("")+'</div>'
+    +'<div class="mvw-top"><button type="button" id="mVwX" aria-label="Close">'+X+'</button><b id="mVwN"></b><button type="button" id="mVwSh" aria-label="Share">'+MI.share+'</button></div>'
+    +'<div class="mvw-bot"><div id="mVwNote"></div>'+(photos.length>1?'<div class="dots">'+photos.map(()=>'<i></i>').join("")+'</div>':'')+'</div>';
+  document.body.appendChild(el); el._onClose=onClose;
+  if(!mVwHist){ mVwHist=true; mPush({m:"vw"}); }
+  const hs=el.querySelector("#mVwHs");
+  const show=j=>{ el._i=j; el.querySelector("#mVwN").textContent=photos.length>1?(j+1)+" / "+photos.length:"";
+    el.querySelector("#mVwNote").textContent=note(photos[j]); el.querySelectorAll(".dots i").forEach((d,k)=>d.classList.toggle("on",k===j)); };
+  requestAnimationFrame(()=>{ hs.scrollLeft=i*hs.clientWidth; show(i); });
+  let fr=0; hs.addEventListener("scroll",()=>{ if(fr) return; fr=requestAnimationFrame(()=>{ fr=0; const j=Math.round(hs.scrollLeft/Math.max(1,hs.clientWidth)); if(j!==el._i) show(j); }); });
+  mWirePinch(hs);
+  el.querySelector("#mVwX").addEventListener("click",()=>mCloseViewer());
+  el.querySelector("#mVwSh").addEventListener("click",e=>mShareCard(a,e.currentTarget));
+  let sy=null,sx=0,dy=0;   // swipe down to close (only when the photo isn't zoomed)
+  el.addEventListener("touchstart",e=>{ const img=hs.children[el._i]&&hs.children[el._i].querySelector("img");
+    sy=(e.touches.length===1&&!(img&&img.style.transform))?e.touches[0].clientY:null; sx=e.touches[0]?e.touches[0].clientX:0; dy=0; },{passive:true});
+  el.addEventListener("touchmove",e=>{ if(sy==null) return; dy=e.touches[0].clientY-sy; const dx=e.touches[0].clientX-sx;
+    if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>12){ sy=null; el.style.transform=""; el.style.opacity=""; return; }
+    if(dy>0){ el.style.transform="translateY("+dy+"px)"; el.style.opacity=String(Math.max(.35,1-dy/500)); } },{passive:true});
+  el.addEventListener("touchend",()=>{ if(sy==null) return; sy=null; if(dy>110) mCloseViewer(); else { el.style.transform=""; el.style.opacity=""; } });
+}
+function mCloseViewer(quiet){ const el=document.getElementById("mVw"); if(!el) return;
+  try{ if(el._onClose) el._onClose(el._i||0); }catch(e){} el.remove();
+  if(!quiet&&mVwHist){ mVwHist=false; mPopQuiet(); } }
 function mWirePinch(hs){
   if(!hs) return;
   hs.querySelectorAll(".m-hpage").forEach(page=>{
