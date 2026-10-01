@@ -2319,9 +2319,14 @@ async function ghPutFile(cfg,path,text,msg,retried){
 /* Shared JSON files (uploads.json, changes.json) are written by BOTH devices. Every update is a
    read-modify-write against the version we read: GitHub rejects the write (409/422) if the other
    side changed it in between, and we re-read and re-apply — nothing is ever silently overwritten. */
-async function ghReadJson(cfg,path){
-  const r=await fetch("https://api.github.com/repos/"+cfg.repo+"/contents/"+path+"?t="+Date.now(),{cache:"no-store",headers:ghHeaders(cfg.token)});
-  if(r.status===404) return {obj:null,sha:null};
+const _pollRd=new Map();   // path -> {etag,obj,sha,missAt,misses}: polling reads are free when nothing changed
+async function ghReadJson(cfg,path,poll){
+  const pc=poll?_pollRd.get(cfg.repo+"/"+path):null;
+  if(pc&&pc.missAt&&Date.now()-pc.missAt<Math.min(300000,15000*Math.pow(2,pc.misses-1))) return {obj:null,sha:null};   // missing file: look less and less often
+  const hd=ghHeaders(cfg.token); if(pc&&pc.etag) hd["If-None-Match"]=pc.etag;
+  const r=await fetch("https://api.github.com/repos/"+cfg.repo+"/contents/"+path+(poll?"":"?t="+Date.now()),{cache:"no-store",headers:hd});
+  if(r.status===304&&pc) return {obj:pc.obj==null?null:JSON.parse(JSON.stringify(pc.obj)),sha:pc.sha};   // unchanged — doesn't count against the hourly limit
+  if(r.status===404){ if(poll){ const o=_pollRd.get(cfg.repo+"/"+path)||{}; _pollRd.set(cfg.repo+"/"+path,{missAt:Date.now(),misses:(o.misses||0)+1}); } return {obj:null,sha:null}; }
   if(!r.ok) throw new Error("GitHub says "+r.status+" reading "+path);
   const j=await r.json();
   let b64=String(j.content||"");
@@ -2331,6 +2336,7 @@ async function ghReadJson(cfg,path){
     b64=String((await br.json()).content||""); }
   let obj=null; try{ obj=JSON.parse(decodeURIComponent(escape(atob(b64.replace(/\s/g,""))))); }
   catch(e){ if(j.size) throw new Error("Couldn\u2019t read "+path+" \u2014 left untouched"); }   // unreadable is NOT "empty": never let a writer replace it
+  if(poll) _pollRd.set(cfg.repo+"/"+path,{etag:r.headers.get("etag"),obj,sha:j.sha||null});
   return {obj,sha:j.sha||null};
 }
 async function ghUpdateJson(cfg,path,mutate,msg){   // mutate(current|null) -> new object, or null to leave the file alone
@@ -2338,7 +2344,7 @@ async function ghUpdateJson(cfg,path,mutate,msg){   // mutate(current|null) -> n
     const {obj,sha}=await ghReadJson(cfg,path);
     const next=mutate(obj);
     if(next==null) return false;
-    const body={message:msg,content:btoa(unescape(encodeURIComponent(JSON.stringify(next))))}; if(sha) body.sha=sha;
+    const body={message:msg,content:btoa(unescape(encodeURIComponent(JSON.stringify(next))))}; if(sha) body.sha=sha; _pollRd.delete(cfg.repo+"/"+path);
     const r=await fetch("https://api.github.com/repos/"+cfg.repo+"/contents/"+path,{method:"PUT",headers:ghHeaders(cfg.token),body:JSON.stringify(body)});
     if(r.ok) return true;
     if(r.status===409||r.status===422){ await new Promise(res=>setTimeout(res,400+Math.random()*900)); continue; }   // the other device wrote first: re-read, re-apply
@@ -2718,11 +2724,14 @@ async function thumbWorker(){
   _thRun--;
 }
 const _fullP=new Map();
+const FULL_KEEP=120;   // full-size photos kept on this device (newest used); thumbnails are kept regardless
+function fullCacheNote(key){ try{ let ks=JSON.parse(localStorage.getItem("pmFuKeys")||"[]").filter(k=>k!==key); ks.push(key);
+  while(ks.length>FULL_KEEP){ const old=ks.shift(); idbDel(old).catch(()=>{}); } localStorage.setItem("pmFuKeys",JSON.stringify(ks)); }catch(e){} }
 function getFullBlob(p){   // one download per photo however many things ask at once; then it's on this device
   if(!p||!p.h) return Promise.resolve(null);
   const h=p.h; if(_fullP.has(h)) return _fullP.get(h);
   const pr=(async()=>{ const key="fu:"+h; let b=null; try{ b=await idbGet(key); }catch(e){}
-    if(!b){ b=await repoGetImage("photos/"+h+".jpg"); if(b) idbSet(key,b).catch(()=>{}); }
+    if(!b){ b=await repoGetImage("photos/"+h+".jpg"); if(b){ idbSet(key,b).catch(()=>{}); fullCacheNote(key); } }
     return b; })().finally(()=>_fullP.delete(h));
   _fullP.set(h,pr); return pr;
 }
@@ -2761,8 +2770,10 @@ async function renditionsFor(p){   // best source: the original file; failing th
    Each waits in this device's storage until it's safely uploaded, so closing the tab loses nothing. */
 let _upBusy=false;
 function upQueueKey(p){ if(!p._qk) p._qk=newUid(); return "upq:"+onRepo()+"|"+ON.pid+"|"+p._qk; }
+let _upT=null, _upFails=0;
 async function pumpUploads(){
   if(!canEdit()||_upBusy) return;
+  clearTimeout(_upT);
   const todo=photos.filter(p=>!p.h&&!p._upDead); if(!todo.length) return;
   _upBusy=true; renderSaveStatus();
   try{
@@ -2782,8 +2793,10 @@ async function pumpUploads(){
         else { p.h=u.h; if(!p.added) p.added=Date.now(); p.file=null; }
         if(p._qk) idbDel("upq:"+onRepo()+"|"+ON.pid+"|"+p._qk).catch(()=>{}); }
       persistState(); }
-  }catch(e){ ON.err=e; console.warn("photo upload paused",e); setTimeout(pumpUploads,30000); }
-  finally{ _upBusy=false; renderSaveStatus(); if(photos.some(p=>!p.h&&!p._upDead)&&canEdit()) setTimeout(pumpUploads,1500); }
+    _upFails=0;
+  }catch(e){ ON.err=e; _upFails++; console.warn("photo upload paused",e); }
+  finally{ _upBusy=false; renderSaveStatus();
+    if(photos.some(p=>!p.h&&!p._upDead)&&canEdit()){ clearTimeout(_upT); _upT=setTimeout(pumpUploads,_upFails?Math.min(600000,30000*Math.pow(2,_upFails-1)):1500); } }   // one timer: 1.5 s between batches, 30 s → 10 min after failures
 }
 function onPhotoMeta(p){ const byId=new Map(actions.map(a=>[a.id,a]));
   return {name:p.name,size:p.size,lat:p.lat,lng:p.lng,time:p.time,dir:p.dir,alt:p.alt,noGps:!!p.noGps,adhoc:!!p.adhoc,note:p.note||"",tags:virtPaths(p).slice(),acts:(p.acts||[]).map(id=>byId.get(id)).filter(Boolean).map(a=>a.u),repoPath:p.repoPath||null,pendFu:p.pendFu||null,qk:p._qk}; }
@@ -3074,21 +3087,27 @@ async function publishPackImages(cfg,pack,st){
     if(r.ok){ const arr=await r.json(); if(Array.isArray(arr)) for(const f of arr) have.add(f.path); } }catch(e){}
   const used=new Set(); let up=0;
   for(const a of pack.actions) for(const ph of a.photos){
-    const m=/^data:image\/[a-z]+;base64,(.*)$/.exec(ph.img||""); if(!m){ delete ph.img; continue; }
+    const m=/^data:image\/[a-z]+;base64,(.*)$/.exec(ph.img||""); if(!m){ delete ph.img; if(ph.h) used.add(repoP("img/"+ph.h+".jpg")); continue; }   // a reused preview stays in use
     const h=await hashB64(m[1]), path=repoP("img/"+h+".jpg"); used.add(path);
     if(!have.has(path)){ if(st) st.textContent="Uploading new photo previews\u2026 "+(++up); await ghPutB64(cfg,path,m[1],"Pack preview",false,true); have.add(path); }
     ph.h=h; delete ph.img;
   }
   return {have,used};
 }
+function lookSig(p){ const s=(p.h||p.id)+"|"+(p.rot||0)+"|"+JSON.stringify(p.marks||[]); let x=0; for(let i=0;i<s.length;i++) x=(x*31+s.charCodeAt(i))|0; return (p.h||p.id)+"."+(p.rot||0)+"."+(x>>>0).toString(36); }   // what the phone's preview shows
 async function buildMobilePack(){
   const open=actions.slice();   // finished ones too: the phone shows them grey when "Show done" is on
-  if(isOnline()) await ensurePreviews(open.flatMap(a=>actPhotos(a)));   // the phone gets proper previews, not thumbnails
+  /* the published pack already has a preview for every photo that hasn't changed: reuse it, so a desktop
+     only downloads a full-size photo (to draw a preview) when that photo is new or its markup changed */
+  const prevLook=new Map();
+  if(isOnline()){ try{ const rd=await repoReadJson(repoP("pack.json")); for(const a of ((rd&&rd.obj&&rd.obj.actions)||[])) for(const ph of (a.photos||[])) if(ph.vs&&ph.h) prevLook.set(ph.vs,ph.h); }catch(e){}
+    await ensurePreviews(open.flatMap(a=>actPhotos(a)).filter(p=>!prevLook.has(lookSig(p)))); }
   let mergedFrom=null; try{ mergedFrom=localStorage.getItem(mfKey())||null; }catch(e){}
   const pk={ v:2, exportedAt:new Date().toISOString(), project:loadedJsonName||folderName||"ActionMap", pid:ON.pid||null, mergedFrom, actions:[] };   // mergedFrom = ack: the phone lets go of sent edits only once this covers them
   for(const a of open){
     const ps=[];
-    for(const p of actPhotos(a)) ps.push({ id:p.id, k:metaKey(p), name:p.name, note:(p.note||""), lat:(p.lat!=null?p.lat:null), lng:(p.lng!=null?p.lng:null), img:await packPreview(p) });   // exportMobile swaps img for a content hash
+    for(const p of actPhotos(a)){ const vs=lookSig(p), ph0=prevLook.get(vs);
+      ps.push(Object.assign({ id:p.id, k:metaKey(p), name:p.name, note:(p.note||""), lat:(p.lat!=null?p.lat:null), lng:(p.lng!=null?p.lng:null), vs },ph0?{h:ph0}:{img:await packPreview(p)})); }   // exportMobile swaps img for a content hash
     for(const st of (a.steps||[])) if(!st.id) st.id=newSid();   // every exported step gets its permanent id
     pk.actions.push({ id:a.id, text:a.text, hold:!!a.hold, done:!!a.done, doneAt:a.doneAt||null, fu:a.fu||null, loc:a.loc||null, steps:(a.steps||[]).map(stepCopy), photos:ps });
   }
@@ -6629,7 +6648,7 @@ async function checkPhotoUploads(){   // polled: phone uploads auto-merge as soo
   const cfg=ghCfg(); if(!cfg.token) return;
   _upMerging=true;
   try{
-    const {obj:man}=await ghReadJson(cfg,repoP("uploads.json"));
+    const {obj:man}=await ghReadJson(cfg,repoP("uploads.json"),true);
     const onPhone=mIsEngPhone(), fresh=it=>it.self&&Date.now()-it.self<120000;
     /* a phone adds its own photos; a desktop takes over only what a phone left for over 2 minutes */
     const items=Array.isArray(man&&man.items)?man.items.filter(it=>it&&it.f&&(onPhone?(it.dev===mDeviceId()||!fresh(it)):!fresh(it))):[];
@@ -6719,7 +6738,7 @@ async function checkFieldChanges(){
   const cfg=ghCfg(); if(!cfg.token) return;
   _chMerging=true;
   try{
-    const {obj:raw}=await ghReadJson(cfg,repoP("changes.json")); if(!raw||!raw.updatedAt) return;   // cleared file: nothing to do
+    const {obj:raw}=await ghReadJson(cfg,repoP("changes.json"),true); if(!raw||!raw.updatedAt) return;   // cleared file: nothing to do
     const lmKey="pmLastMergedBatch:"+cfg.repo+(ON.pid?"|"+ON.pid:"");
     let lastB=null; try{ lastB=JSON.parse(localStorage.getItem(lmKey)||"null"); }catch(e){}
     let merged=""; try{ merged=localStorage.getItem(mfKey())||""; }catch(e){}
@@ -6847,7 +6866,9 @@ async function checkFieldChanges(){
   }
   syncMenus();
   setInterval(()=>{ if(isOnline()&&document.visibilityState==="visible") onlinePoll(); },5000);   // everyone's edits within ~5 s while the window is on screen
-  setInterval(()=>{ if(isOnline()){ onlinePoll(); if(canEdit()){ pumpUploads(); syncTick(); } } else syncTick(); },15000);   // everyone's edits arrive by themselves
+  let hidTick=0;
+  setInterval(()=>{ if(document.visibilityState!=="visible"){ if(Date.now()-hidTick<120000) return; hidTick=Date.now(); }   // a tab in the background checks every 2 min, not every 15 s (all devices share one token's hourly limit)
+    if(isOnline()){ onlinePoll(); if(canEdit()){ pumpUploads(); syncTick(); } } else syncTick(); },15000);   // everyone's edits arrive by themselves
   window.addEventListener("focus",()=>{ if(isOnline()){ onlinePoll(); if(canEdit()) syncTick(); } else syncTick(); });
   document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&isOnline()) onlinePoll(); });
   window.addEventListener("beforeunload",e=>{ if(isOnline()&&canEdit()&&(onDirty()||ON.busy||photos.some(p=>!p.h&&!p._upDead))){ onCacheLocal(); e.preventDefault(); e.returnValue=""; } });   // unsaved edits / uploads in flight
