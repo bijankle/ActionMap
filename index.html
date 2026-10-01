@@ -266,15 +266,16 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .markpalette .thick{-webkit-appearance:slider-vertical;appearance:slider-vertical;writing-mode:vertical-lr;direction:rtl;width:22px;height:90px;margin-top:3px;accent-color:var(--accent);cursor:pointer;}
   .tbed{position:absolute;z-index:8;line-height:0;}
   .tbed .tbtext{display:inline-block;min-width:8px;background:#ffffff;border:2px solid #ff3b30;color:#ff3b30;font:600 13px var(--font);line-height:1.15;padding:2px 5px;border-radius:0;white-space:pre;outline:none;cursor:text;box-shadow:none;box-sizing:content-box;vertical-align:top;}
-  .projhead{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:1300;display:none;flex-direction:column;align-items:stretch;background:#ffffffee;border:1px solid var(--line2);border-radius:10px;padding:9px 16px;box-shadow:0 6px 24px #1e1f2233;max-width:72%;pointer-events:none;}
+  .projhead{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:1300;display:none;flex-direction:column;align-items:stretch;background:#ffffffee;border:1px solid var(--line2);border-radius:10px;padding:9px 16px;box-shadow:0 6px 24px #1e1f2233;max-width:72%;pointer-events:auto;cursor:pointer;}   /* the whole label opens the project list */
   .projhead.show{display:flex;}
   .ph-track{display:none;height:4px;border-radius:3px;background:var(--line);overflow:hidden;margin:0 0 7px;}
   .projhead.loading .ph-track{display:block;}
   .projhead .progress{position:static;display:block;height:100%;width:0;background:var(--gold);border-radius:3px;transition:width .15s;box-shadow:none;}
   .ph-line{font:600 var(--fb) var(--font);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .ph-name,.ph-caret{font-size:var(--fb);cursor:pointer;pointer-events:auto;}   /* the rest of the header lets the map drag through */
+  .ph-name,.ph-caret{font-size:var(--fb);}
   .ph-caret{color:var(--faint);margin-left:5px;font-size:12px;}
-  .ph-name:hover,.ph-name:hover+.ph-caret{color:var(--accent);}
+  .projhead:hover .ph-name,.projhead:hover .ph-caret{color:var(--accent);}
+  .projhead:hover{border-color:var(--gold)!important;}
   .proj-drop{position:absolute;z-index:1400;transform:translateX(-50%);min-width:220px;max-width:340px;max-height:60vh;overflow-y:auto;background:#fff;border:var(--ctl-bd);border-radius:var(--ctl-r);box-shadow:0 8px 24px #1d243026;padding:4px;display:flex;flex-direction:column;}
   .pd-row{display:flex;align-items:center;gap:6px;text-align:left;font:600 var(--fb) var(--font);color:var(--ink);background:none;border:0;border-radius:6px;padding:7px 10px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .pd-row:hover{background:#fdf6e6;}
@@ -3496,7 +3497,7 @@ function renderProjHead(){
     projHeadEl.innerHTML='<div class="ph-track"></div><div class="ph-line"><span class="ph-name" title="Switch project"></span><span class="ph-caret" title="Switch project">\u25be</span><span class="ph-saved"></span><span class="ph-load"></span></div>';
     map.getContainer().appendChild(projHeadEl);
     ["mousedown","pointerdown","dblclick","wheel","contextmenu","click"].forEach(ev=>projHeadEl.addEventListener(ev,e=>e.stopPropagation()));
-    projHeadEl.querySelectorAll(".ph-name,.ph-caret").forEach(el=>el.addEventListener("click",toggleProjDrop));
+    projHeadEl.addEventListener("click",toggleProjDrop);   // anywhere on the label
     const pr=document.getElementById("progress"); if(pr) projHeadEl.querySelector(".ph-track").appendChild(pr);   // the load bar lives just above the header text, sized to the callout
   }
   const has=!!(loadedJsonName||folderName||photos.length||projLoadMsg||_stWarn);
