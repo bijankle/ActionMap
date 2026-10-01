@@ -6022,8 +6022,8 @@ function mShowDetail(ai,keepScroll){
         +(photos.length>1?'<div class="ma-cnt" id="mCnt">1 / '+photos.length+'</div>':'')+'</div>'
         +'<div class="ma-note"><textarea id="mNin" rows="1" placeholder="Add a note about this photo" enterkeyhint="done"></textarea>'+MI.pen+'</div>'
         +'<div class="ma-thumbs" id="mThumbs">'+(photos.length>1?photos.map((p,i)=>'<button type="button" class="tb'+(i?'':' cur')+'" data-i="'+i+'" style="background-image:url(\''+(p.img||'')+'\')" aria-label="Photo '+(i+1)+'"></button>').join(""):'')
-        +'<button type="button" class="tb cam" id="mCamAct" aria-label="Take a photo for this action">'+MI.cam+'</button></div>'
-      :'<button type="button" class="ma-first" id="mCamAct">'+MI.cam+'Add the first photo</button>')
+        +'</div>'
+      :'<div class="ma-first">'+MI.cam+'No photos yet</div>')
     +'<div class="ma-sech"><b>Checklist</b><span id="mStCnt"></span></div><div class="ma-cl2" id="mSub2"></div>'
     +'</div>'
     +'<div class="ma-bar"><button type="button" class="ma-btn" id="mCamAct2">'+MI.cam+'Photo</button><button type="button" class="ma-btn pri" id="mCopyB">'+MI.share+'Share</button></div>');
