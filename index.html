@@ -778,9 +778,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-fab svg{width:24px;height:24px;}
   .ma-peek{position:absolute;left:12px;right:12px;bottom:16px;z-index:500;background:#fff;border:0;border-radius:16px;box-shadow:0 4px 18px #1d243033;padding:14px;display:flex;align-items:center;gap:14px;text-align:left;font:inherit;color:var(--ink);box-sizing:border-box;}
   .ma-peek{cursor:pointer;padding:10px 12px;gap:12px;}
-  .ma-peek.done .t,.ma-grow.done .t{text-decoration:line-through;color:var(--muted);}   /* completed / on hold actions shown by the filters */
-  .ma-peek.hold .m,.ma-grow.hold .m{color:#7A5C00;font-weight:600;}
-  .ma-grow{cursor:pointer;gap:12px;padding:10px 16px;}.ma-grow .ma-view{height:40px;padding:0 16px;font-size:15px;}
+  .ma-peek.done .t{text-decoration:line-through;color:var(--muted);}   /* completed / on hold actions shown by the filters */
+  .ma-peek.hold .m{color:#7A5C00;font-weight:600;}
   .ma-peeks{position:absolute;left:0;right:0;bottom:12px;z-index:500;display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 16px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
   .ma-peeks::-webkit-scrollbar{display:none;}
   .ma-peeks .ma-peek{position:relative;left:auto;right:auto;bottom:auto;flex:0 0 calc(100% - 32px);scroll-snap-align:center;box-shadow:0 3px 12px #1d243030;padding:8px 10px;gap:10px;}
@@ -5926,18 +5925,32 @@ function mShowList(){
 /* the card under the map: the open action nearest to you (else the first open one on the map) */
 /* the map card was tapped: zoom to that action's dot (ringed in gold), in the clear space above the card */
 let mFocusK=null;
+function mFlyTo(pts,z){   // glide to these points at zoom z, landing them in the clear space between the filters and the cards
+  const m2=mHomeMap; const fb=L.latLngBounds(pts.map(p=>[p.lat,p.lng]));
+  if(pts.length>1) z=Math.min(z,m2.getBoundsZoom(fb.pad(0.25),false));
+  const mc=m2.getContainer().getBoundingClientRect(), card=document.getElementById("mPeeks"), flt=document.querySelector(".ma-mapwrap .ma-flt");
+  const top=flt?flt.getBoundingClientRect().bottom-mc.top:0, bot=card?card.getBoundingClientRect().top-mc.top:mc.height;
+  const c=m2.project(fb.getCenter(),z).add([0,mc.height/2-(top+bot)/2]);
+  m2.flyTo(m2.unproject(c,z),z,{duration:0.8});
+  m2.once("moveend",()=>m2._draw()); }
+function mApartZoom(group,others){   // the closest-in zoom (up to 22) needed for these dots to stand clear of the others
+  const m2=mHomeMap; let z=Math.max(17,m2.getZoom());
+  for(;z<22;z++){ const near=group.some(p=>{ const a=m2.project([p.lat,p.lng],z); return others.some(o=>{ const b=m2.project([o.lat,o.lng],z); return Math.hypot(a.x-b.x,a.y-b.y)<50; }); }); if(!near) break; }
+  return z; }
 function mFocusDot(k){
   const m2=mHomeMap; if(!m2||!m2._pts) return;
   const fp=m2._pts.filter(p=>p.k===String(k)); if(!fp.length) return;
-  mFocusK=String(k); mHomeTouched=true;
-  const fb=L.latLngBounds(fp.map(p=>[p.lat,p.lng])), others=m2._pts.filter(p=>p.k!==String(k));
-  let z=19;   // close enough that the dot stands on its own (not merged into a neighbour's bubble)
-  for(;z<22;z++){ const near=fp.some(p=>{ const a=m2.project([p.lat,p.lng],z); return others.some(o=>{ const b=m2.project([o.lat,o.lng],z); return Math.hypot(a.x-b.x,a.y-b.y)<50; }); }); if(!near) break; }
-  if(fp.length>1) m2.fitBounds(fb,{padding:[70,70],maxZoom:Math.max(z,19),animate:false}); else m2.setView(fb.getCenter(),z,{animate:false});
-  const mc=m2.getContainer().getBoundingClientRect(), card=document.getElementById("mPeeks"), flt=document.querySelector(".ma-mapwrap .ma-flt");
-  const top=flt?flt.getBoundingClientRect().bottom-mc.top:0, bot=card?card.getBoundingClientRect().top-mc.top:mc.height;
-  const cp=m2.latLngToContainerPoint(fb.getCenter()); m2.panBy([0,cp.y-(top+bot)/2],{animate:false});
-  m2._draw(); }
+  mFocusK=String(k); mHomeTouched=true; m2._draw();
+  mFlyTo(fp,Math.max(19,mApartZoom(fp,m2._pts.filter(p=>p.k!==String(k))))); }
+function mZoomBunch(items){   // a numbered bubble: fly in until its dots stand apart (the cards below pick between them)
+  const m2=mHomeMap, ks=[...new Set(items.map(p=>p.k))];
+  let z=Math.max(17,m2.getZoom()+1);
+  for(;z<22;z++){ let ok=true; for(const k of ks){ const g=items.filter(p=>p.k===k), o=items.filter(p=>p.k!==k);
+      if(g.some(p=>{ const a=m2.project([p.lat,p.lng],z); return o.some(q=>{ const b=m2.project([q.lat,q.lng],z); return Math.hypot(a.x-b.x,a.y-b.y)<46; }); })){ ok=false; break; } }
+    if(ok) break; }
+  mHomeTouched=true;
+  if(z>=22){ const first=mMapCards(mHomeActs()).find(a=>ks.includes(mCardKey(a))); if(first){ mFocusCard(mCardKey(first)); return; } }   // they sit on one spot: show the first, swipe for the rest
+  mFlyTo(items,z); }
 function mMapCards(acts){   // the actions with a dot on the map, as the filters show them, in Actions-list order
   return acts.filter(a=>{ const st=mStatus(a); if((st==="hold"&&!mShowHold)||(st==="done"&&!mShowDone)) return false;
     const loc=a._new?(mNewActs()[a._ni]||{}).loc:a.loc; return !!loc||(a.photos||[]).some(p=>p.lat!=null); }); }
@@ -6028,16 +6041,6 @@ function mWirePull(list,ptr){   // pull the list down from the top to refresh
     if(dy>=SET){ ptr.style.height="48px"; if(lab) lab.textContent="Refreshing…"; mRefresh(); } else ptr.style.height=""; };
   list.addEventListener("touchend",end); list.addEventListener("touchcancel",end);
 }
-/* A group of actions whose dots sit together: a short pick-list */
-function mShowGroup(list){   // a bunch of dots: tap a row to find it on the map, View to open it
-  mSheet('<div class="ma-shh"><b>'+list.length+' actions here</b></div><div class="m-note" style="padding:0 20px 10px;text-align:left">Tap one to find it on the map, View to open it</div>'
-    +list.map(a=>{ const st=mStatus(a); return '<div class="ma-row ma-grow'+(st==="open"?'':' '+st)+'" role="button" tabindex="0" data-k="'+mCardKey(a)+'">'+mThumbOf(a)+'<div class="ma-rt"><div class="t">'+mActLine(a)+'</div>'+mMetaDiv(a)+'</div><button class="ma-view" type="button">View</button></div>'; }).join(""));
-  document.querySelectorAll("#mSheet .ma-row[data-k]").forEach(b=>{
-    b.addEventListener("click",()=>{ mCloseSheet(); mFocusCard(b.dataset.k); });
-    b.querySelector(".ma-view").addEventListener("click",e=>{ e.stopPropagation(); mCloseSheet(); mSetTab("list"); mOpenAct(b.dataset.k); }); });
-}
-/* one tap on an action on the map (its dot, or a row of a bunch): it becomes the card under the map and the map
-   zooms to it; only View opens it */
 function mActOrder(){ const n=(mPack&&mPack.actions||[]).length; const seen=new Set(); const o=[];
   for(const i of (mPend().actOrder||[])){ const j=+i; if(j>=0&&j<n&&!seen.has(j)){ seen.add(j); o.push(j); } }
   for(let i=0;i<n;i++) if(!seen.has(i)) o.push(i);
@@ -6264,7 +6267,7 @@ function mBuildHomeMap(acts){
             .on("click",()=>mFocusCard(ks[0])).addTo(lay); }   // a dot brings its card up; View opens it
         else { const sts=g.items.map(p=>mStatus(p.a)), cs=sts.includes("open")?"":sts.includes("hold")?" hold":" done";
           L.marker(ll,{zIndexOffset:500,icon:L.divIcon({className:"",html:'<div class="ma-cl'+cs+(ks.includes(mFocusK)?' focus':'')+'">'+ks.length+'</div>',iconSize:[50,50],iconAnchor:[25,25]})})
-            .on("click",()=>mShowGroup(ks.map(k=>g.items.find(p=>p.k===k).a))).addTo(lay); } } };
+            .on("click",()=>mZoomBunch(g.items)).addTo(lay); } } };
     m2.on("contextmenu",e=>{   // long-press the map: a new action at that spot
       if(mRoBlock()) return;
       const v=prompt("New action at this spot — name it:",""); if(!v||!v.trim()) return;
