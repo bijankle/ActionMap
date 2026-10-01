@@ -854,7 +854,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-cl2 .s2row.s2insb{box-shadow:0 2px 0 var(--accent);}
   .ma-cl2 .s2new{margin-top:12px;}
   .ma-cl2 .s2x{font-size:24px;padding:0 4px 0 10px;}
-  .ma-bar{flex-shrink:0;display:flex;gap:10px;padding:12px 16px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:#fff;}
+  .ma-bar{flex-shrink:0;display:flex;gap:10px;padding:12px 16px 12px;border-top:1px solid var(--line);background:#fff;}
   .ma-btn{box-sizing:border-box;height:56px;border-radius:12px;background:#fff;border:1.5px solid var(--line);font:inherit;font-size:17px;font-weight:600;color:var(--ink);display:flex;align-items:center;justify-content:center;gap:8px;flex:1;padding:0 14px;white-space:nowrap;}
   .ma-btn.pri{flex:1.6;background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);font-weight:700;}
   .ma-btn.busy{opacity:.6;pointer-events:none;}
@@ -5571,7 +5571,7 @@ async function mHydrateImages(cfg,pk,silent){
     localStorage.setItem("pmImgKeys",JSON.stringify([...live])); }catch(e){}
 }
 function mSafeToSwap(){ const onList=!!document.getElementById("mList"); const i=document.getElementById("mNewAct");
-  return onList&&!(i&&(i===document.activeElement||i.value))&&!mUpBusy&&!document.querySelector(".m-card.mdrag"); }
+  return onList&&!(i&&(i===document.activeElement||i.value))&&!mUpBusy&&!document.querySelector(".m-card.mdrag")&&!document.getElementById("mSheet"); }   // never under an open sheet (it would close it)
 function mApplyPack(np){
   const old=mPack; mPack=np; mPackStale=false; mPackNext=null;
   let p=mPend();
@@ -5624,7 +5624,7 @@ function mStartGeo(){
     mAddCrumb(mGeo.lat,mGeo.lng);
     const picking=mUpBusy||(window.mPickT&&Date.now()-window.mPickT<180000);
     const typing=(()=>{ const i=document.getElementById("mNewAct"); return !!(i&&(i===document.activeElement||i.value)); })();   // a rebuild would wipe a half-typed action
-    if(document.getElementById("mList")&&mTab==="list"){ if(first&&!picking&&!typing) mShowList(); else mGeoLive(false); }   // never rebuild the screen mid-pick/upload — that used to eat the selection
+    if(document.getElementById("mList")&&mTab==="list"){ if(first&&!picking&&!typing&&!document.getElementById("mSheet")) mShowList(); else mGeoLive(false); }   // never rebuild the screen mid-pick/upload — that used to eat the selection
     else mGeoLive(first);
   },()=>{},{enableHighAccuracy:true,maximumAge:10000,timeout:20000});
 }
@@ -5683,13 +5683,11 @@ function mHeadSub(){ if(!mPack) return "";
   if(n&&mSyncState==="error") return "⚠ "+n+" change"+(n===1?"":"s")+" waiting to sync";
   if(n||mSyncState==="sending") return "↻ Syncing…";
   return mRO()?"View only":""; }
-function mMeta(a){ const rows=mSteps(a), sd=rows.filter(s=>s.d).length, n=(a.photos||[]).length, d=mDist(a), out=[];
+function mMeta(a){ const out=[];   // cards stay clean: just the title, plus a word when it's new or on hold
   if(a._new) out.push('<span style="color:var(--accent);font-weight:600">New · on this phone</span>');
-  if(rows.length) out.push(sd+"/"+rows.length+" steps");
-  if(!a._new||n) out.push(n+" photo"+(n===1?"":"s"));
-  if(d!=null) out.push(mFmtD(d));
   if(!mDone(a)&&mHold(a)) out.push("on hold");
   return out.join(" · "); }
+function mMetaDiv(a){ const m=mMeta(a); return m?'<div class="m">'+m+'</div>':''; }
 function mThumbOf(a){ const p=(a.photos||[]).find(x=>x.img); return p?'<div class="ma-th" style="background-image:url(\''+p.img+'\')"></div>':''; }
 function mActLine(a){ return (a._new?'':'<span class="m-anum">'+actNo(a)+'</span> ')+esc(mTitle(a)); }
 function mStatus(a){ return mDone(a)?"done":mHold(a)?"hold":"open"; }
@@ -5703,9 +5701,16 @@ function mFltHtml(onMap){
     +'<span class="ma-ps ma-cs" id="mSendNote"'+(st?'':' style="display:none"')+'>'+esc(st)+'</span>'
     +'<button type="button" class="ma-ref'+(onMap?' ma-refmap':'')+'" id="mRefB" aria-label="Refresh" title="Refresh: send your changes, get the latest actions and the newest app">'+MI.sync+'</button></div>';   // on the map it sits under the north arrow
 }
+function mWireNav(inDetail){   // the bar stays on the action screen too: Map / Actions go back to that view
+  const go=t=>{ if(!inDetail&&t===mTab) return; mSetTab(t); if(inDetail) mExitDetail(); else mShowList(); };
+  document.getElementById("mNavM").addEventListener("click",()=>go("map"));
+  document.getElementById("mNavL").addEventListener("click",()=>go("list"));
+  document.getElementById("mNavP").addEventListener("click",()=>mShowMenu("project"));
+  document.getElementById("mNavS").addEventListener("click",()=>mShowMenu("settings"));
+}
 function mNavHtml(on){
   const tab=(id,ic,label,isOn)=>'<button type="button" id="'+id+'" class="'+(isOn?"on":"")+'"'+(isOn?' aria-current="page"':'')+'>'+MI[ic]+'<span>'+label+'</span></button>';
-  return '<nav class="ma-nav">'+tab("mNavP","folder",esc(mPack.project||"Project"))+tab("mNavM","map","Map",on==="map")+tab("mNavL","list","Actions",on==="list")+tab("mNavS","gear","Settings")+'</nav>';
+  return '<nav class="ma-nav">'+tab("mNavP","folder","Project")+tab("mNavM","map","Map",on==="map")+tab("mNavL","list","Actions",on==="list")+tab("mNavS","gear","Settings")+'</nav>';
 }
 /* bottom sheets: one at a time, dropped by a tap on the dimmed map/list behind them */
 function mSheet(html){ mCloseSheet(); if(mToastEl&&!mUpBusy) mToastEl.style.display="none"; const root=document.getElementById("mroot");
@@ -5724,19 +5729,15 @@ function mShowList(){
       +'<div class="ma-north" title="North is up">'+NORTH_SVG(30,36)+'</div>'
       +'<button class="ma-ign'+(ignoreLoc?" on":"")+(pk?" up":"")+'" id="mIgnB" type="button" aria-pressed="'+ignoreLoc+'" title="Hide YOU ARE HERE, and zoom to the actions only (never to where you are)">Ignore my location</button>'
       +'<button class="ma-add'+(pk?" up":"")+'" id="mAddB" type="button">'+MI.plus+'Add</button>'
-      +(pk?'<button class="ma-peek" id="mPeek" type="button" data-k="'+mCardKey(pk)+'">'+mThumbOf(pk)+'<div class="ma-rt"><div class="t">'+mActLine(pk)+'</div><div class="m">'+mMeta(pk)+'</div></div><span class="ma-chev">›</span></button>':'')+'</div>'+mNavHtml("map"));
+      +(pk?'<button class="ma-peek" id="mPeek" type="button" data-k="'+mCardKey(pk)+'">'+mThumbOf(pk)+'<div class="ma-rt"><div class="t">'+mActLine(pk)+'</div>'+mMetaDiv(pk)+'</div><span class="ma-chev">›</span></button>':'')+'</div>'+mNavHtml("map"));
   } else {
     const shown=acts.filter(a=>{ const st=mStatus(a); return st==="open"||(st==="hold"&&mShowHold)||(st==="done"&&mShowDone); });
     mScr('<div class="ma-lwrap"><div class="ma-ptr" id="mPtr">'+MI.sync+'<span>Pull to refresh</span></div>'+mFltHtml()+'<div class="ma-lhead"><label class="ma-search">'+MI.search+'<input id="mQ" type="search" placeholder="Search actions" autocomplete="off" value="'+esc(mLQ)+'" /></label><button class="ma-fab" id="mAddB" type="button" aria-label="Add">'+MI.plus+'</button></div>'
       +'<div class="ma-list" id="mList">'+(shown.length?shown.map(a=>{ const done=mDone(a), hold=!done&&mHold(a);
-          return '<div class="m-card'+(done?' done':'')+(hold?' hold':'')+'" data-k="'+mCardKey(a)+'" data-s="'+esc(((a._new?'':actNo(a)+' ')+mTitle(a)).toLowerCase())+'"><div class="ma-rt"><div class="t">'+mActLine(a)+'</div><div class="m">'+mMeta(a)+'</div></div>'+mThumbOf(a)+'</div>'; }).join("")
+          return '<div class="m-card'+(done?' done':'')+(hold?' hold':'')+'" data-k="'+mCardKey(a)+'" data-s="'+esc(((a._new?'':actNo(a)+' ')+mTitle(a)).toLowerCase())+'"><div class="ma-rt"><div class="t">'+mActLine(a)+'</div>'+mMetaDiv(a)+'</div>'+mThumbOf(a)+'</div>'; }).join("")
         :'<div class="ma-empty">No open actions.</div>')+'</div></div>'+mNavHtml("list"));
   }
-  const go=t=>{ if(t===mTab) return; mSetTab(t); mShowList(); };
-  document.getElementById("mNavM").addEventListener("click",()=>go("map"));
-  document.getElementById("mNavL").addEventListener("click",()=>go("list"));
-  document.getElementById("mNavP").addEventListener("click",()=>mShowMenu("project"));
-  document.getElementById("mNavS").addEventListener("click",()=>mShowMenu("settings"));
+  mWireNav(false);
   document.getElementById("mRefB").addEventListener("click",mRefresh);
   document.getElementById("mAddB").addEventListener("click",mShowAdd);
   document.getElementById("mShowH").addEventListener("click",()=>{ mShowHold=!mShowHold; try{ localStorage.setItem("pmMHold",mShowHold?"1":"0"); }catch(e){} mShowList(); });   // one setting for the map and the list
@@ -5841,7 +5842,7 @@ function mWirePull(list,ptr){   // pull the list down from the top to refresh
 /* A group of actions whose dots sit together: a short pick-list */
 function mShowGroup(list){
   mSheet('<div class="ma-shh"><b>'+list.length+' actions here</b><span>tap one to open</span></div>'
-    +list.map(a=>'<button class="ma-row" type="button" data-k="'+mCardKey(a)+'">'+mThumbOf(a)+'<div class="ma-rt"><div class="t">'+mActLine(a)+'</div><div class="m">'+mMeta(a)+'</div></div><span class="ma-chev">›</span></button>').join(""));
+    +list.map(a=>'<button class="ma-row" type="button" data-k="'+mCardKey(a)+'">'+mThumbOf(a)+'<div class="ma-rt"><div class="t">'+mActLine(a)+'</div>'+mMetaDiv(a)+'</div><span class="ma-chev">›</span></button>').join(""));
   document.querySelectorAll("#mSheet .ma-row[data-k]").forEach(b=>b.addEventListener("click",()=>{ mCloseSheet(); mOpenAct(b.dataset.k); }));
 }
 function mActOrder(){ const n=(mPack&&mPack.actions||[]).length; const seen=new Set(); const o=[];
@@ -6253,7 +6254,7 @@ function mShowDetail(ai,keepScroll){
     +'<div class="ma-dbody" id="mSnap">'
     +'<div class="ma-dpad"><div class="ma-title">'+mActLine(a)+'</div>'
     +'<div class="ma-strow" id="mState">'+[["open","Open"],["hold","On hold"],["done","Done"]].map(([k,t])=>'<button type="button" class="ma-chip'+(stNow()===k?" on":"")+'" data-s="'+k+'">'+t+'</button>').join("")
-      +(onMap?'<button type="button" class="ma-dist" id="mDistB">'+MI.pin+(d!=null?mFmtD(d):"Map")+'</button>':'')+'</div></div>'
+      +(onMap?'<button type="button" class="ma-dist" id="mDistB">'+MI.pin+'Show on map</button>':'')+'</div></div>'
     +(photos.length?'<div class="ma-car"><div class="ma-hs" id="mHsnap">'+photos.map(p=>'<div class="m-hpage">'+(p.img?'<img src="'+p.img+'" alt="'+esc(p.name||"photo")+'" />':'')+'</div>').join("")+'</div>'
         +(photos.length>1?'<div class="ma-cnt" id="mCnt">1 / '+photos.length+'</div>':'')+'</div>'
         +'<div class="ma-note"><textarea id="mNin" rows="1" placeholder="Add a note about this photo" enterkeyhint="done"></textarea>'+MI.pen+'</div>'
@@ -6262,8 +6263,9 @@ function mShowDetail(ai,keepScroll){
       :'<div class="ma-first">'+MI.cam+'No photos yet</div>')
     +'<div class="ma-sech"><b>Checklist</b><span id="mStCnt"></span></div><div class="ma-cl2" id="mSub2"></div>'
     +'</div>'
-    +'<div class="ma-bar"><button type="button" class="ma-btn" id="mCamAct2">'+MI.cam+'Photo</button><button type="button" class="ma-btn pri" id="mCopyB">'+MI.share+'Share</button></div>');
+    +'<div class="ma-bar"><button type="button" class="ma-btn" id="mCamAct2">'+MI.cam+'Photo</button><button type="button" class="ma-btn pri" id="mCopyB">'+MI.share+'Share</button></div>'+mNavHtml(mTab));
   document.getElementById("mBack").addEventListener("click",mExitDetail);
+  mWireNav(true);
   mWireUndo();
   const snap=document.getElementById("mSnap");
   const paintState=()=>document.querySelectorAll("#mState .ma-chip").forEach(b=>b.classList.toggle("on",b.dataset.s===stNow()));
