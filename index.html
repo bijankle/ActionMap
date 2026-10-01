@@ -794,6 +794,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-peek .t{font-size:17px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;}   /* two lines still fit beside the small photo */
   .ma-peek .ma-rt{min-width:0;}
   .ma-view{flex-shrink:0;height:44px;padding:0 18px;border-radius:12px;border:0;background:var(--gold);color:#1a1307;box-shadow:inset 0 0 0 1.5px #c9952e;font:inherit;font-size:16px;font-weight:700;}
+  .ma-cl.flash,.ma-dot.flash{animation:maflash .5s ease-in-out 3;}   /* the swiped-to card's dot pulses */
+  @keyframes maflash{50%{transform:scale(1.55);box-shadow:0 0 0 4px #e8b44a,0 0 0 16px #e8b44a66,0 3px 8px #0006;}}
   .ma-cl.focus,.ma-dot.focus{transform:scale(1.2);box-shadow:0 0 0 3px #e8b44a,0 0 0 9px #e8b44a55,0 3px 8px #0006;}
   .ma-peek .m{font-size:15px;color:var(--muted);margin-top:6px;}
   .ma-dot{width:44px;height:44px;box-sizing:border-box;border-radius:50%;background:#F28C28;border:3px solid #fff;box-shadow:0 0 0 1.5px #9A520B,0 3px 8px #0006;color:#fff;font:800 14px/38px var(--font);text-align:center;letter-spacing:-.2px;}
@@ -5965,13 +5967,14 @@ function mZoomBunch(items){   // a numbered bubble: fly in until its dots stand 
 function mMapCards(acts){   // the actions with a dot on the map, as the filters show them, in Actions-list order
   return acts.filter(a=>{ const st=mStatus(a); if((st==="hold"&&!mShowHold)||(st==="done"&&!mShowDone)) return false;
     const loc=a._new?(mNewActs()[a._ni]||{}).loc:a.loc; return !!loc||(a.photos||[]).some(p=>p.lat!=null); }); }
-let mCardScrolling=false;
+let mCardScrolling=false, mFlashK=null, mFlashT=null;
 function mFocusCard(k,fromSwipe){   // bring the card up (unless the swipe already did) and find its dot
   k=String(k); const row=document.getElementById("mPeeks"), c=row&&row.querySelector('.ma-peek[data-k="'+k+'"]');
   if(row) row.querySelectorAll(".ma-peek.on").forEach(x=>x.classList.remove("on"));
   if(c){ c.classList.add("on");
     if(!fromSwipe){ mCardScrolling=true; row.scrollTo({left:c.offsetLeft-(row.clientWidth-c.offsetWidth)/2,behavior:"smooth"}); setTimeout(()=>{ mCardScrolling=false; },600); } }
-  mFocusDot(k);
+  if(fromSwipe){ mFocusK=k; mFlashK=k; if(mHomeMap&&mHomeMap._draw) mHomeMap._draw(); clearTimeout(mFlashT); mFlashT=setTimeout(()=>{ mFlashK=null; },1600); }   // swiping: the map stays put, its dot flashes
+  else mFocusDot(k);   // a tap: glide to it
   const a=mHomeActs().find(x=>mCardKey(x)===k); if(a) mWarmCards([a]); }
 function mShowAdd(){
   if(mRoBlock()) return;
@@ -6274,10 +6277,10 @@ function mBuildHomeMap(acts){
       for(const g of groups){ const ks=[...new Set(g.items.map(p=>p.k))], ll=m2.unproject([g.x,g.y],z);
         if(ks.length===1){ const a=g.items[0].a;
           const st=mStatus(a);
-          L.marker(ll,{zIndexOffset:ks[0]===mFocusK?800:st==="open"?300:st==="hold"?100:0,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(a._new?' new':st==="open"?'':' '+st)+(ks[0]===mFocusK?' focus':'')+'">'+(a._new?'•':actNo(a))+'</div>',iconSize:[44,44],iconAnchor:[22,22]})})
+          L.marker(ll,{zIndexOffset:ks[0]===mFocusK?800:st==="open"?300:st==="hold"?100:0,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(a._new?' new':st==="open"?'':' '+st)+(ks[0]===mFocusK?' focus':'')+(ks[0]===mFlashK?' flash':'')+'">'+(a._new?'•':actNo(a))+'</div>',iconSize:[44,44],iconAnchor:[22,22]})})
             .on("click",()=>mFocusCard(ks[0])).addTo(lay); }   // a dot brings its card up; View opens it
         else { const sts=g.items.map(p=>mStatus(p.a)), cs=sts.includes("open")?"":sts.includes("hold")?" hold":" done";
-          L.marker(ll,{zIndexOffset:500,icon:L.divIcon({className:"",html:'<div class="ma-cl'+cs+(ks.includes(mFocusK)?' focus':'')+'">'+ks.length+'</div>',iconSize:[50,50],iconAnchor:[25,25]})})
+          L.marker(ll,{zIndexOffset:500,icon:L.divIcon({className:"",html:'<div class="ma-cl'+cs+(ks.includes(mFocusK)?' focus':'')+(ks.includes(mFlashK)?' flash':'')+'">'+ks.length+'</div>',iconSize:[50,50],iconAnchor:[25,25]})})
             .on("click",()=>mZoomBunch(g.items)).addTo(lay); } } };
     m2.on("contextmenu",e=>{   // long-press the map: a new action at that spot
       if(mRoBlock()) return;
