@@ -376,7 +376,9 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .lightbox.open{display:flex;animation:fade .15s ease;}
   @keyframes fade{from{opacity:0;}to{opacity:1;}}
   .lb-frame{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line2);border-radius:12px;overflow:hidden;box-shadow:0 30px 80px #1e1f2240;}
-  .lb-stage{position:relative;overflow:hidden;background:#ECEEF1;cursor:grab;}
+  .lb-stage{position:relative;z-index:1;overflow:hidden;background:#ECEEF1;cursor:grab;}
+  .lb-frame{position:absolute;z-index:0;background:#000;border-radius:8px;display:none;pointer-events:none;}   /* fixed 4:3 frame: black around the photo, so nothing moves between wide and tall photos */
+  .imgpanel.open .lb-frame{display:block;}
   .lb-stage.panning{cursor:grabbing;}
   .lb-stage img.main{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform;user-select:none;-webkit-user-drag:none;}
   .lb-ref{position:absolute;top:50px;right:12px;border:1px solid var(--line2);border-radius:6px;overflow:hidden;box-shadow:0 6px 18px #1e1f2233;display:none;}
@@ -577,7 +579,10 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   /* actions strip under the open photo */
   /* photo note under the photo + a strip of the action's other photos with the start of their notes */
   .ip-actions{position:absolute;left:12px;right:12px;top:0;z-index:40;display:flex;flex-direction:column;gap:8px;}
-  .ip-actions #ipaPnote .nt-box{background:#fff;border:1.5px solid var(--gold);box-shadow:inset 0 0 0 1px var(--gold);border-radius:10px;padding:9px 34px 9px 11px;font:var(--fb)/1.4 var(--font);color:var(--ink);cursor:text;position:relative;white-space:pre-wrap;max-height:22vh;overflow:auto;}
+  .ip-actions #ipaPnote{height:78px;overflow:auto;border-radius:10px;}
+  .ip-actions .ipn-strip{height:82px;flex:none;}
+  .ip-actions .ipn-strip:empty{display:block;}
+  .ip-actions #ipaPnote .nt-box{background:#fff;border:1.5px solid var(--gold);box-shadow:inset 0 0 0 1px var(--gold);border-radius:10px;padding:9px 34px 9px 11px;font:var(--fb)/1.4 var(--font);color:var(--ink);cursor:text;position:relative;white-space:pre-wrap;min-height:100%;box-sizing:border-box;}
   .ip-actions #ipaPnote .nt-box::after{content:"";position:absolute;right:11px;top:11px;width:15px;height:15px;opacity:.45;background:no-repeat center/15px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231d2430' stroke-width='1.9' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L19 9l-4-4L4 16v4Z'/%3E%3C/svg%3E");}
   .ip-actions #ipaPnote .nt-newp{width:100%;box-sizing:border-box;background:#fff;border:1.5px dashed var(--line2);border-radius:10px;padding:9px 11px;font:var(--fb) var(--font);color:var(--ink);outline:none;}
   .ip-actions #ipaPnote .nt-newp:focus{border-style:solid;border-color:var(--gold);}
@@ -1069,6 +1074,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   <div class="splitter" id="actSplit"></div>
   <div class="imgpanel" id="imgPanel">
     <div class="ip-empty" id="ipEmpty"><div><b>No photo open.</b><br/><span class="hint">Click a dot on the map, a gallery thumbnail, or an action.</span></div></div>
+    <div class="lb-frame" id="lbFrame"></div>
     <div class="lb-stage" id="lbStage">
       <img class="main" id="lbImg" src="" alt="" draggable="false" />
       <canvas class="lb-mark" id="lbMark"></canvas>
@@ -1996,7 +2002,7 @@ function renderIpActions(){   // the strip under the photo holds ONLY the photo 
 }
 /* Room for the note block: the photo is fitted into what's left above it, and the block sits right
    under the photo (never over the tag buttons at the bottom). */
-let _ipReserve=0;
+let _ipReserve=0, _frame=null;
 function ipLayoutNotes(){
   const box=document.getElementById("ipActions"); if(!box||box.style.display==="none"){ if(_ipReserve){ _ipReserve=0; lb.style.paddingBottom=""; if(lb.classList.contains("open")) refit(); } return; }
   const pr=lb.getBoundingClientRect(); let tagTop=pr.bottom;
@@ -2005,8 +2011,11 @@ function ipLayoutNotes(){
   if(Math.abs(need-_ipReserve)>2){ _ipReserve=need; lb.style.paddingBottom=need+"px"; if(lb.classList.contains("open")&&lbImg.naturalWidth) setupFit(lbImg.naturalWidth,lbImg.naturalHeight,true); }
   ipPlaceNotes(); }
 function ipPlaceNotes(){ const box=document.getElementById("ipActions"); if(!box) return;
-  const pr=lb.getBoundingClientRect(), sr=lbStage.getBoundingClientRect(); box.style.top=Math.round(sr.bottom-pr.top+10)+"px";
-  const mid=Math.round((sr.top+sr.bottom)/2-pr.top)+"px"; ["lbPrev","lbNext"].forEach(id=>{ const b=document.getElementById(id); if(b) b.style.top=mid; }); }   // ‹ › centred on the photo, not the panel
+  const pr=lb.getBoundingClientRect(), sr=lbStage.getBoundingClientRect();
+  const cx=(sr.left+sr.right)/2-pr.left, cy=(sr.top+sr.bottom)/2-pr.top, fw=(_frame&&_frame.w)||sr.width, fh=(_frame&&_frame.h)||sr.height;
+  const fr=document.getElementById("lbFrame"); if(fr){ fr.style.width=fw+"px"; fr.style.height=fh+"px"; fr.style.left=Math.round(cx-fw/2)+"px"; fr.style.top=Math.round(cy-fh/2)+"px"; }
+  box.style.top=Math.round(cy+fh/2+10)+"px";   // under the frame: the same spot for every photo
+  const mid=Math.round(cy)+"px"; ["lbPrev","lbNext"].forEach(id=>{ const b=document.getElementById(id); if(b) b.style.top=mid; }); }   // ‹ › centred on the frame
 function actFilterChanged(){ renderActions(); buildCluster(); renderClusters(); updateGallery(); persistState(); }   // the pills filter the list AND the map
 document.getElementById("actShowHold").addEventListener("click",()=>{ actShowHold=!actShowHold; actFilterChanged(); });
 document.getElementById("actShowDone").addEventListener("click",()=>{ actShowDone=!actShowDone; actFilterChanged(); });
@@ -4121,8 +4130,10 @@ async function showFull(p){
 function setupFit(natW,natH,keepView){
   const pad=12;
   const maxW=Math.max(40,(lb.clientWidth||window.innerWidth)-pad*2), maxH=Math.max(40,(lb.clientHeight||window.innerHeight)-pad*2-(typeof _ipReserve==="number"?_ipReserve:0));   // the note block's room is kept free
-  const scale=Math.min(maxW/natW,maxH/natH);
+  const frW=maxW, frH=Math.min(maxH,Math.round(maxW*3/4));   // the photo always sits in the same 4:3 frame
+  const scale=Math.min(frW/natW,frH/natH);
   fitW=Math.max(1,Math.round(natW*scale)); fitH=Math.max(1,Math.round(natH*scale));
+  _frame={w:frW,h:frH};
   lbStage.style.width=fitW+"px"; lbStage.style.height=fitH+"px"; lbImg.style.width=fitW+"px"; lbImg.style.height=fitH+"px";
   lbMark.width=fitW; lbMark.height=fitH; lbMark.style.width=fitW+"px"; lbMark.style.height=fitH+"px"; redrawMarks(); if(selMark) positionEditor();
   const refH=Math.round(REF_W*fitH/fitW); lbRef.style.width=REF_W+"px"; lbRef.style.height=refH+"px"; lbRefImg.style.width=REF_W+"px"; lbRefImg.style.height=refH+"px";
