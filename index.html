@@ -489,7 +489,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ipa-row .act-chk,.ipa-row .ipa-x,.ipa-row .act-exp{margin-top:1px;}
   .ipa-row .act-exp{font-size:14px;padding:2px 4px;}   /* strip rows are shorter — keep icons ~30% of THEIR collapsed height */
   .ipa-row .ipa-x{font-size:16px;padding:0 3px;}
-  .act-head{display:flex;align-items:center;flex-wrap:wrap;gap:6px 4px;padding:10px 12px 6px;}
+  .act-head{display:flex;align-items:center;flex-wrap:wrap;gap:6px 4px;padding:12px 12px 8px;}
   .act-head .title{font-weight:700;color:var(--ink);font-size:var(--fh);}
   .act-head .count{font-family:var(--font);font-size:var(--fl);color:var(--dim);flex:1;font-variant-numeric:tabular-nums}
   .act-tgl{font:600 var(--fl) var(--font);white-space:nowrap;color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:4px 6px;cursor:pointer;}
@@ -1066,7 +1066,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
 
 <div class="main tab-photo" id="main">
   <aside class="actpanel" id="actPanel">
-    <div class="act-head">
+    <div class="act-head"><span class="title">Actions</span><span style="flex:1"></span>
       <button class="act-tgl" id="actShowHold" title="On hold — also show the actions that are on hold, in this list and on the map (white dots with an orange ring)">On hold</button>
       <button class="act-tgl" id="actShowDone" title="Done — also show finished actions, in this list and on the map (grey dots)">Done</button>
       <button class="act-tgl" id="actExpAll" title="Collapse or expand every action's sub-actions and notes">Collapse</button></div>
