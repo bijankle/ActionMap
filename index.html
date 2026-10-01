@@ -497,6 +497,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .act-tgl:hover{border-color:var(--gold);}
   .af-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:-1px;box-sizing:border-box;}   /* the map's dot for each pill */
   .af-dot.open{background:#F28C28;}.af-dot.hold{background:#fff;border:2px solid #F28C28;}.af-dot.done{background:#6b7580;}
+  .act-dl{width:30px;height:30px;padding:0!important;display:grid;place-items:center;margin-left:6px;}.act-dl svg{width:17px;height:17px;}   /* export to Excel, beside the heading */
   .af-n{color:var(--dim);font-weight:500;margin-left:4px;font-variant-numeric:tabular-nums;}
   .act-tgl.on{background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);color:var(--ink);}   /* on: gold edge */
   .act-new{padding:0 12px 10px;}
@@ -1043,7 +1044,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
       <button class="mi" id="miAddPhotos" type="button" title="Choose photos to add to this project — or just paste (Ctrl+V) or drag them onto the map. They're uploaded to the project online; photos with GPS land where they were taken.">Add photos…</button>
       <div class="msep"></div>
       <button class="mi" id="miReport" type="button" title="Pending actions report: every open and on-hold action with its photos, sub-actions and notes, a linked contents page and a 'Back to contents' link on every page. Save it as a PDF from the print dialog.">Report (PDF)…</button>
-      <button class="mi" id="miXlsx" type="button" title="Every action as a spreadsheet row — status, sub-actions, photo notes — with the annotated photos embedded.">Export to Excel…</button>
+      <button class="mi" id="miXlsx" type="button" title="Every problem as a spreadsheet row — status and sub-actions — with the annotated photos embedded, each photo's note written in its corner.">Export to Excel…</button>
       <button class="mi" id="miBackup" type="button" title="Download a zip of this project — actions, notes, markup, history and every photo at full size — to keep as your own copy. Not needed to use or share the project.">Download backup</button>
       <div class="msep"></div>
       <button class="mi" id="miMigrate" type="button" style="display:none" title="One time: copy the project stored on this PC (from before ActionMap went online) into the data repository — every photo, action, note and markup. Nothing on this PC is changed.">Move this project online…</button>
@@ -1163,7 +1164,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
 
 <div class="main tab-photo" id="main">
   <aside class="actpanel" id="actPanel">
-    <div class="act-head"><span class="title">Actions</span><span style="flex:1"></span>
+    <div class="act-head"><span class="title">Actions</span><button class="act-tgl act-dl" id="actXlsx" type="button" title="Export to Excel: every problem as a row, status, sub-actions and the marked-up photos with their notes" aria-label="Export to Excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10.5l5 5 5-5"/><path d="M5 20h14"/></svg></button><span style="flex:1"></span>
       <button class="act-tgl" id="actShowOpen" title="Open — show the open actions, in this list and on the map (orange dots)"><i class="af-dot open"></i>Open<span class="af-n"></span></button>
       <button class="act-tgl" id="actShowHold" title="On hold — also show the actions that are on hold, in this list and on the map (white dots with an orange ring)"><i class="af-dot hold"></i>On hold<span class="af-n"></span></button>
       <button class="act-tgl" id="actShowDone" title="Done — also show finished actions, in this list and on the map (grey dots)"><i class="af-dot done"></i>Done<span class="af-n"></span></button>
@@ -2234,6 +2235,7 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
   document.getElementById("miUndo").addEventListener("click",()=>undoLatest(lb.classList.contains("open")));
   document.getElementById("miRedo").addEventListener("click",()=>redoLatest(lb.classList.contains("open")));
   document.getElementById("miXlsx").addEventListener("click",()=>exportActionsXlsx());
+  document.getElementById("actXlsx").addEventListener("click",()=>exportActionsXlsx());
   document.getElementById("miReport").addEventListener("click",()=>openPendingReport());
   document.getElementById("miPush")?.addEventListener("click",()=>{ const c=ghCfg(); if(!c.token){ openSettings(); return; } exportMobile(true); loadNote("Syncing to the phone\u2026"); setTimeout(()=>loadNote(""),2500); });
 })();
@@ -3461,15 +3463,26 @@ function loadExcelJS(){ if(window.ExcelJS) return Promise.resolve();
     sc.onload=res; sc.onerror=()=>{ _exceljsP=null; rej(new Error("could not load the Excel library — are you online?")); };
     document.head.appendChild(sc); });
   return _exceljsP; }
-async function xlsImage(p){   // annotated preview scaled into a 180x110 box for the sheet
+async function xlsImage(p){   // annotated preview scaled into a 180x110 box for the sheet; its note in the bottom left corner
   try{
     const src=await annotatedPreview(p); if(!src) return null;
     const im=await loadImg(src);
     const sc=Math.min(1,180/im.width,110/im.height);
-    const w=Math.max(1,Math.round(im.width*sc)), h=Math.max(1,Math.round(im.height*sc));
-    const c=document.createElement("canvas"); c.width=w; c.height=h;
-    c.getContext("2d").drawImage(im,0,0,w,h);
-    return {b64:c.toDataURL("image/jpeg",0.78),w,h};
+    const w=Math.max(1,Math.round(im.width*sc)), h=Math.max(1,Math.round(im.height*sc)), K=2;   // drawn at 2x so the note stays sharp
+    const c=document.createElement("canvas"); c.width=w*K; c.height=h*K;
+    const g=c.getContext("2d"); g.drawImage(im,0,0,w*K,h*K);
+    const note=String(p.note||"").trim();
+    if(note){
+      const fs=9*K, pad=3*K, lh=fs*1.2, maxW=w*K-2*pad-4*K; g.font="600 "+fs+"px Segoe UI, Arial, sans-serif";
+      const words=note.split(/\s+/), lines=[]; let cur="";
+      for(const wd of words){ const t=cur?cur+" "+wd:wd; if(g.measureText(t).width<=maxW||!cur) cur=t; else { lines.push(cur); cur=wd; } }
+      if(cur) lines.push(cur);
+      if(lines.length>3){ lines.length=3; lines[2]=lines[2].replace(/\s*\S*$/,"")+"\u2026"; }
+      const bw=Math.min(maxW,Math.max(...lines.map(l=>g.measureText(l).width)))+2*pad, bh=lines.length*lh+2*pad-(lh-fs);
+      g.fillStyle="rgba(0,0,0,.68)"; g.fillRect(2*K,h*K-bh-2*K,bw,bh);
+      g.fillStyle="#fff"; g.textBaseline="top"; lines.forEach((l,i)=>g.fillText(l,2*K+pad,h*K-bh-2*K+pad+i*lh,maxW));
+    }
+    return {b64:c.toDataURL("image/jpeg",0.82),w,h};
   }catch(e){ return null; }
 }
 async function exportActionsXlsx(){
@@ -3483,23 +3496,21 @@ async function exportActionsXlsx(){
   try{
     await loadExcelJS();
     const wb=new ExcelJS.Workbook(); wb.created=new Date();
-    const ws=wb.addWorksheet("Actions",{views:[{state:"frozen",ySplit:1}]});
+    const ws=wb.addWorksheet("Problems",{views:[{state:"frozen",ySplit:1}]});
     ws.columns=[
       {header:"#",key:"n",width:7},
-      {header:"Action",key:"t",width:34},
+      {header:"Problem",key:"t",width:34},
       {header:"Status",key:"s",width:16},
       {header:"Sub-actions",key:"st",width:42},
-      {header:"Photo notes",key:"pn",width:42},
-    ];
+    ];   // photo notes are written on the photos
     const order=actions.slice().sort((x,y)=>actRank(x)-actRank(y));   // same order as the list; # is the action's 001-style number
     let maxImgs=0, ri=2;
     for(const a of order){
       st.textContent="Compiling "+(ri-1)+" / "+order.length+"\u2026";
       const ps=actPhotos(a);
       const subs=(a.steps||[]).map((s2,i)=>stepLetter(i)+". "+(s2.d?"\u2611":"\u2610")+" "+s2.t).join("\n");
-      const notes=ps.map((x,i)=>x.note?("Photo "+(i+1)+" \u2014 "+x.note):null).filter(Boolean).join("\n");
       const status=a.done?("Done"+(a.doneAt?" "+fmtDate(a.doneAt):"")):(a.hold?"On hold":"Open");
-      const row=ws.addRow({n:actNo(a),t:a.text,s:status,st:subs,pn:notes});
+      const row=ws.addRow({n:actNo(a),t:a.text,s:status,st:subs});
       row.alignment={vertical:"top",wrapText:true};
       const imgs=[];
       for(const ph of ps) imgs.push(await xlsImage(ph));   // null keeps the slot: column N is always Photo N
@@ -3507,24 +3518,24 @@ async function exportActionsXlsx(){
       const rowH=got.length?Math.max(...got.map(x=>x.h)):0;
       const COLPX=187;   // ~26-char column in px; images centre inside their own cell
       imgs.forEach((im2,ci2)=>{
-        if(!im2){ ws.getCell(ri,6+ci2).value="(no image)"; return; }
+        if(!im2){ ws.getCell(ri,5+ci2).value="(no image)"; return; }
         const id=wb.addImage({base64:im2.b64,extension:"jpeg"});
-        ws.addImage(id,{tl:{col:5+ci2+Math.max(0,(COLPX-im2.w)/2)/COLPX,row:(ri-1)+Math.max(0,(rowH-im2.h)/2)/Math.max(rowH,1)},ext:{width:im2.w,height:im2.h}});
+        ws.addImage(id,{tl:{col:4+ci2+Math.max(0,(COLPX-im2.w)/2)/COLPX,row:(ri-1)+Math.max(0,(rowH-im2.h)/2)/Math.max(rowH,1)},ext:{width:im2.w,height:im2.h}});
       });
       maxImgs=Math.max(maxImgs,imgs.length);
       row.height=Math.max(Math.round(rowH*0.78),46);   // px -> pt
       ri++;
     }
-    for(let i=0;i<maxImgs;i++){ ws.getColumn(6+i).width=26; ws.getCell(1,6+i).value="Photo "+(i+1); }
+    for(let i=0;i<maxImgs;i++){ ws.getColumn(5+i).width=26; ws.getCell(1,5+i).value="Photo "+(i+1); }
     const hr=ws.getRow(1); hr.font={bold:true}; hr.alignment={vertical:"middle"}; hr.height=18;
     st.textContent="Writing file\u2026";
     const buf=await wb.xlsx.writeBuffer();
     const blob=new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
     const aEl=document.createElement("a"); aEl.href=URL.createObjectURL(blob);
-    aEl.download=String(loadedJsonName||folderName||"ActionMap").replace(/\.[^.]+$/,"")+"-actions-"+new Date().toISOString().slice(0,10)+".xlsx";
+    aEl.download=String(loadedJsonName||folderName||"ActionMap").replace(/\.[^.]+$/,"")+"-problems-"+new Date().toISOString().slice(0,10)+".xlsx";
     document.body.appendChild(aEl); aEl.click(); aEl.remove();
     setTimeout(()=>{ try{ URL.revokeObjectURL(aEl.href); }catch(e){} },4000);
-    done("\u2713 saved "+order.length+" action"+(order.length===1?"":"s"),2600); return;
+    done("\u2713 saved "+order.length+" problem"+(order.length===1?"":"s"),2600); return;
   }catch(err){ done("failed: "+(err&&err.message||err),6000); }
 }
 document.getElementById("setGhRepo").addEventListener("change",e=>{ try{ localStorage.setItem("pmGhRepo",e.target.value.trim()); }catch(err){} _branch=null; _imgHave=null; syncMenus(); });

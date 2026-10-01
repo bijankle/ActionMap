@@ -5,7 +5,7 @@
       Online you always get the newest version; the fallback is what lets the phone install it
       as a real app. */
 const SW_VER = "10";
-const APP_CACHE = "am-app-6";
+const APP_CACHE = "am-app-7";
 const LIB_CACHE = "am-libs-1";
 const TILE_CACHE = "am-tiles-1", TILE_MAX = 6000;   // satellite tiles seen before come from the phone, not the network (imagery changes every few months at most)   // versioned map / photo libraries from the CDNs: kept so the app also opens offline
 const CORE = ["./", "index.html", "manifest.json", "icon-192.png", "icon-512.png", "icon-maskable-512.png", "apple-touch-icon.png"];
