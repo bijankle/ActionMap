@@ -830,7 +830,6 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-astep i{width:20px;height:20px;border:1.5px solid #9aa3ad;border-radius:5px;flex-shrink:0;}
   .ma-astep span{flex:1;min-width:0;} .ma-astep button{border:0;background:none;color:var(--faint);font-size:22px;width:40px;height:36px;}
   .m-in.need{border-color:#e8b44a;box-shadow:0 0 0 2px #e8b44a55;}
-  .ma-link{background:none;border:0;color:var(--muted);text-decoration:underline;font:inherit;font-size:14px;padding:6px;}
   #mNewGo{flex:none;min-height:52px;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--gold);border-color:#c9952e;color:#1a1307;font-size:17px;}
   .ma-add2 .m-in{flex:none;}
   .ma-sbtns .ma-btn{flex:none;}
@@ -5963,7 +5962,7 @@ function mFlyTo(pts,z){   // glide to these points at zoom z, landing them in th
   m2.flyTo(m2.unproject(c,z),z,{duration:0.8});
   m2.once("moveend",()=>m2._draw()); }
 function mApartZoom(group,others){   // the closest-in zoom (up to 22) needed for these dots to stand clear of the others
-  const m2=mHomeMap; let z=Math.max(17,m2.getZoom());
+  const m2=mHomeMap; let z=Math.max(17,m2.getZoom()||17);
   for(;z<22;z++){ const near=group.some(p=>{ const a=m2.project([p.lat,p.lng],z); return others.some(o=>{ const b=m2.project([o.lat,o.lng],z); return Math.hypot(a.x-b.x,a.y-b.y)<50; }); }); if(!near) break; }
   return z; }
 function mFocusDot(k){
@@ -6004,8 +6003,7 @@ function mShowAdd(){
     +'<input class="m-in" id="mNewAct" placeholder="What needs doing?" autocomplete="off" enterkeyhint="next" value="'+esc(d.t)+'" />'
     +'<div id="mAddSteps"></div>'
     +'<input class="m-in" id="mAddStep" placeholder="+ Add sub-action" autocomplete="off" enterkeyhint="next" />'
-    +'<button class="ma-btn pri" id="mNewGo" type="button">'+MI.check+'Create action</button>'
-    +'<button class="ma-link" id="mAddLoose" type="button">Add photos without an action</button></div>');
+    +'<button class="ma-btn pri" id="mNewGo" type="button">'+MI.check+'Create action</button></div>');
   const inp=document.getElementById("mNewAct"), sin=document.getElementById("mAddStep");
   const thumbs=()=>{ const el=document.getElementById("mAddTh"); if(!el) return;
     el.innerHTML=d.files.map((f,i)=>'<span class="ma-ath" style="background-image:url(\''+f.url+'\')"><button type="button" data-i="'+i+'" aria-label="Remove photo">×</button></span>').join("");
@@ -6022,7 +6020,6 @@ function mShowAdd(){
     input.click(); window.mPickT=Date.now(); };
   document.getElementById("mAddCam").addEventListener("click",()=>pick(mCamInput()));
   document.getElementById("mAddGal").addEventListener("click",()=>pick(mUpInput()));
-  document.getElementById("mAddLoose").addEventListener("click",()=>{ mCloseSheet(); mCollect=null; mUpInput().click(); window.mPickT=Date.now(); });
   document.getElementById("mNewGo").addEventListener("click",()=>{
     addStep(); const v=inp.value.trim();
     if(!v){ inp.placeholder="Name the action first"; inp.classList.add("need"); inp.focus(); return; }
@@ -6335,7 +6332,8 @@ function mBuildHomeMap(acts){
     mHomeMap=m2; mHomeBB=bb; m2._pts=pts; m2._draw=draw;
     const fit=()=>{ m2.invalidateSize();
       if(mHomeFocus!=null){ const fp=pts.filter(p=>p.k===String(mHomeFocus)); mHomeFocus=null;
-        if(fp.length){ mHomeTouched=true; const fb=L.latLngBounds(fp.map(p=>[p.lat,p.lng])); if(fp.length>1) m2.fitBounds(fb,{padding:[60,60],maxZoom:19}); else m2.setView(fb.getCenter(),19); return; } }
+        if(fp.length){ mHomeTouched=true; const fb=L.latLngBounds(fp.map(p=>[p.lat,p.lng])), z=Math.max(19,mApartZoom(fp,pts.filter(p=>!fp.includes(p))));   // close enough that its dot stands alone (and flashes, not a bubble)
+          if(fp.length>1) m2.fitBounds(fb,{padding:[60,60],maxZoom:z}); else m2.setView(fb.getCenter(),z); return; } }
       if(mHomeTouched&&mHomeView){ m2.setView(mHomeView.c,mHomeView.z,{animate:false}); return; }
       if(bb){ if(pts.length>1||me) m2.fitBounds(bb,{padding:[40,40],maxZoom:18}); else m2.setView(bb.getCenter(),17); }
       else if(me) m2.setView([me.lat,me.lng],16); else m2.setView([0,0],2); };
@@ -6547,7 +6545,7 @@ function mShowDetail(ai,keepScroll){
   const snap=document.getElementById("mSnap");
   const paintState=()=>document.querySelectorAll("#mState .ma-chip").forEach(b=>b.classList.toggle("on",b.dataset.s===stNow()));
   document.querySelectorAll("#mState .ma-chip").forEach(b=>b.addEventListener("click",()=>{ mSetState(a,b.dataset.s); paintState(); }));
-  const db=document.getElementById("mDistB"); if(db) db.addEventListener("click",()=>{ mHomeFocus=key; mSetTab("map"); mExitDetail(); });   // show this action on the map
+  const db=document.getElementById("mDistB"); if(db) db.addEventListener("click",()=>{ mHomeFocus=key; mFocusK=String(key); mFlashK=String(key); clearTimeout(mFlashT); mFlashT=setTimeout(()=>{ mFlashK=null; },2500); mSetTab("map"); mExitDetail(); });   // the map opens on it, its dot flashing   // show this action on the map
   { const lk=a._new?{au:(mNewActs()[a._ni]||{}).u}:{act:a.id};   // shots taken here are linked to THIS action on the desktop
     const go=()=>{ mTakePhoto(lk); };   // progress shows once a photo is actually taken (the outbox toasts)
     ["mCamAct","mCamAct2"].forEach(id=>{ const b=document.getElementById(id); if(b) b.addEventListener("click",e=>{ e.stopPropagation(); go(); }); }); }
