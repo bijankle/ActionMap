@@ -4,9 +4,10 @@
    2. network first for the app's own files, with the last good copy as the offline fallback.
       Online you always get the newest version; the fallback is what lets the phone install it
       as a real app. */
-const SW_VER = "9";
+const SW_VER = "10";
 const APP_CACHE = "am-app-2";
-const LIB_CACHE = "am-libs-1";   // versioned map / photo libraries from the CDNs: kept so the app also opens offline
+const LIB_CACHE = "am-libs-1";
+const TILE_CACHE = "am-tiles-1", TILE_MAX = 6000;   // satellite tiles seen before come from the phone, not the network (imagery changes every few months at most)   // versioned map / photo libraries from the CDNs: kept so the app also opens offline
 const CORE = ["./", "index.html", "manifest.json", "icon-192.png", "icon-512.png", "icon-maskable-512.png", "apple-touch-icon.png"];
 self.addEventListener("install", e => {
   e.waitUntil(Promise.all([
@@ -16,7 +17,7 @@ self.addEventListener("install", e => {
   self.skipWaiting();
 });
 self.addEventListener("activate", e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== APP_CACHE && k !== LIB_CACHE && k !== "pm-shared").map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== APP_CACHE && k !== LIB_CACHE && k !== TILE_CACHE && k !== "pm-shared").map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 self.addEventListener("fetch", e => {
   const u = new URL(e.request.url);
@@ -26,6 +27,10 @@ self.addEventListener("fetch", e => {
         caches.open(APP_CACHE).then(c => c.put(key, copy)).catch(() => {}); }
       return r;
     }).catch(() => (e.request.mode === "navigate" ? caches.match("./") : caches.match(e.request, { ignoreSearch: true })).then(hit => hit || caches.match("./"))));
+    return;
+  }
+  if (e.request.method === "GET" && (/^mt\d\.google\.com$/.test(u.hostname) || (u.hostname === "server.arcgisonline.com" && u.pathname.includes("/tile/")))) {
+    e.respondWith(tileFirst(e.request));
     return;
   }
   if (e.request.method === "GET" && /^(cdn\.jsdelivr\.net|unpkg\.com|cdnjs\.cloudflare\.com)$/.test(u.hostname) && /@\d|\/\d+\.\d+/.test(u.pathname)) {   // pinned versions never change: cache first
@@ -56,3 +61,17 @@ self.addEventListener("fetch", e => {
     })());
   }
 });
+
+/* map tiles: cache first. Fetched in CORS mode so the stored copy is a normal (not opaque) response —
+   it can also be drawn into the share image, and doesn't eat the storage quota the way opaque ones do. */
+let _tilePuts = 0;
+async function tileFirst(req) {
+  const c = await caches.open(TILE_CACHE), key = req.url;
+  const hit = await c.match(key); if (hit) return hit;
+  try {
+    const r = await fetch(key, { mode: "cors", credentials: "omit" });
+    if (r.ok) { c.put(key, r.clone()).then(() => { if (++_tilePuts % 200 === 0) trimTiles(c); }).catch(() => {}); }
+    return r;
+  } catch (err) { return fetch(req); }   // that source doesn't allow CORS: plain fetch, not stored
+}
+async function trimTiles(c) { try { const ks = await c.keys(); for (let i = 0; i < ks.length - TILE_MAX; i++) await c.delete(ks[i]); } catch (e) {} }   // oldest first

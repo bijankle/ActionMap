@@ -1241,7 +1241,8 @@ let measuring=false, measurePts=[], measureLayer=null;
 /* map + layers */
 const map=L.map("map",{zoomControl:false,boxZoom:false,attributionControl:false,worldCopyJump:true,maxZoom:24,minZoom:2,zoomSnap:0.25,wheelDebounceTime:35}).setView([20,0],3);
 const dotRenderer=L.canvas({padding:0.5});   // photo dots on ONE canvas instead of hundreds of SVG nodes — far cheaper zoom animations
-const google=L.tileLayer("https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",{subdomains:["mt0","mt1","mt2","mt3"],maxZoom:24,maxNativeZoom:21,attribution:"Imagery &copy; Google"}).addTo(map);
+const google=L.tileLayer("https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",{subdomains:["mt0","mt1","mt2","mt3"],maxZoom:24,maxNativeZoom:21,keepBuffer:6,attribution:"Imagery &copy; Google"}).addTo(map);   // keepBuffer: tiles just off screen stay loaded, so panning shows imagery at once
+google.on("loading",()=>{ tilesBusy=true; }).on("load",()=>{ tilesBusy=false; });
 const esri=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:24,maxNativeZoom:19,attribution:"Imagery &copy; Esri, Maxar, Earthstar Geographics"});
 const none=L.layerGroup();
 L.control.layers({ "Google":google, "Esri":esri, "None":none },null,{position:"topleft",collapsed:false}).addTo(map);
@@ -3370,12 +3371,14 @@ function deskCardBlob(a){
   let x=0; for(let i=0;i<sig.length;i++) x=(x*31+sig.charCodeAt(i))|0;
   return cardCached("d"+(ON.pid||"")+"."+a.id+"."+(x>>>0).toString(36)+"."+sig.length,()=>composeActionCard(a)); }
 var _warmT=null, _warmBusy=false;   // var: renderActions runs before this line during start-up
+var tilesBusy=false;   // the map is fetching tiles: background work waits so the map gets the connection first
+async function mapIdle(maxMs){ const t0=Date.now(); while(tilesBusy&&Date.now()-t0<(maxMs||20000)) await sleep(400); }
 function warmCards(soon){   // the selected action(s) first, then the top of the list — one at a time, when the app is idle
   if(document.body.classList.contains("mobile")) return;
   clearTimeout(_warmT); _warmT=setTimeout(async()=>{
     if(_warmBusy||document.visibilityState!=="visible"||!actions.length||document.body.classList.contains("mobile")) return; _warmBusy=true;   // (the phone makes its own, see mWarmCards)
     try{ const want=[...selActs].map(actById).filter(Boolean).concat(actsShown().filter(a=>!a.done).slice(0,4));
-      for(const a of [...new Set(want)]){ if(document.visibilityState!=="visible") break; try{ await deskCardBlob(a); }catch(e){} await sleep(300); } }
+      for(const a of [...new Set(want)]){ if(document.visibilityState!=="visible") break; await mapIdle(); try{ await deskCardBlob(a); }catch(e){} await sleep(300); } }
     finally{ _warmBusy=false; } },soon?400:3000); }
 setInterval(()=>warmCards(true),20000);   // catches changes that don't redraw the list (a photo finishing its upload, markup, a moved dot); free when nothing changed
 async function copyActionForPhone(a,btn){
@@ -6212,7 +6215,8 @@ function mBuildHomeMap(acts){
   const hm=document.getElementById("mHomeMap"); if(!hm||typeof L==="undefined") return;
   try{
     const m2=L.map(hm,{zoomControl:false,attributionControl:false});
-    m2._tl=L.tileLayer(mTileUrl(),{subdomains:["mt0","mt1","mt2","mt3"],maxZoom:22,maxNativeZoom:21}).addTo(m2);
+    m2._tl=L.tileLayer(mTileUrl(),{subdomains:["mt0","mt1","mt2","mt3"],maxZoom:22,maxNativeZoom:21,keepBuffer:4,updateWhenIdle:false}).addTo(m2);   // tiles load while you pan, and a ring around the screen stays loaded
+    m2._tl.on("loading",()=>{ tilesBusy=true; }).on("load",()=>{ tilesBusy=false; });
     const pts=[];
     acts.forEach(a=>{ const st=mStatus(a); if((st==="hold"&&!mShowHold)||(st==="done"&&!mShowDone)) return; const k=mCardKey(a);
       for(const ph of (a.photos||[])) if(ph.lat!=null&&isFinite(ph.lat)&&isFinite(ph.lng)) pts.push({lat:+ph.lat,lng:+ph.lng,k,a});
@@ -6541,7 +6545,7 @@ function mCardBlob(a){   // kept on the phone (see cardCached): Share is instant
   return cardCached("m"+(mPid||"")+"."+(x>>>0).toString(36)+"."+sig.length,()=>composeActionCard(act,ps)); }
 var _mWarmT=null;
 function mWarmCards(list){   // the map card's action (and the top of the list) get their images made while you look
-  clearTimeout(_mWarmT); _mWarmT=setTimeout(async()=>{ for(const a of list.filter(Boolean).slice(0,3)){ if(document.visibilityState!=="visible") break; try{ await mCardBlob(a); }catch(e){} } },1500); }
+  clearTimeout(_mWarmT); _mWarmT=setTimeout(async()=>{ for(const a of list.filter(Boolean).slice(0,3)){ if(document.visibilityState!=="visible") break; await mapIdle(); try{ await mCardBlob(a); }catch(e){} } },2500); }
 function mSaveBlob(blob,name){ const u=URL.createObjectURL(blob), dl=document.createElement("a"); dl.href=u; dl.download=name; document.body.appendChild(dl); dl.click(); dl.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000); }
 function mShareNow(blob,name,onBlocked){
   const file=new File([blob],name,{type:"image/png"});
