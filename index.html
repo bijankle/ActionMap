@@ -495,6 +495,9 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .act-head .count{font-family:var(--font);font-size:var(--fl);color:var(--dim);flex:1;font-variant-numeric:tabular-nums}
   .act-tgl{font:600 var(--fl) var(--font);white-space:nowrap;color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:4px 6px;cursor:pointer;}
   .act-tgl:hover{border-color:var(--gold);}
+  .af-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:-1px;box-sizing:border-box;}   /* the map's dot for each pill */
+  .af-dot.open{background:#F28C28;}.af-dot.hold{background:#fff;border:2px solid #F28C28;}.af-dot.done{background:#6b7580;}
+  .af-n{color:var(--dim);font-weight:500;margin-left:4px;font-variant-numeric:tabular-nums;}
   .act-tgl.on{background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);color:var(--ink);}   /* on: gold edge */
   .act-new{padding:0 12px 10px;}
   .act-new input{width:100%;box-sizing:border-box;font:inherit;font-size:var(--fb);color:var(--ink);background:var(--panel2);border:1px solid var(--line2);border-radius:9px;padding:8px 10px;outline:none;}
@@ -1158,8 +1161,9 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
 <div class="main tab-photo" id="main">
   <aside class="actpanel" id="actPanel">
     <div class="act-head"><span class="title">Actions</span><span style="flex:1"></span>
-      <button class="act-tgl" id="actShowHold" title="On hold — also show the actions that are on hold, in this list and on the map (white dots with an orange ring)">On hold</button>
-      <button class="act-tgl" id="actShowDone" title="Done — also show finished actions, in this list and on the map (grey dots)">Done</button>
+      <button class="act-tgl" id="actShowOpen" title="Open — show the open actions, in this list and on the map (orange dots)"><i class="af-dot open"></i>Open<span class="af-n"></span></button>
+      <button class="act-tgl" id="actShowHold" title="On hold — also show the actions that are on hold, in this list and on the map (white dots with an orange ring)"><i class="af-dot hold"></i>On hold<span class="af-n"></span></button>
+      <button class="act-tgl" id="actShowDone" title="Done — also show finished actions, in this list and on the map (grey dots)"><i class="af-dot done"></i>Done<span class="af-n"></span></button>
       <button class="act-tgl" id="actExpAll" title="Collapse or expand every action's sub-actions and notes">Collapse</button></div>
     <div class="act-new"><input type="text" id="actNewInput" placeholder="+ New action" autocomplete="off" /></div>
     <div class="act-list" id="actList"></div>
@@ -1613,7 +1617,7 @@ map.on("click",e=>{
    An action is a task with a tick box (tick = completed). Actions link to photos (one action to
    many photos, or many actions to one photo). Stored in the .json like tags; photos untouched. */
 let actions=[], nextActId=1, selActs=new Set(), actionFilter=null;
-let actShowHold=false, actShowDone=false, actOnlyMap=false, rightTab="photo";   // open actions always show; On hold / Done add theirs (list + map)
+let actShowOpen=true, actShowHold=false, actShowDone=false, actOnlyMap=false, rightTab="photo";   // Open / On hold / Done pills: which actions show (list + map); open on by default
 let _aIdx=null,_aArr=null;
 function actById(id){
   if(_aIdx&&_aArr===actions){ const i=_aIdx.get(id); if(i!=null){ const a=actions[i]; if(a&&a.id===id) return a; } }
@@ -1649,7 +1653,7 @@ function photoStatus(p){   // open beats on-hold beats complete, when a photo be
   let hold=false,done=false,any=false;
   for(const id of p.acts){ const a=actById(id); if(!a) continue; any=true; if(a.done) done=true; else if(a.hold) hold=true; else return "open"; }
   return !any?"none":hold?"hold":done?"done":"none"; }
-function actVisible(a){ return selActs.has(a.id)||(a.done?actShowDone:a.hold?actShowHold:true); }   // open always; on hold / done when their pill is on; a selected action always
+function actVisible(a){ return selActs.has(a.id)||(a.done?actShowDone:a.hold?actShowHold:actShowOpen); }   // open always; on hold / done when their pill is on; a selected action always
 function passActs(p){ if(!Array.isArray(p.acts)||!p.acts.length) return true;   /* photos on no action always show */
   let any=false; for(const id of p.acts){ const a=actById(id); if(!a) continue; any=true; if(actVisible(a)) return true; } return !any; }
 function normActs(list){ let mx=0; const out=(list||[]).map(a=>{
@@ -1686,12 +1690,12 @@ function createAction(text,pids,loc){
 }
 function stepLetter(i){ let t=""; do{ t=String.fromCharCode(97+(i%26))+t; i=Math.floor(i/26)-1; }while(i>=0); return t; }   /* a..z, aa, ab… */
 function actNo(a){ return String(a&&a.id!=null?a.id:a).padStart(3,"0"); }   /* the action NUMBER: creation-sequential id, 001-style */
-function actsShown(){ return actions.filter(a=>a.done?actShowDone:a.hold?actShowHold:true).sort((x,y)=>actRank(x)-actRank(y)); }   // the list as rendered: open, plus on hold / done when their pill is on
+function actsShown(){ return actions.filter(a=>a.done?actShowDone:a.hold?actShowHold:actShowOpen).sort((x,y)=>actRank(x)-actRank(y)); }   // the list as rendered: open, plus on hold / done when their pill is on
 function actRank(a){ return a.done?2:(a.hold?1:0); }   // list order: open, then on hold, then completed (display only — stored order unchanged)
 function setActionDone(a,done){ const before=actState(a); a.done=!!done; a.doneAt=a.done?Date.now():null; recordActEdit(a,before); afterFolderChange(); dropIfHidden(a,"done"); }
 function setActionHold(a,hold){ const before=actState(a); a.hold=!!hold; recordActEdit(a,before); afterFolderChange(); dropIfHidden(a,"on hold"); }
 function dropIfHidden(a,what){   // its card just left the list (that filter is off): let go of it everywhere else too, and say where it went
-  if(a.done?actShowDone:a.hold?actShowHold:true) return;
+  if(a.done?actShowDone:a.hold?actShowHold:actShowOpen) return;
   if(selActs.has(a.id)){ selActs.delete(a.id); rebuildActionFilter(); if(typeof clearAreaPreviews==="function"&&!selActs.size) clearAreaPreviews(); renderActions(); drawActionRings(); updateGallery(); buildCluster(); renderClusters(); }
   loadNote(actNo(a)+" marked "+what+" \u2014 hidden from the list (turn on "+(a.done?"Done":"On hold")+" to see it) \u00b7 Ctrl+Z undoes"); setTimeout(()=>loadNote(""),4500); }
 /* Inline editing (titles and descriptions, in both the Actions panel and the under-photo strip):
@@ -2040,7 +2044,10 @@ async function maybeStartGeo(){
 function renderActions(){
   const list=document.getElementById("actList"); if(!list) return;
   warmCards();
+  document.getElementById("actShowOpen").classList.toggle("on",actShowOpen);
   document.getElementById("actShowHold").classList.toggle("on",actShowHold);
+  { let no=0,nh=0,nd=0; for(const a of actions){ if(a.done) nd++; else if(a.hold) nh++; else no++; }   // how many each pill holds
+    [["actShowOpen",no],["actShowHold",nh],["actShowDone",nd]].forEach(([id,n])=>{ const e=document.querySelector("#"+id+" .af-n"); if(e) e.textContent=n; }); }
   document.getElementById("actShowDone").classList.toggle("on",actShowDone);
 
   document.getElementById("actExpAll").textContent=actions.some(a=>!collActs.has(a.id))?"Collapse":"Expand";
@@ -2129,6 +2136,7 @@ function ipPlaceNotes(){ const box=document.getElementById("ipActions"); if(!box
   box.style.top=Math.round(cy+fh/2+10)+"px";   // under the frame: the same spot for every photo
   const mid=Math.round(cy)+"px"; ["lbPrev","lbNext"].forEach(id=>{ const b=document.getElementById(id); if(b) b.style.top=mid; }); }   // ‹ › centred on the frame
 function actFilterChanged(){ renderActions(); buildCluster(); renderClusters(); updateGallery(); persistState(); }   // the pills filter the list AND the map
+document.getElementById("actShowOpen").addEventListener("click",()=>{ actShowOpen=!actShowOpen; actFilterChanged(); });
 document.getElementById("actShowHold").addEventListener("click",()=>{ actShowHold=!actShowHold; actFilterChanged(); });
 document.getElementById("actShowDone").addEventListener("click",()=>{ actShowDone=!actShowDone; actFilterChanged(); });
 document.getElementById("actMapOnly")?.addEventListener("click",()=>{ actOnlyMap=!actOnlyMap; buildCluster(); renderClusters(); updateGallery(); renderActions(); renderMapTags(); persistState(); });
@@ -2265,7 +2273,7 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
   function mark(){ drop.querySelectorAll(".hs-row").forEach((el,i)=>el.classList.toggle("on",i===cur)); const el=drop.querySelector(".hs-row.on"); if(el) el.scrollIntoView({block:"nearest"}); }
   function pick(i){ const r=res[i]; if(!r) return; const a=r.a;
     inp.value=""; closeS();
-    if(a.done) actShowDone=true; else if(a.hold) actShowHold=true;   // a search hit must be visible in the list
+    if(a.done) actShowDone=true; else if(a.hold) actShowHold=true; else actShowOpen=true;   // a search hit must be visible in the list
     collActs.delete(a.id);
     selActs=new Set([a.id]); lastActClick=a.id; if(typeof rebuildActionFilter==="function") rebuildActionFilter();
     renderActions(); buildCluster(); renderClusters(); drawActionRings(); updateGallery(); persistState();   // gallery follows the pick (and a turned-on filter is remembered)
@@ -5325,7 +5333,7 @@ function uiSettings(){ return { baseLayer: map.hasLayer(google)?"google":map.has
       sideW:getComputedStyle(document.documentElement).getPropertyValue("--side-w").trim(),
       actW:getComputedStyle(document.documentElement).getPropertyValue("--act-w").trim()||null,
       covW:getComputedStyle(document.documentElement).getPropertyValue("--cov-w").trim()||null,
-      recentTags: recentTags.slice(0,10), rightTab, actShowHold, actShowDone, actOnlyMap, clusterSens,
+      recentTags: recentTags.slice(0,10), rightTab, actShowOpen, actShowHold, actShowDone, actOnlyMap, clusterSens,
       view:{ center:[map.getCenter().lat, map.getCenter().lng], zoom:map.getZoom() } }; }   // this device's view of the project (layout, filters, map view) — never shared
 function serializeState(includeImages){
   return {
@@ -5389,7 +5397,7 @@ function applyUiSettings(s){ s=s||{};
   if(s.baseLayer==="esri"){ map.removeLayer(google); esri.addTo(map); } else if(s.baseLayer==="none"){ map.removeLayer(google); map.removeLayer(esri); } else if(s.baseLayer==="google"&&!map.hasLayer(google)){ map.removeLayer(esri); google.addTo(map); }
   showNoGeo=!!s.showNoGeo; document.getElementById("showNoGeo").checked=showNoGeo;
   if(Array.isArray(s.recentTags)) recentTags=s.recentTags.slice(0,10);
-  actShowHold=!!s.actShowHold; actShowDone=!!s.actShowDone; actOnlyMap=false; setTab(s.rightTab==="gallery"?"gallery":"photo"); renderActions();
+  actShowOpen=s.actShowOpen!==false; actShowHold=!!s.actShowHold; actShowDone=!!s.actShowDone; actOnlyMap=false; setTab(s.rightTab==="gallery"?"gallery":"photo"); renderActions();
   currentSort=s.sortBy||"date_desc"; document.getElementById("sortSel").value=currentSort;
   clusterSens=(typeof s.clusterSens==="number"?Math.max(0,Math.min(100,s.clusterSens)):50);
   if(boxRect){map.removeLayer(boxRect);boxRect=null;} boxBounds=null;
