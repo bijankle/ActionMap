@@ -822,19 +822,19 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-peek .t{font-size:17px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;}   /* two lines still fit beside the small photo */
   .ma-peek .ma-rt{min-width:0;}
   .ma-view{flex-shrink:0;height:44px;padding:0 18px;border-radius:12px;border:0;background:var(--gold);color:#1a1307;box-shadow:inset 0 0 0 1.5px #c9952e;font:inherit;font-size:16px;font-weight:700;}
-  /* the action you picked: a red arrow points down at its dot (or at the bubble it sits in) */
-  .ma-cl.focus::before,.ma-dot.focus::before{content:"";position:absolute;left:50%;top:-30px;width:8px;height:15px;margin-left:-4px;background:#E8281E;border-radius:2px;}
-  .ma-cl.focus::after,.ma-dot.focus::after{content:"";position:absolute;left:50%;top:-17px;margin-left:-12px;border-left:12px solid transparent;border-right:12px solid transparent;border-top:16px solid #E8281E;filter:drop-shadow(0 2px 2px #0005);}
-  .ma-cl.flash::before,.ma-dot.flash::before,.ma-cl.flash::after,.ma-dot.flash::after{animation:maarrow .45s ease-in-out 3;}   /* swiped to / shown on map: the arrow bobs a few times */
-  @keyframes maarrow{50%{transform:translateY(-8px);}}
+  /* the action you picked: a red arrow points down at its dot (or at the bubble it sits in), bobs twice and fades */
+  .ma-cl.flash::before,.ma-dot.flash::before{content:"";position:absolute;left:50%;top:-30px;width:8px;height:15px;margin-left:-4px;background:#E8281E;border-radius:2px;}
+  .ma-cl.flash::after,.ma-dot.flash::after{content:"";position:absolute;left:50%;top:-17px;margin-left:-12px;border-left:12px solid transparent;border-right:12px solid transparent;border-top:16px solid #E8281E;filter:drop-shadow(0 2px 2px #0005);}
+  .ma-cl.flash::before,.ma-dot.flash::before,.ma-cl.flash::after,.ma-dot.flash::after{animation:maarrow 1.5s ease-in-out forwards;}
+  @keyframes maarrow{0%,30%,60%{transform:translateY(0);opacity:1;}15%,45%{transform:translateY(-8px);}80%{opacity:1;}100%{transform:translateY(0);opacity:0;}}
   .ma-peek .m{font-size:15px;color:var(--muted);margin-top:6px;}
   .ma-dot{position:relative;width:50px;height:28px;box-sizing:border-box;border-radius:8px;background:#F28C28;border:3px solid #fff;box-shadow:0 0 0 1.5px #9A520B,0 3px 8px #0006;color:#fff;font:800 13px/22px var(--font);text-align:center;letter-spacing:-.2px;}
   .ma-dot.hold{background:#fff;color:#9A520B;border:0;box-shadow:0 0 0 2.5px #F28C28,0 3px 8px #0006;line-height:28px;}
   .ma-dot.done{background:#6b7580;box-shadow:0 0 0 1.5px #3f4750,0 3px 8px #0006;}
   .ma-dot.new{background:#fff;color:#9A520B;font-size:20px;}
-  .ma-cl{position:relative;width:50px;height:50px;box-sizing:border-box;border-radius:50%;background:#fff;border:3.5px solid #F28C28;box-shadow:0 2px 8px #0005;color:#9A520B;font:800 18px/43px var(--font);text-align:center;}
+  .ma-cl{position:absolute;left:50%;top:0;transform:translateX(-50%);min-width:32px;height:32px;padding:0 7px;box-sizing:border-box;border-radius:16px;background:#fff;border:2.5px solid #F28C28;box-shadow:0 2px 8px #0005;color:#9A520B;font:800 15px/27px var(--font);text-align:center;white-space:nowrap;}   /* snug to its ×N; two digits stretch it to a pill */
   .ma-cl.hold{border-style:dashed;}
-  .ma-cl i{font-style:normal;font-size:14px;font-weight:700;margin-right:1px;}   /* bubbles count actions: ×3 */
+  .ma-cl i{font-style:normal;font-size:12px;font-weight:700;margin-right:1px;}   /* bubbles count actions: ×3 */
   .ma-cl.done{border-color:#6b7580;color:#3f4750;}
   .ma-ov{position:absolute;inset:0;z-index:800;background:#1d243040;}
   .ma-sheet{position:absolute;left:0;right:0;bottom:0;z-index:801;background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -4px 20px #1d24302a;padding:0 0 calc(18px + env(safe-area-inset-bottom));max-height:80%;overflow-y:auto;}
@@ -6023,11 +6023,12 @@ function mSyncCards(){
   const mc=m2.getContainer().getBoundingClientRect(), flt=document.querySelector(".ma-mapwrap .ma-flt");
   const rr=row.getBoundingClientRect(), top=flt?flt.getBoundingClientRect().top-mc.top:0, bot=rr.height?rr.top-mc.top+20:mc.height-90, W=mc.width;   // (a hidden row has no size: assume a card's height)
   const seen=new Set(); for(const p of m2._pts){ const c=m2.latLngToContainerPoint([p.lat,p.lng]); if(c.x>=-10&&c.x<=W+10&&c.y>=top&&c.y<=bot) seen.add(p.k); }
+  if(mCardsHold) for(const k of mCardsHold) seen.add(k);   // browsing by swipe: the row keeps what it had
   let any=false; row.querySelectorAll(".ma-peek").forEach(c=>{ const on=seen.has(c.dataset.k); c.classList.toggle("off",!on); if(on) any=true; });
   row.classList.toggle("none",!any);
   const cur=row.querySelector(".ma-peek.on:not(.off)")||row.querySelector(".ma-peek:not(.off)");
   if(cur){ mCardScrolling=true; row.scrollLeft=cur.offsetLeft-(row.clientWidth-cur.offsetWidth)/2; setTimeout(()=>{ mCardScrolling=false; },250); } }
-function mFlyTo(pts,z){   // glide to these points at zoom z, landing them in the clear space between the filters and the cards
+function mFlyTo(pts,z,landed){   // glide to these points at zoom z, landing them in the clear space between the filters and the cards
   const m2=mHomeMap; const fb=L.latLngBounds(pts.map(p=>[p.lat,p.lng]));
   if(pts.length>1) z=Math.min(z,m2.getBoundsZoom(fb.pad(0.25),false));
   const mc=m2.getContainer().getBoundingClientRect(), card=document.getElementById("mPeeks"), flt=document.querySelector(".ma-mapwrap .ma-flt");
@@ -6036,7 +6037,9 @@ function mFlyTo(pts,z){   // glide to these points at zoom z, landing them in th
   const to=m2.unproject(c,z);
   mHomeTouched=true; mHomeView={c:to,z};   // the destination is the view to keep: a screen rebuild mid-flight lands here, not back where it started
   m2._flying=true; m2.flyTo(to,z,{duration:0.8});
-  m2.once("moveend",()=>{ m2._flying=false; m2._draw(); }); }
+  const fid=m2._fid=(m2._fid||0)+1;   // a newer flight (a quick second swipe) takes over: only the last one lands
+  let done=false; const end=()=>{ if(done) return; done=true; m2.off("moveend",end); if(fid!==m2._fid) return; m2._flying=false; m2._draw(); if(landed) landed(); };
+  m2.on("moveend",end); setTimeout(end,1500); }   // (a flight to where it already is may not report back)
 function mApartZoom(group,others){   // the closest-in zoom (up to 22) needed for these dots to stand clear of the others
   const m2=mHomeMap; let z=Math.max(17,m2.getZoom()||17);
   for(;z<22;z++){ const near=group.some(p=>{ const a=m2.project([p.lat,p.lng],z); return others.some(o=>{ const b=m2.project([o.lat,o.lng],z); return Math.hypot(a.x-b.x,a.y-b.y)<50; }); }); if(!near) break; }
@@ -6045,27 +6048,31 @@ function mFocusDot(k){
   const m2=mHomeMap; if(!m2||!m2._pts) return;
   const fp=m2._pts.filter(p=>p.k===String(k)); if(!fp.length) return;
   mFocusK=String(k); mHomeTouched=true; m2._draw();
-  mFlyTo(fp,Math.max(19,mApartZoom(fp,m2._pts.filter(p=>p.k!==String(k))))); }
+  const row=document.getElementById("mPeeks");   // zooming in hides the other dots: keep their cards so you can swipe on to them
+  mCardsHold=new Set([String(k),...(row?[...row.querySelectorAll(".ma-peek:not(.off)")].map(c=>c.dataset.k):[])]);
+  mFlyTo(fp,Math.max(19,mApartZoom(fp,m2._pts.filter(p=>p.k!==String(k)))),()=>mFlash(k)); }
+function mFlash(k){   // the red arrow: bobs twice over the dot, then fades (CSS); the class goes once it has played
+  mFlashK=String(k); if(mHomeMap&&mHomeMap._draw) mHomeMap._draw();
+  clearTimeout(mFlashT); mFlashT=setTimeout(()=>{ mFlashK=null; if(mHomeMap&&mHomeMap._draw&&!mHomeMap._flying) mHomeMap._draw(); },1700); }
 function mZoomBunch(items){   // a numbered bubble: fly in until its dots stand apart (the cards below pick between them)
   const m2=mHomeMap, ks=[...new Set(items.map(p=>p.k))];
   let z=Math.max(17,m2.getZoom()+1);
   for(;z<22;z++){ let ok=true; for(const k of ks){ const g=items.filter(p=>p.k===k), o=items.filter(p=>p.k!==k);
       if(g.some(p=>{ const a=m2.project([p.lat,p.lng],z); return o.some(q=>{ const b=m2.project([q.lat,q.lng],z); return Math.hypot(a.x-b.x,a.y-b.y)<46; }); })){ ok=false; break; } }
     if(ok) break; }
-  mHomeTouched=true;
+  mHomeTouched=true; mCardsHold=null;
   if(z>=22){ const first=mMapCards(mHomeActs()).find(a=>ks.includes(mCardKey(a))); if(first){ mFocusCard(mCardKey(first)); return; } }   // they sit on one spot: show the first, swipe for the rest
   mFlyTo(items,z); }
 function mMapCards(acts){   // the actions with a dot on the map, as the filters show them, in Actions-list order
   return acts.filter(a=>{ const st=mStatus(a); if((st==="hold"&&!mShowHold)||(st==="done"&&!mShowDone)) return false;
     const loc=a._new?(mNewActs()[a._ni]||{}).loc:a.loc; return !!loc||(a.photos||[]).some(p=>p.lat!=null); }); }
-let mCardScrolling=false, mFlashK=null, mFlashT=null;
+let mCardScrolling=false, mFlashK=null, mFlashT=null, mCardsHold=null;
 function mFocusCard(k,fromSwipe){   // bring the card up (unless the swipe already did) and find its dot
   k=String(k); const row=document.getElementById("mPeeks"), c=row&&row.querySelector('.ma-peek[data-k="'+k+'"]');
   if(row) row.querySelectorAll(".ma-peek.on").forEach(x=>x.classList.remove("on"));
   if(c){ c.classList.add("on");
     if(!fromSwipe){ mCardScrolling=true; row.scrollTo({left:c.offsetLeft-(row.clientWidth-c.offsetWidth)/2,behavior:"smooth"}); setTimeout(()=>{ mCardScrolling=false; },600); } }
-  if(fromSwipe){ mFocusK=k; mFlashK=k; if(mHomeMap&&mHomeMap._draw) mHomeMap._draw(); clearTimeout(mFlashT); mFlashT=setTimeout(()=>{ mFlashK=null; },1600); }   // swiping: the map stays put, its dot flashes
-  else mFocusDot(k);   // a tap: glide to it
+  mFocusDot(k);   // swipe or tap: glide in to its dot, then the arrow
   const a=mHomeActs().find(x=>mCardKey(x)===k); if(a) mWarmCards([a]); }
 /* + New action: photos (camera / gallery) on top, then the title and its sub-actions — any order, photos
    optional. The draft survives popping out to the camera or gallery (and closing the sheet by mistake). */
@@ -6395,7 +6402,7 @@ function mBuildHomeMap(acts){
           L.marker(ll,{zIndexOffset:ks[0]===mFocusK?800:st==="open"?300:st==="hold"?100:0,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(a._new?' new':st==="open"?'':' '+st)+(ks[0]===mFocusK?' focus':'')+(ks[0]===mFlashK?' flash':'')+'">'+(a._new?'•':actNo(a))+'</div>',iconSize:[50,28],iconAnchor:[25,14]})})
             .on("click",()=>mFocusCard(ks[0])).addTo(lay); }   // a dot brings its card up; View opens it
         else { const sts=g.items.map(p=>mStatus(p.a)), cs=sts.includes("open")?"":sts.includes("hold")?" hold":" done";
-          L.marker(ll,{zIndexOffset:500,icon:L.divIcon({className:"",html:'<div class="ma-cl'+cs+(ks.includes(mFocusK)?' focus':'')+(ks.includes(mFlashK)?' flash':'')+'"><i>\u00d7</i>'+ks.length+'</div>',iconSize:[50,50],iconAnchor:[25,25]})})
+          L.marker(ll,{zIndexOffset:500,icon:L.divIcon({className:"",html:'<div class="ma-cl'+cs+(ks.includes(mFocusK)?' focus':'')+(ks.includes(mFlashK)?' flash':'')+'"><i>\u00d7</i>'+ks.length+'</div>',iconSize:[32,32],iconAnchor:[16,16]})})
             .on("click",()=>mZoomBunch(g.items)).addTo(lay); } } };
     m2.on("contextmenu",e=>{   // long-press the map: a new action at that spot
       if(mRoBlock()) return;
@@ -6417,8 +6424,8 @@ function mBuildHomeMap(acts){
     m2.on("zoomend",draw);
     m2.on("moveend",()=>mSyncCards());
     m2.on("moveend",()=>{ mHomeView={c:m2.getCenter(),z:m2.getZoom()}; });
-    m2.on("dragstart",()=>{ mHomeTouched=true; });
-    hm.addEventListener("touchstart",e=>{ if(e.touches.length>1) mHomeTouched=true; },{passive:true});   // a pinch is the user's view too
+    m2.on("dragstart",()=>{ mHomeTouched=true; mCardsHold=null; });   // moving the map yourself: the cards follow the dots again
+    hm.addEventListener("touchstart",e=>{ if(e.touches.length>1){ mHomeTouched=true; mCardsHold=null; } },{passive:true});   // a pinch is the user's view too   // a pinch is the user's view too
     requestAnimationFrame(()=>{ try{ m2.invalidateSize(); }catch(e){} });
   }catch(e){}
 }
@@ -6621,7 +6628,7 @@ function mShowDetail(ai,keepScroll){
   const snap=document.getElementById("mSnap");
   const paintState=()=>document.querySelectorAll("#mState .ma-chip").forEach(b=>b.classList.toggle("on",b.dataset.s===stNow()));
   document.querySelectorAll("#mState .ma-chip").forEach(b=>b.addEventListener("click",()=>{ mSetState(a,b.dataset.s); paintState(); }));
-  const db=document.getElementById("mDistB"); if(db) db.addEventListener("click",()=>{ mHomeFocus=key; mFocusK=String(key); mFlashK=String(key); clearTimeout(mFlashT); mFlashT=setTimeout(()=>{ mFlashK=null; },2500); mSetTab("map"); mExitDetail(); });   // the map opens on it, its dot flashing   // show this action on the map
+  const db=document.getElementById("mDistB"); if(db) db.addEventListener("click",()=>{ mHomeFocus=key; mFocusK=String(key); mCardsHold=null; mFlashK=String(key); clearTimeout(mFlashT); mFlashT=setTimeout(()=>{ mFlashK=null; },2500); mSetTab("map"); mExitDetail(); });   // the map opens on it, its dot flashing   // show this action on the map
   { const lk=a._new?{au:(mNewActs()[a._ni]||{}).u}:{act:a.id};   // shots taken here are linked to THIS action on the desktop
     const go=()=>{ mTakePhoto(lk); };   // progress shows once a photo is actually taken (the outbox toasts)
     ["mCamAct","mCamAct2"].forEach(id=>{ const b=document.getElementById(id); if(b) b.addEventListener("click",e=>{ e.stopPropagation(); go(); }); });
