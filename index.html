@@ -2951,7 +2951,7 @@ async function openProject(pid){
       ON.cleanJ=dirty?"":canonJ(serializeOnline()); if(dirty) scheduleOnlineSave(800); }
   } else if(rd&&!rd.obj&&!ON.live){ loadNote(""); ON.pid=null; try{ localStorage.removeItem("pmProject"); }catch(e){} syncMenus(); renderSaveStatus(); showProjectPicker(ghRaw().token?"That project wasn't found in "+onRepo()+".":"Couldn't open this project. If the link is right, its data repository may still be private \u2014 the owner needs to make it public (or give you an access token)."); return; }
   loadNote(""); onCacheLocal(); renderSaveStatus(); syncMenus();
-  if(canEdit()){ restoreUploadQueue(); pumpUploads(); setTimeout(syncTick,1500); scheduleAutoExport(4000); snapActionPhotosOnce(); }
+  if(canEdit()){ restoreUploadQueue(); pumpUploads(); setTimeout(syncTick,1500); scheduleAutoExport(4000); }   // (lining up each action's photos waits for a preview + your OK)
 }
 function afterOpenUI(){
   let ui=null; try{ ui=JSON.parse(localStorage.getItem(uiSettingsKey())||"null"); }catch(e){}
