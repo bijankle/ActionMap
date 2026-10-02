@@ -497,6 +497,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .act-tgl:hover{border-color:var(--gold);}
   .af-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:-1px;box-sizing:border-box;}   /* the map's dot for each pill */
   .af-dot.open{background:#F28C28;}.af-dot.hold{background:#fff;border:2px solid #F28C28;}.af-dot.done{background:#6b7580;}
+  .act-sc{font-weight:600;font-size:var(--fl);color:var(--muted);white-space:nowrap;}   /* folded: how many sub-actions it holds */
   .act-dl{width:30px;height:30px;padding:0!important;display:grid;place-items:center;margin-left:6px;}.act-dl svg{width:17px;height:17px;}   /* export to Excel, beside the heading */
   .af-n{color:var(--dim);font-weight:500;margin-left:4px;font-variant-numeric:tabular-nums;}
   .act-tgl.on{background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);color:var(--ink);}   /* on: gold edge */
@@ -1169,11 +1170,11 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
 
 <div class="main tab-photo" id="main">
   <aside class="actpanel" id="actPanel">
-    <div class="act-head"><span class="title">Actions</span><button class="act-tgl act-dl" id="actXlsx" type="button" title="Export to Excel: every problem as a row, status, sub-actions and the marked-up photos with their notes" aria-label="Export to Excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10.5l5 5 5-5"/><path d="M5 20h14"/></svg></button><span style="flex:1"></span>
+    <div class="act-head"><span class="title">Actions</span><button class="act-tgl act-dl" id="actXlsx" type="button" title="Export to Excel: every problem as a row, status, sub-actions and the marked-up photos with their notes" aria-label="Export to Excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10.5l5 5 5-5"/><path d="M5 20h14"/></svg></button><button class="act-tgl act-dl" id="actExpAll" type="button"></button><span style="flex:1"></span>
       <button class="act-tgl" id="actShowOpen" title="Open — show the open actions, in this list and on the map (orange dots)"><i class="af-dot open"></i>Open<span class="af-n"></span></button>
       <button class="act-tgl" id="actShowHold" title="On hold — also show the actions that are on hold, in this list and on the map (white dots with an orange ring)"><i class="af-dot hold"></i>On hold<span class="af-n"></span></button>
       <button class="act-tgl" id="actShowDone" title="Done — also show finished actions, in this list and on the map (grey dots)"><i class="af-dot done"></i>Done<span class="af-n"></span></button>
-      <button class="act-tgl" id="actExpAll" title="Collapse or expand every action's sub-actions and notes">Collapse</button></div>
+</div>
     <div class="act-new"><input type="text" id="actNewInput" placeholder="+ New action" autocomplete="off" /></div>
     <div class="act-list" id="actList"></div>
   </aside>
@@ -2059,7 +2060,9 @@ function renderActions(){
     [["actShowOpen",no],["actShowHold",nh],["actShowDone",nd]].forEach(([id,n])=>{ const e=document.querySelector("#"+id+" .af-n"); if(e) e.textContent=n; }); }
   document.getElementById("actShowDone").classList.toggle("on",actShowDone);
 
-  document.getElementById("actExpAll").textContent=actions.some(a=>!collActs.has(a.id))?"Collapse":"Expand";
+  { const b=document.getElementById("actExpAll"), open=actions.some(a=>!collActs.has(a.id)), t=open?"Collapse all \u2014 titles only":"Expand all \u2014 show sub-actions";   // one quiet icon: shows what a click will do
+    b.innerHTML=open?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4l4 4 4-4M8 20l4-4 4 4M4 12h16"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 8l4-4 4 4M8 16l4 4 4-4M4 12h16"/></svg>';
+    b.title=t; b.setAttribute("aria-label",t); }
   const shown=actsShown();   // on-hold then completed actions sink to the bottom (display only — stored order unchanged)
   if(!shown.length){ const nh=actions.filter(a=>!a.done&&a.hold).length, nd=actions.filter(a=>a.done).length;   // say why the list is empty
     list.innerHTML=actions.length?'<div class="act-empty">'+[nh?nh+" on hold":"",nd?nd+" done":""].filter(Boolean).join(" and ")+' \u2014 turn on <b>'+(nh&&nd?"On hold / Done":nh?"On hold":"Done")+'</b> above to see '+((nh+nd)===1?"it":"them")+'.</div>':""; return; }
@@ -2077,7 +2080,7 @@ function renderActions(){
     return '<div class="act-row'+(a.done?' done':'')+(a.hold?' hold':'')+(selActs.has(a.id)?' sel':'')+(isCur?' cur':'')+'" data-aid="'+a.id+'" draggable="true">'
       +'<div class="act-st"><span class="a-num">'+actNo(a)+'</span><button type="button" class="st-h'+(a.hold?' on':'')+'" title="'+(a.hold?'Take this action off hold':'Put this action on hold')+'">On hold</button>'
         +'<button type="button" class="st-d'+(a.done?' on':'')+'" title="'+(a.done?'Reopen this action':'Mark this action done')+'">Done</button></div>'
-      +'<div class="act-body"><div class="bh"><div class="t">'+esc(a.text)+'</div>'
+      +'<div class="act-body"><div class="bh"><div class="t">'+esc(a.text)+((!exp&&(a.steps||[]).length)?'<span class="act-sc"> \u00b7 '+(a.steps.filter(x=>x.d).length?a.steps.filter(x=>x.d).length+' of '+a.steps.length:a.steps.length+' sub-action'+(a.steps.length===1?'':'s'))+'</span>':'')+'</div>'
         +'<button class="act-copy" type="button" title="Copy image: one portrait picture of this action (title, map, photos with markup) to paste into any chat or email"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg></button>'
         +expBtnHtml(a)+'<button class="ipa-x act-del" type="button" title="'+(isCur?'Remove this action from the open photo':'Delete this action')+'">&times;</button></div>'
       +(exp?('<div class="asec">'+stepsHtml(a)+'</div>'):'')
