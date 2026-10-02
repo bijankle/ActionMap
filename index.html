@@ -747,11 +747,13 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-mapwrap{flex:1;min-height:0;position:relative;}
   .ma-map{position:absolute;inset:0;background:#e9ecef;}
   .ma-fabs{position:absolute;top:14px;right:14px;z-index:500;display:flex;flex-direction:column;gap:10px;}
-  .ma-nav{flex-shrink:0;display:flex;background:#fff;border-top:1px solid var(--line);padding:0 4px env(safe-area-inset-bottom);position:relative;z-index:700;}
+  .ma-nav{flex-shrink:0;display:flex;background:#fff;border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));position:relative;z-index:700;}
   .ma-nav button{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 2px 9px;background:none;border:0;border-radius:0;font:inherit;font-size:12px;font-weight:600;color:var(--muted);box-shadow:none;}
   .ma-nav button span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .ma-nav button svg{width:24px;height:24px;flex-shrink:0;}
-  .ma-nav button.on{color:var(--ink);box-shadow:inset 0 3px 0 var(--gold);}
+  .ma-nav button:not(.ma-navadd){border-radius:12px;margin:0 3px;padding-top:7px;padding-bottom:6px;}
+  .ma-nav button.on{color:var(--ink);background:#fdf6e6;box-shadow:inset 0 0 0 2px var(--gold);}   /* the selected tab: cream tile, gold outline */
+  .ma-nav button.on span{font-weight:800;}
   body.mobile{--m-topgap:calc((10px + env(safe-area-inset-top))/2);}   /* half the old gap above the top strip (it was status bar + 10 px) */
   .ma-top2{flex-shrink:0;display:flex;align-items:center;gap:12px;background:#fff;border-bottom:1px solid var(--line);padding:var(--m-topgap) 14px 8px;position:relative;z-index:700;}
   .ma-pname{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px;background:none;border:0;padding:0;font:inherit;text-align:left;color:var(--ink);}
