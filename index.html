@@ -5778,7 +5778,7 @@ async function mHydrateImages(cfg,pk,silent){
     localStorage.setItem("pmImgKeys",JSON.stringify([...live])); }catch(e){}
 }
 function mSafeToSwap(){ const onList=!!document.getElementById("mList"); const i=document.getElementById("mNewAct");
-  return onList&&!(i&&(i===document.activeElement||i.value))&&!mUpBusy&&!document.querySelector(".m-card.mdrag")&&!document.getElementById("mSheet"); }   // never under an open sheet (it would close it)
+  return onList&&!(i&&(i===document.activeElement||i.value))&&!mUpBusy&&!document.querySelector(".m-card.mdrag")&&!document.getElementById("mSheet")&&!(mHomeMap&&mHomeMap._flying); }   // nor while the map is flying to an action   // never under an open sheet (it would close it)
 function mApplyPack(np){
   const old=mPack; mPack=np; mPackStale=false; mPackNext=null;
   let p=mPend();
@@ -6017,8 +6017,10 @@ function mFlyTo(pts,z){   // glide to these points at zoom z, landing them in th
   const mc=m2.getContainer().getBoundingClientRect(), card=document.getElementById("mPeeks"), flt=document.querySelector(".ma-mapwrap .ma-flt");
   const top=flt?flt.getBoundingClientRect().bottom-mc.top:0, bot=card?card.getBoundingClientRect().top-mc.top:mc.height;
   const c=m2.project(fb.getCenter(),z).add([0,mc.height/2-(top+bot)/2]);
-  m2.flyTo(m2.unproject(c,z),z,{duration:0.8});
-  m2.once("moveend",()=>m2._draw()); }
+  const to=m2.unproject(c,z);
+  mHomeTouched=true; mHomeView={c:to,z};   // the destination is the view to keep: a screen rebuild mid-flight lands here, not back where it started
+  m2._flying=true; m2.flyTo(to,z,{duration:0.8});
+  m2.once("moveend",()=>{ m2._flying=false; m2._draw(); }); }
 function mApartZoom(group,others){   // the closest-in zoom (up to 22) needed for these dots to stand clear of the others
   const m2=mHomeMap; let z=Math.max(17,m2.getZoom()||17);
   for(;z<22;z++){ const near=group.some(p=>{ const a=m2.project([p.lat,p.lng],z); return others.some(o=>{ const b=m2.project([o.lat,o.lng],z); return Math.hypot(a.x-b.x,a.y-b.y)<50; }); }); if(!near) break; }
