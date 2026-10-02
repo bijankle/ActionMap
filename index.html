@@ -607,16 +607,10 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ip-empty{display:none;place-items:center;width:100%;height:100%;color:var(--dim);font-size:var(--fb);text-align:center;padding:20px;line-height:1.6;}
 
   /* actions strip under the open photo */
-  /* photo note under the photo + a strip of the action's other photos with the start of their notes */
+  /* a strip of the action's other photos under the open photo */
   .ip-actions{position:absolute;left:12px;right:12px;top:0;z-index:40;display:flex;flex-direction:column;gap:8px;}
-  .ip-actions #ipaPnote{height:78px;overflow:auto;border-radius:10px;}
-  .ip-actions .ipn-strip{height:82px;flex:none;}
+  .ip-actions .ipn-strip{height:62px;flex:none;}
   .ip-actions .ipn-strip:empty{display:block;}
-  .ip-actions #ipaPnote .nt-box{background:#fff;border:1.5px solid var(--gold);box-shadow:inset 0 0 0 1px var(--gold);border-radius:10px;padding:9px 34px 9px 11px;font:var(--fb)/1.4 var(--font);color:var(--ink);cursor:text;position:relative;white-space:pre-wrap;min-height:100%;box-sizing:border-box;}
-  .ip-actions #ipaPnote .nt-box::after{content:"";position:absolute;right:11px;top:11px;width:15px;height:15px;opacity:.45;background:no-repeat center/15px url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231d2430' stroke-width='1.9' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L19 9l-4-4L4 16v4Z'/%3E%3C/svg%3E");}
-  .ip-actions #ipaPnote .nt-newp{width:100%;box-sizing:border-box;background:#fff;border:1.5px dashed var(--line2);border-radius:10px;padding:9px 11px;font:var(--fb) var(--font);color:var(--ink);outline:none;}
-  .ip-actions #ipaPnote .nt-newp:focus{border-style:solid;border-color:var(--gold);}
-  .ip-actions #ipaPnote textarea,.ip-actions #ipaPnote input:not(.nt-newp){width:100%;box-sizing:border-box;font:var(--fb)/1.4 var(--font);border:1.5px solid var(--gold);border-radius:10px;padding:9px 11px;outline:none;}
   .ipn-strip{display:flex;gap:8px;overflow-x:auto;scrollbar-width:thin;}
   .ipn-strip:empty{display:none;}
   .ipn-it{flex:1 0 84px;max-width:140px;min-width:0;background:none;border:0;padding:0;text-align:left;cursor:pointer;font:inherit;}
@@ -624,8 +618,6 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ipn-it.cur .th{box-shadow:0 0 0 2.5px var(--gold);}
   .ipn-it:hover .th{box-shadow:0 0 0 2px var(--line2);}
   .ipn-it.cur:hover .th{box-shadow:0 0 0 2.5px var(--gold);}
-  .ipn-it .nn{font:var(--fl) var(--font);color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .ipn-it .nn.none{color:var(--faint);font-style:italic;}
   .ipa-head{display:flex;align-items:center;justify-content:space-between;}
   .ipa-head .t{font-family:var(--font);font-weight:700;font-size:var(--fl);letter-spacing:.6px;text-transform:uppercase;color:var(--muted);}
   .ipa-tgl{font-family:var(--font);font-size:var(--fl);color:var(--muted);background:none;border:1px solid var(--line2);border-radius:999px;padding:2px 8px;cursor:pointer;font-variant-numeric:tabular-nums}
@@ -894,10 +886,6 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-hs .m-hpage{position:relative;flex:0 0 100%;height:100%;scroll-snap-align:start;overflow:hidden;}
   .ma-hs .m-hpage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
   .ma-cnt{position:absolute;right:12px;top:12px;background:#000a;color:#fff;font-size:14px;font-weight:600;border-radius:999px;padding:4px 12px;pointer-events:none;}
-  .ma-note{display:flex;gap:12px;align-items:flex-start;border-bottom:1px solid var(--line);padding:14px 16px;}
-  .ma-note textarea{flex:1;min-width:0;border:0;outline:none;resize:none;font:inherit;font-size:17px;line-height:1.4;color:var(--ink);background:none;padding:0;overflow:hidden;height:24px;}
-  .ma-note textarea::placeholder{color:var(--faint);}
-  .ma-note svg{width:20px;height:20px;color:var(--faint);flex-shrink:0;margin-top:2px;}
   .ma-thumbs{display:flex;gap:10px;overflow-x:auto;padding:12px 16px 2px;scrollbar-width:none;}
   .ma-thumbs .tb{width:72px;height:54px;border-radius:8px;background:#dfe3e8 center/cover no-repeat;flex-shrink:0;border:0;padding:0;}
   .ma-thumbs .tb.cur{box-shadow:0 0 0 2.5px var(--gold);}
@@ -1071,8 +1059,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
       <div class="msep"></div>
       <button class="mi" id="miAddPhotos" type="button" title="Choose photos to add to this project — or just paste (Ctrl+V) or drag them onto the map. They're uploaded to the project online; photos with GPS land where they were taken.">Add photos…</button>
       <div class="msep"></div>
-      <button class="mi" id="miReport" type="button" title="Pending actions report: every open and on-hold action with its photos, sub-actions and notes, a linked contents page and a 'Back to contents' link on every page. Save it as a PDF from the print dialog.">Report (PDF)…</button>
-      <button class="mi" id="miXlsx" type="button" title="Every problem as a spreadsheet row — status and sub-actions — with the annotated photos embedded, each photo's note written in its corner.">Export to Excel…</button>
+      <button class="mi" id="miReport" type="button" title="Pending actions report: every open and on-hold action with its photos and sub-actions, a linked contents page and a 'Back to contents' link on every page. Save it as a PDF from the print dialog.">Report (PDF)…</button>
+      <button class="mi" id="miXlsx" type="button" title="Every problem as a spreadsheet row — status and sub-actions — with the annotated photos embedded.">Export to Excel…</button>
       <button class="mi" id="miBackup" type="button" title="Download a zip of this project — actions, notes, markup, history and every photo at full size — to keep as your own copy. Not needed to use or share the project.">Download backup</button>
       <div class="msep"></div>
       <button class="mi" id="miMigrate" type="button" style="display:none" title="One time: copy the project stored on this PC (from before ActionMap went online) into the data repository — every photo, action, note and markup. Nothing on this PC is changed.">Move this project online…</button>
@@ -1089,11 +1077,11 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
       <button class="mi" id="btnSettings" type="button" title="Map, photo, filter, action and phone-sync settings — including your name for the change history."><svg viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm8.6 3.5c0-.6-.05-1.1-.15-1.6l2-1.55-2-3.4-2.35.95a8 8 0 0 0-2.75-1.6L14.95 2h-4l-.4 2.8a8 8 0 0 0-2.75 1.6L5.45 5.45l-2 3.4 2 1.55c-.1.5-.15 1-.15 1.6s.05 1.1.15 1.6l-2 1.55 2 3.4 2.35-.95a8 8 0 0 0 2.75 1.6l.4 2.8h4l.4-2.8a8 8 0 0 0 2.75-1.6l2.35.95 2-3.4-2-1.55c.1-.5.15-1 .15-1.6z"/><circle cx="12" cy="12" r="4.4" fill="#fff"/><circle cx="12" cy="12" r="2.6" fill="var(--accent)"/></svg><span>Settings…</span></button>
     </div></div>
     <div class="mb"><button class="mb-btn" type="button">Help</button><div class="mb-drop">
-      <button class="mi" id="miSearch" type="button" title="Find an action by its number, title, a sub-action or a photo note — active and completed actions.">Search…<span class="mk">Ctrl+K</span></button>
+      <button class="mi" id="miSearch" type="button" title="Find an action by its number, title or a sub-action — active and completed actions.">Search…<span class="mk">Ctrl+K</span></button>
       <button class="mi" id="miAbout" type="button" title="Save status, this project's link, the app version and where the data lives.">About…</button>
     </div></div>
   </nav>
-  <div class="hsearch" id="hsWrap"><input type="search" id="hSearch" name="am-action-search" data-lpignore="true" data-1p-ignore placeholder="Search actions   Ctrl+K" title="Find an action by its number, title, a sub-action or a photo note — active and completed actions" autocomplete="off" spellcheck="false" /><div class="hs-drop" id="hsDrop"></div></div>
+  <div class="hsearch" id="hsWrap"><input type="search" id="hSearch" name="am-action-search" data-lpignore="true" data-1p-ignore placeholder="Search actions   Ctrl+K" title="Find an action by its number, title or a sub-action — active and completed actions" autocomplete="off" spellcheck="false" /><div class="hs-drop" id="hsDrop"></div></div>
   <input id="folderInput" type="file" webkitdirectory directory multiple style="display:none" />
   <input id="origInput" type="file" webkitdirectory directory multiple style="display:none" />
   <input id="jsonInput" type="file" accept="application/json,.json" style="display:none" />
@@ -1192,7 +1180,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
 
 <div class="main tab-photo" id="main">
   <aside class="actpanel" id="actPanel">
-    <div class="act-head"><span class="title">Actions</span><button class="act-tgl act-dl" id="actXlsx" type="button" title="Export to Excel: every problem as a row, status, sub-actions and the marked-up photos with their notes" aria-label="Export to Excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10.5l5 5 5-5"/><path d="M5 20h14"/></svg></button><span style="flex:1"></span>
+    <div class="act-head"><span class="title">Actions</span><button class="act-tgl act-dl" id="actXlsx" type="button" title="Export to Excel: every problem as a row, status, sub-actions and the marked-up photos" aria-label="Export to Excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10.5l5 5 5-5"/><path d="M5 20h14"/></svg></button><span style="flex:1"></span>
       <button class="act-tgl" id="actShowOpen" title="Open — show the open actions, in this list and on the map (orange dots)"><i class="af-dot open"></i>Open<span class="af-n"></span></button>
       <button class="act-tgl" id="actShowHold" title="On hold — also show the actions that are on hold, in this list and on the map (white dots with an orange ring)"><i class="af-dot hold"></i>On hold<span class="af-n"></span></button>
       <button class="act-tgl" id="actShowDone" title="Done — also show finished actions, in this list and on the map (grey dots)"><i class="af-dot done"></i>Done<span class="af-n"></span></button>
@@ -1255,7 +1243,6 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
       <label class="lb-fullchk" id="lbFullWrap"><input type="checkbox" id="lbFull" /><span>Full quality</span></label>
     </div>
     <div class="ip-actions" id="ipActions">
-      <div id="ipaPnote"></div>
       <div class="ipn-strip" id="ipnStrip"></div>
     </div>
     <div class="folder-pop" id="folderPop"></div>
@@ -1809,33 +1796,6 @@ function reorderStep(a,from,to){
   recordActEdit(a,b); afterFolderChange();
 }
 function expBtnHtml(a){ const exp=!collActs.has(a.id); return '<button class="act-exp'+(exp?' on':'')+'" type="button" title="'+(exp?'Hide':'Show')+' details">▾</button>'; }
-/* Photo notes: ONE plain-text blob per PHOTO (actions carry no notes) — an input when empty,
-   a click-to-edit box when set. Edits ride the standard photo-snapshot undo. */
-function setPhotoNote(p,v){
-  v=(v==null?"":v.trim());
-  if(v===(p.note||"")){ refreshActUI(); return; }
-  const before=snapshotTags(p); p.note=v;
-  pushUndo({items:[{id:p.id,before,after:snapshotTags(p)}]});
-  afterFolderChange();
-}
-function pNoteHtml(p){
-  if(!p.note) return '<input class="st-new nt-newp" type="text" placeholder="+ Add a note about this photo" autocomplete="off" />';
-  return '<div class="d nt-box" title="Click to edit">'+esc(p.note)+'</div>';
-}
-function wirePNote(el,p){
-  const box=el.querySelector(".nt-box");
-  if(box){
-    const edit=e=>{ e.stopPropagation();
-      inlineEdit(box,p.note||"",true,v=>{ if(v!=null) setPhotoNote(p,v); else refreshActUI(); }); };
-    box.addEventListener("click",edit); box.addEventListener("dblclick",edit);
-    box.addEventListener("mousedown",e=>e.stopPropagation());
-  }
-  const inp=el.querySelector(".nt-newp");
-  if(inp){
-    ["click","dblclick","mousedown"].forEach(ev=>inp.addEventListener(ev,e=>e.stopPropagation()));
-    inp.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key!=="Enter") return; const v=inp.value.trim(); if(!v) return; setPhotoNote(p,v); });
-  }
-}
 const hideDoneSteps=false;   // ticked sub-actions always show
 function stepsHtml(a){
   const rows=(a.steps||[]).map((s,i)=>(hideDoneSteps&&s.d)?'':'<div class="st-row" data-si="'+i+'">'
@@ -2137,19 +2097,16 @@ function renderActions(){
     el.addEventListener("drop",e=>{ e.preventDefault(); e.stopPropagation(); const before=el.classList.contains("drop-b"); el.classList.remove("drop-b","drop-a"); if(dragActId!=null&&dragActId!==a.id) reorderAction(dragActId,a.id,before); dragActId=null; });
   });
 }
-function renderIpActions(){   // the strip under the photo holds ONLY the photo notes — action detail lives in the left panel
+function renderIpActions(){   // the strip under the photo: the action's other photos — action detail lives in the left panel
   const box=document.getElementById("ipActions"); if(!box) return;
   const p=lb.classList.contains("open")?curPhoto():null;
   if(!p){ box.style.display="none"; return; }
   box.style.display="flex";
-  const pnEl=document.getElementById("ipaPnote");
-  pnEl.innerHTML=pNoteHtml(p);
-  wirePNote(pnEl,p);
   /* the strip: every photo on this photo's action (the selected one if it's on several), the open one ringed */
   const st=document.getElementById("ipnStrip");
   const ids=Array.isArray(p.acts)?p.acts:[]; const aid=ids.find(id=>selActs.has(id))||ids.find(id=>actById(id));
   const a=aid!=null?actById(aid):null, ps=a?actPhotos(a):[];
-  st.innerHTML=ps.length>1?ps.map(q=>'<button type="button" class="ipn-it'+(q===p?' cur':'')+'" data-pid="'+q.id+'" title="'+esc(q.note||q.name||"")+'"><div class="th" style="background-image:url(\''+(thumbSrc(q)||"")+'\')"></div><div class="nn'+(q.note?'':' none')+'">'+esc(q.note||"No note")+'</div></button>').join(""):"";
+  st.innerHTML=ps.length>1?ps.map(q=>'<button type="button" class="ipn-it'+(q===p?' cur':'')+'" data-pid="'+q.id+'" title="'+esc(q.name||"")+'"><div class="th" style="background-image:url(\''+(thumbSrc(q)||"")+'\')"></div></button>').join(""):"";
   st.querySelectorAll(".ipn-it").forEach(b=>{ b.addEventListener("mousedown",e=>e.stopPropagation()); b.addEventListener("click",e=>{ e.stopPropagation(); const q=photoById(Number(b.dataset.pid)); if(q&&q!==p) openViewer(q); }); });
   ipLayoutNotes();
 }
@@ -2270,7 +2227,7 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
   document.getElementById("miReport").addEventListener("click",()=>openPendingReport());
   document.getElementById("miPush")?.addEventListener("click",()=>{ const c=ghCfg(); if(!c.token){ openSettings(); return; } exportMobile(true); loadNote("Syncing to the phone\u2026"); setTimeout(()=>loadNote(""),2500); });
 })();
-/* ---- Find an action: one box searches numbers, titles, sub-actions and photo notes across
+/* ---- Find an action: one box searches numbers, titles and sub-actions across
    active AND completed actions; picking a result jumps to it (list + map). ---- */
 (function(){
   const inp=document.getElementById("hSearch"), drop=document.getElementById("hsDrop"), wrap=document.getElementById("hsWrap"); if(!inp) return;
@@ -2281,12 +2238,10 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
   const hl=(txt,terms)=>{ let h=esc(txt); for(const t of terms){ if(!t) continue; h=h.replace(new RegExp("("+t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")","ig"),"<mark>$1</mark>"); } return h; };
   function search(q){
     const terms=q.toLowerCase().split(/\s+/).filter(Boolean); if(!terms.length) return [];
-    const byAct=new Map(); for(const ph of photos) if(ph.note&&Array.isArray(ph.acts)) for(const id of ph.acts){ if(!byAct.has(id)) byAct.set(id,[]); byAct.get(id).push(ph); }
     const out=[];
     for(const a of actions){
       const fields=[{k:"num",v:actNo(a),w:5},{k:"title",v:a.text||"",w:4}]
-        .concat((a.steps||[]).map((st,i)=>({k:"step",v:st.t||"",w:2,lbl:"Sub-action "+stepLetter(i)+"."})))
-        .concat((byAct.get(a.id)||[]).map(ph=>({k:"note",v:ph.note||"",w:1,lbl:"Note on "+ph.name})));
+        .concat((a.steps||[]).map((st,i)=>({k:"step",v:st.t||"",w:2,lbl:"Sub-action "+stepLetter(i)+"."})));
       let score=0, where=null;
       for(const t of terms){ let best=0,bw=null;
         for(const f of fields){ const v=f.v.toLowerCase(); if(!v.includes(t)) continue; const sc=f.w*(v.startsWith(t)?2:1); if(sc>best){ best=sc; bw=f; } }
@@ -2303,7 +2258,7 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
     drop.innerHTML=res.length?res.map((r,i)=>{ const a=r.a, stc=a.done?"done":a.hold?"hold":"open", stl=a.done?"Completed":a.hold?"On hold":"Active";
       return '<div class="hs-row '+(a.done?'done ':'')+(i===cur?'on':'')+'" data-i="'+i+'"><span class="hs-num">'+actNo(a)+'</span><div class="hs-main"><div class="hs-t">'+hl(a.text,terms)+'</div>'
         +(r.where?'<div class="hs-s">'+esc(r.where.lbl)+': '+hl(r.where.v,terms)+'</div>':'')+'</div><span class="hs-st '+stc+'">'+stl+'</span></div>'; }).join("")
-      :'<div class="hs-empty">No action mentions \u201c'+esc(q)+'\u201d \u2014 searched titles, sub-actions and photo notes of active and completed actions.</div>';
+      :'<div class="hs-empty">No action mentions \u201c'+esc(q)+'\u201d \u2014 searched titles and sub-actions of active and completed actions.</div>';
     drop.classList.add("show");
   }
   function mark(){ drop.querySelectorAll(".hs-row").forEach((el,i)=>el.classList.toggle("on",i===cur)); const el=drop.querySelector(".hs-row.on"); if(el) el.scrollIntoView({block:"nearest"}); }
@@ -3276,13 +3231,12 @@ async function openPendingReport(){
     toc+='<tr><td class="n"><a href="#'+id+'">'+actNo(a)+'</a></td><td><a href="#'+id+'">'+esc(a.text)+'</a></td><td>'+status+'</td><td class="r">'+(st.length?sd+' / '+st.length:'—')+'</td><td class="r">'+ps.length+'</td></tr>';
     let imgs="";
     for(const ph of ps){ let src=null; try{ src=await packPreview(ph); }catch(e){}
-      imgs+='<figure>'+(src?'<img src="'+src+'" alt="">':'<div class="noimg">No image</div>')+'<figcaption><b>'+esc(ph.name||"")+'</b>'+(ph.time?' · '+fmtD(ph.time):'')+(ph.note?'<br>'+esc(ph.note):'')+'</figcaption></figure>'; }
+      imgs+='<figure>'+(src?'<img src="'+src+'" alt="">':'<div class="noimg">No image</div>')+'<figcaption><b>'+esc(ph.name||"")+'</b>'+(ph.time?' · '+fmtD(ph.time):'')+'</figcaption></figure>'; }
     const loc=a.loc||(ps.find(p=>p.lat!=null&&!p.noGps)||null);
     body+='<section class="act" id="'+id+'"><div class="ah"><div class="num">'+actNo(a)+'</div><h2>'+esc(a.text)+'</h2>'+status+'</div>'
       +'<div class="meta">'+(a.created?'Created '+fmtD(a.created)+' · ':'')+ps.length+' photo'+(ps.length===1?'':'s')
       +(loc?' · Location '+(+loc.lat).toFixed(6)+', '+(+loc.lng).toFixed(6)+' (<a href="https://www.google.com/maps?q='+(+loc.lat)+','+(+loc.lng)+'">map</a>)':'')+'</div>'
       +(st.length?'<h3>Sub-actions ('+sd+' of '+st.length+' done)</h3><table class="steps">'+st.map((x,i)=>'<tr class="'+(x.d?'done':'')+'"><td class="l">'+stepLetter(i)+'.</td><td class="b">'+(x.d?'☑':'☐')+'</td><td>'+esc(x.t)+'</td></tr>').join('')+'</table>':'<p class="none">No sub-actions.</p>')
-      +(ps.some(p=>p.note)?'<h3>Photo notes</h3><ul class="notes">'+ps.map((p,i)=>p.note?'<li><b>Photo '+(i+1)+'</b> ('+esc(p.name||"")+') — '+esc(p.note)+'</li>':'').join('')+'</ul>':'')
       +(imgs?'<h3>Photos</h3><div class="grid">'+imgs+'</div>':'')
       +'<p class="back"><a href="#toc">↑ Back to contents</a></p></section>';
   }
@@ -3297,7 +3251,7 @@ async function openPendingReport(){
   .badge{font-size:9pt;font-weight:700;border-radius:5px;padding:2px 8px;white-space:nowrap} .badge.open{background:#E7F6EC;color:#237042} .badge.hold{background:#FDF3D2;color:#7A5C00}
   .meta{color:#555;font-size:9.5pt;margin:2mm 0 3mm} h3{font-size:11pt;margin:5mm 0 2mm;color:#333}
   table.steps{border-collapse:collapse;width:100%} .steps td{padding:3px 5px;vertical-align:top;border-bottom:1px solid #f0f1f3} .steps .l{font-family:monospace;color:#8f600b;width:28px} .steps .b{width:22px;font-size:12pt} .steps tr.done td{color:#777;text-decoration:line-through} .steps tr.done .b,.steps tr.done .l{text-decoration:none}
-  .notes{margin:0;padding-left:18px} .none{color:#888;font-style:italic}
+  .none{color:#888;font-style:italic}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:4mm} figure{margin:0;break-inside:avoid;page-break-inside:avoid} figure img{width:100%;max-height:85mm;object-fit:contain;background:#f3f4f6;border:1px solid #d9dee5;border-radius:4px;display:block}
   figcaption{font-size:8.5pt;color:#444;margin-top:1mm} .noimg{height:40mm;background:#f3f4f6;border:1px dashed #ccc;display:flex;align-items:center;justify-content:center;color:#999}
   .back{margin-top:5mm;font-size:9pt}
@@ -3494,25 +3448,14 @@ function loadExcelJS(){ if(window.ExcelJS) return Promise.resolve();
     sc.onload=res; sc.onerror=()=>{ _exceljsP=null; rej(new Error("could not load the Excel library — are you online?")); };
     document.head.appendChild(sc); });
   return _exceljsP; }
-async function xlsImage(p){   // annotated preview scaled into a 180x110 box for the sheet; its note in the bottom left corner
+async function xlsImage(p){   // annotated preview scaled into a 180x110 box for the sheet
   try{
     const src=await annotatedPreview(p); if(!src) return null;
     const im=await loadImg(src);
     const sc=Math.min(1,180/im.width,110/im.height);
-    const w=Math.max(1,Math.round(im.width*sc)), h=Math.max(1,Math.round(im.height*sc)), K=2;   // drawn at 2x so the note stays sharp
+    const w=Math.max(1,Math.round(im.width*sc)), h=Math.max(1,Math.round(im.height*sc)), K=2;   // drawn at 2x so it stays sharp
     const c=document.createElement("canvas"); c.width=w*K; c.height=h*K;
     const g=c.getContext("2d"); g.drawImage(im,0,0,w*K,h*K);
-    const note=String(p.note||"").trim();
-    if(note){
-      const fs=9*K, pad=3*K, lh=fs*1.2, maxW=w*K-2*pad-4*K; g.font="600 "+fs+"px Segoe UI, Arial, sans-serif";
-      const words=note.split(/\s+/), lines=[]; let cur="";
-      for(const wd of words){ const t=cur?cur+" "+wd:wd; if(g.measureText(t).width<=maxW||!cur) cur=t; else { lines.push(cur); cur=wd; } }
-      if(cur) lines.push(cur);
-      if(lines.length>3){ lines.length=3; lines[2]=lines[2].replace(/\s*\S*$/,"")+"\u2026"; }
-      const bw=Math.min(maxW,Math.max(...lines.map(l=>g.measureText(l).width)))+2*pad, bh=lines.length*lh+2*pad-(lh-fs);
-      g.fillStyle="rgba(0,0,0,.68)"; g.fillRect(2*K,h*K-bh-2*K,bw,bh);
-      g.fillStyle="#fff"; g.textBaseline="top"; lines.forEach((l,i)=>g.fillText(l,2*K+pad,h*K-bh-2*K+pad+i*lh,maxW));
-    }
     return {b64:c.toDataURL("image/jpeg",0.82),w,h};
   }catch(e){ return null; }
 }
@@ -3533,7 +3476,7 @@ async function exportActionsXlsx(){
       {header:"Problem",key:"t",width:34},
       {header:"Status",key:"s",width:16},
       {header:"Sub-actions",key:"st",width:42},
-    ];   // photo notes are written on the photos
+    ];
     const order=actions.slice().sort((x,y)=>actRank(x)-actRank(y));   // same order as the list; # is the action's 001-style number
     let maxImgs=0, ri=2;
     for(const a of order){
@@ -6588,8 +6531,8 @@ async function mPackPoll(force){
   }catch(e){}
   _mppBusy=false;
 }
-/* One action, full screen: title, Open / On hold / Done, the photos (swipe; pinch to zoom) with the
-   note of the photo being viewed right under it, then the checklist. Photo + Share stay pinned at
+/* One action, full screen: title, Open / On hold / Done, the photos (swipe; pinch to zoom),
+   then the checklist. Photo + Share stay pinned at
    the bottom. */
 function mSetState(a,s){
   const d0=mDone(a), h0=mHold(a), wd=s==="done", wh=s==="hold";
@@ -6615,7 +6558,6 @@ function mShowDetail(ai,keepScroll){
       +'</div></div>'
     +(photos.length?'<div class="ma-car"><div class="ma-hs" id="mHsnap">'+photos.map(p=>'<div class="m-hpage">'+(p.img?'<img src="'+p.img+'" alt="'+esc(p.name||"photo")+'" />':'')+'</div>').join("")+'</div>'
         +(photos.length>1?'<div class="ma-cnt" id="mCnt">1 / '+photos.length+'</div>':'')+(onMap?'<button type="button" class="ma-pinb" id="mDistB" aria-label="Show on map">'+MI.pin+'</button>':'')+'<div class="ma-fl"><button type="button" id="mGalAct" aria-label="Add photos from the gallery">'+MI.gal+'</button><button type="button" id="mCamAct2" aria-label="Take a photo">'+MI.cam+'</button><button type="button" class="g" id="mCopyB" aria-label="Share">'+MI.share+'</button></div>'+'</div>'
-        +'<div class="ma-note"><textarea id="mNin" rows="1" placeholder="Add a note about this photo" enterkeyhint="done"></textarea>'+MI.pen+'</div>'
         +'<div class="ma-thumbs" id="mThumbs">'+(photos.length>1?photos.map((p,i)=>'<button type="button" class="tb'+(i?'':' cur')+'" data-i="'+i+'" style="background-image:url(\''+(p.img||'')+'\')" aria-label="Photo '+(i+1)+'"></button>').join(""):'')
         +'</div>'
       :'<div class="ma-car ma-car0"><div class="ma-first">'+MI.cam+'No photos yet</div>'+(onMap?'<button type="button" class="ma-pinb" id="mDistB" aria-label="Show on map">'+MI.pin+'</button>':'')+'<div class="ma-fl"><button type="button" id="mGalAct" aria-label="Add photos from the gallery">'+MI.gal+'</button><button type="button" id="mCamAct2" aria-label="Take a photo">'+MI.cam+'</button><button type="button" class="g" id="mCopyB" aria-label="Share">'+MI.share+'</button></div>'+'</div>')
@@ -6636,30 +6578,15 @@ function mShowDetail(ai,keepScroll){
       mCollect=fs=>mUploadPhotos(fs,null,lk); mUpInput().click(); window.mPickT=Date.now(); }); }
   document.getElementById("mCopyB").addEventListener("click",e=>mShareCard(a,e.currentTarget));
   setTimeout(()=>{ if(document.getElementById("mCopyB")) mCardBlob(a).catch(()=>{}); },700);   // built ahead, so Share opens the moment it's tapped
-  /* the note under the photo belongs to the photo being viewed; an edit is kept before swapping */
-  const nin=document.getElementById("mNin");
-  let ninPi=0;
-  const ninSize=()=>{ if(!nin) return; nin.style.height="auto"; nin.style.height=nin.scrollHeight+"px"; };
-  const ninLoad=()=>{ if(!nin) return; const p=photos[ninPi]; const pend=p?mPn(p.id):null; nin.value=p?((pend!=null)?pend:(p.note||"")):""; ninSize(); };
-  const ninCommit=()=>{ if(!nin) return; const p=photos[ninPi]; if(!p) return; const v=nin.value.trim();
-    const base=(mPn(p.id)!=null?mPn(p.id):(p.note||"")); if(v===base) return; if(!v&&mPn(p.id)==null) return;
-    mMutate(()=>mSetPn(p.id,p.name||"",v)); };
-  if(nin){
-    nin.addEventListener("input",ninSize);
-    nin.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); nin.blur(); } });
-    nin.addEventListener("blur",ninCommit);
-    ninLoad();
-  }
   const hsEl=document.getElementById("mHsnap"), cnt=document.getElementById("mCnt"), th=document.getElementById("mThumbs");
   if(hsEl){ let fr=0, last=0;
     hsEl.addEventListener("scroll",()=>{ if(fr) return; fr=requestAnimationFrame(()=>{ fr=0; const i=Math.round(hsEl.scrollLeft/Math.max(1,hsEl.clientWidth));
       if(i===last) return; last=i;
-      ninCommit(); ninPi=i; ninLoad();
       if(cnt) cnt.textContent=(i+1)+" / "+photos.length;
       if(th) th.querySelectorAll(".tb[data-i]").forEach(b=>b.classList.toggle("cur",Number(b.dataset.i)===i)); }); });
     if(th) th.querySelectorAll(".tb[data-i]").forEach(b=>b.addEventListener("click",()=>hsEl.scrollTo({left:Number(b.dataset.i)*hsEl.clientWidth,behavior:"smooth"})));
     mWirePinch(hsEl);
-    hsEl.addEventListener("click",()=>{ const i=Math.round(hsEl.scrollLeft/Math.max(1,hsEl.clientWidth)); ninCommit(); mOpenViewer(a,photos,i,j=>{ hsEl.scrollLeft=j*hsEl.clientWidth; }); });   // a tap opens the full-screen viewer
+    hsEl.addEventListener("click",()=>{ const i=Math.round(hsEl.scrollLeft/Math.max(1,hsEl.clientWidth)); mOpenViewer(a,photos,i,j=>{ hsEl.scrollLeft=j*hsEl.clientWidth; }); });   // a tap opens the full-screen viewer
   }
   /* checklist: tick the box, tap the text to edit it, × deletes (undoable), drag the letter to reorder */
   const sub2=document.getElementById("mSub2"), stCnt=document.getElementById("mStCnt");
@@ -6700,7 +6627,7 @@ function mShowDetail(ai,keepScroll){
   /* undo/redo refresh this screen in place (no rebuild, the photo stays where it is) */
   mSoftRefresh=()=>{
     if(!mActAt(ai)){ mSoftRefresh=null; mShowList(); return true; }   // e.g. an undone phone-created action vanished
-    paintState(); fill(); ninLoad(); mUpdUndoUI();
+    paintState(); fill(); mUpdUndoUI();
     return true;
   };
   if(keepScroll!=null) requestAnimationFrame(()=>{ snap.scrollTop=keepScroll; });
@@ -6751,22 +6678,21 @@ async function mShareCard(a,btn){
 /* Pinch-zoom and pan on the action's photos. The transform lives on the IMG alone. While zoomed,
    one-finger pans move the image; only a pan that pushes PAST the image edge is released to the
    photo strip, so the view never springs back mid-photo. */
-/* Full-screen photo viewer: black, ✕ / counter / share on top, the photo's note at the bottom; swipe for the
+/* Full-screen photo viewer: black, ✕ / counter / share on top, dots at the bottom; swipe for the
    next photo, pinch to zoom, swipe down (or Back, or ✕) to close. */
 let mVwHist=false;
 function mOpenViewer(a,photos,i,onClose){
   mCloseViewer(true);
   const X='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
-  const note=p=>{ const pend=p?mPn(p.id):null; return p?((pend!=null)?pend:(p.note||"")):""; };
   const el=document.createElement("div"); el.className="mvw"; el.id="mVw";
   el.innerHTML='<div class="mvw-hs" id="mVwHs">'+photos.map(p=>'<div class="m-hpage">'+(p.img?'<img src="'+p.img+'" alt="'+esc(p.name||"photo")+'" />':'')+'</div>').join("")+'</div>'
     +'<div class="mvw-top"><button type="button" id="mVwX" aria-label="Close">'+X+'</button><b id="mVwN"></b><button type="button" id="mVwSh" aria-label="Share">'+MI.share+'</button></div>'
-    +'<div class="mvw-bot"><div id="mVwNote"></div>'+(photos.length>1?'<div class="dots">'+photos.map(()=>'<i></i>').join("")+'</div>':'')+'</div>';
+    +'<div class="mvw-bot">'+(photos.length>1?'<div class="dots">'+photos.map(()=>'<i></i>').join("")+'</div>':'')+'</div>';
   document.body.appendChild(el); el._onClose=onClose;
   if(!mVwHist){ mVwHist=true; mPush({m:"vw"}); }
   const hs=el.querySelector("#mVwHs");
   const show=j=>{ el._i=j; el.querySelector("#mVwN").textContent=photos.length>1?(j+1)+" / "+photos.length:"";
-    el.querySelector("#mVwNote").textContent=note(photos[j]); el.querySelectorAll(".dots i").forEach((d,k)=>d.classList.toggle("on",k===j)); };
+    el.querySelectorAll(".dots i").forEach((d,k)=>d.classList.toggle("on",k===j)); };
   requestAnimationFrame(()=>{ hs.scrollLeft=i*hs.clientWidth; show(i); });
   let fr=0; hs.addEventListener("scroll",()=>{ if(fr) return; fr=requestAnimationFrame(()=>{ fr=0; const j=Math.round(hs.scrollLeft/Math.max(1,hs.clientWidth)); if(j!==el._i) show(j); }); });
   mWirePinch(hs);
