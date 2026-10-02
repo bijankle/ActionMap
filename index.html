@@ -487,6 +487,9 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .act-top{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
   .act-top .act-st{flex-direction:row;gap:5px;}
   .act-top .act-st button{width:auto;padding:1px 9px;}
+  .act-top .act-st .act-all{width:22px;padding:0;display:flex;align-items:center;justify-content:center;color:#4a525c;border-color:#cfd4da;background:#fff;}   /* same height and outline as On hold beside it */
+  .act-top .act-st .act-all:hover{border-color:var(--gold);color:var(--ink);}
+  .act-all svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   .act-body .bh .t{display:flex;align-items:flex-start;gap:7px;}
   .act-row .act-exp.act-tri{width:14px;height:14px;flex:none;margin:3px 0 0;padding:0;border:1.3px solid #7d8794;border-radius:2px;background:#fff;color:var(--ink);font:700 12px/11px ui-monospace,Consolas,monospace;display:inline-flex;align-items:center;justify-content:center;transform:none;box-shadow:none;}
   .act-row .act-exp.act-tri:hover{border-color:var(--gold);background:#fdf6e6;}
@@ -1189,7 +1192,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
 
 <div class="main tab-photo" id="main">
   <aside class="actpanel" id="actPanel">
-    <div class="act-head"><span class="title">Actions</span><button class="act-tgl act-dl" id="actXlsx" type="button" title="Export to Excel: every problem as a row, status, sub-actions and the marked-up photos with their notes" aria-label="Export to Excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10.5l5 5 5-5"/><path d="M5 20h14"/></svg></button><button class="act-tgl act-dl" id="actExpAll" type="button"></button><span style="flex:1"></span>
+    <div class="act-head"><span class="title">Actions</span><button class="act-tgl act-dl" id="actXlsx" type="button" title="Export to Excel: every problem as a row, status, sub-actions and the marked-up photos with their notes" aria-label="Export to Excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10.5l5 5 5-5"/><path d="M5 20h14"/></svg></button><span style="flex:1"></span>
       <button class="act-tgl" id="actShowOpen" title="Open — show the open actions, in this list and on the map (orange dots)"><i class="af-dot open"></i>Open<span class="af-n"></span></button>
       <button class="act-tgl" id="actShowHold" title="On hold — also show the actions that are on hold, in this list and on the map (white dots with an orange ring)"><i class="af-dot hold"></i>On hold<span class="af-n"></span></button>
       <button class="act-tgl" id="actShowDone" title="Done — also show finished actions, in this list and on the map (grey dots)"><i class="af-dot done"></i>Done<span class="af-n"></span></button>
@@ -2079,9 +2082,8 @@ function renderActions(){
     [["actShowOpen",no],["actShowHold",nh],["actShowDone",nd]].forEach(([id,n])=>{ const e=document.querySelector("#"+id+" .af-n"); if(e) e.textContent=n; }); }
   document.getElementById("actShowDone").classList.toggle("on",actShowDone);
 
-  { const b=document.getElementById("actExpAll"), open=actions.some(a=>!collActs.has(a.id)), t=open?"Collapse all \u2014 titles only":"Expand all \u2014 show sub-actions";   // one quiet icon: shows what a click will do
-    b.innerHTML=open?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4l4 4 4-4M8 20l4-4 4 4M4 12h16"/></svg>':'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 8l4-4 4 4M8 16l4 4 4-4M4 12h16"/></svg>';
-    b.title=t; b.setAttribute("aria-label",t); }
+  const allOpen=actions.some(a=>!collActs.has(a.id)), allT=allOpen?"Collapse all \u2014 titles only":"Expand all \u2014 show sub-actions";   // stacked boxes (Navisworks style) on the first card: \u2212 collapses every card, + expands them
+  const allBtn='<button type="button" class="act-all" id="actExpAll" title="'+allT+'" aria-label="'+allT+'"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3.5" width="12" height="12" rx="1.5"/><path d="M5 7.5v12h12"/>'+(allOpen?'<path d="M11 9.5h6"/>':'<path d="M11 9.5h6M14 6.5v6"/>')+'</svg></button>';
   const shown=actsShown();   // on-hold then completed actions sink to the bottom (display only — stored order unchanged)
   if(!shown.length){ const nh=actions.filter(a=>!a.done&&a.hold).length, nd=actions.filter(a=>a.done).length;   // say why the list is empty
     list.innerHTML=actions.length?'<div class="act-empty">'+[nh?nh+" on hold":"",nd?nd+" done":""].filter(Boolean).join(" and ")+' \u2014 turn on <b>'+(nh&&nd?"On hold / Done":nh?"On hold":"Done")+'</b> above to see '+((nh+nd)===1?"it":"them")+'.</div>':""; return; }
@@ -2097,7 +2099,7 @@ function renderActions(){
     const isCur=!!(cp&&Array.isArray(cp.acts)&&cp.acts.includes(a.id));
     const exp=!collActs.has(a.id);
     return '<div class="act-row'+(a.done?' done':'')+(a.hold?' hold':'')+(selActs.has(a.id)?' sel':'')+(isCur?' cur':'')+'" data-aid="'+a.id+'" draggable="true">'
-      +'<div class="act-body"><div class="act-top"><div class="act-st"><button type="button" class="st-h'+(a.hold?' on':'')+'" title="'+(a.hold?'Take this action off hold':'Put this action on hold')+'">On hold</button>'
+      +'<div class="act-body"><div class="act-top"><div class="act-st">'+(a===shown[0]?allBtn:'')+'<button type="button" class="st-h'+(a.hold?' on':'')+'" title="'+(a.hold?'Take this action off hold':'Put this action on hold')+'">On hold</button>'
         +'<button type="button" class="st-d'+(a.done?' on':'')+'" title="'+(a.done?'Reopen this action':'Mark this action done')+'">Done</button></div><span style="flex:1"></span>'
         +'<button class="ipa-x act-del" type="button" title="'+(isCur?'Remove this action from the open photo':'Delete this action')+'">&times;</button></div>'   // status along the top, so the left side is free for the tree
       +'<div class="bh"><div class="t"><button type="button" class="act-exp act-tri" aria-expanded="'+exp+'" title="'+(exp?'Hide':'Show')+' sub-actions">'+(exp?'\u2212':'+')+'</button>'
@@ -2172,7 +2174,8 @@ document.getElementById("actShowOpen").addEventListener("click",()=>{ actShowOpe
 document.getElementById("actShowHold").addEventListener("click",()=>{ actShowHold=!actShowHold; actFilterChanged(); });
 document.getElementById("actShowDone").addEventListener("click",()=>{ actShowDone=!actShowDone; actFilterChanged(); });
 document.getElementById("actMapOnly")?.addEventListener("click",()=>{ actOnlyMap=!actOnlyMap; buildCluster(); renderClusters(); updateGallery(); renderActions(); renderMapTags(); persistState(); });
-document.getElementById("actExpAll").addEventListener("click",()=>{ if(actions.some(a=>!collActs.has(a.id))) actions.forEach(a=>collActs.add(a.id)); else collActs.clear(); renderActions(); });
+document.getElementById("actList").addEventListener("click",e=>{ if(!e.target.closest("#actExpAll")) return; e.stopPropagation();   // collapse-all lives on the first card, which is rebuilt each render
+  if(actions.some(a=>!collActs.has(a.id))) actions.forEach(a=>collActs.add(a.id)); else collActs.clear(); renderActions(); },true);
 /* Right-click "New action" on photos doesn't pop a dialog: it ARMS this input — type the action
    and Enter creates it already assigned to those photos. Escape disarms. */
 let pendingActPhotos=null, pendingActLoc=null;
