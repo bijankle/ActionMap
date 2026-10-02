@@ -3416,8 +3416,29 @@ async function composeActionCard(a,psIn){   // psIn: the phone passes its own ph
   for(let i=0;i<ps.length;i++){ const b=boxes[i], src=await cardImage(ps[i]);   // one at a time: originals are big
     _drawPhoto(ctx,ps[i],src&&src.im,b.x,b.y,b.w,b.h,b.r);
     if(src&&src.url) URL.revokeObjectURL(src.url); }
+  _drawStepsBand(ctx,a.steps||[],boxes[0]);
   return c;
 }
+/* The sub-actions across the top of the main photo: "a. …, b. …" on one dark see-through band, as many
+   lines as it takes; done ones carry a ✓, greyed and struck through. No sub-actions: no band. */
+function _drawStepsBand(ctx,steps,b){
+  steps=(steps||[]).filter(s=>s&&String(s.t||"").trim()); if(!steps.length||!b) return;
+  const fs=34, lh=44, padX=24, padY=16, maxW=b.w-2*padX;
+  ctx.save(); ctx.font="600 "+fs+"px 'Segoe UI',Aptos,system-ui,-apple-system,Roboto,sans-serif";
+  const toks=[]; steps.forEach((s,i)=>{ const ws=[stepLetter(i)+"."].concat(s.d?["\u2713"]:[],String(s.t).trim().split(/\s+/));
+    if(i<steps.length-1) ws[ws.length-1]+=","; ws.forEach((w,j)=>toks.push({w,d:!!s.d,i,last:j===ws.length-1})); });
+  const sp=ctx.measureText(" ").width, lines=[[]]; let x=0;
+  for(const t of toks){ t.wd=ctx.measureText(t.w).width; if(x&&x+sp+t.wd>maxW){ lines.push([]); x=0; } t.x=x?x+sp:0; x=t.x+t.wd; lines[lines.length-1].push(t); }
+  const maxL=Math.max(1,Math.floor((b.h*0.7-2*padY)/lh)); if(lines.length>maxL){ lines.length=maxL; const l=lines[maxL-1], t=l[l.length-1]; t.w+="\u2026"; }   // only a very long list is cut, deep into the photo
+  const h=lines.length*lh+2*padY-(lh-fs);
+  ctx.beginPath(); ctx.moveTo(b.x+b.r,b.y); ctx.arcTo(b.x+b.w,b.y,b.x+b.w,b.y+b.h,b.r); ctx.arcTo(b.x+b.w,b.y+b.h,b.x,b.y+b.h,b.r); ctx.arcTo(b.x,b.y+b.h,b.x,b.y,b.r); ctx.arcTo(b.x,b.y,b.x+b.w,b.y,b.r); ctx.closePath(); ctx.clip();   // inside the photo's rounded corners
+  ctx.fillStyle="rgba(0,0,0,.55)"; ctx.fillRect(b.x,b.y,b.w,h);
+  ctx.textBaseline="top";
+  lines.forEach((l,li)=>{ const y=b.y+padY+li*lh;
+    l.forEach((t,k)=>{ const X=b.x+padX+t.x; ctx.fillStyle=t.d?"rgba(255,255,255,.55)":"#fff"; ctx.fillText(t.w,X,y);
+      if(t.d){ const nx=l[k+1], end=(nx&&nx.i===t.i)?b.x+padX+nx.x:X+t.wd-(t.last&&/,$/.test(t.w)?ctx.measureText(",").width:0);   // the strike runs through the item (not its comma)
+        ctx.fillRect(X,y+fs*0.52,end-X,2.5); } }); });
+  ctx.restore(); }
 /* Share images are made AHEAD of time and kept on this device (memory + IndexedDB), keyed by what
    they show — so Copy / Share is instant, and an unchanged action is never drawn twice. */
 const _cardMem=new Map(), CARD_KEEP=24;
@@ -3432,7 +3453,7 @@ function cardCached(sig,make){
   return p; }
 function cardMeSig(){ if(ignoreLoc) return "x"; try{ const l=geoMarker&&geoMarker.getLatLng(); if(l) return l.lat.toFixed(3)+","+l.lng.toFixed(3); }catch(e){} return "?"; }
 function deskCardBlob(a){
-  const sig=[CARD_LAYOUT.head,CARD_K,actNo(a),a.text||"",a.loc?a.loc.lat+","+a.loc.lng:"",cardMeSig()].concat(actPhotos(a).map(p=>lookSig(p)+"@"+(p.lat!=null?(+p.lat).toFixed(5)+","+(+p.lng).toFixed(5):""))).join("|");
+  const sig=[CARD_LAYOUT.head,CARD_K,actNo(a),a.text||"",a.loc?a.loc.lat+","+a.loc.lng:"",cardMeSig(),JSON.stringify((a.steps||[]).map(x=>[x.t,!!x.d]))].concat(actPhotos(a).map(p=>lookSig(p)+"@"+(p.lat!=null?(+p.lat).toFixed(5)+","+(+p.lng).toFixed(5):""))).join("|");
   let x=0; for(let i=0;i<sig.length;i++) x=(x*31+sig.charCodeAt(i))|0;
   return cardCached("d"+(ON.pid||"")+"."+a.id+"."+(x>>>0).toString(36)+"."+sig.length,()=>composeActionCard(a)); }
 var _warmT=null, _warmBusy=false;   // var: renderActions runs before this line during start-up
@@ -6677,9 +6698,9 @@ function mShowDetail(ai,keepScroll){
 function mCardName(a){ return (a._new?"":actNo(a)+" ")+String(mTitle(a)||"action").replace(/[\\/:*?"<>|]+/g,"").slice(0,60)+".png"; }
 function mCardBlob(a){   // kept on the phone (see cardCached): Share is instant, even after the app was closed
   const photos=(a.photos||[]).filter(p=>p.img);
-  const act={text:mTitle(a),num:a._new?null:actNo(a),loc:a._new?(mNewActs()[a._ni]||{}).loc:a.loc};
+  const act={text:mTitle(a),num:a._new?null:actNo(a),loc:a._new?(mNewActs()[a._ni]||{}).loc:a.loc,steps:mSteps(a).map(x=>({t:x.t,d:!!x.d}))};
   const me=(ignoreLoc||!mGeo)?"x":mGeo.lat.toFixed(3)+","+mGeo.lng.toFixed(3);
-  const sig=[CARD_LAYOUT.head,CARD_K,mCardKey(a),act.num,act.text,act.loc?act.loc.lat+","+act.loc.lng:"",me].concat(photos.map(p=>(p.h||p.id)+"@"+p.lat+","+p.lng)).join("|");
+  const sig=[CARD_LAYOUT.head,CARD_K,mCardKey(a),act.num,act.text,act.loc?act.loc.lat+","+act.loc.lng:"",me,JSON.stringify(act.steps.map(x=>[x.t,x.d]))].concat(photos.map(p=>(p.h||p.id)+"@"+p.lat+","+p.lng)).join("|");
   let x=0; for(let i=0;i<sig.length;i++) x=(x*31+sig.charCodeAt(i))|0;
   const ps=photos.map(p=>({preview:p.img,lat:p.lat,lng:p.lng,_phone:true}));
   return cardCached("m"+(mPid||"")+"."+(x>>>0).toString(36)+"."+sig.length,()=>composeActionCard(act,ps)); }
