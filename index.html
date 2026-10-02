@@ -539,6 +539,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .act-hold{display:flex;align-items:center;padding-top:1px;cursor:pointer;margin-left:1px;}
   /* per-action status: labelled tags, On hold above Done; filled in its colour when on */
   .act-st{display:flex;flex-direction:column;gap:4px;flex:none;align-self:flex-start;}
+  .act-st .a-num{display:block;margin:0 0 1px;text-align:center;font-size:var(--fb);font-weight:800;line-height:1.35;}   /* same size and line height as the title, so their tops line up */
   .act-st button{font:600 var(--fl) var(--font);width:66px;padding:2px 0;border-radius:6px;border:1.5px solid;cursor:pointer;text-align:center;white-space:nowrap;}
   .act-st .st-h{color:#7a828c;border-color:#cfd4da;background:#fff;}   /* not ticked: grey; ticked: solid colour */
   .act-st .st-h:hover{border-color:#E8A33D;}
@@ -2074,9 +2075,9 @@ function renderActions(){
     const isCur=!!(cp&&Array.isArray(cp.acts)&&cp.acts.includes(a.id));
     const exp=!collActs.has(a.id);
     return '<div class="act-row'+(a.done?' done':'')+(a.hold?' hold':'')+(selActs.has(a.id)?' sel':'')+(isCur?' cur':'')+'" data-aid="'+a.id+'" draggable="true">'
-      +'<div class="act-st"><button type="button" class="st-h'+(a.hold?' on':'')+'" title="'+(a.hold?'Take this action off hold':'Put this action on hold')+'">On hold</button>'
+      +'<div class="act-st"><span class="a-num">'+actNo(a)+'</span><button type="button" class="st-h'+(a.hold?' on':'')+'" title="'+(a.hold?'Take this action off hold':'Put this action on hold')+'">On hold</button>'
         +'<button type="button" class="st-d'+(a.done?' on':'')+'" title="'+(a.done?'Reopen this action':'Mark this action done')+'">Done</button></div>'
-      +'<div class="act-body"><div class="bh"><div class="t"><span class="a-num">'+actNo(a)+'</span>'+esc(a.text)+'</div>'
+      +'<div class="act-body"><div class="bh"><div class="t">'+esc(a.text)+'</div>'
         +'<button class="act-copy" type="button" title="Copy image: one portrait picture of this action (title, map, photos with markup) to paste into any chat or email"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg></button>'
         +expBtnHtml(a)+'<button class="ipa-x act-del" type="button" title="'+(isCur?'Remove this action from the open photo':'Delete this action')+'">&times;</button></div>'
       +(exp?('<div class="asec">'+stepsHtml(a)+'</div>'):'')
