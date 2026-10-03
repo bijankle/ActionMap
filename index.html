@@ -3933,13 +3933,21 @@ async function ingestAdhoc(items){
   if(!isOnline()&&!photos.length&&!actions.length){ showProjectPicker("Open or create a project first \u2014 photos are added to a project online."); return; }
   const added=(await ingest(items,true))||[];
   if(!added.length){ loadNote("Already in this project — nothing new added"); setTimeout(()=>loadNote(""),2500); return; }
-  const c=map.getCenter();
-  for(const p of added){ p.adhoc=true; p.added=Date.now(); if(p.lat==null){ p.noGps=true; p.lat=c.lat; p.lng=c.lng; } }
+  /* one action selected: the pasted photos join it, at the BACK of its photo list (the cover stays);
+     one without GPS lands on the action's cover spot instead of the map centre */
+  const selA=selActs.size===1?actById([...selActs][0]):null, cov=selA?actPhotos(selA).find(q=>q.lat!=null):null;
+  if(selA&&!(Array.isArray(selA.porder)&&selA.porder.length)) selA.porder=actPhotos(selA).map(q=>q.id);
+  const c=cov?L.latLng(cov.lat,cov.lng):map.getCenter();
+  for(const p of added){ p.adhoc=true; p.added=Date.now(); if(p.lat==null){ p.noGps=true; p.lat=c.lat; p.lng=c.lng; } if(selA) p.acts=[selA.id]; }
   pushUndo({addPhotos:added.map(p=>p.id)});
+  if(selA&&typeof rebuildActionFilter==="function") rebuildActionFilter();
   buildDateFilter(); buildCluster(); renderClusters(); updateStats(); updateGallery(); persistState(); cacheFullSession();
-  const geo=added.filter(p=>p.lat!=null);
-  if(geo.length>1) map.flyToBounds(L.latLngBounds(geo.map(p=>[p.lat,p.lng])),{padding:[60,60],maxZoom:18,duration:DESK_FLY});
-  else if(geo.length===1) map.flyTo([geo[0].lat,geo[0].lng],Math.max(map.getZoom(),17),{duration:DESK_FLY});
+  if(selA){ renderActions(); loadNote("\u2713 Added "+added.length+" photo"+(added.length===1?"":"s")+" to "+actNo(selA)); setTimeout(()=>loadNote(""),2500); }
+  /* only move the map if a new dot is out of sight — no fly to where you already are (that was the shake) */
+  const geo=added.filter(p=>p.lat!=null), vb=map.getBounds();
+  if(geo.some(p=>!vb.contains([p.lat,p.lng]))){
+    if(geo.length>1) map.flyToBounds(L.latLngBounds(geo.map(p=>[p.lat,p.lng])),{padding:[60,60],maxZoom:18,duration:DESK_FLY});
+    else map.flyTo([geo[0].lat,geo[0].lng],Math.max(map.getZoom(),17),{duration:DESK_FLY}); }
 }
 // Generate the cached renditions for a photo we already track (metadata-only .json opened on a
 // machine with no image cache): heals grey images on the next Open Folder / Refresh.
