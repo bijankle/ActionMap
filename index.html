@@ -1311,6 +1311,7 @@ let boxBounds=null,boxRect=null,drawing=false,drawStart=null,tempRect=null,drawM
 let measuring=false, measurePts=[], measureLayer=null;
 
 /* map + layers */
+const DESK_FLY=1.2;   // every click that zooms / moves the desktop map glides this long (scroll-wheel zoom is separate)
 const map=L.map("map",{zoomControl:false,boxZoom:false,attributionControl:false,worldCopyJump:true,maxZoom:24,minZoom:2,zoomSnap:0.25,wheelDebounceTime:35}).setView([20,0],3);
 const dotRenderer=L.canvas({padding:0.5});   // photo dots on ONE canvas instead of hundreds of SVG nodes — far cheaper zoom animations
 const google=L.tileLayer("https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",{subdomains:["mt0","mt1","mt2","mt3"],maxZoom:24,maxNativeZoom:21,keepBuffer:6,attribution:"Imagery &copy; Google"}).addTo(map);   // keepBuffer: tiles just off screen stay loaded, so panning shows imagery at once
@@ -1450,10 +1451,10 @@ function renderClusters(){
             const ez=Math.min(cluster.getClusterExpansionZoom(cid),22);   // zoom at which this cluster actually breaks apart
             let z=map.getBoundsZoom(bb,false,L.point(46,46));             // zoom that fits the photos' extent
             z=Math.min(Math.max(z,ez),22);                                 // never shallower than the break-apart zoom, never past useful tile depth
-            map.flyTo(bb.getCenter(),z,{duration:.45});
+            map.flyTo(bb.getCenter(),z,{duration:DESK_FLY});
             return;
           } }catch(err){}
-        const ez=Math.min(cluster.getClusterExpansionZoom(cid),map.getMaxZoom()); map.flyTo([lat,lng],ez,{duration:.45});   // fallback
+        const ez=Math.min(cluster.getClusterExpansionZoom(cid),map.getMaxZoom()); map.flyTo([lat,lng],ez,{duration:DESK_FLY});   // fallback
       });
       m.on("contextmenu",e=>{ L.DomEvent.stop(e.originalEvent); uiClickT=Date.now(); try{ openBubbleMenu(cluster.getLeaves(cid,Infinity).map(f=>f.properties.pid),[lat,lng],e.originalEvent); }catch(err){} });
       if(c.properties.hl){ ring=L.circleMarker([lat,lng],{radius:size/2+5,color:"#ffffff",weight:3,fillColor:"#e8b44a",fillOpacity:.3,interactive:false,className:"hl-dot"}); markerLayer.addLayer(ring); }   // cluster holds selected photos: the bubble itself flashes
@@ -1552,7 +1553,7 @@ function openBubbleMenu(ids,ll,ev){
   const n=ids.length;
   ctxMenu.appendChild(mkCtxItem("Spread these "+n+" photos out",()=>spreadPhotos(ids,ll),!canEdit()&&isOnline(),"View only"));
   ctxMenu.appendChild(mkCtxItem("Show them in the Gallery",()=>showSpot(ids)));
-  ctxMenu.appendChild(mkCtxItem("Zoom in",()=>map.flyTo(ll,Math.min(map.getZoom()+2,22),{duration:.45})));
+  ctxMenu.appendChild(mkCtxItem("Zoom in",()=>map.flyTo(ll,Math.min(map.getZoom()+2,22),{duration:DESK_FLY})));
   showCtxAt(ev.clientX,ev.clientY); }
 function spreadPhotos(ids,ll){
   const ps=ids.map(photoById).filter(p=>p&&p.lat!=null); if(ps.length<2) return;
@@ -2048,7 +2049,7 @@ function actNavigate(a,refitOnly){
       skip=Math.abs(map.getZoom()-tgt.zoom)<0.5 && map.latLngToContainerPoint(tgt.center).distanceTo(map.latLngToContainerPoint(map.getCenter()))<40;
     }catch(e){}
     clearAreaPreviews();
-    if(!skip){ map.once("moveend",()=>setTimeout(()=>showAreaPreviews(a),40)); map.flyToBounds(bb,Object.assign({duration:.45},fitOpts)); }
+    if(!skip){ map.once("moveend",()=>setTimeout(()=>showAreaPreviews(a),40)); map.flyToBounds(bb,Object.assign({duration:DESK_FLY},fitOpts)); }
     else setTimeout(()=>showAreaPreviews(a),40);
   }
   if(ps.length&&!refitOnly) setTab("gallery");   // always the gallery (a resize refit leaves the tab alone), even for one photo — its thumbnail carries the unassign X
@@ -3788,7 +3789,7 @@ function showNewPhotos(list){
   }
   selSet=new Set(list.map(p=>p.id)); setAreaBtn();
   buildCluster(); renderClusters(); renderActions(); renderMapTags(); updateGallery(); persistState();
-  if(loc.length>1) map.fitBounds(L.latLngBounds(loc.map(p=>[p.lat,p.lng])),{padding:[60,60],maxZoom:18}); else if(loc.length===1) map.flyTo([loc[0].lat,loc[0].lng],17);
+  if(loc.length>1) map.flyToBounds(L.latLngBounds(loc.map(p=>[p.lat,p.lng])),{padding:[60,60],maxZoom:18,duration:DESK_FLY}); else if(loc.length===1) map.flyTo([loc[0].lat,loc[0].lng],17,{duration:DESK_FLY});
   setTab("gallery");
   loadNote("The new photos are selected (Esc clears) \u2014 "+loc.length+" on the map"+(list.length>loc.length?", "+(list.length-loc.length)+" without location at the end of the gallery":""));
   setTimeout(()=>loadNote(""),6000);
@@ -3931,8 +3932,8 @@ async function ingestAdhoc(items){
   pushUndo({addPhotos:added.map(p=>p.id)});
   buildDateFilter(); buildCluster(); renderClusters(); updateStats(); updateGallery(); persistState(); cacheFullSession();
   const geo=added.filter(p=>p.lat!=null);
-  if(geo.length>1) map.fitBounds(L.latLngBounds(geo.map(p=>[p.lat,p.lng])),{padding:[60,60],maxZoom:18});
-  else if(geo.length===1) map.flyTo([geo[0].lat,geo[0].lng],Math.max(map.getZoom(),17));
+  if(geo.length>1) map.flyToBounds(L.latLngBounds(geo.map(p=>[p.lat,p.lng])),{padding:[60,60],maxZoom:18,duration:DESK_FLY});
+  else if(geo.length===1) map.flyTo([geo[0].lat,geo[0].lng],Math.max(map.getZoom(),17),{duration:DESK_FLY});
 }
 // Generate the cached renditions for a photo we already track (metadata-only .json opened on a
 // machine with no image cache): heals grey images on the next Open Folder / Refresh.
