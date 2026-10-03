@@ -875,17 +875,26 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-cl.hold{border-style:dashed;}
   .ma-cl i{font-style:normal;font-size:12px;font-weight:700;margin-right:1px;}   /* bubbles count actions: ×3 */
   .ma-cl.done{border-color:#6b7580;color:#3f4750;}
-  .ma-ov{position:absolute;inset:0;z-index:800;background:#1d243040;} .ma-ov.clear{background:none;}
+  .ma-ov{position:absolute;inset:0;z-index:800;background:#1d243040;} .ma-ov.clear{background:none;pointer-events:none;}   /* a top card leaves the map live below it */
+  .m-adding .ma-peeks,.m-adding .ma-fit{display:none!important;}   /* adding: the cards row steps aside */
+  .ma-nx{flex-shrink:0;width:28px;height:40px;border:0;background:none;font-size:30px;line-height:1;color:var(--muted);padding:0;box-shadow:none;}
+  .ma-nplace{display:none;align-items:center;gap:8px;padding:0 16px 4px 20px;} .ma-nplace>span{flex:1;min-width:0;display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.25;} .ma-nplace>span svg{width:22px;height:22px;flex-shrink:0;color:#9A520B;}
+  .ma-nme{flex-shrink:0;width:44px;height:44px;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--ink);display:grid;place-items:center;padding:0;box-shadow:none;} .ma-nme svg{width:24px;height:24px;}
+  .ma-sheet.placing .ma-ntop,.ma-sheet.placing .ma-add2{display:none;} .ma-sheet.placing .ma-nplace{display:flex;}
+  .ma-xpin{position:absolute;z-index:650;width:0;height:0;pointer-events:none;}
+  .ma-xpin i{position:absolute;left:-11px;top:-11px;width:22px;height:22px;border-radius:50%;background:#F28C28;border:3px solid #fff;box-sizing:border-box;box-shadow:0 0 0 2px #9A520B,0 2px 6px #0006;animation:mapin 1.4s ease-in-out infinite;}
+  .ma-xpin.tight span{display:none;} .ma-xpin span{position:absolute;left:0;top:-44px;transform:translateX(-50%);white-space:nowrap;background:#1d2430;color:#fff;font-size:13px;font-weight:700;padding:5px 10px;border-radius:8px;}
   .ma-sheet.top{top:0;bottom:auto;overflow-x:hidden;border-radius:0 0 22px 22px;box-shadow:0 6px 24px #1d243040;padding:calc(10px + env(safe-area-inset-top)) 0 0;max-height:72%;}
   .ma-sheet.top .ma-handle{margin:8px auto 10px;}
-  .ma-ntop{display:flex;align-items:center;gap:10px;padding:2px 16px 10px 20px;} .ma-ntop b{flex:1;font-size:21px;font-weight:800;}
-  .ma-npill{display:flex;align-items:center;gap:6px;height:40px;padding:0 16px;border:0;border-radius:20px;background:var(--gold);color:var(--ink);font:inherit;font-size:16px;font-weight:800;box-shadow:none;}
-  .ma-npill svg{width:18px;height:18px;}
+  .ma-ntop{display:flex;align-items:center;gap:8px;padding:2px 10px 10px 20px;} .ma-ntop b{flex:1;min-width:0;font-size:20px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ma-ntools{display:flex;gap:8px;} .ma-ntool{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:6px;height:42px;padding:0 6px;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--ink);font:inherit;font-size:14.5px;font-weight:700;white-space:nowrap;box-shadow:none;}
+  .ma-ntool svg{width:20px;height:20px;flex-shrink:0;} .ma-add2 textarea.m-in{resize:none;overflow:hidden;line-height:1.35;}
+  .ma-npill{flex-shrink:0;display:flex;align-items:center;gap:5px;height:38px;padding:0 13px;border:0;border-radius:19px;background:var(--gold);color:var(--ink);font:inherit;font-size:15px;font-weight:800;box-shadow:none;}
+  .ma-npill svg{width:16px;height:16px;}
   .ma-nrow{display:flex;gap:8px;align-items:flex-start;} .ma-add2 .ma-nrow textarea{flex:1 1 0;width:auto;min-width:0;resize:none;overflow:hidden;line-height:1.35;}
   .ma-nico{flex-shrink:0;width:48px;height:48px;padding:0;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--ink);display:grid;place-items:center;box-shadow:none;}
   .ma-nico svg{width:24px;height:24px;}
   .m-in.need{border-color:#d0573f;box-shadow:0 0 0 3px #d0573f22;}
-  .ma-newpin{position:absolute;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;background:#F28C28;border:3px solid #fff;box-sizing:border-box;box-shadow:0 0 0 2px #9A520B,0 2px 6px #0006;animation:mapin 1.4s ease-in-out infinite;}
   @keyframes mapin{50%{box-shadow:0 0 0 2px #9A520B,0 0 0 10px #F28C2833,0 2px 6px #0006;}}   /* where the new action will go */
   .ma-sheet{position:absolute;left:0;right:0;bottom:0;z-index:801;background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -4px 20px #1d24302a;padding:0 0 calc(18px + env(safe-area-inset-bottom));max-height:80%;overflow-y:auto;}
   .ma-handle{width:40px;height:5px;border-radius:3px;background:var(--line2);margin:10px auto 8px;}
@@ -6249,6 +6258,7 @@ const MI={
   pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
   share:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.4M8.2 13.2l7.6 4.4"/></svg>',
   gal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.7"/><path d="M4 17l5-5 4 4 3-3 4 4"/></svg>',
+  me:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="6.5"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3"/></svg>',
   check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   folder:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
   gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>',
@@ -6494,52 +6504,69 @@ function mFocusCard(k,fromSwipe){   // bring the card up (unless the swipe alrea
     if(!fromSwipe){ mCardScrolling=true; row.scrollTo({left:c.offsetLeft-(row.clientWidth-c.offsetWidth)/2,behavior:"smooth"}); setTimeout(()=>{ mCardScrolling=false; },600); } }
   mFocusDot(k);   // swipe or tap: glide in to its dot, then the arrow
   const a=mHomeActs().find(x=>mCardKey(x)===k); if(a) mWarmCards([a]); }
-/* + New action: a card that drops from the top — the title (camera and gallery beside it), its sub-actions,
-   the photos — with Create in its corner, so the keyboard never hides anything that matters. Enter puts
-   the keyboard away. The map stays in view below, the new action's spot marked. The draft survives popping
-   out to the camera or gallery (and closing the card by mistake). */
-let mAddDraft=null, mCollect=null;
+/* + New action: a card that drops from the top — the title (place, camera and gallery beside it), its
+   sub-actions, the photos — with Create in its corner. Enter on the title goes straight on to a sub-action,
+   Enter on a sub-action adds it and stays there for the next; Enter on an empty line puts the keyboard
+   away. The map stays live below: a fixed pin in the middle of the clear space marks where the action goes —
+   move the map under it. The place button folds the card away to line the pin up on the whole map. The
+   draft survives popping out to the camera or gallery (and closing the card by mistake). */
+let mAddDraft=null, mCollect=null, mAdding=false;
 function mShowAdd(){
   if(mRoBlock()) return;
+  if(mTab!=="map"){ mSetTab("map"); mShowList(); }   // the action is placed on the map
   const d=mAddDraft||(mAddDraft={t:"",steps:[],files:[]});
-  const sh=mSheet('<div class="ma-ntop"><b>New action</b><button class="ma-npill" id="mNewGo" type="button">'+MI.check+'Create</button></div><div class="ma-add2">'
-    +'<div class="ma-nrow"><textarea class="m-in" id="mNewAct" rows="1" placeholder="What needs doing?" autocomplete="off" enterkeyhint="done">'+esc(d.t)+'</textarea>'
-    +'<button class="ma-nico" id="mAddCam" type="button" aria-label="Take a photo">'+MI.cam+'</button><button class="ma-nico" id="mAddGal" type="button" aria-label="From gallery">'+MI.gal+'</button></div>'
+  const sh=mSheet('<div class="ma-ntop"><b>New action</b><button class="ma-npill" id="mNewGo" type="button">'+MI.check+'Create</button><button class="ma-nx" id="mNewX" type="button" aria-label="Close">×</button></div>'
+    +'<div class="ma-nplace"><span>'+MI.pin+'Move the map under the pin</span><button class="ma-nme" id="mPlMe" type="button" aria-label="My location">'+MI.me+'</button><button class="ma-npill" id="mPlDone" type="button">Done</button></div>'
+    +'<div class="ma-add2">'
+    +'<textarea class="m-in" id="mNewAct" rows="1" placeholder="What needs doing?" autocomplete="off" enterkeyhint="next">'+esc(d.t)+'</textarea>'
+    +'<div class="ma-ntools"><button class="ma-ntool" id="mAddPl" type="button">'+MI.pin+'Place</button><button class="ma-ntool" id="mAddCam" type="button">'+MI.cam+'Photo</button><button class="ma-ntool" id="mAddGal" type="button">'+MI.gal+'Gallery</button></div>'
     +'<div id="mAddSteps"></div>'
-    +'<input class="m-in" id="mAddStep" placeholder="+ Add sub-action" autocomplete="off" enterkeyhint="done" />'
+    +'<input class="m-in" id="mAddStep" placeholder="+ Add sub-action" autocomplete="off" enterkeyhint="enter" />'
     +'<div class="ma-athumbs" id="mAddTh"></div></div>',true);
-  const inp=document.getElementById("mNewAct"), sin=document.getElementById("mAddStep");
+  const inp=document.getElementById("mNewAct"), sin=document.getElementById("mAddStep"), root=document.getElementById("mroot");
+  mAdding=true; root.classList.add("m-adding");
   const grow=()=>{ inp.style.height="auto"; inp.style.height=Math.min(inp.scrollHeight+2,120)+"px"; };   // the title wraps instead of scrolling sideways
-  /* where it will go: the first camera shot's spot, else where you stand — marked on the map below */
-  let pin=null; const m2=mTab==="map"?mHomeMap:null;
-  const spot=()=>{ const cam=d.files.find(f=>f.fixed); return cam?cam.fixed:(!d.files.length&&mGeo?{lat:mGeo.lat,lng:mGeo.lng}:null); };
-  const mark=()=>{ if(!m2) return; const at=spot(); if(pin){ m2.removeLayer(pin); pin=null; } if(!at) return;
-    pin=L.marker([at.lat,at.lng],{interactive:false,zIndexOffset:2000,icon:L.divIcon({className:"",html:'<div class="ma-newpin"></div>',iconSize:[0,0],iconAnchor:[0,0]})}).addTo(m2);
-    try{ const cb=sh.getBoundingClientRect(), mc=m2.getContainer().getBoundingClientRect(), pt=m2.latLngToContainerPoint([at.lat,at.lng]), clear=cb.bottom-mc.top+40;
-      const row=document.getElementById("mPeeks"), rr=row&&!row.classList.contains("none")?row.getBoundingClientRect():null, low=(rr&&rr.height?rr.top-mc.top:mc.height)-40;
-      if(pt.y<clear||pt.y>low||pt.x<30||pt.x>mc.width-30) m2.panBy([pt.x-mc.width/2,pt.y-(clear+Math.max(0,low-clear)*0.4)],{animate:true}); }catch(e){} };   // in the clear space between the card and the cards row
-  mSheetGone=()=>{ if(pin&&m2){ m2.removeLayer(pin); pin=null; } };
+  /* the pin: fixed in the middle of the map's clear space (under the card, above the keyboard); the map moves under it */
+  const m2=mHomeMap, wrap=document.querySelector(".ma-mapwrap");
+  const xp=document.createElement("div"); xp.className="ma-xpin"; xp.innerHTML='<i></i><span>Action goes here</span>'; if(wrap) wrap.appendChild(xp);
+  let moved=false;   // once you move the map yourself, it is yours: nothing re-centres it
+  const pinPt=()=>{ if(!m2) return null; const mc=m2.getContainer().getBoundingClientRect(), cb=sh.getBoundingClientRect(), vv=window.visualViewport;
+    const top=Math.max(0,cb.bottom-mc.top), low=Math.min(mc.height,(vv?vv.height+vv.offsetTop:innerHeight)-mc.top);
+    return {x:mc.width/2,y:top+Math.max(30,(low-top)/2),room:low-top}; };
+  let at=null;   // the pin's place on screen; when the card grows or shrinks it moves, and the map moves with it (it keeps pointing at the same spot)
+  const place=()=>{ const p=pinPt(); if(!p) return; if(at&&m2&&Math.abs(p.y-at.y)>0.5) m2.panBy([0,at.y-p.y],{animate:false}); at=p; xp.style.left=p.x+"px"; xp.style.top=p.y+"px"; xp.classList.toggle("tight",p.room<70); };   // little room (keyboard up): just the pin, no label
+  const centreOn=at=>{ if(!m2||!at) return; const p=pinPt(), c=m2.latLngToContainerPoint([at.lat,at.lng]); m2.panBy([c.x-p.x,c.y-p.y],{animate:true}); };
+  const start=()=>{ const cam=d.files.find(f=>f.fixed); return cam?cam.fixed:(mGeo?{lat:mGeo.lat,lng:mGeo.lng}:null); };   // where it starts: the camera shot's spot, else where you stand
+  const onDrag=()=>{ moved=true; }; if(m2){ m2.on("dragstart zoomstart",onDrag); }
+  const ro=new ResizeObserver(place); ro.observe(sh); const vvr=()=>place(); if(window.visualViewport) visualViewport.addEventListener("resize",vvr);
+  mSheetGone=()=>{ mAdding=false; root.classList.remove("m-adding"); xp.remove(); ro.disconnect(); if(window.visualViewport) visualViewport.removeEventListener("resize",vvr); if(m2) m2.off("dragstart zoomstart",onDrag); };
+  requestAnimationFrame(()=>{ place(); if(!d.moved) centreOn(start()); else moved=true; });
+  const placing=on=>{ sh.classList.toggle("placing",on); if(on){ try{ document.activeElement.blur(); }catch(e){} } requestAnimationFrame(place); };   // fold the card away to line the pin up
+  document.getElementById("mAddPl").addEventListener("click",()=>placing(true));
+  document.getElementById("mPlDone").addEventListener("click",()=>placing(false));
+  document.getElementById("mPlMe").addEventListener("click",()=>{ if(mGeo){ moved=true; centreOn({lat:mGeo.lat,lng:mGeo.lng}); } else mToast("Your location isn’t known yet"); });
+  document.getElementById("mNewX").addEventListener("click",()=>mCloseSheet());
   const thumbs=()=>{ const el=document.getElementById("mAddTh"); if(!el) return;
     el.innerHTML=d.files.map((f,i)=>'<span class="ma-ath" style="background-image:url(\''+f.url+'\')"><button type="button" data-i="'+i+'" aria-label="Remove photo">×</button></span>').join("");
-    el.querySelectorAll("button[data-i]").forEach(b=>b.addEventListener("click",()=>{ const f=d.files.splice(+b.dataset.i,1)[0]; if(f) URL.revokeObjectURL(f.url); thumbs(); mark(); })); };
+    el.querySelectorAll("button[data-i]").forEach(b=>b.addEventListener("click",()=>{ const f=d.files.splice(+b.dataset.i,1)[0]; if(f) URL.revokeObjectURL(f.url); thumbs(); })); };
   const steps=()=>{ const el=document.getElementById("mAddSteps"); if(!el) return;
     el.innerHTML=d.steps.map((t,i)=>'<div class="ma-astep"><i></i><span>'+esc(t)+'</span><button type="button" data-i="'+i+'" aria-label="Remove">×</button></div>').join("");
     el.querySelectorAll("button[data-i]").forEach(b=>b.addEventListener("click",()=>{ d.steps.splice(+b.dataset.i,1); steps(); })); };
-  thumbs(); steps(); grow(); requestAnimationFrame(mark);
+  thumbs(); steps(); grow();
   inp.addEventListener("input",()=>{ d.t=inp.value.replace(/\n/g," "); if(inp.value!==d.t) inp.value=d.t; grow(); inp.classList.remove("need"); });
-  inp.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });   // Enter locks the title in and puts the keyboard away
+  inp.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"){ e.preventDefault(); if(inp.value.trim()) sin.focus(); else inp.blur(); } });   // Enter: straight on to the sub-actions, keyboard still up
   const addStep=()=>{ const v=sin.value.trim(); if(!v) return false; d.steps.push(v); sin.value=""; steps(); return true; };
-  sin.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"){ e.preventDefault(); addStep(); sin.blur(); } });   // Enter adds it and puts the keyboard away
+  sin.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"){ e.preventDefault(); if(!addStep()) sin.blur(); } });   // Enter adds it, ready for the next; Enter on an empty line puts the keyboard away
   sin.addEventListener("blur",()=>{ addStep(); });   // tapping away keeps what was typed
-  const pick=(input)=>{ d.t=inp.value; mCollect=(fs,fixed)=>{ for(const f of fs) d.files.push({file:f,fixed,url:URL.createObjectURL(f)}); thumbs(); mark(); };
+  const pick=(input)=>{ d.t=inp.value; d.moved=moved; mCollect=(fs,fixed)=>{ for(const f of fs) d.files.push({file:f,fixed,url:URL.createObjectURL(f)}); thumbs(); if(!moved&&fixed) centreOn(fixed); };
     input.click(); window.mPickT=Date.now(); };
   document.getElementById("mAddCam").addEventListener("click",()=>pick(mCamInput()));
   document.getElementById("mAddGal").addEventListener("click",()=>pick(mUpInput()));
   document.getElementById("mNewGo").addEventListener("click",()=>{
     addStep(); const v=inp.value.trim();
-    if(!v){ inp.placeholder="Name the action first"; inp.classList.add("need"); inp.focus(); return; }
-    const u=mUid(), loc=spot();   // where the photo was taken, else where you stand
-    mMutate(()=>{ const p=mPend(); p.newActs=(p.newActs||[]).concat([{text:v,steps:d.steps.map(t=>({t,d:false,u:mUid()})),done:false,u,loc,cr:Date.now()}]); mPendSave(p); });
+    if(!v){ inp.placeholder="Name the action first"; inp.classList.add("need"); placing(false); inp.focus(); return; }
+    const u=mUid(), p=pinPt(), ll=(m2&&p)?m2.containerPointToLatLng([p.x,p.y]):null, loc=ll?{lat:ll.lat,lng:ll.lng}:start();   // where the pin points
+    mMutate(()=>{ const pp=mPend(); pp.newActs=(pp.newActs||[]).concat([{text:v,steps:d.steps.map(t=>({t,d:false,u:mUid()})),done:false,u,loc,cr:Date.now()}]); mPendSave(pp); });
     const files=d.files.slice(); mAddDraft=null; mCloseSheet(); mShowList(); mToast("Added “"+v+"”");
     for(const f of files.filter(x=>x.fixed)) mUploadPhotos([f.file],f.fixed,{au:u});   // camera shots: pinned where each was taken
     const gal=files.filter(x=>!x.fixed).map(x=>x.file); if(gal.length) mUploadPhotos(gal,null,{au:u});
@@ -6862,7 +6889,7 @@ function mBuildHomeMap(acts){
       return wheels; };
     const dot=(k,a,ll)=>{ const st=mStatus(a);   // one action's label
       L.marker(ll,{zIndexOffset:k===mFocusK?800:st==="open"?300:st==="hold"?100:0,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(a._new?' new':st==="open"?'':' '+st)+(k===mFocusK?' focus':'')+(k===mFlashK?' flash':'')+'">'+(a._new?'•':actNo(a))+'</div>',iconSize:[0,0],iconAnchor:[0,0]})})
-        .on("click",()=>{ if(k===mFocusK){ mTapK=null; mOpenAct(k); } else { mTapK=k; mTapT=Date.now(); mFocusCard(k); } }).addTo(lay); };   // a label brings its card up; tapping it again (or View) opens it
+        .on("click",()=>{ if(mAdding) return; if(k===mFocusK){ mTapK=null; mOpenAct(k); } else { mTapK=k; mTapT=Date.now(); mFocusCard(k); } }).addTo(lay); };   // a label brings its card up; tapping it again (or View) opens it
     const render=(wheels,z)=>{ lay.clearLayers();
       for(const w of wheels){
         if(w.one){ dot(w.one.k,w.one.a,[w.one.lat,w.one.lng]); continue; }
