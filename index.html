@@ -3166,7 +3166,7 @@ async function annotatedPreview(p){
     const im=await loadImg(src);
     const c=document.createElement("canvas"); c.width=im.width; c.height=im.height;
     const ctx=c.getContext("2d"); ctx.drawImage(im,0,0);
-    paintMarks(ctx,0,0,im.width,im.height,Math.min(im.width,im.height)*0.0012,p.marks,(p.mkw!=null?p.mkw:null),(p.mth!=null?p.mth:null));
+    paintMarks(ctx,0,0,im.width,im.height,Math.min(im.width,im.height)*0.0012,p.marks,(p.mkw!=null?p.mkw:null),(p.mth!=null?p.mth:null),true);
     p._pa=c.toDataURL("image/jpeg",0.8); p._paKey=key;
     return p._pa;
   }catch(e){ return src; }
@@ -3436,7 +3436,7 @@ function _drawPhoto(ctx,p,im,x,y,w,h,r){   // the WHOLE photo (never cropped) on
   ctx.save(); _rr(ctx,x,y,w,h,r); ctx.clip(); ctx.fillStyle="#000"; ctx.fillRect(x,y,w,h);
   if(im){ const s=Math.min(w/im.width,h/im.height), dw=im.width*s, dh=im.height*s, dx=x+(w-dw)/2, dy=y+(h-dh)/2;
     ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality="high"; ctx.drawImage(im,dx,dy,dw,dh);
-    if(p&&p.marks&&p.marks.length) paintMarks(ctx,dx,dy,dw,dh,Math.min(dw,dh)*0.0012,p.marks,(p.mkw!=null?p.mkw:null),(p.mth!=null?p.mth:null)); }
+    if(p&&p.marks&&p.marks.length) paintMarks(ctx,dx,dy,dw,dh,Math.min(dw,dh)*0.0012,p.marks,(p.mkw!=null?p.mkw:null),(p.mth!=null?p.mth:null),true); }
   ctx.restore(); }
 async function composeActionCard(a,psIn){   // psIn: the phone passes its own photo list   // portrait card: title | satellite mini-map · main photo · the rest tiled
   const S=CARD_STYLE, Lo=CARD_LAYOUT, W=1080, H=1920, gap=S.gap, K=CARD_K;   // laid out in 1080x1920 units, rendered at K x
@@ -3503,7 +3503,7 @@ function cardMeSig(){ if(ignoreLoc) return "x"; try{ const l=geoMarker&&geoMarke
 function deskCardBlob(a){
   const sig=[CARD_LAYOUT.head,CARD_K,actNo(a),a.text||"",a.loc?a.loc.lat+","+a.loc.lng:"",cardMeSig(),JSON.stringify((a.steps||[]).map(x=>[x.t,!!x.d]))].concat(actPhotos(a).map(p=>lookSig(p)+"@"+(p.lat!=null?(+p.lat).toFixed(5)+","+(+p.lng).toFixed(5):""))).join("|");
   let x=0; for(let i=0;i<sig.length;i++) x=(x*31+sig.charCodeAt(i))|0;
-  return cardCached("d"+(ON.pid||"")+"."+a.id+"."+(x>>>0).toString(36)+"."+sig.length,()=>composeActionCard(a)); }
+  return cardCached("d2"+(ON.pid||"")+"."+a.id+"."+(x>>>0).toString(36)+"."+sig.length,()=>composeActionCard(a)); }
 var _warmT=null, _warmBusy=false;   // var: renderActions runs before this line during start-up
 var tilesBusy=false;   // the map is fetching tiles: background work waits so the map gets the connection first
 async function mapIdle(maxMs){ const t0=Date.now(); while(tilesBusy&&Date.now()-t0<(maxMs||20000)) await sleep(400); }
@@ -4257,7 +4257,7 @@ function ensureAnnotThumb(p){
   loadImg(p.thumb).then(im=>{
     const c=document.createElement("canvas"); c.width=im.width; c.height=im.height;
     const ctx=c.getContext("2d"); ctx.drawImage(im,0,0);
-    paintMarks(ctx,0,0,im.width,im.height,Math.min(im.width,im.height)*0.0012,p.marks,(p.mkw!=null?p.mkw:null),(p.mth!=null?p.mth:null));
+    paintMarks(ctx,0,0,im.width,im.height,Math.min(im.width,im.height)*0.0012,p.marks,(p.mkw!=null?p.mkw:null),(p.mth!=null?p.mth:null),true);
     p._ta=c.toDataURL("image/jpeg",0.78); p._taKey=key;
     patchThumbEls(p);
   }).catch(()=>{}).then(()=>annotBusy.delete(p.id));
@@ -4612,7 +4612,7 @@ function evToNorm(e){ const r=lbStage.getBoundingClientRect(); return { x:((e.cl
 function orthoNorm(last,pt){ const dxp=(pt[0]-last[0])*fitW, dyp=(pt[1]-last[1])*fitH; return (Math.abs(dxp)>=Math.abs(dyp))?[pt[0],last[1]]:[last[0],pt[1]]; }
 function distPx(a,b){ return Math.hypot((a[0]-b[0])*fitW,(a[1]-b[1])*fitH); }
 
-function paintMarks(ctx,ox,oy,sx,sy,lwBase,list,mkAll,thAll){
+function paintMarks(ctx,ox,oy,sx,sy,lwBase,list,mkAll,thAll,exact){   // exact: an image we produce (copy, card, thumbnail) — true proportions, no on-screen minimum sizes
   ctx.save(); ctx.lineJoin="round"; ctx.lineCap="round"; ctx.shadowColor="rgba(0,0,0,.4)";
   const PX=n=>ox+n*sx, PY=n=>oy+n*sy;
   for(const m of list){
@@ -4621,13 +4621,13 @@ function paintMarks(ctx,ox,oy,sx,sy,lwBase,list,mkAll,thAll){
     if(m.t==="pen"||m.t==="poly"){ const pts=m.p; if(!pts||!pts.length)continue; ctx.beginPath(); ctx.moveTo(PX(pts[0][0]),PY(pts[0][1])); for(let i=1;i<pts.length;i++) ctx.lineTo(PX(pts[i][0]),PY(pts[i][1])); if(pts.length===1) ctx.lineTo(PX(pts[0][0])+0.01,PY(pts[0][1])+0.01); ctx.stroke(); }
     else if(m.t==="rect"){ ctx.strokeRect(PX(m.x),PY(m.y),m.w*sx,m.h*sy); }
     else if(m.t==="oval"){ ctx.beginPath(); ctx.ellipse(PX(m.x+m.w/2),PY(m.y+m.h/2),Math.abs(m.w/2*sx),Math.abs(m.h/2*sy),0,0,Math.PI*2); ctx.stroke(); }
-    else if(m.t==="arrow"){ const x1=PX(m.x),y1=PY(m.y),x2=PX(m.x2),y2=PY(m.y2); ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); const ang=Math.atan2(y2-y1,x2-x1), hl=Math.max(8,lw*4.5); ctx.beginPath(); ctx.moveTo(x2,y2); ctx.lineTo(x2-hl*Math.cos(ang-0.45),y2-hl*Math.sin(ang-0.45)); ctx.moveTo(x2,y2); ctx.lineTo(x2-hl*Math.cos(ang+0.45),y2-hl*Math.sin(ang+0.45)); ctx.stroke(); }
-    else if(m.t==="text"||m.t==="call"){ paintLabel(ctx,m,PX,PY,sy,col,lw,thAll); }
+    else if(m.t==="arrow"){ const x1=PX(m.x),y1=PY(m.y),x2=PX(m.x2),y2=PY(m.y2); ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); const ang=Math.atan2(y2-y1,x2-x1), hl=Math.max(exact?0:8,lw*4.5); ctx.beginPath(); ctx.moveTo(x2,y2); ctx.lineTo(x2-hl*Math.cos(ang-0.45),y2-hl*Math.sin(ang-0.45)); ctx.moveTo(x2,y2); ctx.lineTo(x2-hl*Math.cos(ang+0.45),y2-hl*Math.sin(ang+0.45)); ctx.stroke(); }
+    else if(m.t==="text"||m.t==="call"){ paintLabel(ctx,m,PX,PY,sy,col,lw,thAll,exact); }
   }
   ctx.restore();
 }
-function paintLabel(ctx,m,PX,PY,sy,col,lw,thAll){
-  const fpx=Math.max(9,((thAll!=null?thAll:(m.th||DEF_MTH)))*sy);   // ONE text size per photo
+function paintLabel(ctx,m,PX,PY,sy,col,lw,thAll,exact){
+  const fpx=Math.max(exact?1:9,((thAll!=null?thAll:(m.th||DEF_MTH)))*sy);   // ONE text size per photo; the 9px floor is for the screen only — in a small exported tile it made notes outgrow the photo
   const bl=Math.max(1.5,lw||1.5);                                // border/leader weight matches the line tools
   ctx.save(); ctx.shadowBlur=0; ctx.font="600 "+fpx+"px 'Aptos',sans-serif"; ctx.textBaseline="top";
   const lines=String(m.s||"").split("\n"), lh=fpx*1.2, padx=fpx*0.42, pady=fpx*0.3;
@@ -4637,7 +4637,7 @@ function paintLabel(ctx,m,PX,PY,sy,col,lw,thAll){
   if(m.t==="call"){ const cx=bx+bw/2, cy=by+bh/2, x2=PX(m.tx), y2=PY(m.ty);
     ctx.strokeStyle=col; ctx.lineWidth=bl; ctx.lineJoin="round"; ctx.lineCap="round";
     ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(x2,y2); ctx.stroke();
-    const ang=Math.atan2(y2-cy,x2-cx), hl=Math.max(8,bl*4.5);
+    const ang=Math.atan2(y2-cy,x2-cx), hl=Math.max(exact?0:8,bl*4.5);
     ctx.beginPath(); ctx.moveTo(x2,y2); ctx.lineTo(x2-hl*Math.cos(ang-0.45),y2-hl*Math.sin(ang-0.45)); ctx.moveTo(x2,y2); ctx.lineTo(x2-hl*Math.cos(ang+0.45),y2-hl*Math.sin(ang+0.45)); ctx.stroke(); }
   ctx.fillStyle="#ffffff"; ctx.fillRect(bx,by,bw,bh);
   ctx.strokeStyle=col; ctx.lineWidth=bl; ctx.strokeRect(bx-bl/2,by-bl/2,bw+bl,bh+bl);   // border grows OUTWARD so text is never encroached
@@ -4840,7 +4840,7 @@ function renderViewCanvas(p,maxDim,srcOverride,whole){   // whole: the full phot
       cx.drawImage(img,sx,sy,sw,sh,0,0,outW,outH);
       // marks are normalized to the whole image; map them into the cropped output
       const mx=outW/f.fw, my=outH/f.fh, ox=-f.fx*mx, oy=-f.fy*my;
-      paintMarks(cx,ox,oy,mx,my,Math.min(mx,my)*0.0012,(p.marks||[]),(p.mkw!=null?p.mkw:null),(p.mth!=null?p.mth:null));
+      paintMarks(cx,ox,oy,mx,my,Math.min(mx,my)*0.0012,(p.marks||[]),(p.mkw!=null?p.mkw:null),(p.mth!=null?p.mth:null),true);
       resolve(c);
     };
     img.onerror=()=>reject(new Error("load failed"));
@@ -6827,7 +6827,7 @@ function mCardBlob(a){   // kept on the phone (see cardCached): Share is instant
   const sig=[CARD_LAYOUT.head,CARD_K,mCardKey(a),act.num,act.text,act.loc?act.loc.lat+","+act.loc.lng:"",me,JSON.stringify(act.steps.map(x=>[x.t,x.d]))].concat(photos.map(p=>(p.h||p.id)+"@"+p.lat+","+p.lng)).join("|");
   let x=0; for(let i=0;i<sig.length;i++) x=(x*31+sig.charCodeAt(i))|0;
   const ps=photos.map(p=>({preview:p.img,lat:p.lat,lng:p.lng,_phone:true}));
-  return cardCached("m"+(mPid||"")+"."+(x>>>0).toString(36)+"."+sig.length,()=>composeActionCard(act,ps)); }
+  return cardCached("m2"+(mPid||"")+"."+(x>>>0).toString(36)+"."+sig.length,()=>composeActionCard(act,ps)); }
 var _mWarmT=null;
 function mWarmCards(list){   // the map card's action (and the top of the list) get their images made while you look
   clearTimeout(_mWarmT); _mWarmT=setTimeout(async()=>{ for(const a of list.filter(Boolean).slice(0,3)){ if(document.visibilityState!=="visible") break; await mapIdle(); try{ await mCardBlob(a); }catch(e){} } },2500); }
