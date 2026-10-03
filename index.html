@@ -4513,10 +4513,11 @@ document.addEventListener("keydown",e=>{
   { const tag=((e.target&&e.target.tagName)||"").toLowerCase(); if(tag==="input"||tag==="select"||tag==="textarea"||(e.target&&e.target.isContentEditable)) return; }   // keys typed in other fields (e.g. + New action) aren't the viewer's
   if(e.key==="Escape"){
     if(selMark){ deselectText(); return; }
+    if(lb.classList.contains("edit-open")||markTool!=="none"){   // drawing: Escape puts the tools away (a half-drawn shape is dropped)
+      if(draft&&draft.t==="poly") endPoly(false); draft=null; polyPrev=null; selObj=null; setEditOpen(false); redrawMarks(); return; }
     if(draft&&draft.t==="poly"){ endPoly(false); return; }
     if(draft){ draft=null; polyPrev=null; redrawMarks(); return; }
     if(selObj){ selObj=null; redrawMarks(); return; }
-    if(markTool!=="none"){ setMarkTool("none"); return; }
     if(fileInfoShown){ closeFileInfo(); return; }
     return;
   }
