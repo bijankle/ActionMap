@@ -588,10 +588,6 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .cl-bubble.cl-h{background:#fff;color:#9A520B;border:3px solid #F28C28;box-shadow:0 0 0 4px #F28C2830,0 2px 8px #1e1f2233;}   /* mostly on-hold photos */
   .cl-bubble.cl-d{background:radial-gradient(circle at 35% 30%,#8a939d,#6b7580);color:#fff;box-shadow:0 0 0 4px #3f475030,0 2px 8px #1e1f2233;}   /* mostly completed */
   .cl-bubble.cl-y{background:radial-gradient(circle at 35% 30%,#ffffff,#e9ecef);color:#1d2430;border-color:#4a5563;box-shadow:0 0 0 4px #ffffff55,0 2px 8px #1e1f2233;}   /* mostly photos not on any action */
-  .act-pin{width:46px;height:40px;display:flex;justify-content:center;filter:drop-shadow(0 2px 3px #1e1f2255);cursor:pointer;}
-  .act-pin span{position:relative;background:#F28C28;color:#fff;border:2px solid #fff;border-radius:7px;font:700 12px var(--font);padding:4px 6px;height:fit-content;}
-  .act-pin span::after{content:"";position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);border:7px solid transparent;border-top-color:#3BA55C;border-bottom:0;}
-  body.mobile .act-pin span{font:700 9px var(--mono);padding:3px 5px;}
   .num-dot{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f7a95a,#F28C28);border:2px solid #fff;box-sizing:border-box;color:#fff;font:700 12px var(--font);letter-spacing:.3px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px #3BA55C33,0 2px 8px #1e1f2233;}   /* identical to a numbered cluster bubble */
   body.mobile .num-dot{width:26px;height:26px;font:700 9px var(--mono);}   /* phone sizes were fine as they were */
   .act-hold{display:flex;align-items:center;padding-top:1px;cursor:pointer;margin-left:1px;}
@@ -1482,16 +1478,7 @@ function renderClusters(){
       addSingleDot(p,lat,lng,hlSet.has(p.id));
     }
   }
-  drawActionPins();
   if(hlMarker) hlMarker.setOpacity(_openInArrowed?0:1);
-}
-function drawActionPins(){   // actions placed at a map spot: a green numbered pin (open ones, plus any selected)
-  for(const a of actions){ if(!a.loc) continue; const sel=selActs.has(a.id); if(!actVisible(a)) continue;
-    if(sel) markerLayer.addLayer(mkHlDot(a.loc.lat,a.loc.lng));
-    const m=L.marker([a.loc.lat,a.loc.lng],{zIndexOffset:500,icon:L.divIcon({className:"",html:'<div class="act-pin"><span>'+actNo(a)+'</span></div>',iconSize:[46,40],iconAnchor:[23,40]})});
-    m.on("mouseover",()=>{ m.bindTooltip(actNo(a)+" \u2014 "+esc(a.text),{direction:"top",offset:[0,-36]}).openTooltip(); });
-    m.on("click",()=>{ uiClickT=Date.now(); clickAction(a,null,true); setTimeout(()=>actNavigate(a),30); });
-    markerLayer.addLayer(m); }
 }
 function addSingleDot(p,lat,lng,isSel){
   if(isSel){ const hl=mkHlDot(lat,lng); markerLayer.addLayer(hl); dotMarkers.set(p.id,{hl}); }   // selected = same pulsing highlight as a single open photo
@@ -2191,7 +2178,6 @@ document.getElementById("actList").addEventListener("click",e=>{ if(!e.target.cl
    and Enter creates it already assigned to those photos. Escape disarms. */
 let pendingActPhotos=null, pendingActLoc=null;
 const ACT_PH="+ New action";
-function armNewActionAt(ll){ armNewAction(null); pendingActLoc={lat:ll.lat,lng:ll.lng}; const inp=document.getElementById("actNewInput"); inp.placeholder="+ New action at the map spot"; inp.classList.add("arm"); inp.focus(); }
 function armNewAction(pids){
   pendingActLoc=null;
   pendingActPhotos=(pids&&pids.length)?pids.slice():null;
@@ -3690,7 +3676,6 @@ map.on("contextmenu",e=>{
   mkCtxItem("Select area [S]",toggleSelect);
   mkCtxItem("Measure [M]",toggleMeasure);
   mkCtxItem("New action…",()=>armNewAction(null));   // focuses the Actions panel input
-  { const ll=e.latlng; mkCtxItem("New action at this spot…",()=>armNewActionAt(ll)); }
   if(selSet.size||selActs.size) mkCtxItem("Clear selections",()=>{ clearSel(); clearActSel(); });
   showCtxAt(e.originalEvent.clientX,e.originalEvent.clientY);
 });
@@ -6564,11 +6549,6 @@ function mBuildHomeMap(acts){
         else { const sts=g.items.map(p=>mStatus(p.a)), cs=sts.includes("open")?"":sts.includes("hold")?" hold":" done";
           L.marker(ll,{zIndexOffset:500,icon:L.divIcon({className:"",html:'<div class="ma-cl'+cs+(ks.includes(mFocusK)?' focus':'')+(ks.includes(mFlashK)?' flash':'')+'"><i>\u00d7</i>'+ks.length+'</div>',iconSize:[32,32],iconAnchor:[16,16]})})
             .on("click",()=>mZoomBunch(g.items)).addTo(lay); } } };
-    m2.on("contextmenu",e=>{   // long-press the map: a new action at that spot
-      if(mRoBlock()) return;
-      const v=prompt("New action at this spot — name it:",""); if(!v||!v.trim()) return;
-      mMutate(()=>{ const p=mPend(); p.newActs=(p.newActs||[]).concat([{text:v.trim(),steps:[],done:false,u:mUid(),loc:{lat:e.latlng.lat,lng:e.latlng.lng}}]); mPendSave(p); });
-      mHomeTouched=true; mShowList(); });
     const bb=pts.length?L.latLngBounds(pts.map(p=>[p.lat,p.lng])):null;
     const me=(mGeo&&!ignoreLoc)?mGeo:null;   // Ignore my location: no YOU ARE HERE, and the view fits the actions only
     if(me){ m2._geoPin=L.marker([me.lat,me.lng],{icon:youAreHereIcon(30),interactive:false,zIndexOffset:900}).addTo(m2); if(bb) bb.extend([me.lat,me.lng]); }
