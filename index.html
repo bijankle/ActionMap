@@ -6379,7 +6379,7 @@ function mShowList(){
   if(mTab==="map"){
     const row=document.getElementById("mPeeks");   // tap a card (or swipe to it): its dot is found on the map; View opens it under Actions
     if(row){
-      row.querySelectorAll(".ma-peek").forEach(c=>{ c.addEventListener("click",()=>mFocusCard(c.dataset.k));
+      row.querySelectorAll(".ma-peek").forEach(c=>{ c.addEventListener("click",()=>{ if(c.dataset.k===mFocusK) mOpenAct(c.dataset.k); else mFocusCard(c.dataset.k); });   // tapping the selected card again opens it (like its label)
         c.querySelector(".ma-view").addEventListener("click",e=>{ e.stopPropagation(); mOpenAct(c.dataset.k); }); });   // opened from the map: Back (button or swipe) returns to the map, same view and card
       const cur=mFocusK!=null&&row.querySelector('.ma-peek[data-k="'+mFocusK+'"]');
       if(cur){ row.scrollLeft=cur.offsetLeft-(row.clientWidth-cur.offsetWidth)/2; cur.classList.add("on"); }   // back on the map: the same card, map view unchanged
