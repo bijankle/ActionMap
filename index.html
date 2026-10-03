@@ -1443,7 +1443,7 @@ function renderClusters(){
         if(Date.now()-dotDropT<450) return;   // the click after dropping a dragged cluster must not zoom
         try{ const leaves=cluster.getLeaves(cid,Infinity);
           { const ids=leaves.map(f=>f.properties.pid), acts=new Set(); ids.forEach(id=>{ const q=photoById(id); (q&&q.acts||[]).forEach(a=>{ if(actById(a)) acts.add(a); }); });
-            if(acts.size===1){ const a=actById([...acts][0]), first=actPhotos(a).find(q=>ids.includes(q.id))||photoById(ids[0]); selectActionOf(first); setTab("photo"); openViewer(first); return; }   // one action: select it, open the photo with its action's photos below
+            if(acts.size===1){ const a=actById([...acts][0]), first=actPhotos(a).find(q=>ids.includes(q.id))||photoById(ids[0]); selectActionOf(first); setTab("gallery"); updateGallery(); return; }   // one action's photos bunched together: select it and show its photos in the gallery (as clicking the action does)
             if(!acts.size){ showSpot(ids); return; } }   // no action: these photos in the gallery; 2+ actions: zoom in to split them
           if(leaves.length){
             const bb=L.latLngBounds(leaves.map(f=>[f.geometry.coordinates[1],f.geometry.coordinates[0]]));
