@@ -4701,7 +4701,8 @@ function closeViewer(){ if(!lb.classList.contains("open")) return; if(selMark) d
 function sideWNow(){ return parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--side-w"))||380; }
 function sideShowsPhoto(){ return lb.classList.contains("open")&&rightTab==="photo"; }
 function applySideW(){ if(sideBase==null) sideBase=sideWNow();
-  const w=sideShowsPhoto()?Math.round(Math.min(window.innerWidth*0.75,sideBase*2)):sideBase;
+  const ap=document.getElementById("actPanel"), room=window.innerWidth-(ap?ap.offsetWidth:0)-Math.max(300,window.innerWidth*0.25);   // the map always keeps a fair share
+  const w=sideShowsPhoto()?Math.round(Math.max(sideBase,Math.min(window.innerWidth*0.75,sideBase*2,room))):sideBase;
   if(Math.abs(w-sideWNow())<1) return;
   document.documentElement.style.setProperty("--side-w",w+"px");
   setTimeout(()=>{ map.invalidateSize(); positionTools(); if(sideShowsPhoto()) refit(); },40); }
@@ -5736,7 +5737,7 @@ function applyState(st){
 }
 function applyUiSettings(s){ s=s||{};
   if(s.thumb){ document.documentElement.style.setProperty("--thumb",s.thumb); document.getElementById("thumbSize").value=parseInt(s.thumb)||120; }
-  if(s.sideW){ document.documentElement.style.setProperty("--side-w",s.sideW); sideBase=parseFloat(s.sideW)||null; }
+  if(s.sideW){ sideBase=Math.min(parseFloat(s.sideW)||380,Math.round(window.innerWidth*0.4)); document.documentElement.style.setProperty("--side-w",sideBase+"px"); }   // older files saved the photo width: never start wider than 40%
   else if(s.galleryW) document.documentElement.style.setProperty("--side-w",s.galleryW);   // older files: adopt the gallery width as the sidebar width
   if(s.actW) document.documentElement.style.setProperty("--act-w",s.actW);
   if(s.covW) document.documentElement.style.setProperty("--cov-w",s.covW);
