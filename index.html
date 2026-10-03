@@ -3281,15 +3281,98 @@ function loadJsPDF(){ if(window.jspdf) return Promise.resolve();
   if(!_jspdfP) _jspdfP=new Promise((res,rej)=>{ const sc=document.createElement("script"); sc.src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
     sc.onload=res; sc.onerror=()=>{ _jspdfP=null; rej(new Error("could not load the PDF library — are you online?")); }; document.head.appendChild(sc); });
   return _jspdfP; }
+/* Exports follow the Actions panel's filters: the Open / On hold / Done pills and the date bar —
+   exactly the actions the list shows, in its order (open, on hold, done). */
+function pdfStepLines(doc,steps,maxW){   // sub-actions as one paragraph: "a. …, b. ✓ …" — done ones get a tick, grey, struck through
+  if(!steps.length) return [];
+  doc.setFont("helvetica","normal"); doc.setFontSize(8.5);
+  const toks=[]; steps.forEach((x,i)=>{ const ws=[stepLetter(i)+"."].concat(x.d?["\u0001"]:[],String(x.t).trim().split(/\s+/));
+    if(i<steps.length-1) ws[ws.length-1]+=","; ws.forEach((w,j)=>toks.push({w,d:!!x.d,i,last:j===ws.length-1,tick:w==="\u0001"})); });
+  const sp=doc.getTextWidth(" "), lines=[[]]; let x=0;
+  for(const t of toks){ t.wd=t.tick?2.4:doc.getTextWidth(t.w); if(x&&x+sp+t.wd>maxW){ lines.push([]); x=0; } t.x=x?x+sp:0; x=t.x+t.wd; lines[lines.length-1].push(t); }
+  return lines; }
+function pdfDrawStepLines(doc,lines,x0,y0,lh,ink){
+  doc.setFont("helvetica","normal"); doc.setFontSize(8.5); const GR=[150,150,150];
+  lines.forEach((l,li)=>{ const y=y0+li*lh;
+    l.forEach((t,k)=>{ const X=x0+t.x;
+      if(t.tick){ doc.setDrawColor(...GR); doc.setLineWidth(.35); doc.line(X+.2,y-1.3,X+.9,y-.5); doc.line(X+.9,y-.5,X+2.2,y-2.4); }
+      else { doc.setTextColor(...(t.d?GR:ink)); doc.text(t.w,X,y); }
+      if(t.d){ const nx=l[k+1], end=(nx&&nx.i===t.i)?x0+nx.x:X+t.wd-(t.last&&/,$/.test(t.w)?doc.getTextWidth(","):0);   // the strike runs through the item, not its comma
+        doc.setDrawColor(...GR); doc.setLineWidth(.2); doc.line(X,y-1.1,end,y-1.1); } }); }); }
+function exportActs(){ return actsShown(); }
+function exportFilterNote(){ const parts=[];
+  const sts=[["Open",actShowOpen],["On hold",actShowHold],["Done",actShowDone]];
+  if(!sts.every(x=>x[1])) parts.push(sts.filter(x=>x[1]).map(x=>x[0]).join(" + ")||"none");
+  if(actDateLo!=null||actDateHi!=null){ const f=t=>new Date(t).toLocaleDateString(undefined,{day:"numeric",month:"short"}); parts.push((actDateLo!=null?f(actDateLo):"start")+" \u2192 "+(actDateHi!=null?f(actDateHi):"today")); }
+  return parts.length?"Filters: "+parts.join(" \u00b7 "):""; }
+/* ---- PDF map pages: every action on satellite imagery with a callout box (number + title) joined to
+   its spot, plus a status legend. If the boxes can't all fit without overlapping, the rest go onto
+   another map page (each page zooms to its own actions). Actions with no located photo are left out. */
+function pdfMapPoint(a){ const p=actPhotos(a).find(q=>q.lat!=null&&isFinite(q.lat)&&isFinite(q.lng)); return p?{lat:+p.lat,lng:+p.lng}:null; }
+const PM_W=1108, PM_H=700, PM_BW=210, PM_BH=34;   // map area in canvas units (4 per mm = 277 x 175 mm); callout box size
+function pdfMapLayout(list){
+  const mw=PM_W, mh=PM_H, pad=170, BW=PM_BW, BH=PM_BH, GAPB=8;
+  const P=list.map(a=>({a,ll:pdfMapPoint(a)})).filter(q=>q.ll);
+  let z=19; const fits=z=>{ const xs=P.map(q=>_lx(q.ll.lng,z)), ys=P.map(q=>_ly(q.ll.lat,z)); return Math.max(...xs)-Math.min(...xs)<=mw-2*pad&&Math.max(...ys)-Math.min(...ys)<=mh-2*pad; };
+  while(z>3&&!fits(z)) z--;
+  if(P.length===1) z=Math.min(z,18);
+  const xs=P.map(q=>_lx(q.ll.lng,z)), ys=P.map(q=>_ly(q.ll.lat,z)), x0=(Math.min(...xs)+Math.max(...xs))/2-mw/2, y0=(Math.min(...ys)+Math.max(...ys))/2-mh/2;
+  P.forEach((q,i)=>{ q.x=xs[i]-x0; q.y=ys[i]-y0; });
+  let groups=P.map(q=>[q]); const Rof=G=>G.length===1?30:Math.max(56,G.length*15), cen=G=>[G.reduce((t,q)=>t+q.x,0)/G.length,G.reduce((t,q)=>t+q.y,0)/G.length];
+  for(let merged=true;merged;){ merged=false; for(let i=0;i<groups.length&&!merged;i++) for(let j=i+1;j<groups.length;j++){ const a=cen(groups[i]), b=cen(groups[j]); const close=groups[i].some(p=>groups[j].some(q=>Math.hypot(p.x-q.x,p.y-q.y)<34));
+    if(close||Math.hypot(a[0]-b[0],a[1]-b[1])<Rof(groups[i])+Rof(groups[j])+24){ groups[i]=groups[i].concat(groups[j]); groups.splice(j,1); merged=true; break; } } }
+  const clampX=(x,w)=>Math.max(w/2+6,Math.min(mw-w/2-6,x)), clampY=(y,h)=>Math.max(h/2+6,Math.min(mh-h/2-6,y));
+  const boxes=[];
+  for(const G of groups){ const [mxx,myy]=cen(G);   // the crowd's boxes in two columns either side of it (one side if the other has no room)
+    const L=G.slice().sort((a,b)=>a.y-b.y), roomL=mxx>BW+90, roomR=mw-mxx>BW+90, half=(roomL&&roomR)?Math.ceil(L.length/2):(roomR?0:L.length);
+    L.forEach((q,i)=>{ const left=i<half, k=left?i:i-half, nn=left?half:L.length-half;
+      boxes.push({q,bx:clampX(mxx+(left?-1:1)*(BW/2+70),BW),by:clampY(myy-(nn-1)*(BH+GAPB)/2+k*(BH+GAPB),BH),left}); }); }
+  const over=(A,B)=>{ const ox=Math.min(A.bx,B.bx)+BW/2-Math.max(A.bx,B.bx)+BW/2, oy=Math.min(A.by+BH/2,B.by+BH/2)-Math.max(A.by-BH/2,B.by-BH/2); return [ox,oy]; };
+  for(let it=0;it<80;it++){ let moved=false; for(let i=0;i<boxes.length;i++) for(let j=i+1;j<boxes.length;j++){ const A=boxes[i], B=boxes[j], [ox,oy]=over(A,B);
+    if(ox>0&&oy>-6){ const lo=A.by<=B.by?B:A, hi=lo===A?B:A, d=oy+6; lo.by=clampY(lo.by+d/2,BH); hi.by=clampY(hi.by-d/2,BH); moved=true; } } if(!moved) break; }
+  let ok=true; for(let i=0;i<boxes.length&&ok;i++) for(let j=i+1;j<boxes.length;j++){ const [ox,oy]=over(boxes[i],boxes[j]); if(ox>0&&oy>0){ ok=false; break; } }
+  return {P,boxes,z,x0,y0,ok};
+}
+async function pdfMapCanvas(L,onTile){
+  const mw=PM_W, mh=PM_H, K=2, c=document.createElement("canvas"); c.width=mw*K; c.height=mh*K; const g=c.getContext("2d"); g.scale(K,K);
+  g.fillStyle="#2a2d31"; g.fillRect(0,0,mw,mh);
+  const tz=Math.min(L.z+1,20), f=Math.pow(2,tz-L.z), T=256/f, tn=Math.pow(2,tz), jobs=[], holes=[];   // one zoom deeper, drawn at half size: sharp at 2x
+  for(let tx=Math.floor(L.x0/T);tx<=Math.floor((L.x0+mw)/T);tx++) for(let ty=Math.floor(L.y0/T);ty<=Math.floor((L.y0+mh)/T);ty++){ if(ty<0||ty>=tn) continue;
+    jobs.push(loadMapTile(tz,((tx%tn)+tn)%tn,ty).then(im=>{ if(im) g.drawImage(im,tx*T-L.x0,ty*T-L.y0,T,T); else holes.push([tx,ty]); if(onTile) onTile(); })); }
+  await Promise.all(jobs);
+  for(const [tx,ty] of holes){ for(let up=1;up<=3;up++){ const k=Math.pow(2,up), pn=tn/k, px=Math.floor(tx/k), py=Math.floor(ty/k);   // a missing tile: borrow the one a zoom or two out
+    const im=await loadMapTile(tz-up,((px%pn)+pn)%pn,py); if(!im) continue; const sz=256/k; g.drawImage(im,(((tx%k)+k)%k)*sz,(((ty%k)+k)%k)*sz,sz,sz,tx*T-L.x0,ty*T-L.y0,T,T); break; } }
+  const COL={open:"#F28C28",hold:"#ffffff",done:"#6b7580"}, TXT={open:"#ffffff",hold:"#9A520B",done:"#ffffff"}, RING={open:"#9A520B",hold:"#F28C28",done:"#3f4750"}, st=a=>a.done?"done":a.hold?"hold":"open";
+  const rr=(x,y,w,h,r)=>{ g.beginPath(); if(g.roundRect) g.roundRect(x,y,w,h,r); else g.rect(x,y,w,h); };
+  g.lineCap="round";
+  for(const k of L.boxes){ g.strokeStyle="rgba(0,0,0,.45)"; g.lineWidth=3.2; g.beginPath(); g.moveTo(k.q.x,k.q.y); g.lineTo(k.bx+(k.left?PM_BW/2:-PM_BW/2),k.by); g.stroke();
+    g.strokeStyle="#fff"; g.lineWidth=1.6; g.stroke(); }
+  for(const k of L.boxes){ const a=k.q.a, s2=st(a), x=k.bx-PM_BW/2, y=k.by-PM_BH/2;
+    g.fillStyle=COL[s2]; g.strokeStyle=RING[s2]; g.lineWidth=1.6; rr(x,y,PM_BW,PM_BH,6); g.fill(); g.stroke();
+    g.fillStyle=TXT[s2]; g.font="bold 12px Helvetica,Arial,sans-serif"; g.textBaseline="alphabetic"; g.fillText(actNo(a),x+7,y+15);
+    g.font="11px Helvetica,Arial,sans-serif"; const words=String(a.text||"").split(/\s+/), lines=[]; let line="";
+    for(const w of words){ const t=line?line+" "+w:w; if(g.measureText(t).width>PM_BW-44&&line){ lines.push(line); line=w; } else line=t; } if(line) lines.push(line);
+    lines.slice(0,2).forEach((l,i)=>{ let t=l; if(i===1&&lines.length>2){ while(g.measureText(t+"\u2026").width>PM_BW-44&&t.length>1) t=t.slice(0,-1); t+="\u2026"; } g.fillText(t,x+36,y+14+i*13); }); }
+  for(const q of L.P){ g.fillStyle="#E8281E"; g.strokeStyle="#fff"; g.lineWidth=2; g.beginPath(); g.arc(q.x,q.y,4.5,0,7); g.fill(); g.stroke(); }
+  // north arrow, legend, scale bar
+  g.fillStyle="rgba(255,255,255,.92)"; rr(10,10,30,38,5); g.fill(); g.fillStyle="#1e1f22"; g.beginPath(); g.moveTo(25,14); g.lineTo(32,36); g.lineTo(25,31); g.lineTo(18,36); g.closePath(); g.fill(); g.font="bold 10px Helvetica,Arial"; g.fillText("N",21.5,46);
+  { const lx=10, ly=56, LW=118, LH=86; g.fillStyle="rgba(255,255,255,.94)"; rr(lx,ly,LW,LH,6); g.fill(); g.strokeStyle="#cfd5dd"; g.lineWidth=1; g.stroke();
+    g.fillStyle="#1e1f22"; g.font="bold 11px Helvetica,Arial"; g.fillText("Status",lx+10,ly+16);
+    [["open","Open"],["hold","On hold"],["done","Done"]].forEach(([k2,l],i)=>{ const y=ly+28+i*19; g.fillStyle=COL[k2]; g.strokeStyle=RING[k2]; g.lineWidth=1.6; rr(lx+10,y,30,14,4); g.fill(); g.stroke(); g.fillStyle="#333"; g.font="11px Helvetica,Arial"; g.fillText(l,lx+48,y+11); }); }
+  { const lat=(L.P[0]||{ll:{lat:0}}).ll.lat, mpp=40075016*Math.cos(lat*Math.PI/180)/(256*Math.pow(2,L.z));   // metres per canvas unit
+    const nice=[5,10,20,25,50,100,200,250,500,1000,2000,5000,10000]; let m=nice[0]; for(const v of nice) if(v/mpp<=160) m=v; const bw=m/mpp;
+    g.fillStyle="rgba(255,255,255,.92)"; rr(mw-bw-42,10,bw+32,26,5); g.fill(); g.fillStyle="#1e1f22"; g.fillRect(mw-bw-26,26,bw,4); g.font="bold 11px Helvetica,Arial"; g.fillText(m>=1000?(m/1000)+" km":m+" m",mw-bw-26,22); }
+  return c;
+}
 async function exportActionsPdf(){
   const say=t=>loadNote(t?"PDF export — "+t:"");
-  if(!actions.length){ say("nothing to export"); setTimeout(()=>say(""),1800); return; }
+  if(!exportActs().length){ say(actions.length?"no actions match the current filters":"nothing to export"); setTimeout(()=>say(""),2600); return; }
   if(exportActionsPdf._busy) return; exportActionsPdf._busy=true;
   try{
     say("loading…"); await loadJsPDF();
     const doc=new window.jspdf.jsPDF({orientation:"landscape",unit:"mm",format:"a4"});
     const W=297, H=210, M=10, now=new Date(), proj=String(ON.name||loadedJsonName||"ActionMap").replace(/\.[^.]+$/,"");
-    const order=actions.slice().sort((x,y)=>actRank(x)-actRank(y));
+    const order=exportActs(), fnote=exportFilterNote();
     const INK=[30,31,34], MUT=[110,110,110], HEAD=[29,111,66], COL={Done:[30,107,58],Open:[29,36,48],"On hold":[138,90,0]}, BG={Done:[227,244,232],"On hold":[253,241,220]};
 
     const fmt=t=>{ if(!t) return ""; const d=new Date(t), p=n=>String(n).padStart(2,"0"); return p(d.getDate())+"/"+p(d.getMonth()+1)+"/"+d.getFullYear()+" "+p(d.getHours())+":"+p(d.getMinutes()); };
@@ -3299,7 +3382,18 @@ async function exportActionsPdf(){
     const header=(y,cols)=>{ doc.setFillColor(...HEAD); doc.rect(M,y,W-2*M,7,"F"); doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.setTextColor(255,255,255);
       cols.forEach(c=>doc.text(c.h,c.x+1.5,y+4.8)); return y+7; };
 
+    /* ---- Map pages */
+    const located=order.filter(a=>pdfMapPoint(a)), mapPages=[];
+    { let rest=located; while(rest.length){ let n=rest.length, L=pdfMapLayout(rest); while(!L.ok&&n>1){ n=Math.max(1,Math.floor(n*0.75)); L=pdfMapLayout(rest.slice(0,n)); } mapPages.push(L); rest=rest.slice(n); } }
+    for(let i=0;i<mapPages.length;i++){ const L=mapPages[i]; if(i) doc.addPage();
+      let y=title(mapPages.length>1?"Map "+(i+1)+" of "+mapPages.length:"Map");
+      const cnt=s=>L.P.filter(q=>(q.a.done?"d":q.a.hold?"h":"o")===s).length;
+      doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(...MUT);
+      doc.text(L.P.length+" action"+(L.P.length===1?"":"s")+" \u2014 Open "+cnt("o")+" \u00b7 On hold "+cnt("h")+" \u00b7 Done "+cnt("d")+(fnote?"   "+fnote:""),M+70,M+10);
+      let nt=0; const c=await pdfMapCanvas(L,()=>{ nt++; if(nt%8===0) say("map "+(i+1)+" / "+mapPages.length+": imagery "+nt+"\u2026"); });
+      doc.addImage(c.toDataURL("image/jpeg",0.88),"JPEG",M,y,W-2*M,H-M-y,undefined,"FAST"); }
     /* ---- Problems */
+    if(mapPages.length) doc.addPage();
     const C1=[{h:"#",x:M,w:12},{h:"Problem",x:M+12,w:52},{h:"Status",x:M+64,w:24},{h:"Sub-actions",x:M+88,w:78},{h:"Photos",x:M+166,w:W-M-(M+166)}];
     const PW=C1[4].w, GAP=1.5;   // photos: one line, as tall as the row (its text sets the height); too many for the width → they all shrink to fit
     let y=header(title("Problems"),C1);
@@ -3307,7 +3401,7 @@ async function exportActionsPdf(){
       const stat=a.done?"Done":a.hold?"On hold":"Open";
       doc.setFont("helvetica","bold"); doc.setFontSize(9); const tl=doc.splitTextToSize(a.text||"",C1[1].w-3);
       doc.setFont("helvetica","normal"); doc.setFontSize(8.5);
-      const sl=[]; (a.steps||[]).forEach((x,i)=>{ doc.splitTextToSize(stepLetter(i)+". "+x.t,C1[3].w-8).forEach((l,j)=>sl.push({l,first:j===0,d:!!x.d})); });
+      const sl=pdfStepLines(doc,(a.steps||[]).filter(x=>x&&String(x.t||"").trim()),C1[3].w-3);   // "a. …, b. ✓ …" in one paragraph, as on the copied image
       const ps=actPhotos(a), ims=[]; for(const ph of ps){ let u=null; try{ u=await annotatedPreview(ph); }catch(e){} if(!u) continue; try{ const im=await loadImg(u); ims.push({u,ar:(im.width/im.height)||1.33}); }catch(e){} }
       const rowH=Math.max(12,tl.length*4.2+4,sl.length*3.9+4);
       let ph=rowH-2*GAP; const totW=ims.reduce((t,x)=>t+ph*x.ar+GAP,0)-GAP; if(totW>PW-2*GAP) ph*= (PW-2*GAP)/totW;
@@ -3317,9 +3411,7 @@ async function exportActionsPdf(){
       doc.setTextColor(...INK); doc.text(tl,C1[1].x+1.5,y+5,{lineHeightFactor:1.35});
       doc.setTextColor(...COL[stat]); doc.text(stat,C1[2].x+1.5,y+5); if(a.done&&a.doneAt){ doc.setFont("helvetica","normal"); doc.setFontSize(7.5); doc.text(fmt(a.doneAt),C1[2].x+1.5,y+9); }
       doc.setFont("helvetica","normal"); doc.setFontSize(8.5);
-      sl.forEach((r,i)=>{ const yy=y+5+i*3.9; doc.setTextColor(...(r.d?[140,140,140]:INK));
-        if(r.first){ doc.setDrawColor(120,120,120); doc.setLineWidth(.25); doc.rect(C1[3].x+1.5,yy-2.6,2.8,2.8); if(r.d){ doc.setDrawColor(30,107,58); doc.setLineWidth(.45); doc.line(C1[3].x+2,yy-1.2,C1[3].x+2.8,yy-.4); doc.line(C1[3].x+2.8,yy-.4,C1[3].x+4.1,yy-2.3); } }
-        doc.text(r.l,C1[3].x+6,yy); if(r.d){ doc.setDrawColor(140,140,140); doc.setLineWidth(.2); doc.line(C1[3].x+6,yy-1.1,C1[3].x+6+doc.getTextWidth(r.l),yy-1.1); } });
+      pdfDrawStepLines(doc,sl,C1[3].x+1.5,y+5,3.9,INK);
       { let cx=C1[4].x+GAP; for(const x of ims){ const w=ph*x.ar; try{ doc.addImage(x.u,"JPEG",cx,y+GAP,w,ph,undefined,"FAST"); }catch(e){} cx+=w+GAP; } }
       doc.setDrawColor(221,221,221); doc.setLineWidth(.2); doc.line(M,y+rowH,W-M,y+rowH); y+=rowH; }
     /* ---- Sub-actions */
@@ -3338,7 +3430,7 @@ async function exportActionsPdf(){
     const n=doc.getNumberOfPages(); for(let i=1;i<=n;i++){ doc.setPage(i); doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setTextColor(...MUT); doc.text("Page "+i+" of "+n,W-M,M+10,{align:"right"}); }
     say("saving…");
     doc.save(proj+"-problems-"+now.toISOString().slice(0,10)+".pdf");
-    say("✓ saved "+order.length+" problem"+(order.length===1?"":"s")); setTimeout(()=>say(""),2600);
+    say("✓ saved "+order.length+" problem"+(order.length===1?"":"s")+(fnote?" ("+fnote.toLowerCase()+")":"")); setTimeout(()=>say(""),3200);
   }catch(err){ say("failed: "+(err&&err.message||err)); setTimeout(()=>say(""),6000); }
   finally{ exportActionsPdf._busy=false; } }
 /* ---- Copy an action for a phone: ONE portrait image (2160x3840) — title + satellite map, the main
@@ -3603,7 +3695,8 @@ async function exportActionsXlsx(){
       {header:"Status",key:"s",width:16},
       {header:"Sub-actions",key:"st",width:42},
     ];
-    const order=actions.slice().sort((x,y)=>actRank(x)-actRank(y));   // same order as the list; # is the action's 001-style number
+    const order=exportActs();   // what the list shows (filters + date bar), in its order; # is the action's 001-style number
+    if(!order.length){ done("no actions match the current filters",2600); return; }
     let maxImgs=0, ri=2;
     for(const a of order){
       st.textContent="Compiling "+(ri-1)+" / "+order.length+"\u2026";
