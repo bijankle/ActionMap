@@ -250,9 +250,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ip-marktools .mk:hover{border-color:var(--accent);color:var(--accent);}
   .ip-marktools .mk.on{background:var(--gold);color:var(--on-accent);border-color:var(--gold);}
   .ip-marktools .mk.on .hk{color:#ffffffcc;}
-  .ip-marktools .mk.clear{width:41px;height:auto;flex-direction:column;gap:1px;padding:5px 0 4px;color:var(--bad);border-color:#EDB5B6;}
-  .ip-marktools .mk.clear .hk{position:static;font:600 9px var(--font);color:inherit;margin:0;}
-  .ip-marktools .mk.clear svg{width:17px;height:17px;}
+  .ip-marktools .mk.clear{color:var(--bad);border-color:#EDB5B6;}   /* same box and icon size as every other tool */
   .ip-editbtn{position:absolute;top:10px;left:12px;z-index:6;width:44px;background:#ffffffe6;border:1px solid var(--line);border-radius:10px;color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0 5px;box-shadow:0 2px 8px #1e1f221f;transition:color .12s,border-color .12s,background .12s;}
   .ip-editbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
   .ip-editbtn span{font:600 var(--fl) var(--font);letter-spacing:.6px;text-transform:uppercase;color:var(--dim);font-variant-numeric:tabular-nums}
@@ -1245,8 +1243,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
       <button class="mk" data-tool="text" title="Text box (W)"><svg viewBox="0 0 24 24"><path d="M5 6h14M12 6v12"/></svg><b class="hk">W</b></button>
       <button class="mk" data-tool="call" title="Callout — drag from the target to place the text box, or click the target then click again (Q)"><svg viewBox="0 0 24 24"><rect x="8" y="4" width="13" height="8" rx="1.5"/><path d="M9 12L3 20M3 20l1.2-4.2M3 20l4.2-1.2"/></svg><b class="hk">Q</b></button>
       <button class="mk" data-tool="erase" title="Eraser (E)"><svg viewBox="0 0 24 24"><path d="M4 15l7-7 6 6-4 4H8zM11 8l6 6"/></svg><b class="hk">E</b></button>
-      <button class="mk" id="mkRotate" title="Rotate 90° clockwise (Ctrl+Shift +) — Shift-click or Ctrl+Shift − for counter-clockwise"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.4-5.7M20 3v4h-4"/></svg><b class="hk">&#8635;</b></button>
-      <button class="mk clear" id="mkClear" title="Remove every markup on this photo"><svg viewBox="0 0 24 24"><path d="M6 7h12M9 7V5h6v2M8 7l1 12h6l1-12"/></svg><b class="hk">Clear</b></button>
+      <button class="mk" id="mkRotate" title="Rotate 90° clockwise (Ctrl+Shift +) — Shift-click or Ctrl+Shift − for counter-clockwise"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.4-5.7M20 3v4h-4"/></svg></button>
+      <button class="mk clear" id="mkClear" title="Remove every markup on this photo"><svg viewBox="0 0 24 24"><path d="M6 7h12M9 7V5h6v2M8 7l1 12h6l1-12"/></svg></button>
     </div>
     <div class="ip-tagcol">
       <div class="ip-tags" id="lbTags"></div>
