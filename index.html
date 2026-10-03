@@ -3381,7 +3381,7 @@ async function exportActionsPdf(){
 
     /* ---- Map pages */
     const located=order.filter(a=>pdfMapPoint(a)), mapPages=[];
-    const copt=window._pdfCoverOpt||"none";   // cover photo in each callout box: style chosen in settings below
+    const copt=window._pdfCoverOpt||"left";   // each callout box carries the action's cover photo on its left (option 1)
     { let rest=located; while(rest.length){ let n=rest.length, L=pdfMapLayout(rest,copt); while(!L.ok&&n>1){ n=Math.max(1,Math.floor(n*0.75)); L=pdfMapLayout(rest.slice(0,n),copt); } mapPages.push(L); rest=rest.slice(n); } }
     for(let i=0;i<mapPages.length;i++){ const L=mapPages[i]; if(i) doc.addPage();
       let y=title(mapPages.length>1?"Map "+(i+1)+" of "+mapPages.length:"Map");
@@ -3631,12 +3631,43 @@ function loadExcelJS(){ if(window.ExcelJS) return Promise.resolve();
     sc.onload=res; sc.onerror=()=>{ _exceljsP=null; rej(new Error("could not load the Excel library — are you online?")); };
     document.head.appendChild(sc); });
   return _exceljsP; }
+/* Photos IN their cells (Excel's "Place in Cell" pictures): they sort and filter with their row.
+   ExcelJS can only float pictures over the sheet, so the photo cells get a placeholder number and the
+   saved file is rewritten: each placeholder becomes an in-cell picture (rich value), the same parts
+   Excel itself writes (metadata.xml + xl/richData/*). */
+const XL_PH=987650000;   // placeholder: cell value -(XL_PH+k) = picture k
+async function xlsxEmbedPictures(buf,pics){
+  await loadJSZip();
+  const zip=await JSZip.loadAsync(buf), sp="xl/worksheets/sheet1.xml";
+  let xml=await zip.file(sp).async("string"); const used=[];
+  xml=xml.replace(/<c r="([A-Z]+\d+)"([^>]*?)>\s*<v>(-98765\d{4})<\/v>\s*<\/c>/g,(m,ref,attrs,v)=>{ const k=-(+v)-XL_PH; if(!pics[k]) return '<c r="'+ref+'"'+attrs.replace(/\s+t="[^"]*"/,"")+'/>';
+    used.push(k); return '<c r="'+ref+'"'+attrs.replace(/\s+t="[^"]*"/,"")+' t="e" vm="'+used.length+'"><v>#VALUE!</v></c>'; });
+  if(!used.length) return buf;
+  const put=(name,data)=>zip.file(name,data,{createFolders:false});   // no folder entries: the same shape Excel writes
+  put(sp,xml);
+  const H='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n', n=used.length, R=[...Array(n).keys()];
+  used.forEach((k,i)=>put("xl/media/cellpic"+(i+1)+".jpeg",pics[k]));
+  put("xl/richData/richValueRel.xml",H+'<richValueRels xmlns="http://schemas.microsoft.com/office/spreadsheetml/2022/richvaluerel" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'+R.map(i=>'<rel r:id="rId'+(i+1)+'"/>').join("")+'</richValueRels>');
+  put("xl/richData/_rels/richValueRel.xml.rels",H+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+R.map(i=>'<Relationship Id="rId'+(i+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/cellpic'+(i+1)+'.jpeg"/>').join("")+'</Relationships>');
+  put("xl/richData/rdrichvalue.xml",H+'<rvData xmlns="http://schemas.microsoft.com/office/spreadsheetml/2017/richdata" count="'+n+'">'+R.map(i=>'<rv s="0"><v>'+i+'</v><v>5</v></rv>').join("")+'</rvData>');
+  put("xl/richData/rdrichvaluestructure.xml",H+'<rvStructures xmlns="http://schemas.microsoft.com/office/spreadsheetml/2017/richdata" count="1"><s t="_localImage"><k n="_rvRel:LocalImageIdentifier" t="i"/><k n="CalcOrigin" t="i"/></s></rvStructures>');
+  put("xl/richData/rdRichValueTypes.xml",H+'<rvTypesInfo xmlns="http://schemas.microsoft.com/office/spreadsheetml/2017/richdata2" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x" xmlns:x="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><global><keyFlags><key name="_Self"><flag name="ExcludeFromFile" value="1"/><flag name="ExcludeFromCalcComparison" value="1"/></key><key name="_DisplayString"><flag name="ExcludeFromCalcComparison" value="1"/></key><key name="_Flags"><flag name="ExcludeFromCalcComparison" value="1"/></key><key name="_Format"><flag name="ExcludeFromCalcComparison" value="1"/></key><key name="_SubLabel"><flag name="ExcludeFromCalcComparison" value="1"/></key><key name="_Attribution"><flag name="ExcludeFromCalcComparison" value="1"/></key><key name="_Icon"><flag name="ExcludeFromCalcComparison" value="1"/></key><key name="_Display"><flag name="ExcludeFromCalcComparison" value="1"/></key><key name="_CanonicalPropertyNames"><flag name="ExcludeFromCalcComparison" value="1"/></key><key name="_ClassificationId"><flag name="ExcludeFromCalcComparison" value="1"/></key></keyFlags></global></rvTypesInfo>');
+  put("xl/metadata.xml",H+'<metadata xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:xlrd="http://schemas.microsoft.com/office/spreadsheetml/2017/richdata"><metadataTypes count="1"><metadataType name="XLRICHVALUE" minSupportedVersion="120000" copy="1" pasteAll="1" pasteValues="1" merge="1" splitFirst="1" rowColShift="1" clearFormats="1" clearComments="1" assign="1" coerce="1"/></metadataTypes><futureMetadata name="XLRICHVALUE" count="'+n+'">'+R.map(i=>'<bk><extLst><ext uri="{3e2802c4-a4d2-4d8b-9148-e3be6c30e623}"><xlrd:rvb i="'+i+'"/></ext></extLst></bk>').join("")+'</futureMetadata><valueMetadata count="'+n+'">'+R.map(i=>'<bk><rc t="1" v="'+i+'"/></bk>').join("")+'</valueMetadata></metadata>');
+  let wr=await zip.file("xl/_rels/workbook.xml.rels").async("string");
+  wr=wr.replace("</Relationships>",[["sheetMetadata","http://schemas.openxmlformats.org/officeDocument/2006/relationships/sheetMetadata","metadata.xml"],["rvRel","http://schemas.microsoft.com/office/2022/10/relationships/richValueRel","richData/richValueRel.xml"],["rdRv","http://schemas.microsoft.com/office/2017/06/relationships/rdRichValue","richData/rdrichvalue.xml"],["rdRvS","http://schemas.microsoft.com/office/2017/06/relationships/rdRichValueStructure","richData/rdrichvaluestructure.xml"],["rdRvT","http://schemas.microsoft.com/office/2017/06/relationships/rdRichValueTypes","richData/rdRichValueTypes.xml"]].map(([id,t,tg])=>'<Relationship Id="rIdAM'+id+'" Type="'+t+'" Target="'+tg+'"/>').join("")+"</Relationships>");
+  put("xl/_rels/workbook.xml.rels",wr);
+  let ct=await zip.file("[Content_Types].xml").async("string");
+  if(!/Extension="jpeg"/i.test(ct)) ct=ct.replace(/(<Types[^>]*>)/,'$1<Default Extension="jpeg" ContentType="image/jpeg"/>');
+  ct=ct.replace("</Types>",[["/xl/metadata.xml","application/vnd.openxmlformats-officedocument.spreadsheetml.sheetMetadata+xml"],["/xl/richData/rdRichValueTypes.xml","application/vnd.ms-excel.rdrichvaluetypes+xml"],["/xl/richData/rdrichvalue.xml","application/vnd.ms-excel.rdrichvalue+xml"],["/xl/richData/rdrichvaluestructure.xml","application/vnd.ms-excel.rdrichvaluestructure+xml"],["/xl/richData/richValueRel.xml","application/vnd.ms-excel.richvaluerel+xml"]].map(([p,t])=>'<Override PartName="'+p+'" ContentType="'+t+'"/>').join("")+"</Types>");
+  put("[Content_Types].xml",ct);
+  return await zip.generateAsync({type:"arraybuffer",compression:"DEFLATE"});
+}
 async function xlsImage(p){   // annotated preview scaled into a 180x110 box for the sheet
   try{
     const src=await annotatedPreview(p); if(!src) return null;
     const im=await loadImg(src);
     const sc=Math.min(1,180/im.width,110/im.height);
-    const w=Math.max(1,Math.round(im.width*sc)), h=Math.max(1,Math.round(im.height*sc)), K=2;   // drawn at 2x so it stays sharp
+    const w=Math.max(1,Math.round(im.width*sc)), h=Math.max(1,Math.round(im.height*sc)), K=Math.max(2,Math.min(4,800/Math.max(w,h)));   // ~800 px: sharp when the picture is enlarged in Excel
     const c=document.createElement("canvas"); c.width=w*K; c.height=h*K;
     const g=c.getContext("2d"); g.drawImage(im,0,0,w*K,h*K);
     return {b64:c.toDataURL("image/jpeg",0.82),w,h};
@@ -3696,7 +3727,7 @@ async function exportActionsXlsx(){
     ];
     const order=exportActs();   // what the list shows (filters + date bar), in its order; # is the action's 001-style number
     if(!order.length){ done("no actions match the current filters",2600); return; }
-    let maxImgs=0, ri=2;
+    let maxImgs=0, ri=2; const pics=[];
     for(const a of order){
       st.textContent="Compiling "+(ri-1)+" / "+order.length+"\u2026";
       const ps=actPhotos(a);
@@ -3711,8 +3742,8 @@ async function exportActionsXlsx(){
       const COLPX=187;   // ~26-char column in px; images centre inside their own cell
       imgs.forEach((im2,ci2)=>{
         if(!im2){ ws.getCell(ri,5+ci2).value="(no image)"; return; }
-        const id=wb.addImage({base64:im2.b64,extension:"jpeg"});
-        ws.addImage(id,{tl:{col:4+ci2+Math.max(0,(COLPX-im2.w)/2)/COLPX,row:(ri-1)+Math.max(0,(rowH-im2.h)/2)/Math.max(rowH,1)},ext:{width:im2.w,height:im2.h}});
+        pics.push(Uint8Array.from(atob(im2.b64.split(",")[1]),ch=>ch.charCodeAt(0)));   // becomes a picture IN this cell (see xlsxEmbedPictures)
+        const c2=ws.getCell(ri,5+ci2); c2.value=-(XL_PH+pics.length-1); c2.alignment={horizontal:"center",vertical:"middle"};
       });
       maxImgs=Math.max(maxImgs,imgs.length);
       row.height=Math.max(Math.round(rowH*0.78),46);   // px -> pt
@@ -3722,7 +3753,8 @@ async function exportActionsXlsx(){
     xlHeadRow(ws,1);   // green, white bold — same as the Sub-actions tab
     st.textContent="Sub-actions tab\u2026"; addSubActionsSheet(wb,order,Date.now());
     st.textContent="Writing file\u2026";
-    const buf=await wb.xlsx.writeBuffer();
+    let buf=await wb.xlsx.writeBuffer();
+    if(pics.length){ st.textContent="Placing photos in their cells\u2026"; buf=await xlsxEmbedPictures(buf,pics); }
     const blob=new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
     const aEl=document.createElement("a"); aEl.href=URL.createObjectURL(blob);
     aEl.download=String(loadedJsonName||folderName||"ActionMap").replace(/\.[^.]+$/,"")+"-problems-"+new Date().toISOString().slice(0,10)+".xlsx";
