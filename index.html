@@ -146,14 +146,10 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .btn.ghost{color:var(--text);background:var(--panel);border:1px solid var(--line2);}
   .btn.ghost:hover{border-color:var(--accent);color:var(--accent);}
   .btn.ghost:active{transform:translateY(1px);}
-  .btn.grpL{color:var(--on-accent);background:var(--gold);border:none;box-shadow:0 2px 0 var(--gold2);}
-  .btn.grpL:hover{background:var(--gold2);}
-  .btn.grpL:active{transform:translateY(2px);box-shadow:0 0 0 var(--gold2);}
-  .btn.grpR{color:var(--text);background:var(--panel);border:1px solid var(--line2);box-shadow:0 1px 0 var(--line2);}
-  .btn.grpR:hover{border-color:var(--accent);color:var(--accent);}
-  .btn.grpR:active{transform:translateY(1px);box-shadow:0 0 0 var(--line2);}
-  .sharerow{display:flex;gap:8px;padding:10px 14px 0;}
-  .sharerow .btn{flex:1;text-align:center;}
+  
+  
+  
+  
   .sep{width:1px;height:24px;background:var(--line);margin:0 2px;}
 
   .stats{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel);}
@@ -183,8 +179,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   #map{flex:1 1 auto;height:100%;background:#f3f4f6;z-index:1;}
   .imgpanel{position:relative;box-sizing:border-box;display:none;flex:0 0 var(--side-w);width:var(--side-w);min-width:240px;max-width:82vw;height:100%;background:#ECEEF1;align-items:center;justify-content:center;overflow:hidden;z-index:2;}
   .imgpanel.open{display:flex;}
-  .imgsplit{display:none;}
-  .imgpanel.open + .imgsplit{display:block;}
+  
   .ip-close{position:absolute;top:10px;right:12px;z-index:6;background:#ffffffe6;border:1px solid var(--line);color:var(--text);font-size:22px;line-height:1;width:32px;height:32px;border-radius:8px;cursor:pointer;box-shadow:0 2px 8px #1e1f221f;}
   .ip-close:hover{color:var(--accent);border-color:var(--accent);}
   .ip-topright{position:absolute;top:10px;right:calc(12px + 32px + var(--btn-gap));z-index:6;display:flex;gap:var(--btn-gap);}
@@ -213,11 +208,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .folder-pop .fp-tag.on{opacity:1;background:var(--accent-tint);border-color:var(--accent);}
   .folder-pop .fp-create{font:600 var(--fl) var(--font);color:var(--on-accent);background:var(--gold);border:none;border-radius:6px;padding:5px 10px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .folder-pop .fp-create:hover{background:var(--gold2);}
-  .map-tags{position:absolute;left:12px;bottom:14px;z-index:1000;display:flex;flex-direction:column;align-items:flex-start;gap:6px;max-width:280px;}
-  .mt-pills{display:flex;flex-direction:column;align-items:flex-start;gap:6px;max-height:38vh;overflow:auto;scrollbar-width:none;}
-  .mt-pills::-webkit-scrollbar{display:none;}
-  .map-tags.filtered .ip-tag{opacity:.65;}
-  .map-tags.filtered .ip-tag.on{opacity:1;border-color:var(--accent);background:var(--accent-tint);}
+  
+  
   .ip-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:6;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:#ffffffe6;color:var(--text);font-size:26px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s,color .12s;box-shadow:0 2px 10px #1e1f2226;}
   .ip-arrow:hover{background:var(--gold);color:var(--on-accent);border-color:var(--gold);}
   .ip-arrow.left{left:14px;} .ip-arrow.right{right:14px;}
@@ -234,10 +226,9 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ip-tags::-webkit-scrollbar{display:none;}
   .ip-tag{font:600 var(--fl) var(--font);text-align:left;color:var(--accent2);background:#ffffffe8;border:1px solid var(--line2);border-radius:6px;padding:4px 10px;cursor:pointer;box-shadow:0 2px 8px #1e1f221a;transition:opacity .15s,border-color .12s;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;}
   .ip-tag:hover{border-color:var(--accent);}
-  .ip-tags .ip-tag,.map-tags .ip-tag{opacity:.9;}   /* resting: barely transparent; filtering dims unselected tags further */
-  .ip-tags .ip-tag:hover,.map-tags .ip-tag:hover{opacity:1;}
-  .ip-tags.filtered .ip-tag{opacity:.65;}
-  .ip-tags.filtered .ip-tag.on{opacity:1;border-color:var(--accent);background:var(--accent-tint);}
+  .ip-tags .ip-tag{opacity:.9;}   /* resting: barely transparent; filtering dims unselected tags further */
+  .ip-tags .ip-tag:hover{opacity:1;}
+  
   .ip-tag.clearall{opacity:1!important;color:var(--bad);}
   .ip-tag.clearall:hover{border-color:var(--bad);}
   .ip-tag .tag-x{margin-right:7px;color:var(--faint);font-style:normal;font-weight:700;cursor:pointer;}
@@ -280,7 +271,6 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .markpalette .sw{width:21px;height:21px;flex-shrink:0;border-radius:50%;background:var(--c);border:2px solid #00000022;cursor:pointer;padding:0;}
   .markpalette .sw:hover{border-color:#00000044;}
   .markpalette .sw.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent),0 0 8px var(--accent-tint);}
-  .markpalette .thick{-webkit-appearance:slider-vertical;appearance:slider-vertical;writing-mode:vertical-lr;direction:rtl;width:22px;height:90px;margin-top:3px;accent-color:var(--accent);cursor:pointer;}
   .tbed{position:absolute;z-index:8;line-height:0;}
   .tbed .tbtext{display:inline-block;min-width:8px;background:#ffffff;border:2px solid #ff3b30;color:#ff3b30;font:600 13px var(--font);line-height:1.15;padding:2px 5px;border-radius:0;white-space:pre;outline:none;cursor:text;box-shadow:none;box-sizing:content-box;vertical-align:top;}
   .projhead{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:1300;display:none;flex-direction:column;align-items:stretch;background:#ffffffee;border:1px solid var(--line2);border-radius:10px;padding:9px 16px;box-shadow:0 6px 24px #1e1f2233;max-width:72%;pointer-events:auto;cursor:pointer;}   /* the whole label opens the project list */
@@ -306,9 +296,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
 
   .splitter{width:6px;flex:0 0 6px;cursor:col-resize;background:var(--line);position:relative;z-index:3;}   /* the slate line IS the grip */
   .gallery{width:var(--side-w);flex:0 0 var(--side-w);height:100%;background:var(--panel);display:flex;flex-direction:column;z-index:2;min-width:220px;border-left:1px solid var(--line);}
-  .gallery-head{padding:11px 14px 9px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
-  .gallery-head .title{font-family:var(--font);font-weight:700;font-size:var(--fh);letter-spacing:.4px;text-transform:uppercase;color:var(--ink);}
-  .gallery-head .count{font-family:var(--font);font-size:var(--fl);color:var(--accent2);}
+  
   .controls{padding:8px 14px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:9px;}
   .ctl-row{display:flex;gap:8px;align-items:center;}
   .ctl-row label{font-size:var(--fl);letter-spacing:1px;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
@@ -352,11 +340,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .areabtn.active{background:var(--gold);color:var(--on-accent);border-color:var(--gold);}
   .measure-lbl{background:#fff;color:var(--accent);font-family:var(--font);font-size:var(--fl);font-weight:700;padding:3px 7px;border:1px solid var(--accent);border-radius:6px;white-space:nowrap;box-shadow:0 4px 14px #1e1f2226;}
   .measure-lbl.leaflet-tooltip-top:before{border-top-color:var(--accent);}
-  .datebar{background:#ffffffe8;backdrop-filter:blur(8px);border:1px solid var(--line2);border-radius:9px;padding:4px 9px 5px;width:190px;box-shadow:0 4px 14px #1e1f221f;}
-  .datebar.hidden{display:none;}
-  .datebar .vals{display:flex;justify-content:space-between;font-family:var(--font);font-size:var(--fl);color:var(--accent2);margin-bottom:2px;}
+  
   .slider-wrap{position:relative;height:16px;}
-  .pdot{width:18px;height:18px;box-sizing:border-box;border-radius:50%;opacity:.95;}   /* a single photo dot */
   .snap-ring{width:52px;height:52px;border-radius:50%;border:3px dashed var(--gold);background:#e8b44a33;box-sizing:border-box;pointer-events:none;}   /* drag onto a dot: the drop target */
   .snap-tip{position:absolute;left:60px;top:-10px;background:#1d2430;color:#fff;font:600 13px var(--font);padding:5px 10px;border-radius:8px;white-space:nowrap;pointer-events:none;}
   .act-dates{padding:0 12px 10px;} .act-dates[hidden]{display:none;}   /* date window: two handles over a bar chart of actions created per day */
@@ -370,10 +355,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .slider-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;pointer-events:auto;width:13px;height:13px;border-radius:50%;background:var(--gold);border:2px solid #fff;cursor:grab;box-shadow:0 0 0 1px var(--gold2),0 1px 4px #1e1f2233;}
   .slider-wrap input[type=range]::-moz-range-thumb{pointer-events:auto;width:11px;height:11px;border-radius:50%;background:var(--gold);border:2px solid #fff;cursor:grab;}
 
-  .cl-bubble{display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f7a95a,#F28C28);color:#fff;font-family:var(--font);font-weight:700;border:2px solid #fff;box-shadow:0 0 0 4px #1d243033,0 2px 8px #1e1f2233;cursor:pointer;}   /* bold, open numerals — as the phone renders them */
-  .cl-bubble.cl-hl{animation:clpulse 1.2s ease-in-out infinite;}   /* the whole cluster flashes when it holds a selected photo */
+  
   @keyframes clpulse{0%,100%{box-shadow:0 0 0 6px rgba(232,180,74,.95),0 2px 8px #1e1f2233;}50%{box-shadow:0 0 0 6px rgba(232,180,74,.2),0 2px 8px #1e1f2233;}}
-  .leaflet-interactive.photo-dot{cursor:pointer;}
 
   /* action "relevant area" previews: hover-preview-sized mini-maps floating above each photo group */
   .hoverview{position:fixed;z-index:1600;display:none;background:#fff;border:1px solid var(--accent);border-radius:10px;padding:5px;box-shadow:0 14px 40px #1e1f2233;pointer-events:none;}
@@ -381,7 +364,6 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .hoverview img{display:block;width:min(270px,40vh);height:min(270px,40vh);object-fit:cover;border-radius:6px;background:#ECEEF1;}
   .hoverview .cap{font-family:var(--font);font-size:var(--fl);color:var(--muted);margin-top:5px;text-align:center;max-width:min(270px,40vh);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
   @keyframes hlpulse{0%,100%{stroke-opacity:1;}50%{stroke-opacity:.25;}}
-  .hl-dot{animation:hlpulse 1.2s ease-in-out infinite;}
   .sel-arrow{position:relative;width:0;height:0;pointer-events:none;}   /* selected dot / bubble: red arrow above it, the phone's arrow */
   .sel-arrow i{position:absolute;left:-4px;top:calc(-1 * var(--r) - 33px);width:8px;height:14px;background:#E8281E;border-radius:2px;}
   .sel-arrow b{position:absolute;left:-11px;top:calc(-1 * var(--r) - 21px);border-left:11px solid transparent;border-right:11px solid transparent;border-top:15px solid #E8281E;filter:drop-shadow(0 2px 2px #0005);}
@@ -414,30 +396,19 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .lb-ref.show{display:block;}
   .lb-ref img{display:block;}
   .lb-ref .box{position:absolute;border:2px solid var(--gold);background:#e8b44a22;box-shadow:0 0 0 9999px #1e1f2240;}
-  .lb-tools{position:absolute;top:12px;right:12px;z-index:3;display:flex;flex-direction:column;gap:8px;align-items:flex-end;}
-  .lb-enhance{font-family:var(--font);font-size:var(--fb);font-weight:600;color:var(--on-accent);background:var(--gold);border:none;border-radius:7px;padding:7px 11px;cursor:pointer;box-shadow:0 2px 10px #1e1f2226;}
-  .lb-copyloc{font-family:var(--font);font-size:var(--fb);font-weight:600;color:var(--text);background:var(--panel2);border:1px solid var(--line2);border-radius:7px;padding:7px 11px;cursor:pointer;box-shadow:0 2px 10px #1e1f221a;}
+  
   .lb-fullchk{display:flex;align-items:center;gap:7px;font-family:var(--font);font-size:var(--fb);font-weight:600;color:var(--on-accent);background:var(--gold);border-radius:7px;padding:7px 11px;cursor:pointer;box-shadow:0 2px 10px #1e1f2226;user-select:none;}
   .lb-fullchk input{width:14px;height:14px;accent-color:#fff;cursor:pointer;margin:0;}
   .lb-fullchk.busy{opacity:.65;cursor:wait;}
-  .fsview{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;background:#ECEEF1;z-index:4;}
-  .fsview.show{display:flex;}
-  .fs-strip{display:flex;align-items:center;justify-content:center;gap:14px;width:100%;height:82vh;overflow:visible;}
-  .fs-item{height:16vh;max-width:16vw;object-fit:contain;border-radius:6px;opacity:.42;cursor:pointer;transition:opacity .18s,height .18s;flex:0 0 auto;background:#ECEEF1;}
-  .fs-item:hover{opacity:.8;}
-  .fs-item.center{height:78vh;max-width:72vw;opacity:1;cursor:default;box-shadow:0 14px 60px #1e1f2240;transform-origin:center center;position:relative;z-index:2;will-change:transform;}
-  .fs-cap{font-family:var(--font);font-size:var(--fl);color:var(--muted);margin-top:14px;text-align:center;max-width:80vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
-  .fs-exit{position:absolute;top:18px;right:20px;z-index:5;font-family:var(--font);font-size:var(--fb);font-weight:600;color:var(--text);background:var(--panel2);border:1px solid var(--line2);border-radius:7px;padding:8px 12px;cursor:pointer;}
-  .fs-exit:hover{border-color:var(--accent);color:var(--accent);}
-  .fsrail{position:absolute;top:0;bottom:0;display:none;flex-direction:column;gap:14px;align-items:center;justify-content:center;z-index:6;padding:2vh 0;pointer-events:auto;}
-  .lightbox.fs .fsrail{display:flex;}
+  
+  
+  
+  
+  
   .lightbox.fs{background:rgba(28,30,38,.7);}
-  .fsrail img{width:100%;height:24vh;object-fit:cover;border-radius:8px;opacity:.55;cursor:pointer;transition:opacity .15s,border-color .15s;border:1px solid transparent;background:#ECEEF1;}
-  .fsrail img:hover{opacity:1;border-color:var(--accent);}
+  
   .lightbox.fs .lb-frame{position:relative;background:transparent;border:0;box-shadow:none;border-radius:0;}
-  .lightbox.fs .lb-bar{position:absolute;left:0;right:0;bottom:0;height:auto;padding:12px 18px;border-top:0;background:linear-gradient(0deg,#1e1f22e0,#1e1f2270,transparent);}
-  .lb-iconbtn{background:transparent;border:0;color:var(--text);width:34px;height:32px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;}
-  .lb-iconbtn:hover{color:var(--accent);}
+  
   .lb-mark{position:absolute;top:0;left:0;z-index:2;pointer-events:none;}
   .lb-ref{z-index:4;}
   .lb-stage.drawing{cursor:crosshair;}
@@ -446,24 +417,15 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .tb-ghost{position:absolute;z-index:6;pointer-events:none;box-sizing:content-box;background:#fff;opacity:.45;white-space:pre;font-weight:600;font-family:'Aptos',sans-serif;display:none;}
   .lb-stage.copying,.lb-stage.copying *{cursor:copy!important;}
   .lb-textbtn.on{background:var(--gold);color:var(--on-accent);border-color:var(--gold);}
-  .lb-close{z-index:8;}
-  .lb-copyloc:hover{border-color:var(--accent);color:var(--accent);}
-  .lb-copyloc.ok{color:var(--good);border-color:var(--good);}
-  .lb-enhance:hover{background:var(--gold2);}
-  .lb-enhance.done{background:var(--panel2);color:var(--good);border:1px solid var(--line2);cursor:default;box-shadow:none;}
-  .lb-enhance.busy{opacity:.7;cursor:wait;}
-  .lb-bar{height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;border-top:1px solid var(--line);gap:12px;}
-  .lb-bar .info{min-width:0;}
-  .lb-bar .fn{font-size:var(--fb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .lb-bar .sub{font-family:var(--font);font-size:var(--fl);color:var(--muted);margin-top:2px;font-variant-numeric:tabular-nums}
-  .lb-bar .nav{display:flex;gap:8px;align-items:center;}
-  .lb-zoomtxt{font-family:var(--font);font-size:var(--fl);color:var(--muted);min-width:42px;text-align:right;}
-  .lb-btn{background:var(--panel2);border:1px solid var(--line2);color:var(--text);width:32px;height:32px;border-radius:7px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+  
+  
+  
+  
+  
+  
   .lb-textbtn{background:var(--panel2);border:1px solid var(--line2);color:var(--text);height:32px;padding:0 12px;border-radius:7px;cursor:pointer;font-family:var(--font);font-size:var(--fb);font-weight:600;}
   .lb-textbtn:hover{border-color:var(--accent);color:var(--accent);}
-  .lb-btn:hover{border-color:var(--accent);color:var(--accent);}
-  .lb-close{position:absolute;top:16px;right:20px;background:none;border:none;color:var(--dim);font-size:30px;cursor:pointer;line-height:1;z-index:2;}
-  .lb-close:hover{color:var(--accent);}
+  
 
   .dropzone{position:fixed;inset:0;z-index:2500;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,.86);border:3px dashed var(--accent);margin:14px;border-radius:18px;font-family:var(--font);font-weight:700;font-size:var(--fh);color:var(--accent);pointer-events:none;}
   .dropzone.show{display:flex;}
@@ -482,10 +444,9 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .act-exp{border:none;background:none;color:var(--dim);cursor:pointer;padding:3px 5px;font-size:19px;line-height:1;align-self:flex-start;transition:transform .15s;}
   .act-exp:hover{color:var(--accent);}
   .act-exp.on{transform:rotate(180deg);}
-  .act-body .d,.ipa-body .d{font-size:var(--fb);color:var(--muted);line-height:1.45;white-space:pre-wrap;word-wrap:break-word;margin:2px 0;}
-  .act-body .d.empty,.ipa-body .d.empty{color:var(--faint);font-style:italic;}
+  .act-body .d{font-size:var(--fb);color:var(--muted);line-height:1.45;white-space:pre-wrap;word-wrap:break-word;margin:2px 0;}
+  .act-body .d.empty{color:var(--faint);font-style:italic;}
   .asec{display:flex;flex-direction:column;gap:4px;margin-top:7px;}
-  .asec .al{font-family:var(--font);font-size:var(--fl);letter-spacing:.8px;color:var(--faint);font-variant-numeric:tabular-nums}
   .asec .d{margin:0;box-sizing:border-box;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:4px 8px;font-size:var(--fb);cursor:text;white-space:pre-wrap;}
   /* current-location marker: red YOU ARE HERE pin */
   .geo-pin{filter:drop-shadow(0 2px 5px rgba(0,0,0,.4));}
@@ -495,7 +456,6 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .st-row.drop-a{box-shadow:0 2px 0 var(--accent);}
   .act-row.drop-b{box-shadow:0 -3px 0 var(--accent);}
   .act-row.drop-a{box-shadow:0 3px 0 var(--accent);}
-  .ipa-body .asec{margin-top:5px;}
   .act-steps{display:flex;flex-direction:column;gap:4px;margin:4px 0 2px;}
   .st-row{display:flex;align-items:flex-start;gap:7px;}
   .st-row .st-num{margin-top:3px;}
@@ -533,7 +493,6 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .act-body .bh{display:flex;align-items:flex-start;gap:4px;}   /* chevron and × hug the title; the cover starts right after */
   .act-body .bh .t{flex:1;min-width:0;}
   .act-body .bh .act-edit{flex:1;min-width:0;}
-  .ipa-body{flex:1;min-width:0;display:flex;flex-direction:column;}
   .ipa-row{align-items:flex-start;}
   .ipa-row .act-chk,.ipa-row .ipa-x,.ipa-row .act-exp{margin-top:1px;}
   .ipa-row .act-exp{font-size:14px;padding:2px 4px;}   /* strip rows are shorter — keep icons ~30% of THEIR collapsed height */
@@ -546,7 +505,6 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .act-tgl:hover{border-color:var(--gold);}
   .af-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:-1px;box-sizing:border-box;}   /* the map's dot for each pill */
   .af-dot.open{background:#F28C28;}.af-dot.hold{background:#fff;border:2px solid #F28C28;}.af-dot.done{background:#6b7580;}
-  .act-sc{font-weight:600;font-size:var(--fl);color:var(--muted);white-space:nowrap;}   /* folded: how many sub-actions it holds */
   .act-dl{width:30px;height:30px;padding:0!important;display:grid;place-items:center;}.act-dl svg{width:17px;height:17px;}   /* export to Excel + Save, beside the heading */
   .act-head .title{margin-right:3px;}
   .act-dl.act-xl{width:36px;height:32px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;} .act-dl.act-xl svg{width:14px;height:14px;} .act-dl.act-xl b{font:800 8.5px/1 Arial,sans-serif;color:#1d6f42;letter-spacing:.3px;margin-top:1px;} .act-dl.act-pdf b{color:#c0392b;}   /* says it's an Excel file */
@@ -582,8 +540,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .af-pin span{position:absolute;left:0;top:-42px;transform:translateX(-50%);white-space:nowrap;background:#1d2430;color:#fff;font:700 12px var(--font);padding:4px 9px;border-radius:7px;}
   .act-new input{width:100%;box-sizing:border-box;font:inherit;font-size:var(--fb);color:var(--ink);background:var(--panel2);border:1px solid var(--line2);border-radius:9px;padding:8px 10px;outline:none;}
   .act-new input:focus{border-color:var(--accent);}
-  .act-new input.arm{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-tint);}
-  .act-new input.arm::placeholder{color:var(--accent);}
+  
   .act-list{flex:1;overflow-y:auto;padding:0 10px 12px;display:flex;flex-direction:column;gap:6px;}
   .act-row{position:relative;display:flex;align-items:flex-start;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 9px;cursor:pointer;user-select:none;}
   .act-row .act-cnr{position:absolute;top:6px;z-index:3;width:24px;height:24px;box-sizing:border-box;padding:0;border:1.5px solid #cfd4da;border-radius:6px;background:#fff;color:#4a525c;display:grid;place-items:center;line-height:1;}   /* Copy + × share the top-right corner, square like the pills */
@@ -610,12 +567,9 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .act-chk input,.act-hold input{appearance:none;-webkit-appearance:none;width:15px;height:15px;margin:0;border:1px solid var(--line2);border-radius:3px;cursor:pointer;position:relative;}
   .act-chk input{background:#3BA55C33;}   /* faint green: this is the COMPLETE box */
   .a-num{color:var(--accent2);font-family:var(--font);font-weight:700;margin-right:5px;}
-  .cl-bubble.cl-g{background:radial-gradient(circle at 35% 30%,#f7a95a,#F28C28);color:#fff;box-shadow:0 0 0 4px #F28C2840,0 2px 8px #1e1f2233;}   /* mostly photos on an action (ties count here) */
-  .cl-bubble.cl-h{background:#fff;color:#9A520B;border:3px solid #F28C28;box-shadow:0 0 0 4px #F28C2830,0 2px 8px #1e1f2233;}   /* mostly on-hold photos */
-  .cl-bubble.cl-d{background:radial-gradient(circle at 35% 30%,#8a939d,#6b7580);color:#fff;box-shadow:0 0 0 4px #3f475030,0 2px 8px #1e1f2233;}   /* mostly completed */
-  .cl-bubble.cl-y{background:radial-gradient(circle at 35% 30%,#ffffff,#e9ecef);color:#1d2430;border-color:#4a5563;box-shadow:0 0 0 4px #ffffff55,0 2px 8px #1e1f2233;}   /* mostly photos not on any action */
-  .num-dot{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f7a95a,#F28C28);border:2px solid #fff;box-sizing:border-box;color:#fff;font:700 12px var(--font);letter-spacing:.3px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px #3BA55C33,0 2px 8px #1e1f2233;}   /* identical to a numbered cluster bubble */
-  body.mobile .num-dot{width:26px;height:26px;font:700 9px var(--mono);}   /* phone sizes were fine as they were */
+  
+  
+  
   .act-hold{display:flex;align-items:center;padding-top:1px;cursor:pointer;margin-left:1px;}
   /* per-action status: labelled tags, On hold above Done; filled in its colour when on */
   .act-st{display:flex;flex-direction:column;gap:4px;flex:none;align-self:flex-start;}
@@ -677,19 +631,15 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ipn-it.cur .th{box-shadow:0 0 0 2.5px var(--gold);}
   .ipn-it:hover .th{box-shadow:0 0 0 2px var(--line2);}
   .ipn-it.cur:hover .th{box-shadow:0 0 0 2.5px var(--gold);}
-  .ipa-head{display:flex;align-items:center;justify-content:space-between;}
-  .ipa-head .t{font-family:var(--font);font-weight:700;font-size:var(--fl);letter-spacing:.6px;text-transform:uppercase;color:var(--muted);}
-  .ipa-tgl{font-family:var(--font);font-size:var(--fl);color:var(--muted);background:none;border:1px solid var(--line2);border-radius:999px;padding:2px 8px;cursor:pointer;font-variant-numeric:tabular-nums}
-  .ipa-tgl:hover{border-color:var(--accent);color:var(--accent);}
-  .ipa-tgl.on{background:var(--gold);border-color:var(--gold);color:var(--on-accent);}
-  .ipa-list{overflow-y:auto;display:flex;flex-direction:column;gap:4px;min-height:0;}
+  
+  
+  
   .ipa-row{display:flex;align-items:flex-start;gap:7px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:5px 7px;}
   .ipa-row .act-chk,.ipa-row .act-exp,.ipa-row .ipa-x{align-self:flex-start;}
   .ipa-row .t{flex:1;font-size:var(--fb);color:var(--ink);min-width:0;word-wrap:break-word;}
   .ipa-row.done .t{text-decoration:line-through;color:var(--dim);}
   .ipa-x{border:none;background:none;color:var(--faint);font-size:21px;cursor:pointer;padding:0 4px;line-height:1;}
   .ipa-x:hover{color:var(--bad);}
-  .ipa-none{font-size:var(--fb);color:var(--dim);text-align:center;padding:2px 0;}
   #ipaNew{width:100%;box-sizing:border-box;font:inherit;font-size:var(--fb);color:var(--ink);background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:6px 8px;outline:none;}
   #ipaNew:focus{border-color:var(--accent);}
 
@@ -712,23 +662,14 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .act-note button{margin-left:auto;border:none;background:var(--gold);color:var(--on-accent);font:inherit;font-size:var(--fl);border-radius:999px;padding:3px 10px;cursor:pointer;}
 
   /* map bottom-left: active-filter pills + Search tag / Actions only buttons */
-  .mt-btnrow{display:flex;gap:6px;align-items:center;}
-  .mt-btn{font-family:var(--font);font-size:var(--fb);font-weight:600;color:var(--text);background:#ffffffe8;backdrop-filter:blur(8px);
-    border:1px solid var(--line2);border-radius:9px;padding:7px 10px;cursor:pointer;box-shadow:0 6px 18px #1e1f221f;}
-  .mt-btn:hover{border-color:var(--accent);color:var(--accent);}
-  .mt-btn.on{background:var(--gold);border-color:var(--gold);color:var(--on-accent);}
-  .mt-pop{position:absolute;bottom:46px;left:0;width:250px;background:var(--panel);border:1px solid var(--line2);border-radius:12px;box-shadow:0 12px 32px #1e1f2233;padding:8px;display:none;flex-direction:column-reverse;gap:6px;}
-  .mt-pop input{width:100%;box-sizing:border-box;font:inherit;font-size:var(--fb);color:var(--ink);background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:6px 8px;outline:none;}
-  .mt-pop input:focus{border-color:var(--accent);}
-  .mt-results{display:flex;flex-direction:column-reverse;gap:4px;max-height:240px;overflow-y:auto;}
-  .mt-item{border:1px solid var(--line2);background:var(--panel2);border-radius:8px;padding:6px 9px;font-size:var(--fb);color:var(--ink);cursor:pointer;text-align:left;}
-  .mt-item:hover{border-color:var(--accent);color:var(--accent);}
-  .mt-item.on{background:var(--gold);border-color:var(--gold);color:var(--on-accent);}
+  
+  
+  
+  
+  
 
   /* settings (cog) modal */
-  .cogbtn{border:none;background:none;color:var(--muted);cursor:pointer;padding:6px;border-radius:8px;display:flex;align-items:center;}
-  .cogbtn svg{width:20px;height:20px;fill:currentColor;}
-  .cogbtn:hover{background:var(--panel2);}   /* the gear stays grey — the blue centre dot is the accent */
+  
   .setmodal{position:fixed;inset:0;z-index:8000;background:#1E1F2255;backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;}
   .setmodal.show{display:flex;}
   .set-win{display:flex;width:min(640px,92vw);height:min(440px,84vh);background:var(--panel);border:1px solid var(--line2);border-radius:14px;box-shadow:0 24px 64px #1e1f2244;overflow:hidden;}
@@ -750,16 +691,12 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .set-ctl{display:flex;align-items:center;gap:10px;min-width:180px;}
   .set-ctl input[type=range]{width:140px;}
   .set-ctl input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;}
-  .set-val{font-family:var(--font);font-size:var(--fl);color:var(--accent);min-width:36px;text-align:right;}
-  .set-radios{display:flex;flex-direction:column;gap:6px;}
-  .set-radios label{display:flex;align-items:center;gap:7px;font-size:var(--fb);color:var(--text);cursor:pointer;}
-  .set-radios input{accent-color:var(--accent);cursor:pointer;}
+  
+  
 
   /* altitude bar extras */
-  .ab-read{width:100%;box-sizing:border-box;margin-top:8px;font-family:var(--font);font-size:var(--fl);color:var(--accent);background:var(--panel);border:1px solid var(--line2);border-radius:8px;padding:7px 10px;cursor:pointer;}
-  .ab-read:hover{border-color:var(--accent);}
-  .ab-read.hidden{display:none;}
-  .ab-read[disabled]{color:var(--faint);cursor:default;}
+  
+  
 
   /* right-click menu on photo dots */
   #ctxmenu{position:fixed;z-index:7000;background:var(--panel);border:1px solid var(--line2);border-radius:10px;
@@ -800,27 +737,20 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
      dots merge into a count bubble that lists its actions; an action opens on its own full screen.
      Phone-sized type: 17-18px to read, 15px for details, every target at least 44px. */
   .ma-top{flex-shrink:0;background:#fff;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:10px 16px 12px;padding-top:var(--m-topgap);position:relative;z-index:700;}
-  .ma-top svg,.ma-seg svg,.ma-fab svg,.ma-btn svg,.ma-add svg,.ma-search svg,.ma-dist svg,.ma-first svg,.ma-thumbs svg{width:22px;height:22px;flex-shrink:0;}
-  .ma-proj{flex:1;min-width:0;text-align:left;background:none;border:0;padding:0;font:inherit;color:var(--ink);display:flex;flex-direction:column;gap:2px;}
-  .ma-pn{font-size:24px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .ma-pn i{font-style:normal;color:var(--faint);font-weight:400;font-size:15px;margin-left:4px;}
+  .ma-top svg,.ma-btn svg,.ma-search svg,.ma-first svg,.ma-thumbs svg{width:22px;height:22px;flex-shrink:0;}
+  
   .ma-ps{font-size:15px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .ma-ps.warn{color:#9a5b00;}
-  .ma-seg{display:inline-flex;border:1.5px solid var(--line);border-radius:12px;background:#fff;flex-shrink:0;}
-  .ma-seg button{font:inherit;font-size:16px;font-weight:600;color:var(--muted);background:none;border:0;height:45px;padding:0 13px;display:flex;align-items:center;gap:6px;border-radius:10px;}
-  .ma-seg button svg{width:20px;height:20px;}
-  .ma-seg button.on{background:#fdf6e6;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--gold);}
-  .ma-show{flex:0 0 100%;display:flex;gap:10px;}
-  .ma-show button{flex:1;min-width:0;height:48px;box-sizing:border-box;font:inherit;font-size:16px;font-weight:600;color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:12px;display:flex;align-items:center;justify-content:center;gap:9px;padding:0 8px;white-space:nowrap;}
-  .ma-show button.on{background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);}
-  .ma-show button span{color:var(--muted);font-weight:500;}
+  
+  
+  
+  
   .ma-sym{width:18px;height:18px;box-sizing:border-box;border-radius:50%;flex-shrink:0;}
   .ma-sym.open{background:#F28C28;border:2px solid #fff;box-shadow:0 0 0 1.5px #9A520B;}
   .ma-sym.hold{background:#fff;box-shadow:0 0 0 2.5px #F28C28;}
   .ma-sym.done{background:#6b7580;border:2px solid #fff;box-shadow:0 0 0 1.5px #3f4750;}
   .ma-mapwrap{flex:1;min-height:0;position:relative;}
   .ma-map{position:absolute;inset:0;background:#e9ecef;}
-  .ma-fabs{position:absolute;top:14px;right:14px;z-index:500;display:flex;flex-direction:column;gap:10px;}
   .ma-nav{flex-shrink:0;display:flex;background:#fff;border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));position:relative;z-index:700;}
   .ma-nav button{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 2px 9px;background:none;border:0;border-radius:0;font:inherit;font-size:12px;font-weight:600;color:var(--muted);box-shadow:none;}
   .ma-nav button span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -856,8 +786,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-ptr svg{width:20px;height:20px;}
   .ma-ptr.ready{color:#7a5a12;}
   .ma-north{position:absolute;top:12px;right:14px;z-index:500;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:6px 10px 4px;line-height:0;box-shadow:0 2px 8px #1d243020;pointer-events:none;}
-  .ma-fab{width:52px;height:52px;box-sizing:border-box;border-radius:12px;background:#fff;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--ink);box-shadow:0 2px 8px #1d243020;padding:0;font:inherit;flex-shrink:0;}
-  .ma-fab svg{width:24px;height:24px;}
+  
   .ma-peek{position:absolute;left:12px;right:12px;bottom:16px;z-index:500;background:#fff;border:0;border-radius:16px;box-shadow:0 4px 18px #1d243033;padding:14px;display:flex;align-items:center;gap:14px;text-align:left;font:inherit;color:var(--ink);box-sizing:border-box;}
   .ma-peek{cursor:pointer;padding:10px 12px;gap:12px;}
   .ma-peek.done .t{text-decoration:line-through;color:var(--muted);}   /* completed / on hold actions shown by the filters */
@@ -880,9 +809,9 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-peek .ma-rt{min-width:0;}
   .ma-view{flex-shrink:0;height:44px;padding:0 18px;border-radius:12px;border:0;background:var(--gold);color:#1a1307;box-shadow:inset 0 0 0 1.5px #c9952e;font:inherit;font-size:16px;font-weight:700;}
   /* the action you picked: a red arrow points down at its dot (or at the bubble it sits in), bobs twice and fades */
-  .ma-cl.flash::before,.ma-dot.flash::before{content:"";position:absolute;left:50%;top:-30px;width:8px;height:15px;margin-left:-4px;background:#E8281E;border-radius:2px;}
-  .ma-cl.flash::after,.ma-dot.flash::after{content:"";position:absolute;left:50%;top:-17px;margin-left:-12px;border-left:12px solid transparent;border-right:12px solid transparent;border-top:16px solid #E8281E;filter:drop-shadow(0 2px 2px #0005);}
-  .ma-cl.flash::before,.ma-dot.flash::before,.ma-cl.flash::after,.ma-dot.flash::after{animation:maarrow 1.5s ease-in-out forwards;}
+  .ma-dot.flash::before{content:"";position:absolute;left:50%;top:-30px;width:8px;height:15px;margin-left:-4px;background:#E8281E;border-radius:2px;}
+  .ma-dot.flash::after{content:"";position:absolute;left:50%;top:-17px;margin-left:-12px;border-left:12px solid transparent;border-right:12px solid transparent;border-top:16px solid #E8281E;filter:drop-shadow(0 2px 2px #0005);}
+  .ma-dot.flash::before,.ma-dot.flash::after{animation:maarrow 1.5s ease-in-out forwards;}
   @keyframes maarrow{0%,30%,60%{transform:translateY(0);opacity:1;}15%,45%{transform:translateY(-8px);}80%{opacity:1;}100%{transform:translateY(0);opacity:0;}}
   .ma-peek .m{font-size:15px;color:var(--muted);margin-top:6px;}
   .ma-dot{position:absolute;left:0;top:0;transform:translate(-50%,-50%);width:auto;padding:0 5px;white-space:nowrap;height:28px;box-sizing:border-box;border-radius:8px;background:#F28C28;border:3px solid #fff;box-shadow:0 0 0 1.5px #9A520B,0 3px 8px #0006;color:#fff;font:800 13px/22px var(--font);text-align:center;letter-spacing:-.2px;}
@@ -895,10 +824,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ldot.n{width:auto;min-width:22px;height:22px;border-radius:11px;padding:0 5px;color:#fff;font:700 11px/18px var(--font);text-align:center;}   /* photos on no action, several on one spot */
   .leaflet-container .ma-dot{cursor:pointer;}
   .ma-dot.new{background:#fff;color:#9A520B;font-size:20px;}
-  .ma-cl{position:absolute;left:50%;top:0;transform:translateX(-50%);min-width:32px;height:32px;padding:0 7px;box-sizing:border-box;border-radius:16px;background:#fff;border:2.5px solid #F28C28;box-shadow:0 2px 8px #0005;color:#9A520B;font:800 15px/27px var(--font);text-align:center;white-space:nowrap;}   /* snug to its ×N; two digits stretch it to a pill */
-  .ma-cl.hold{border-style:dashed;}
-  .ma-cl i{font-style:normal;font-size:12px;font-weight:700;margin-right:1px;}   /* bubbles count actions: ×3 */
-  .ma-cl.done{border-color:#6b7580;color:#3f4750;}
+  
+  
   .ma-ov{position:absolute;inset:0;z-index:800;background:#1d243040;} .ma-ov.clear{background:none;pointer-events:none;}   /* a top card leaves the map live below it */
   .m-adding .ma-peeks,.m-adding .ma-fit{display:none!important;}   /* adding: the cards row steps aside */
   .ma-nx{flex-shrink:0;width:28px;height:40px;border:0;background:none;font-size:30px;line-height:1;color:var(--muted);padding:0;box-shadow:none;}
@@ -915,9 +842,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-ntool svg{width:20px;height:20px;flex-shrink:0;} .ma-add2 textarea.m-in{resize:none;overflow:hidden;line-height:1.35;}
   .ma-npill{flex-shrink:0;display:flex;align-items:center;gap:5px;height:38px;padding:0 13px;border:0;border-radius:19px;background:var(--gold);color:var(--ink);font:inherit;font-size:15px;font-weight:800;box-shadow:none;}
   .ma-npill svg{width:16px;height:16px;}
-  .ma-nrow{display:flex;gap:8px;align-items:flex-start;} .ma-add2 .ma-nrow textarea{flex:1 1 0;width:auto;min-width:0;resize:none;overflow:hidden;line-height:1.35;}
-  .ma-nico{flex-shrink:0;width:48px;height:48px;padding:0;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--ink);display:grid;place-items:center;box-shadow:none;}
-  .ma-nico svg{width:24px;height:24px;}
+  
   .m-in.need{border-color:#d0573f;box-shadow:0 0 0 3px #d0573f22;}
   @keyframes mapin{50%{box-shadow:0 0 0 2px #9A520B,0 0 0 10px #F28C2833,0 2px 6px #0006;}}   /* where the new action will go */
   .ma-sheet{position:absolute;left:0;right:0;bottom:0;z-index:801;background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -4px 20px #1d24302a;padding:0 0 calc(18px + env(safe-area-inset-bottom));max-height:80%;overflow-y:auto;}
@@ -934,9 +859,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-chev{color:var(--faint);font-size:26px;line-height:1;}
   .ma-sbtns{display:flex;flex-direction:column;gap:10px;padding:0 20px;}
   .ma-add2{display:flex;flex-direction:column;gap:10px;padding:0 20px 6px;}
-  .ma-tiles{display:flex;gap:10px;}
-  .ma-tile{flex:1;height:84px;border-radius:14px;border:1.5px dashed #b9c0c8;background:#fafbfc;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font:inherit;font-size:15px;font-weight:600;color:var(--muted);}
-  .ma-tile svg{width:26px;height:26px;}
+  
   .ma-athumbs{display:flex;gap:8px;flex-wrap:wrap;} .ma-athumbs:empty{display:none;}
   .ma-ath{position:relative;width:62px;height:62px;border-radius:10px;background:#ddd center/cover;}
   .ma-ath button{position:absolute;top:-7px;right:-7px;width:26px;height:26px;border-radius:13px;border:0;background:var(--ink);color:#fff;font-size:16px;line-height:26px;padding:0;}
@@ -973,7 +896,6 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-lhead{display:flex;gap:10px;align-items:center;padding:14px 16px 10px;}
   .ma-search{flex:1;min-width:0;display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:0 14px;color:var(--faint);height:52px;box-sizing:border-box;}
   .ma-search input{flex:1;min-width:0;border:0;outline:none;font:inherit;font-size:17px;background:none;color:var(--ink);padding:0;}
-  .ma-chips{display:flex;gap:8px;padding:0 16px 12px;}
   .ma-chip{font:inherit;font-size:16px;font-weight:600;background:#fff;border:1.5px solid var(--line);border-radius:10px;height:44px;padding:0 17px;color:var(--ink);}
   .ma-chip.on{background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);}
   .ma-list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px 24px;display:flex;flex-direction:column;gap:10px;}
@@ -991,8 +913,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-dpad{padding:0 16px;}
   .ma-title{font-size:26px;font-weight:800;line-height:1.2;color:var(--ink);}
   .ma-strow{display:flex;align-items:center;gap:8px;margin-top:14px;}
-  .ma-dist{margin-left:auto;display:flex;align-items:center;gap:4px;font:inherit;font-size:15px;color:var(--muted);background:none;border:0;height:44px;padding:0;white-space:nowrap;}
-  .ma-dist svg{width:18px;height:18px;}
+  
   .ma-car{position:relative;margin-top:16px;background:#000;aspect-ratio:4/3;}
   .ma-hs{position:absolute;inset:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;}
   .ma-hs::-webkit-scrollbar{display:none;}
@@ -1040,29 +961,24 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .mvw-top svg{width:24px;height:24px;}
   .mvw-bot{position:absolute;left:0;right:0;bottom:0;padding:30px 18px calc(16px + env(safe-area-inset-bottom));background:linear-gradient(#0000,#000c);font-size:16px;line-height:1.45;pointer-events:none;}
   .mvw-bot .dots{display:flex;gap:6px;justify-content:center;margin-top:12px;} .mvw-bot .dots i{width:7px;height:7px;border-radius:4px;background:#fff6;} .mvw-bot .dots i.on{width:18px;background:#fff;}
-  .ma-bar{flex-shrink:0;display:flex;gap:10px;padding:12px 16px 12px;border-top:1px solid var(--line);background:#fff;}
   .ma-btn{box-sizing:border-box;height:56px;border-radius:12px;background:#fff;border:1.5px solid var(--line);font:inherit;font-size:17px;font-weight:600;color:var(--ink);display:flex;align-items:center;justify-content:center;gap:8px;flex:1;padding:0 14px;white-space:nowrap;}
   .ma-btn.pri{flex:1.6;background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);font-weight:700;}
   .ma-btn.busy{opacity:.6;pointer-events:none;}
   .ma-btn[disabled]{opacity:.4;}
   .ma-chip{white-space:nowrap;}
   .ma-strow{flex-wrap:wrap;}
-  .ma-show em{font-style:normal;}
-  .ma-show .sn{display:none;}
+  
   .ma-sizes{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:0 0 100%;}
   .ma-sizes .ma-chip{padding:0 6px;}
   @media (max-width:380px){   /* narrow layouts (bigger App size): icons carry Map/List, the switches drop "Show" */
-    .ma-seg button .sl{display:none;}
-    .ma-seg button{padding:0 12px;}
-    .ma-show .sw{display:none;} .ma-show .sn{display:inline;}
-    .ma-show button{font-size:16px;gap:8px;}
-    .ma-chips .ma-chip,.ma-strow .ma-chip{padding:0 12px;}
+    
+    
+    .ma-strow .ma-chip{padding:0 12px;}
     .ma-flt button{font-size:14px;padding:0 11px;gap:6px;}
     .ma-pname .nm{font-size:19px;}
     .ma-nav button{font-size:10px;padding-left:0;padding-right:0;}
     .ma-nav button:not(.ma-navadd){margin:0 1px;}
     .ma-nav .ma-navadd{flex-basis:44px;height:44px;margin:0 3px;}
-    .ma-strow .ma-dist{margin-left:0;flex:0 0 100%;justify-content:flex-start;height:32px;}
   }
   body.mobile .m-in{font-size:17px;padding:12px 14px;border-radius:12px;}
   body.mobile #mToast{font-size:16px;padding:14px 16px;border-radius:12px;}
@@ -1098,11 +1014,10 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
      Tabs: gold underline. Fields: gold edge while typing. Primary buttons: gold. One font, 3 sizes. */
   :root{ --btn-gap:5px; --ctl-bd:1.5px solid var(--line); --ctl-r:8px; --ctl-on-bg:#fdf6e6; --ctl-on:inset 0 0 0 1px var(--gold); }
   /* toggles (on/off) */
-  .act-tgl,.ipa-tgl,.lb-fullchk,.lb-textbtn,.mt-btn,.areabtn{background:#fff!important;border:var(--ctl-bd)!important;border-radius:var(--ctl-r)!important;color:var(--ink)!important;backdrop-filter:none!important;font-weight:600;}
-  .act-tgl.on,.ipa-tgl.on,.lb-textbtn.on,.mt-btn.on,.areabtn.active,.lb-fullchk:has(input:checked){background:var(--ctl-on-bg)!important;border-color:var(--gold)!important;box-shadow:var(--ctl-on)!important;color:var(--ink)!important;}
-  .act-tgl:hover,.ipa-tgl:hover,.lb-fullchk:hover,.lb-textbtn:hover,.mt-btn:hover,.areabtn:hover{border-color:var(--gold)!important;}
+  .act-tgl,.lb-fullchk,.lb-textbtn,.areabtn{background:#fff!important;border:var(--ctl-bd)!important;border-radius:var(--ctl-r)!important;color:var(--ink)!important;backdrop-filter:none!important;font-weight:600;}
+  .act-tgl.on,.lb-textbtn.on,.areabtn.active,.lb-fullchk:has(input:checked){background:var(--ctl-on-bg)!important;border-color:var(--gold)!important;box-shadow:var(--ctl-on)!important;color:var(--ink)!important;}
+  .act-tgl:hover,.lb-fullchk:hover,.lb-textbtn:hover,.areabtn:hover{border-color:var(--gold)!important;}
   .lb-fullchk input{display:none;}
-  .ipa-tgl{font-size:var(--fl);padding:3px 8px;}
   /* switches: settings + View menu checkboxes */
   .set-ctl input[type=checkbox],.mi-chk input{appearance:none;-webkit-appearance:none;width:34px;height:20px;border-radius:999px;background:#d9dee5;position:relative;cursor:pointer;flex:none;margin:0;transition:background .15s;}
   .set-ctl input[type=checkbox]::after,.mi-chk input::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0003;transition:left .15s;}
@@ -1113,29 +1028,28 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .set-tab:hover{color:var(--ink)!important;}
   .set-tab.on{border-left-color:var(--gold)!important;color:var(--ink)!important;font-weight:700;}
   /* search + text fields */
-  .hsearch input,.act-new input,.st-new,.act-edit,.mt-pop input,.folder-pop .fp-search,#ipaNew,.ctl-row input[type=text],.ctl-row select,.set-ctl input[type=text],.set-ctl input[type=password],.m-none{background-color:#fff!important;border:var(--ctl-bd)!important;border-radius:var(--ctl-r)!important;color:var(--ink);}
-  .hsearch input:focus,.act-new input:focus,.st-new:focus,.act-edit:focus,.mt-pop input:focus,.folder-pop .fp-search:focus,#ipaNew:focus,.ctl-row input[type=text]:focus,.ctl-row select:focus,.set-ctl input[type=text]:focus,.set-ctl input[type=password]:focus{border-color:var(--gold)!important;box-shadow:var(--ctl-on)!important;outline:none;}
-  .act-new input.arm{border-color:var(--gold)!important;box-shadow:var(--ctl-on)!important;}
+  .hsearch input,.act-new input,.st-new,.act-edit,.folder-pop .fp-search,#ipaNew,.ctl-row input[type=text],.ctl-row select,.set-ctl input[type=text],.set-ctl input[type=password]{background-color:#fff!important;border:var(--ctl-bd)!important;border-radius:var(--ctl-r)!important;color:var(--ink);}
+  .hsearch input:focus,.act-new input:focus,.st-new:focus,.act-edit:focus,.folder-pop .fp-search:focus,#ipaNew:focus,.ctl-row input[type=text]:focus,.ctl-row select:focus,.set-ctl input[type=text]:focus,.set-ctl input[type=password]:focus{border-color:var(--gold)!important;box-shadow:var(--ctl-on)!important;outline:none;}
   .ctl-row select{font-size:var(--fb);}
   /* gallery Sort / Search / Size: labels in one column, so the three controls start on one line; Sort and Search the same box */
   .gallery .controls .ctl-row label{flex:0 0 62px;}.gallery .controls .ctl-row input[type=range]{margin:0;}
   .gallery .controls .ctl-row select,.gallery .controls .ctl-row input[type=text]{height:32px;box-sizing:border-box;margin:0;font-size:var(--fb)!important;padding:4px 10px!important;}
   /* dropdown menus */
-  .mb-drop,#ctxmenu,.hs-drop,.mt-pop,.pj-win,.yn-win{border:var(--ctl-bd)!important;}
-  .mb-drop,#ctxmenu,.hs-drop,.mt-pop{border-radius:var(--ctl-r)!important;}
+  .mb-drop,#ctxmenu,.hs-drop,.pj-win,.yn-win{border:var(--ctl-bd)!important;}
+  .mb-drop,#ctxmenu,.hs-drop{border-radius:var(--ctl-r)!important;}
   .mb-btn:hover,.mb.open .mb-btn,.mi:hover,#ctxmenu .ci:hover,.hs-row.on,.hs-row:hover{background:#f3f4f6!important;color:var(--ink)!important;}
   /* buttons: primary gold, secondary outlined */
-  .yn-yes,.btn.primary,.btn.grpL,#pickbar .pb-ok,.act-note button,.lb-enhance,#updpill .updgo{background:var(--gold)!important;border:1.5px solid var(--gold)!important;color:var(--on-accent)!important;border-radius:var(--ctl-r)!important;box-shadow:none!important;}
+  .yn-yes,.btn.primary,#pickbar .pb-ok,.act-note button,#updpill .updgo{background:var(--gold)!important;border:1.5px solid var(--gold)!important;color:var(--on-accent)!important;border-radius:var(--ctl-r)!important;box-shadow:none!important;}
   .yn-yes.danger{background:var(--bad)!important;border-color:var(--bad)!important;color:#fff!important;}
-  .yn-no,.btn.ghost,.btn.grpR,.pj-row button,.about-rows .v button,.gal-more,.fs-exit,.lb-copyloc,.ab-read,#pickbar .pb-x{background:#fff!important;border:var(--ctl-bd)!important;color:var(--ink)!important;border-radius:var(--ctl-r)!important;box-shadow:none!important;}
-  .yn-yes:hover,.btn.primary:hover,.btn.grpL:hover,#pickbar .pb-ok:hover,.act-note button:hover,.lb-enhance:hover,#updpill .updgo:hover{background:var(--gold2)!important;border-color:var(--gold2)!important;}
-  .yn-no:hover,.btn.ghost:hover,.btn.grpR:hover,.pj-row button:hover,.about-rows .v button:hover,.gal-more:hover,.fs-exit:hover,.lb-copyloc:hover,.ab-read:hover,#pickbar .pb-x:hover{border-color:var(--gold)!important;}
+  .yn-no,.btn.ghost,.pj-row button,.about-rows .v button,.gal-more,#pickbar .pb-x{background:#fff!important;border:var(--ctl-bd)!important;color:var(--ink)!important;border-radius:var(--ctl-r)!important;box-shadow:none!important;}
+  .yn-yes:hover,.btn.primary:hover,#pickbar .pb-ok:hover,.act-note button:hover,#updpill .updgo:hover{background:var(--gold2)!important;border-color:var(--gold2)!important;}
+  .yn-no:hover,.btn.ghost:hover,.pj-row button:hover,.about-rows .v button:hover,.gal-more:hover,#pickbar .pb-x:hover{border-color:var(--gold)!important;}
   /* icon buttons (toolbar, drawing tools, viewer) */
-  .ip-marktools .mk,.lb-btn,.ip-arrow{background:#fff!important;border:var(--ctl-bd)!important;color:var(--ink)!important;}
-  .ip-marktools .mk,.lb-btn{border-radius:var(--ctl-r)!important;}
+  .ip-marktools .mk,.ip-arrow{background:#fff!important;border:var(--ctl-bd)!important;color:var(--ink)!important;}
+  .ip-marktools .mk{border-radius:var(--ctl-r)!important;}
   .ip-marktools .mk.on{background:var(--ctl-on-bg)!important;border-color:var(--gold)!important;box-shadow:var(--ctl-on)!important;color:var(--ink)!important;}
   .ip-marktools .mk.on .hk{color:var(--dim)!important;}
-  .ip-marktools .mk:hover,.lb-btn:hover,.ip-arrow:hover{border-color:var(--gold)!important;color:var(--ink)!important;}
+  .ip-marktools .mk:hover,.ip-arrow:hover{border-color:var(--gold)!important;color:var(--ink)!important;}
   .act-copy:hover,.act-exp:hover,.act-del:hover,.st-x:hover{color:var(--accent)!important;}
   /* one-of choices: base map + settings radios become a segmented outline */
   .leaflet-control-layers-base{display:flex;flex-direction:column;gap:var(--btn-gap);}
@@ -1143,10 +1057,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .leaflet-control-layers-base label>span,.leaflet-control-layers-base label>div{display:flex;align-items:center;gap:0;border:var(--ctl-bd);border-radius:var(--ctl-r);padding:3px 10px;cursor:pointer;font-size:var(--fl);font-weight:600;color:var(--ink);background:#fff;}
   .leaflet-control-layers-base input{display:none;}
   .leaflet-control-layers-base label:has(input:checked)>span,.leaflet-control-layers-base label:has(input:checked)>div{background:var(--ctl-on-bg);border-color:var(--gold);box-shadow:var(--ctl-on);}
-  .set-radios{flex-direction:row!important;flex-wrap:wrap;gap:6px!important;}
-  .set-radios label{border:var(--ctl-bd);border-radius:var(--ctl-r);padding:4px 10px;font-size:var(--fl)!important;font-weight:600;color:var(--ink)!important;background:#fff;}
-  .set-radios label input{display:none;}
-  .set-radios label:has(input:checked){background:var(--ctl-on-bg);border-color:var(--gold);box-shadow:var(--ctl-on);}
+  
+  
   /* checkboxes: complete / on-hold / sub-action ticks — same box, 5px corners */
   .act-chk input,.act-hold input{width:18px!important;height:18px!important;border:1.5px solid #c3cad3!important;border-radius:5px!important;}
   .st-chk{border:1.5px solid #c3cad3!important;border-radius:5px!important;}
@@ -1157,7 +1069,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .slider-wrap input[type=range]::-moz-range-thumb{background:#fff!important;border:2px solid var(--gold)!important;}
   input[type=range]{accent-color:var(--gold);}
   /* map cards: white, slate outline, 8px corners */
-  .projhead,.datebar,.leaflet-control-layers,.leaflet-bar,.scalebar,.reconnect,#updpill,.hoverview,.measure-lbl{background:#fff!important;border:var(--ctl-bd)!important;border-radius:var(--ctl-r)!important;backdrop-filter:none!important;}
+  .projhead,.leaflet-control-layers,.leaflet-bar,.scalebar,.reconnect,#updpill,.hoverview,.measure-lbl{background:#fff!important;border:var(--ctl-bd)!important;border-radius:var(--ctl-r)!important;backdrop-filter:none!important;}
 </style>
 </head>
 <body>
@@ -1241,7 +1153,6 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
         <div class="set-row">
           <div class="set-lbl">Phone sync<span class="set-sub">Automatic: every action (open, on hold and done), its steps and preview photos are pushed to the project a few seconds after any change, and the phone picks them up by itself.</span></div>
           <div class="set-ctl" style="flex-direction:column;align-items:flex-start;gap:6px;">
-            
             <span id="mobExpStatus" style="font-size:var(--fl);color:var(--dim);"></span>
           </div>
         </div>
@@ -1397,7 +1308,6 @@ let sizeIndex=new Map();   // byte size -> kept photo, for de-duplicating overla
 let existingPaths=new Map();   // path -> photo already loaded, so re-opening a folder only processes what's new (or heals missing thumbs)
 let currentSort="date_desc", showNoGeo=true, nameFilter="";
 let tagFilters=new Set();   // active tag filters (folder paths) — photos must be in ALL of them (intersection)
-let dateMin=null,dateMax=null,dateLo=null,dateHi=null;
 let lightboxList=[], lightboxIndex=0;
 let cluster=null;
 let saveFileHandle=null, jsonHandle=null, dirHandle=null, loadedJsonName=null, lastSavedAt=null;
@@ -1408,7 +1318,6 @@ let measuring=false, measurePts=[], measureLayer=null;
 /* map + layers */
 const DESK_FLY=1.2;   // every click that zooms / moves the desktop map glides this long (scroll-wheel zoom is separate)
 const map=L.map("map",{zoomControl:false,boxZoom:false,attributionControl:false,worldCopyJump:true,maxZoom:24,minZoom:2,zoomSnap:0.25,wheelDebounceTime:35}).setView([20,0],3);
-const dotRenderer=L.canvas({padding:0.5});   // photo dots on ONE canvas instead of hundreds of SVG nodes — far cheaper zoom animations
 const google=L.tileLayer("https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",{subdomains:["mt0","mt1","mt2","mt3"],maxZoom:24,maxNativeZoom:21,keepBuffer:6,attribution:"Imagery &copy; Google"}).addTo(map);   // keepBuffer: tiles just off screen stay loaded, so panning shows imagery at once
 google.on("loading",()=>{ tilesBusy=true; }).on("load",()=>{ tilesBusy=false; });
 const esri=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:24,maxNativeZoom:19,attribution:"Imagery &copy; Esri, Maxar, Earthstar Geographics"});
@@ -1504,11 +1413,8 @@ function passSearch(p){
   return terms.every(t=>hay.includes(t));
 }
 // Multi-tag filter: a photo passes only if it is in EVERY active tag (overlap/intersection).
-function passTags(p){ return true; }
-function buildCluster(){}   // (the map has no bubbles any more — renderClusters lays the labels out each time)
 let clusterSens=50;   // retired setting (the clustering dial); kept so older saved settings still load
 function hlPhotoSet(){ const s=new Set(selSet); for(const id of selActs) for(const p of actPhotos(actById(id))) s.add(p.id); return s; }
-function actSelPhotoSet(){ const s=new Set(); for(const id of selActs) for(const p of actPhotos(actById(id))){ if(p.lat!=null) s.add(p.id); } return s; }
 /* The desktop map, the phone's look: ONE label per action at each spot (its number, snug to it). No
    bubbles: a crowded spot spreads its labels on a "ferris wheel" round it — a spoke from each label to
    its own place — and wheels that would touch join into one bigger wheel. Photos on no action are small
@@ -1521,7 +1427,7 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
   const z=anim?anim.zoom:map.getZoom(), hlSet=hlPhotoSet(), op=lb.classList.contains("open")?curPhoto():null;
   const bnd=anim?(()=>{ const c=map.project(anim.center,z), h=map.getSize().divideBy(2); return L.latLngBounds(map.unproject(c.subtract(h),z),map.unproject(c.add(h),z)).pad(0.3); })():map.getBounds().pad(0.3);
   const pts=[], loose=[];
-  for(const p of photos){ if(p.lat==null||!passDate(p)||!passSearch(p)||!passTags(p)||!passActs(p)||!passAlt(p)||(boxBounds&&!boxBounds.contains([p.lat,p.lng]))||!bnd.contains([p.lat,p.lng])) continue;
+  for(const p of photos){ if(p.lat==null||!passSearch(p)||!passActs(p)||(boxBounds&&!boxBounds.contains([p.lat,p.lng]))||!bnd.contains([p.lat,p.lng])) continue;
     const q=map.project([p.lat,p.lng],z), as=(p.acts||[]).map(actById).filter(a=>a&&actVisible(a));
     if(!as.length) loose.push({p,q}); else for(const a of as) pts.push({a,p,q}); }
   // photos on no action: grey dots (a number when several share a spot)
@@ -1601,7 +1507,6 @@ function startMapDrag(m,h){
    Unselected dots never drag — the map pans as usual. Only where photos SHOW on this map changes;
    the original GPS is kept (glat/glng) and the photo files are never modified. */
 let dotDrag=null, dotDropT=0, selSet=new Set(), dotMarkers=new Map(), uiClickT=0;   // uiClickT: last click that landed on a dot/cluster/menu — never treated as an empty-map click
-function dotSelected(p){ return lb.classList.contains("open") && curPhoto()===p; }
 /* Photos on the very same spot (joined by dragging one onto another) are LINKED: they move together. */
 function linkedTo(ids){ const out=new Set(ids), keys=new Set(); for(const id of ids){ const p=photoById(id); if(p&&p.lat!=null) keys.add(p.lat+","+p.lng); }
   for(const q of photos) if(q.lat!=null&&keys.has(q.lat+","+q.lng)) out.add(q.id); return [...out]; }
@@ -1700,7 +1605,7 @@ function removePhotos(list){
   photos=photos.filter(p=>!ids.has(p.id));
   for(const id of ids) selSet.delete(id);
   pushUndo({delPhotos:{items}});
-  rebuildSizeIndex(); buildDateFilter(); updateStats(); setAreaBtn(); afterFolderChange();
+  rebuildSizeIndex(); updateStats(); setAreaBtn(); afterFolderChange();
 }
 function restoreGps(list){
   const items=[];
@@ -1708,14 +1613,14 @@ function restoreGps(list){
   if(!items.length) return;
   pushTagAction(items); afterFolderChange();
 }
-function clearSel(){ selSet.clear(); setAreaBtn(); buildCluster(); renderClusters(); }
+function clearSel(){ selSet.clear(); setAreaBtn(); renderClusters(); }
 
 /* Photo-picking mode: started from an action's "Add photos" — plain clicks on dots/thumbnails
    select photos (no viewer), a banner shows the count, Assign links them to the action. */
 let pickMode=null, pickBarEl=null;
 function startPickMode(actIds){
   pickMode={actIds:actIds.slice()};
-  selSet.clear(); setAreaBtn(); buildCluster(); renderClusters(); updateGallery(true);
+  selSet.clear(); setAreaBtn(); renderClusters(); updateGallery(true);
   if(!pickBarEl){
     pickBarEl=document.createElement("div"); pickBarEl.id="pickbar"; map.getContainer().appendChild(pickBarEl);
     ["mousedown","pointerdown","dblclick","contextmenu","wheel"].forEach(ev=>pickBarEl.addEventListener(ev,e=>e.stopPropagation()));
@@ -1738,7 +1643,7 @@ function endPickMode(assign){
   if(assign&&pm&&selSet.size) assignActs(pm.actIds,[...selSet].map(photoById).filter(Boolean));
   clearSel(); updateGallery(true);
 }
-function togglePick(p){ if(selSet.has(p.id)) selSet.delete(p.id); else selSet.add(p.id); setAreaBtn(); buildCluster(); renderClusters(); }
+function togglePick(p){ if(selSet.has(p.id)) selSet.delete(p.id); else selSet.add(p.id); setAreaBtn(); renderClusters(); }
 /* A quick left click on empty map clears photo + action selections. Leaflet never fires "click"
    after a pan, so dragging the map is safe; clicks on dots, clusters, or menu dismissals are
    excluded via uiClickT. */
@@ -1785,16 +1690,6 @@ function reorderActPhoto(a,dragId,targetId,before){   // gallery drag: photo ord
 function stepMoveOnTick(a,x){ if(!Array.isArray(a.steps)) return; const L=a.steps.filter(y=>y!==x);
   if(x.d) L.push(x); else { const k=L.findIndex(y=>y.d); L.splice(k<0?L.length:k,0,x); } a.steps=L; }
 function stepsDoneLast(a){ if(!Array.isArray(a.steps)) return; a.steps=a.steps.filter(x=>!x.d).concat(a.steps.filter(x=>x.d)); }
-function hasOpenAct(p){ return Array.isArray(p.acts)&&p.acts.some(id=>{ const a=actById(id); return a&&!a.done&&!a.hold; }); }
-function clClass(pr){   // a bubble takes the colour most of its photos have — same as their dots (open orange, on hold ringed, done grey, none white)
-  const n=pr.point_count||1, op=pr.asg||0, h=pr.hld||0, d=pr.dn||0, none=n-op-h-d;
-  const top=Math.max(op,h,d,none); return op===top?"cl-g":h===top?"cl-h":d===top?"cl-d":"cl-y"; }
-const DOT_COL={none:["#ffffff","#4a5563"],open:["#F28C28","#9A520B"],hold:["#ffffff","#F28C28"],done:["#6b7580","#3f4750"]};   // white = not on an action, orange = open, white with an orange ring = on hold, grey = done (same as the phone)
-function photoStatus(p){   // open beats on-hold beats complete, when a photo belongs to several actions
-  if(!Array.isArray(p.acts)||!p.acts.length) return "none";
-  let hold=false,done=false,any=false;
-  for(const id of p.acts){ const a=actById(id); if(!a) continue; any=true; if(a.done) done=true; else if(a.hold) hold=true; else return "open"; }
-  return !any?"none":hold?"hold":done?"done":"none"; }
 function actVisible(a){ return selActs.has(a.id)||((a.done?actShowDone:a.hold?actShowHold:actShowOpen)&&actInDates(a)); }
 /* Date window: actions CREATED in it show. It belongs to the PROJECT — every desktop and phone on it
    shares one range. {lo,hi} are day starts (null = open-ended; hi null = up to today); p is a rolling
@@ -1858,7 +1753,7 @@ let spotIds=null;   // a clicked bubble's photos, shown on their own in the gall
 function showSpot(ids){ spotIds=new Set(ids); setTab("gallery"); updateGallery(); }
 function clearSpot(){ if(!spotIds) return; spotIds=null; updateGallery(); }
 function rebuildActionFilter(){ if(selActs.size) spotIds=null; actionFilter=selActs.size?new Set([...selActs].flatMap(id=>actPhotos(actById(id)).map(p=>p.id))):null; }
-function drawActionRings(){ buildCluster(); renderClusters(); }   // highlights are rendered with the clusters (bubbles flash when they contain selected photos)
+function drawActionRings(){ renderClusters(); }   // highlights are rendered with the clusters (bubbles flash when they contain selected photos)
 function clearActSel(){ if(!selActs.size) return; selActs.clear(); actionFilter=null; renderActions(); drawActionRings(); updateGallery(); }
 function createAction(text,pids,loc,steps){
   text=(text||"").trim(); if(!text) return null;
@@ -1878,7 +1773,7 @@ function setActionDone(a,done){ const before=actState(a); a.done=!!done; a.doneA
 function setActionHold(a,hold){ const before=actState(a); a.hold=!!hold; if(a.hold&&a.done){ a.done=false; a.doneAt=null; } recordActEdit(a,before); afterFolderChange(); dropIfHidden(a,"on hold"); }
 function dropIfHidden(a,what){   // its card just left the list (that filter is off): let go of it everywhere else too, and say where it went
   if(a.done?actShowDone:a.hold?actShowHold:actShowOpen) return;
-  if(selActs.has(a.id)){ selActs.delete(a.id); rebuildActionFilter(); renderActions(); drawActionRings(); updateGallery(); buildCluster(); renderClusters(); }
+  if(selActs.has(a.id)){ selActs.delete(a.id); rebuildActionFilter(); renderActions(); drawActionRings(); updateGallery(); renderClusters(); }
   loadNote(actNo(a)+" marked "+what+" \u2014 hidden from the list (turn on "+(a.done?"Done":"On hold")+" to see it) \u00b7 Ctrl+Z undoes"); setTimeout(()=>loadNote(""),4500); }
 /* Inline editing (titles and descriptions, in both the Actions panel and the under-photo strip):
    double-click the text to edit in place. Enter (Shift+Enter = new line in a description) or
@@ -1958,7 +1853,6 @@ function reorderStep(a,from,to){
   const mv=a.steps.splice(from,1)[0]; a.steps.splice(to,0,mv);
   recordActEdit(a,b); afterFolderChange();
 }
-function expBtnHtml(a){ const exp=!collActs.has(a.id); return '<button class="act-exp'+(exp?' on':'')+'" type="button" title="'+(exp?'Hide':'Show')+' details">▾</button>'; }
 const hideDoneSteps=false;   // ticked sub-actions always show
 function stepsHtml(a){
   const rows=(a.steps||[]).map((s,i)=>(hideDoneSteps&&s.d)?'':'<div class="st-row" data-si="'+i+'">'
@@ -2030,15 +1924,6 @@ function buildAssign(actIds,phList){
 function assignActs(actIds,phList){
   const items=buildAssign(actIds,phList);
   if(items.length) pushTagAction(items);
-  afterFolderChange();
-}
-function unassignFromSelActs(p){   // the X on an action-filtered gallery card: drop this photo from the selected action(s)
-  if(!selActs.size||!Array.isArray(p.acts)) return;
-  const before=snapshotTags(p);
-  const next=p.acts.filter(id=>!selActs.has(id));
-  if(next.length===p.acts.length) return;
-  p.acts=next;
-  pushTagAction([{id:p.id,before,after:snapshotTags(p)}]);
   afterFolderChange();
 }
 function unassignAct(a,p){
@@ -2286,11 +2171,11 @@ function setDateWin(w){ dateWin=w; renderActDates(); actFilterChanged(); }   // 
   window.addEventListener("pointerup",drop);
   lo.addEventListener("input",()=>set("lo")); hi.addEventListener("input",()=>set("hi"));
   document.getElementById("adPre").addEventListener("click",e=>{ const b=e.target.closest("button[data-p]"); if(!b) return; setDateWin(dwPreset(b.dataset.p)); }); })();
-function actFilterChanged(){ renderActions(); buildCluster(); renderClusters(); updateGallery(); persistState(); }   // the pills filter the list AND the map
+function actFilterChanged(){ renderActions(); renderClusters(); updateGallery(); persistState(); }   // the pills filter the list AND the map
 document.getElementById("actShowOpen").addEventListener("click",()=>{ actShowOpen=!actShowOpen; actFilterChanged(); });
 document.getElementById("actShowHold").addEventListener("click",()=>{ actShowHold=!actShowHold; actFilterChanged(); });
 document.getElementById("actShowDone").addEventListener("click",()=>{ actShowDone=!actShowDone; actFilterChanged(); });
-document.getElementById("actMapOnly")?.addEventListener("click",()=>{ actOnlyMap=!actOnlyMap; buildCluster(); renderClusters(); updateGallery(); renderActions(); renderMapTags(); persistState(); });
+document.getElementById("actMapOnly")?.addEventListener("click",()=>{ actOnlyMap=!actOnlyMap; renderClusters(); updateGallery(); renderActions(); renderMapTags(); persistState(); });
 document.getElementById("actList").addEventListener("click",e=>{ if(!e.target.closest("#actExpAll")) return; e.stopPropagation();   // collapse-all lives on the first card, which is rebuilt each render
   if(actions.some(a=>!collActs.has(a.id))) actions.forEach(a=>collActs.add(a.id)); else collActs.clear(); renderActions(); },true);
 /* The box above the list FILTERS it (number, title or a sub-action). New actions come from the + beside
@@ -2303,7 +2188,6 @@ function actMatchesQ(a){ if(!actQ) return true; const q=actQ.toLowerCase();
 document.getElementById("actNewInput").addEventListener("input",e=>{ actQ=e.target.value.trim(); renderActions(); });
 document.getElementById("actNewInput").addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Escape"&&e.target.value){ e.target.value=""; actQ=""; renderActions(); } });
 const AF={open:false,pids:[],files:[],steps:[]};   // the draft: kept if the form is closed by mistake
-function actFormOpen(){ return AF.open; }
 function openActForm(opt){ opt=opt||{};
   if(roBlock()) return;
   if(ON.pid&&!ON.live){ loadNote(ON.tokenBad?TOKEN_BAD:"The project is still opening — try again in a moment"); setTimeout(()=>loadNote(""),4000); return; }
@@ -2470,7 +2354,7 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
     if(a.done) actShowDone=true; else if(a.hold) actShowHold=true; else actShowOpen=true;   // a search hit must be visible in the list
     collActs.delete(a.id);
     selActs=new Set([a.id]); lastActClick=a.id; if(typeof rebuildActionFilter==="function") rebuildActionFilter();
-    renderActions(); buildCluster(); renderClusters(); drawActionRings(); updateGallery(); persistState();   // gallery follows the pick (and a turned-on filter is remembered)
+    renderActions(); renderClusters(); drawActionRings(); updateGallery(); persistState();   // gallery follows the pick (and a turned-on filter is remembered)
     const row=document.querySelector('#actList .act-row[data-aid="'+a.id+'"]'); if(row){ row.scrollIntoView({block:"center",behavior:"smooth"}); }
     actNavigate(a);
   }
@@ -2637,7 +2521,6 @@ async function ghGetBin(cfg,path){
 const FULL_PX=2048, FULL_Q=0.80;   // stored size of a pasted / added photo: plenty to zoom into, a fraction of a raw phone photo (like messaging apps do)
 const ON={pid:null,name:"",base:null,sha:null,etag:null,rawText:null,cleanJ:null,live:false,busy:false,again:false,saveT:null,err:null,at:0,denied:false,wait:null};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-function urlParam(k){ try{ return new URLSearchParams(location.search).get(k); }catch(e){ return null; } }
 function onRepo(){ return ghRaw().repo; }
 let gpsSnapDone=false;   // (old one-time "line up" flag — kept so saved projects round-trip; grouping is now done by dragging dots together)
 function canEdit(){ return !!(ON.pid&&ON.live&&ghRaw().token&&onRepo()&&!ON.denied); }
@@ -2950,7 +2833,7 @@ function onRefreshUI(){
     else { lightboxList=lightboxList.filter(p=>photos.includes(p)); lightboxIndex=Math.max(0,lightboxList.indexOf(c));
       if(!selMark&&!dragging&&!draft&&!movingObj){ if(selObj&&!(c.marks||[]).includes(selObj)) selObj=null; redrawMarks(); }
       renderPhotoTags(c); renderIpActions(); if(!c.preview&&!c.thumb) showPreview(c,true); } }
-  buildDateFilter(); buildCluster(); renderClusters(); updateStats(); updateGallery(true); renderActions();
+  renderClusters(); updateStats(); updateGallery(true); renderActions();
   if(rightTab==="history") renderHistory();
   renderProjHead(); renderSaveStatus(); ensureThumbs();
 }
@@ -3927,7 +3810,6 @@ async function exportActionsXlsx(){
       for(const ph of ps) imgs.push(await xlsImage(ph));   // null keeps the slot: column N is always Photo N
       const got=imgs.filter(Boolean);
       const rowH=got.length?Math.max(...got.map(x=>x.h)):0;
-      const COLPX=187;   // ~26-char column in px; images centre inside their own cell
       imgs.forEach((im2,ci2)=>{
         if(!im2){ ws.getCell(ri,5+ci2).value="(no image)"; return; }
         pics.push(Uint8Array.from(atob(im2.b64.split(",")[1]),ch=>ch.charCodeAt(0)));   // becomes a picture IN this cell (see xlsxEmbedPictures)
@@ -3957,7 +3839,7 @@ document.getElementById("setGhToken").addEventListener("change",e=>{ try{ localS
   ON.denied=false; ON.tokenBad=false; syncMenus(); renderSaveStatus(); renderProjHead(); if(isOnline()){ onlinePoll(); if(canEdit()){ pumpUploads(); scheduleOnlineSave(500); } }   // a token turns view-only into editing straight away
   ghFindRepo().then(r=>{ const el=document.getElementById("setGhRepo"); if(r&&el&&!el.value) el.value=r; }); });
 document.getElementById("setUserName").addEventListener("input",e=>{ try{ localStorage.setItem("pmUserName",e.target.value.trim()); }catch(err){} });
-document.getElementById("setActMap")?.addEventListener("change",e=>{ actOnlyMap=e.target.checked; buildCluster(); renderClusters(); updateGallery(); renderActions(); persistState(); });
+document.getElementById("setActMap")?.addEventListener("change",e=>{ actOnlyMap=e.target.checked; renderClusters(); updateGallery(); renderActions(); persistState(); });
 
 /* right-click: on/near a dot -> the DOT menu; only genuinely empty map gets the general commands */
 function dotAtPoint(pt){   // the label / grey dot under a map point (right-clicks that miss the marker itself)
@@ -4017,7 +3899,7 @@ async function loadFromHandle(handle, append, opts){
 }
 /* After any folder scan: say exactly what was found, and why anything new isn't visible
    (no GPS in the file, or hidden by a filter), with a one-click way to show it. */
-function onMapNow(p){ return p.lat!=null&&passDate(p)&&passSearch(p)&&passTags(p)&&passActs(p)&&passAlt(p)&&(!boxBounds||boxBounds.contains([p.lat,p.lng])); }
+function onMapNow(p){ return p.lat!=null&&passSearch(p)&&passActs(p)&&(!boxBounds||boxBounds.contains([p.lat,p.lng])); }
 function scanReport(r,quiet){
   if(!r) return;
   const n=r.created.length, noLoc=r.created.filter(p=>p.lat==null), hid=r.created.filter(p=>p.lat!=null&&!onMapNow(p));
@@ -4042,7 +3924,7 @@ function showNewPhotos(list){
     if(tagFilters.size){ tagFilters.clear(); }
   }
   selSet=new Set(list.map(p=>p.id)); setAreaBtn();
-  buildCluster(); renderClusters(); renderActions(); renderMapTags(); updateGallery(); persistState();
+  renderClusters(); renderActions(); renderMapTags(); updateGallery(); persistState();
   if(loc.length>1) map.flyToBounds(L.latLngBounds(loc.map(p=>[p.lat,p.lng])),{padding:[60,60],maxZoom:18,duration:DESK_FLY}); else if(loc.length===1) map.flyTo([loc[0].lat,loc[0].lng],17,{duration:DESK_FLY});
   setTab("gallery");
   loadNote("The new photos are selected (Esc clears) \u2014 "+loc.length+" on the map"+(list.length>loc.length?", "+(list.length-loc.length)+" without location at the end of the gallery":""));
@@ -4050,17 +3932,6 @@ function showNewPhotos(list){
 }
 /* The folder is re-checked by itself (when you come back to the window, and every few minutes):
    photos copied in later are added without a manual re-scan. Only new paths are read. */
-let _watchBusy=false;
-async function watchFolder(){
-  if(_watchBusy||!dirHandle||!projectReady()||userTyping()) return;
-  try{ if((await dirHandle.queryPermission({mode:"read"}))!=="granted") return; }catch(e){ return; }
-  _watchBusy=true;
-  try{
-    const root=dirHandle.name||"", known=new Set(); for(const p of photos) for(const pa of physPaths(p)){ known.add(pa); if(root&&pa.startsWith(root+"/")) known.add(pa.slice(root.length+1)); }
-    const fresh=[]; for await (const f of walkDir(dirHandle,"")) if(IMG_RE.test(f.name)&&!known.has(f.path)) fresh.push({name:f.name,path:f.path,getFile:()=>f.handle.getFile()});
-    if(fresh.length){ const created=(await ingest(fresh,true))||[]; scanReport({root:root||"folder",seen:fresh.length,created,zips:0,other:0},true); }
-  }catch(e){} finally{ _watchBusy=false; }
-}
 /* Disk-truth sync: a fresh scan of the root folder is authoritative for PHYSICAL paths. Any stored
    physical path no longer present is removed from that photo — so folder-derived tags disappear for
    a moved/deleted copy — while in-app tags (vpaths) are never touched. A photo whose last physical
@@ -4080,7 +3951,7 @@ function pruneMissing(root, seenRaw){
     else if(!virtPaths(p).length){ removed.push({photo:photos.splice(i,1)[0],index:i}); removedPhotos++; }
   }
   if(removed.length){ pushUndo({delPhotos:{items:removed}}); for(const r of removed) selSet.delete(r.photo.id); }
-  if(changed){ rebuildSizeIndex(); buildDateFilter(); buildCluster(); renderClusters(); updateStats(); updateGallery(); persistState(); cacheFullSession(); }
+  if(changed){ rebuildSizeIndex(); renderClusters(); updateStats(); updateGallery(); persistState(); cacheFullSession(); }
   return removedPhotos;
 }
 const progress=document.getElementById("progress");
@@ -4189,7 +4060,7 @@ async function ingestAdhoc(items,opt){   // opt.act / opt.at: photos for a new a
   for(const p of added){ p.adhoc=true; p.added=Date.now(); if(p.lat==null){ p.noGps=true; p.lat=c.lat; p.lng=c.lng; } if(selA) p.acts=[selA.id]; }
   pushUndo({addPhotos:added.map(p=>p.id)});
   if(selA&&typeof rebuildActionFilter==="function") rebuildActionFilter();
-  buildDateFilter(); buildCluster(); renderClusters(); updateStats(); updateGallery(); persistState(); cacheFullSession();
+  renderClusters(); updateStats(); updateGallery(); persistState(); cacheFullSession();
   if(selA){ renderActions(); loadNote("\u2713 Added "+added.length+" photo"+(added.length===1?"":"s")+" to "+actNo(selA)); setTimeout(()=>loadNote(""),2500); }
   /* only move the map if a new dot is out of sight — no fly to where you already are (that was the shake) */
   const geo=added.filter(p=>p.lat!=null), vb=map.getBounds();
@@ -4259,9 +4130,9 @@ function scaleToDataURL(img,max,q){
   const c=document.createElement("canvas"); c.width=w; c.height=h; c.getContext("2d").drawImage(img,0,0,w,h);
   try{ return c.toDataURL("image/jpeg",q); }catch(e){ return null; }
 }
-function finishLoad(refit){ buildDateFilter(); buildCluster(); if(refit) fitToPhotos(); renderClusters(); updateStats(); updateGallery(); persistState(); cacheFullSession(); hideBanner(); setTimeout(autoReadAltitudes,300); setTimeout(healMissingImages,1500); }
+function finishLoad(refit){ if(refit) fitToPhotos(); renderClusters(); updateStats(); updateGallery(); persistState(); cacheFullSession(); hideBanner(); setTimeout(autoReadAltitudes,300); setTimeout(healMissingImages,1500); }
 function fitToPhotos(){
-  let geo=photos.filter(p=>p.lat!=null && passDate(p) && (!boxBounds||boxBounds.contains([p.lat,p.lng])));
+  let geo=photos.filter(p=>p.lat!=null && (!boxBounds||boxBounds.contains([p.lat,p.lng])));
   if(!geo.length) geo=photos.filter(p=>p.lat!=null);
   if(!geo.length) return;
   const b=L.latLngBounds(geo.map(p=>[p.lat,p.lng]));
@@ -4337,26 +4208,14 @@ function entriesToItems(roots){
 }
 
 /* date filter */
-function buildDateFilter(){ dateMin=dateMax=dateLo=dateHi=null; }
-/* Live previews fire dozens of events a second: dots re-cluster at most once per frame, the
-   gallery + save wait until things pause. */
-let _frF=0,_frT=null;
-function filterRefreshSoon(){
-  if(!_frF) _frF=requestAnimationFrame(()=>{ _frF=0; buildCluster(); renderClusters(); updateStats(); });
-  clearTimeout(_frT); _frT=setTimeout(()=>{ updateGallery(); persistState(); },160);
-}
 
 /* altitude from photo GPS metadata (meters), shown in File info */
-let altMinV=null,altMaxV=null,altLo=null,altHi=null;
 function altFromExif(ex){
   if(!ex) return null; let a=ex.GPSAltitude;
   if(typeof a!=="number"||!isFinite(a)) return null;
   const ref=ex.GPSAltitudeRef; if(a>0&&(ref===1||ref==="1"||(ref&&ref.byteLength))){ if(ref===1||ref==="1"||(ref[0]===1)) a=-a; }
   return Math.round(a*10)/10;
 }
-function passDate(p){ return true; }
-function passAlt(p){ return true; }
-function buildAltFilter(){}
 /* Altitude backfill is fully automatic: whenever the photo files are reachable, photos missing
    an altitude get their EXIF read silently in the background — no prompts, no button. Photos
    that truly have none just show no altitude. A photo is only marked as
@@ -4396,7 +4255,7 @@ function dUp(e){
   map.off("mousedown",dDown); drawing=false; drawMode=null; map.dragging.enable(); map.getContainer().style.cursor="";
   if(mode==="select"){   // select every visible dot inside the box so they can be dragged together
     if(!tiny){
-      const inWin=photos.filter(p=>p.lat!=null&&passDate(p)&&passSearch(p)&&passTags(p)&&passActs(p)&&passAlt(p)&&(!boxBounds||boxBounds.contains([p.lat,p.lng]))&&b.contains([p.lat,p.lng]));
+      const inWin=photos.filter(p=>p.lat!=null&&passSearch(p)&&passActs(p)&&(!boxBounds||boxBounds.contains([p.lat,p.lng]))&&b.contains([p.lat,p.lng]));
       selSet=new Set(inWin.map(p=>p.id));
       // a cluster BUBBLE inside the box selects its whole cluster, even photos hanging outside the box
       try{ if(cluster){ const z=Math.round(map.getZoom());
@@ -4407,7 +4266,7 @@ function dUp(e){
         } } }catch(err){}
     }
   }
-  setAreaBtn(); buildCluster(); renderClusters();
+  setAreaBtn(); renderClusters();
 }
 function setAreaBtn(){
   if(pickMode) updatePickBar();
@@ -4447,7 +4306,7 @@ setMeasureBtn();
 /* gallery */
 document.getElementById("sortSel").addEventListener("change",e=>{ currentSort=e.target.value; updateGallery(); persistState(); });
 let _nfT=null;
-document.getElementById("nameFilter").addEventListener("input",e=>{ nameFilter=e.target.value.trim().toLowerCase(); clearTimeout(_nfT); _nfT=setTimeout(()=>{ buildCluster(); renderClusters(); updateGallery(); renderPhotoTags(curPhoto()); },140); });
+document.getElementById("nameFilter").addEventListener("input",e=>{ nameFilter=e.target.value.trim().toLowerCase(); clearTimeout(_nfT); _nfT=setTimeout(()=>{ renderClusters(); updateGallery(); renderPhotoTags(curPhoto()); },140); });
 /* little × inside search inputs: click to clear (fires the input event so filtering resets) */
 function wireClearX(input){
   const wrap=input&&input.parentElement, x=wrap&&wrap.querySelector(".xclear"); if(!x) return;
@@ -4469,10 +4328,10 @@ function updateGallery(keepLimit){
   if(!photos.length){ body.innerHTML='<div class="empty-msg"><b>No photos in this project.</b><br/>Paste (Ctrl+V), drag photos onto the map, or use File → Add photos…</div>'; document.getElementById("galCount").textContent="0 shown"; document.getElementById("stView").textContent="0"; renderMapTags(); return; }
   const bounds=map.getBounds(), center=map.getCenter();
   const spatial=boxBounds||bounds;
-  const passName=p=>passSearch(p)&&passTags(p)&&passActs(p)&&passAlt(p)&&(!actionFilter||actionFilter.has(p.id))&&(!spotIds||spotIds.has(p.id));   // shared with the map so gallery + dots stay in sync; actionFilter narrows to the selected actions' photos
+  const passName=p=>passSearch(p)&&passActs(p)&&(!actionFilter||actionFilter.has(p.id))&&(!spotIds||spotIds.has(p.id));   // shared with the map so gallery + dots stay in sync; actionFilter narrows to the selected actions' photos
   const spatialOK=p=>(actionFilter||spotIds)?true:spatial.contains([p.lat,p.lng]);   // an action's photos list regardless of where the map sits
   /* two sections: photos on an action ("On map"), then photos on no action ("No action") — located ones in the map view, plus any without a location */
-  const pool=sortPhotos(photos.filter(p=>passDate(p)&&passName(p)&&(p.lat==null||spatialOK(p))),center);
+  const pool=sortPhotos(photos.filter(p=>passName(p)&&(p.lat==null||spatialOK(p))),center);
   const onAct=p=>Array.isArray(p.acts)&&p.acts.some(id=>actById(id));
   let inView=pool.filter(onAct), noGeo=pool.filter(p=>!onAct(p));
   /* one selected action: the gallery shows ITS order (drag to rearrange; first photo = cover) */
@@ -4509,8 +4368,8 @@ function updateGallery(keepLimit){
         if(!selSet.size&&lb.classList.contains("open")&&curPhoto()&&curPhoto()!==p) selSet.add(curPhoto().id);   // the open photo counts as the first selected item
         if(selSet.has(p.id)) selSet.delete(p.id); else selSet.add(p.id);
         body.querySelectorAll(".card").forEach(c=>c.classList.toggle("sel",selSet.has(Number(c.dataset.id))));
-        setAreaBtn(); buildCluster(); renderClusters(); return; }
-      if(selSet.size){ selSet=new Set([p.id]); body.querySelectorAll(".card").forEach(c=>c.classList.toggle("sel",Number(c.dataset.id)===p.id)); setAreaBtn(); buildCluster(); renderClusters(); }   // plain click collapses the selection to just this photo
+        setAreaBtn(); renderClusters(); return; }
+      if(selSet.size){ selSet=new Set([p.id]); body.querySelectorAll(".card").forEach(c=>c.classList.toggle("sel",Number(c.dataset.id)===p.id)); setAreaBtn(); renderClusters(); }   // plain click collapses the selection to just this photo
       openViewer(p); });
     const gx=el.querySelector(".gal-x");
     if(gx) gx.addEventListener("click",e=>{ e.stopPropagation(); e.preventDefault(); confirmDeletePhotos([p]); });   // the X deletes the photo (right-click → Remove from action just unlinks it)
@@ -4594,7 +4453,7 @@ function hideHover(){ hoverview.classList.remove("show"); }
 const lb=document.getElementById("imgPanel"),lbStage=document.getElementById("lbStage"),lbImg=document.getElementById("lbImg");
 const lbRef=document.getElementById("lbRef"),lbRefImg=document.getElementById("lbRefImg"),lbRefBox=document.getElementById("lbRefBox");
 const lbFull=document.getElementById("lbFull"),lbFullWrap=document.getElementById("lbFullWrap");
-let fsMode=false, lastFsNav=0, markTool="none", draft=null, polyPrev=null, dragging=false, erasing=false, redoMarks=[], eraseSnap=null, erasePhoto=null;
+let markTool="none", draft=null, polyPrev=null, dragging=false, erasing=false, redoMarks=[], eraseSnap=null, erasePhoto=null;
 let vScale=1,vTx=0,vTy=0,fitW=0,fitH=0,curUrl=null;
 const REF_W=160,MAXS=8;
 function openViewer(p){
@@ -4649,7 +4508,7 @@ function wireTagPills(el, removable){
     }
   }));
 }
-function refreshTagFilter(){ buildCluster(); renderClusters(); updateGallery(); renderPhotoTags(curPhoto()); }
+function refreshTagFilter(){ renderClusters(); updateGallery(); renderPhotoTags(curPhoto()); }
 function renderPhotoTags(p){
   const el=document.getElementById("lbTags"); if(!el) return;
   if(!p){ el.innerHTML=""; return; }
@@ -5390,7 +5249,7 @@ function renderHistory(){
   body.innerHTML=html;
 }
 document.getElementById("histBody").addEventListener("click",e=>{ const r=e.target.closest(".hist-row.link"); if(!r) return; const a=actById(Number(r.dataset.a)); if(!a) return;
-  selActs=new Set([a.id]); lastActClick=a.id; if(typeof rebuildActionFilter==="function") rebuildActionFilter(); refreshActSelClasses(); buildCluster(); renderClusters(); drawActionRings(); updateGallery(); actNavigate(a,true); });
+  selActs=new Set([a.id]); lastActClick=a.id; if(typeof rebuildActionFilter==="function") rebuildActionFilter(); refreshActSelClasses(); renderClusters(); drawActionRings(); updateGallery(); actNavigate(a,true); });
 document.getElementById("histFilter").addEventListener("input",()=>{ clearTimeout(_histT); _histT=setTimeout(renderHistory,120); });
 wireClearX(document.getElementById("histFilter"));
 function pushTagAction(items){   // one undo step, possibly touching many photos (e.g. a multi-selection move)
@@ -5425,14 +5284,14 @@ function applyUndoEntry(a,dir){   // dir: "before" (undo) or "after" (redo)
       photos=photos.filter(p=>!ids.has(p.id));
       for(const id of ids) selSet.delete(id);
     } else { for(const p of (a._stash||[])){ if(!photoById(p.id)) photos.push(p); } }
-    rebuildSizeIndex(); buildDateFilter(); updateStats();
+    rebuildSizeIndex(); updateStats();
   }
   if(a.delPhotos){   // right-click removed photos: undo re-inserts them at their old spots, redo removes again
     if(undo){ for(const it of a.delPhotos.items.slice().sort((x,y)=>x.index-y.index)){ if(!photoById(it.photo.id)) photos.splice(Math.min(it.index,photos.length),0,it.photo); } }
     else{ const ids=new Set(a.delPhotos.items.map(x=>x.photo.id));
       if(lb.classList.contains("open")&&curPhoto()&&ids.has(curPhoto().id)) closeViewer();
       photos=photos.filter(p=>!ids.has(p.id)); for(const id of ids) selSet.delete(id); }
-    rebuildSizeIndex(); buildDateFilter(); updateStats();
+    rebuildSizeIndex(); updateStats();
   }
   if(a.order){ const want=undo?a.order.before:a.order.after; actions.sort((x,y)=>{ let ix=want.indexOf(x.id), iy=want.indexOf(y.id); if(ix<0)ix=1e9; if(iy<0)iy=1e9; return ix-iy; }); }
   if(a.marksSnap){ const p=photoById(a.marksSnap.id); if(p){ p.marks=cpMarks(undo?a.marksSnap.before:a.marksSnap.after); if(selObj&&!p.marks.includes(selObj)) selObj=null; if(selMark&&selPhoto===p&&!p.marks.includes(selMark)){ selMark=null; selPhoto=null; tbEditor.style.display="none"; } if(curPhoto()===p&&lb.classList.contains("open")) redrawMarks(); ensureAnnotThumb(p); } }
@@ -5460,7 +5319,7 @@ function redoLatest(open){
   else redoTag();
 }
 function afterFolderChange(){ if(typeof rebuildActionFilter==="function"&&actionFilter) rebuildActionFilter();
-  buildCluster(); renderClusters(); highlightCurrent(); updateGallery(true); renderPhotoTags(curPhoto()); renderActions(); renderIpActions();   // updateGallery renders the map tags too
+  renderClusters(); highlightCurrent(); updateGallery(true); renderPhotoTags(curPhoto()); renderActions(); renderIpActions();   // updateGallery renders the map tags too
   persistState();   // debounced: rapid tick/edit bursts serialize once, not per keystroke
   ensureJsonWrite(!!(navigator.userActivation&&navigator.userActivation.isActive));   // ask for write access only inside a real click (background merges must not prompt)
 }
@@ -5614,7 +5473,6 @@ function clearAll(redraw){
   selSet.clear(); dotMarkers.clear(); setAreaBtn(); if(typeof closeCtx==="function") closeCtx();
   actions=[]; nextActId=1; selActs.clear(); actionFilter=null; renderActions(); renderIpActions();
   if(measuring) stopMeasure();
-  dateMin=dateMax=dateLo=dateHi=null; altMinV=altMaxV=altLo=altHi=null;
   if(redraw){ updateStats(); document.getElementById("galCount").textContent="0 shown"; document.getElementById("stView").textContent="0";
     parkGalSize(); document.getElementById("galleryBody").innerHTML='<div class="empty-msg"><b>Project closed.</b><br/>Open one from File → Projects…</div>'; persistState(); }
 }
@@ -5756,7 +5614,7 @@ async function loadFromJsonFile(fromGesture){
     applyState(st);                          // the FILE is authoritative for folders/locations/markup
     overlayImagesFromCache(lastFullCache);   // reuse locally-cached images so photos still show
     if(photos.some(p=>p.thumb)) hideBanner();
-    buildCluster(); renderClusters(); updateGallery(); cacheFullSession();
+    renderClusters(); updateGallery(); cacheFullSession();
     saveFileHandle=jsonHandle; loadedJsonName=jsonHandle.name||loadedJsonName; fileLoadedOnce=true; fileCorrupt=false; autoDisabled=false;
     lastWrittenSig=metaSignature(); setSaveStatus("Saved","ok");   // loaded state already matches the file on disk
     etaEnd();
@@ -5888,7 +5746,7 @@ function applyUiSettings(s){ s=s||{};
   clusterSens=(typeof s.clusterSens==="number"?Math.max(0,Math.min(100,s.clusterSens)):50);
   if(boxRect){map.removeLayer(boxRect);boxRect=null;} boxBounds=null;
   setAreaBtn();
-  buildCluster(); renderClusters(); updateStats(); updateGallery(); map.invalidateSize();
+  renderClusters(); updateStats(); updateGallery(); map.invalidateSize();
   if(s.view && Array.isArray(s.view.center)) map.setView(s.view.center, (s.view.zoom!=null?s.view.zoom:map.getZoom()));
   else fitToPhotos();
 }
@@ -5898,7 +5756,6 @@ function applyUiSettings(s){ s=s||{};
 function metaKey(p){ if(p.noGps) return (p.name||"")+"|"+(p.size!=null?p.size:"")+"|noGps";   // pasted photos have no real GPS: identity by name+size so moving their placed dot never orphans them
   const la=(p.glat!=null?p.glat:p.lat), ln=(p.glng!=null?p.glng:p.lng);   // identity uses the ORIGINAL GPS so in-app dot corrections never orphan a photo's cache/metadata
   return (p.name||"")+"|"+(p.size!=null?p.size:"")+"|"+(la!=null?Number(la).toFixed(5):"")+"|"+(ln!=null?Number(ln).toFixed(5):""); }
-function snapshotMeta(list){ const m=new Map(); for(const p of (list||[])){ const k=metaKey(p); if(!m.has(k)) m.set(k,{paths:Array.isArray(p.paths)?p.paths.slice():null, vpaths:Array.isArray(p.vpaths)?p.vpaths.slice():null, acts:(Array.isArray(p.acts)&&p.acts.length)?p.acts.slice():null, note:(p.note||null), alt:(p.alt!=null?p.alt:null), rot:p.rot||0, marks:Array.isArray(p.marks)&&p.marks.length?p.marks:null, lat:(p.lat!=null?p.lat:null), lng:(p.lng!=null?p.lng:null), glat:(p.glat!=null?p.glat:null), glng:(p.glng!=null?p.glng:null)}); } return m; }
 function rebuildPorders(){   // photo ids shift between sessions; the saved key order restores each action's drag order and cover
   let byKey=null;
   for(const a of actions){
@@ -5908,9 +5765,6 @@ function rebuildPorders(){   // photo ids shift between sessions; the saved key 
     if(ids.length){ a.porder=ids; delete a.porderK; }   // consumed: later drags own the order again
   }
 }
-function applyMetaMap(m){ if(!m||!m.size) return; for(const p of photos){ const meta=m.get(metaKey(p)); if(!meta) continue; if(meta.paths&&meta.paths.length) p.paths=meta.paths.slice(); if(meta.vpaths&&meta.vpaths.length) p.vpaths=meta.vpaths.slice(); if(meta.acts) p.acts=meta.acts.slice(); if(meta.note) p.note=meta.note; if(meta.alt!=null&&p.alt==null) p.alt=meta.alt; if(meta.marks) p.marks=meta.marks;
-  if(meta.glat!=null){ p.glat=meta.glat; p.glng=meta.glng; if(meta.lat!=null){ p.lat=meta.lat; p.lng=meta.lng; } }   // newer session moved this dot — carry the correction over
-  if(meta.rot&&!p.rot){ p.rot=meta.rot; const d=rotDelta(p.rot); (async()=>{ if(p.thumb)p.thumb=await rotateDataURL(p.thumb,d,THUMB_Q); if(p.preview)p.preview=await rotateDataURL(p.preview,d,PREVIEW_Q); cacheFullSession(); })(); } } }
 
 /* persistence (IndexedDB): metadata only, cheap */
 let _idbP=null;
@@ -5940,7 +5794,7 @@ function maybeOfferReconnect(){
 }
 async function reconnectFolder(){ if(!dirHandle)return; if(!(await ensurePermission(dirHandle))){ alert("Permission to read the folder was not granted."); return; } folderName=dirHandle.name; hideBanner();
   scanReport(await loadFromHandle(dirHandle,true,{prune:true}),true);   // append: heals images onto the existing photos, keeps actions/notes/pasted photos intact
-  buildCluster(); renderClusters(); updateGallery(); renderActions(); persistState();
+  renderClusters(); updateGallery(); renderActions(); persistState();
 }
 async function ensurePermission(handle){ try{ const o={mode:"read"}; if((await handle.queryPermission(o))==="granted")return true; const g=(await handle.requestPermission(o))==="granted"; releaseStuckDrag(); if(g)return true; }catch(e){ releaseStuckDrag(); } return false; }
 let permArmed=false;
@@ -5991,7 +5845,7 @@ function applyShared(P){
   if(boxRect){map.removeLayer(boxRect);boxRect=null;} boxBounds=null; setAreaBtn();
   photos=[]; nextId=1; tagUndoStack=[]; tagRedoStack=[];
   P.p.forEach(m=>photos.push({id:nextId++,path:m[2]||"",name:m[2]||"",paths:m[2]?[m[2]]:[],vpaths:[],file:null,size:null,isHeic:false,thumb:null,lat:(m[0]!=null?m[0]:null),lng:(m[1]!=null?m[1]:null),time:m[3]||null,dir:null,marks:[]}));
-  buildDateFilter(); buildCluster(); renderClusters(); updateStats();
+  renderClusters(); updateStats();
   if(P.vw){ try{ map.setView([P.vw[0],P.vw[1]],P.vw[2]); }catch(e){} }
   updateGallery();
   return true;
@@ -6022,9 +5876,6 @@ function mCh(id){ const p=mPend(); return (p.changes||{})[id]||{}; }
 function mSetCh(id,patch){ const p=mPend(); p.changes=p.changes||{}; const c=Object.assign({},p.changes[id]||{},patch);
   if(!c.sids){ const pa=((mPack&&mPack.actions)||[]).find(x=>String(x.id)===String(id)); if(pa&&(pa.steps||[]).every(st=>st.id)) c.sids=(pa.steps||[]).map(st=>st.id); }   // step references survive re-exports and desktop reorders
   p.changes[id]=c; mPendSave(p); }
-function mPn(pid){ const p=mPend(); const e=(p.pnotes||{})[String(pid)]; return e?e.t:null; }   // pending photo (field) note on this phone
-function mPhotoKey(pid){ for(const a of ((mPack&&mPack.actions)||[])) for(const ph of (a.photos||[])) if(String(ph.id)===String(pid)) return ph.k||null; return null; }
-function mSetPn(pid,name,v){ const p=mPend(); p.pnotes=p.pnotes||{}; if(v) p.pnotes[String(pid)]={n:name||"",t:v,k:mPhotoKey(pid)}; else delete p.pnotes[String(pid)]; mPendSave(p); }
 function mPendSnap(p){ return JSON.stringify({c:p.changes||{},n:p.pnotes||{},a:p.newActs||[],o:p.actOrder||[],d:p.dates||null}); }
 function mChCount(){ const p=mPend();
   let snap=null; if(p.sentSnap){ try{ snap=JSON.parse(p.sentSnap); }catch(e){} }
@@ -6142,13 +5993,8 @@ function mDist(a){   // metres from the phone to the nearest of the action's pho
     if(d!=null&&(best==null||d<best)) best=d; }
   return best;
 }
-function mFmtD(m){ return m==null?"":(m>=1000?(m/1000).toFixed(1)+" km":Math.round(m)+" m"); }
 function mDone(a){ if(a._new){ const x=mNewActs()[a._ni]; return !!(x&&x.done); } const c=mCh(a.id); return typeof c.done==="boolean"?c.done:!!a.done; }
 function mHold(a){ if(a._new){ const x=mNewActs()[a._ni]; return !!(x&&x.hold); } const c=mCh(a.id); return typeof c.hold==="boolean"?c.hold:!!a.hold; }
-function mToggleHold(a){ mMutate(()=>{ const p=mPend();
-  if(a._new){ const x=(p.newActs||[])[a._ni]; if(x) x.hold=!x.hold; }
-  else{ const c=(p.changes=p.changes||{})[a.id]||(p.changes[a.id]={}); c.hold=!mHold(a); }
-  mPendSave(p); }); }
 function mStepDone(a,i){ if(a._new){ const x=mNewActs()[a._ni]; return !!(x&&x.steps&&x.steps[i]&&x.steps[i].d); } const c=mCh(a.id); return (c.steps&&(String(i) in c.steps))?!!c.steps[String(i)]:!!(a.steps[i]&&a.steps[i].d); }
 let mStepFlush=null;
 function mScr(html){ if(mStepFlush){ const f=mStepFlush; mStepFlush=null; try{ f(); }catch(e){} } if(mHomeMap){ try{ mHomeMap.remove(); }catch(e){} } mHomeMap=null; mHomeBB=null; mSoftRefresh=null; document.getElementById("mroot").innerHTML='<div class="m-scr">'+html+'</div>'; if(mToastEl) document.getElementById("mroot").appendChild(mToastEl); }
@@ -6552,10 +6398,6 @@ function mFitAll(){   // zoom to extents: every action dot the filters show, and
   m2.flyToBounds(L.latLngBounds(ll),{paddingTopLeft:[36,top],paddingBottomRight:[36,bot],maxZoom:18,duration:1.2});
   m2.once("moveend",()=>{ m2._flying=false; m2._draw(); mSyncCards(); }); }
 const M_FOCUS_Z=18;   // how far a tap / swipe / bubble zooms in: area level (closer actions fan out there)
-function mApartZoom(group,others){   // the closest-in zoom (up to 22) needed for these dots to stand clear of the others
-  const m2=mHomeMap; let z=Math.max(17,m2.getZoom()||17);
-  for(;z<22;z++){ const near=group.some(p=>{ const a=m2.project([p.lat,p.lng],z); return others.some(o=>{ const b=m2.project([o.lat,o.lng],z); return Math.hypot(a.x-b.x,a.y-b.y)<50; }); }); if(!near) break; }
-  return z; }
 function mFocusDot(k){
   const m2=mHomeMap; if(!m2||!m2._pts) return;
   const fp=m2._pts.filter(p=>p.k===String(k)); if(!fp.length) return;
@@ -6566,14 +6408,6 @@ function mFocusDot(k){
 function mFlash(k){   // the red arrow: bobs twice over the dot, then fades (CSS); the class goes once it has played
   mFlashK=String(k); if(mHomeMap&&mHomeMap._draw) mHomeMap._draw();
   clearTimeout(mFlashT); mFlashT=setTimeout(()=>{ mFlashK=null; if(mHomeMap&&mHomeMap._draw&&!mHomeMap._flying) mHomeMap._draw(); },1700); }
-function mZoomBunch(items){   // a numbered bubble: fly in until its dots stand apart (the cards below pick between them)
-  const m2=mHomeMap, ks=[...new Set(items.map(p=>p.k))];
-  let z=Math.max(17,m2.getZoom()+1);
-  for(;z<22;z++){ let ok=true; for(const k of ks){ const g=items.filter(p=>p.k===k), o=items.filter(p=>p.k!==k);
-      if(g.some(p=>{ const a=m2.project([p.lat,p.lng],z); return o.some(q=>{ const b=m2.project([q.lat,q.lng],z); return Math.hypot(a.x-b.x,a.y-b.y)<46; }); })){ ok=false; break; } }
-    if(ok) break; }
-  mHomeTouched=true; mCardsHold=null;
-  mFlyTo(items,Math.min(z,M_FOCUS_Z)); }   // no deeper than area level: still-close ones fan out there
 function mMapCards(acts){   // the actions with a dot on the map, as the filters show them, in Actions-list order
   return acts.filter(a=>{ const st=mStatus(a); if((st==="open"&&!mShowOpen)||(st==="hold"&&!mShowHold)||(st==="done"&&!mShowDone)) return false;
     const loc=a._new?(mNewActs()[a._ni]||{}).loc:a.loc; return !!loc||(a.photos||[]).some(p=>p.lat!=null); }); }
@@ -7517,7 +7351,7 @@ async function checkPhotoUploads(){   // polled: phone uploads auto-merge as soo
     if(healed.length) pushTagAction(healed);
     if(added.length) pushUndo({addPhotos:added.map(ph=>ph.id)});
     if(added.length||healed.length){
-      rebuildSizeIndex(); buildDateFilter(); buildCluster(); renderClusters(); updateStats(); updateGallery(); persistState(); cacheFullSession();
+      rebuildSizeIndex(); renderClusters(); updateStats(); updateGallery(); persistState(); cacheFullSession();
       const geo=added.filter(ph=>ph.lat!=null&&!ph.noGps).concat(healed.map(h=>photoById(h.id)).filter(Boolean));
       if(geo.length>1) map.fitBounds(L.latLngBounds(geo.map(ph=>[ph.lat,ph.lng])),{padding:[60,60],maxZoom:18});
       else if(geo.length===1) map.flyTo([geo[0].lat,geo[0].lng],Math.max(map.getZoom(),17));
@@ -7722,7 +7556,7 @@ async function bootLegacy(){
       // lastState (image-free autosave) is written on every change; if newer than the cached full snapshot, overlay its fresh folders.
       if(last && Array.isArray(last.photos) && last.savedAt && (!full.savedAt || last.savedAt>full.savedAt)){
         applyState(last); overlayImagesFromCache(full);   // an additive overlay would resurrect cleared notes/links/removed photos
-        buildCluster(); renderClusters(); updateGallery(); renderActions(); persistState();
+        renderClusters(); updateGallery(); renderActions(); persistState();
       }
     }
     else if(last && last.photos && last.photos.length){ applyState(last); }
