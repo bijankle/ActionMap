@@ -3508,6 +3508,39 @@ async function xlsImage(p){   // annotated preview scaled into a 180x110 box for
     return {b64:c.toDataURL("image/jpeg",0.82),w,h};
   }catch(e){ return null; }
 }
+/* Sub-action dates for the exports, taken from History: a done item shows when it was ticked / completed,
+   an open one when it was added / opened. Older items with no History entry fall back to the action's own date. */
+function subActionRows(order,now){
+  const logFirst=pre=>{ for(const e of projLog) if(e&&typeof e.d==="string"&&e.d.startsWith(pre)) return e; return null; };
+  const logLast=pre=>{ let f=null; for(const e of projLog) if(e&&typeof e.d==="string"&&e.d.startsWith(pre)) f=e; return f; };
+  const day=now-24*3600000, out=[];
+  for(const a of order){ const no=actNo(a), st=a.done?"Done":a.hold?"On hold":"Open";
+    const opened=(logFirst("Created action "+no+" ")||{}).t||a.created||null;
+    const at=a.done?(a.doneAt||(logLast("Completed action "+no+" ")||{}).t||opened):a.hold?((logLast("Put action "+no+" ")||{}).t||opened):opened;
+    const recent=projLog.some(e=>e&&e.a===a.id&&e.t>=day&&e.t<=now)||(at&&at>=day);
+    const subs=(a.steps||[]).map((x,i)=>{ const q=qT(x.t);
+      const added=(logFirst("Added sub-action "+q+" to "+no)||{}).t||opened, ticked=x.d?((logLast("Ticked "+q+" on "+no)||{}).t||at):null;
+      return {t:x.d?ticked:added,st:x.d?"Done":(st==="On hold"?"On hold":"Open"),text:stepLetter(i)+". "+x.t}; });
+    out.push({a,no,st,t:at,what:a.done?"Completed":a.hold?"On hold since":"Opened",recent:recent||subs.some(x=>x.t&&x.t>=day),subs}); }
+  return out; }
+const XL_HEAD="FF1D6F42", XL_FILL={Done:"FFE3F4E8",Open:"FFFFFFFF","On hold":"FFFDF1DC"}, XL_FONT={Done:"FF1E6B3A",Open:"FF1D2430","On hold":"FF8A5A00"};
+function xlHeadRow(ws,r){ const hr=ws.getRow(r); hr.font={bold:true,color:{argb:"FFFFFFFF"}}; hr.alignment={vertical:"middle",wrapText:true}; hr.height=20;
+  hr.eachCell({includeEmpty:false},c=>{ c.fill={type:"pattern",pattern:"solid",fgColor:{argb:XL_HEAD}}; }); }
+function xlLocal(t){ return t?new Date(t-new Date(t).getTimezoneOffset()*60000):null; }   // Excel shows the wall-clock time it's given
+function addSubActionsSheet(wb,order,now){
+  const ws=wb.addWorksheet("Sub-actions",{views:[{state:"frozen",ySplit:1}],properties:{outlineProperties:{summaryBelow:false}}});
+  ws.columns=[{header:"Date & time",key:"t",width:19},{header:"Status",key:"st",width:11},{header:"#",key:"no",width:6},{header:"Action / sub-action",key:"x",width:70},{header:"Changed in last 24 h",key:"c",width:12},{header:"Notes",key:"n",width:34}];
+  xlHeadRow(ws,1); ws.getRow(1).height=32;
+  const paint=(cell,st,bold)=>{ cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:XL_FILL[st]}}; cell.font={bold:!!bold,color:{argb:XL_FONT[st]}}; };
+  for(const g of subActionRows(order,now)){ const tick=g.recent?"\u2714":"";
+    const row=ws.addRow({t:xlLocal(g.t),st:g.st,no:g.no,x:g.a.text,c:tick,n:""}); row.font={bold:true};
+    row.eachCell({includeEmpty:true},c=>{ c.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFF6F1E6"}}; });
+    if(g.st!=="Open") paint(row.getCell("st"),g.st,true);
+    row.getCell("t").numFmt="dd/mm/yyyy hh:mm"; row.getCell("c").alignment={horizontal:"center"};
+    for(const x of g.subs){ const r=ws.addRow({t:xlLocal(x.t),st:x.st,no:g.no,x:"      "+x.text,c:tick,n:""}); r.outlineLevel=1;
+      r.getCell("t").numFmt="dd/mm/yyyy hh:mm"; r.getCell("c").alignment={horizontal:"center"}; r.getCell("x").alignment={wrapText:true}; paint(r.getCell("st"),x.st,false); } }
+  ws.autoFilter={from:"A1",to:"F1"};   // filter "Changed in last 24 h" to ✔ for the shift's work
+  return ws; }
 async function exportActionsXlsx(){
   const btn={disabled:!!exportActionsXlsx._busy, set title(t){ if(/^Failed/.test(t)) loadNote("Excel export failed: "+t.replace(/^Failed:\s*/,"")); }};   /* progress shows in the status line (the command lives in File) */
   const say=t=>{ loadNote(t==="Export"?"":"Excel export \u2014 "+t); };
@@ -3550,7 +3583,8 @@ async function exportActionsXlsx(){
       ri++;
     }
     for(let i=0;i<maxImgs;i++){ ws.getColumn(5+i).width=26; ws.getCell(1,5+i).value="Photo "+(i+1); }
-    const hr=ws.getRow(1); hr.font={bold:true}; hr.alignment={vertical:"middle"}; hr.height=18;
+    xlHeadRow(ws,1);   // green, white bold — same as the Sub-actions tab
+    st.textContent="Sub-actions tab\u2026"; addSubActionsSheet(wb,order,Date.now());
     st.textContent="Writing file\u2026";
     const buf=await wb.xlsx.writeBuffer();
     const blob=new Blob([buf],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
