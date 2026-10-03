@@ -3279,8 +3279,12 @@ function exportFilterNote(){ const parts=[];
    its spot, plus a status legend. If the boxes can't all fit without overlapping, the rest go onto
    another map page (each page zooms to its own actions). Actions with no located photo are left out. */
 function pdfMapPoint(a){ const p=actPhotos(a).find(q=>q.lat!=null&&isFinite(q.lat)&&isFinite(q.lng)); return p?{lat:+p.lat,lng:+p.lng}:null; }
-const PM_W=1108, PM_H=700, PM_BW=210, PM_BH=34;   // map area in canvas units (4 per mm = 277 x 175 mm); callout box size
-function pdfMapLayout(list){
+const PM_W=1108, PM_H=700;   // map area in canvas units (4 per mm = 277 x 175 mm)
+/* callout box per cover-photo style: none / photo inside on the left / photo on top (a card) / photo beside the box */
+const PM_BOX={none:{BW:210,BH:34},left:{BW:244,BH:58},top:{BW:160,BH:156},side:{BW:286,BH:54}};
+let PM_BW=210, PM_BH=34;
+function pdfMapLayout(list,opt){
+  const bx0=PM_BOX[opt||"none"]||PM_BOX.none; PM_BW=bx0.BW; PM_BH=bx0.BH;
   const mw=PM_W, mh=PM_H, pad=170, BW=PM_BW, BH=PM_BH, GAPB=8;
   const P=list.map(a=>({a,ll:pdfMapPoint(a)})).filter(q=>q.ll);
   let z=19; const fits=z=>{ const xs=P.map(q=>_lx(q.ll.lng,z)), ys=P.map(q=>_ly(q.ll.lat,z)); return Math.max(...xs)-Math.min(...xs)<=mw-2*pad&&Math.max(...ys)-Math.min(...ys)<=mh-2*pad; };
@@ -3298,13 +3302,22 @@ function pdfMapLayout(list){
     L.forEach((q,i)=>{ const left=i<half, k=left?i:i-half, nn=left?half:L.length-half;
       boxes.push({q,bx:clampX(mxx+(left?-1:1)*(BW/2+70),BW),by:clampY(myy-(nn-1)*(BH+GAPB)/2+k*(BH+GAPB),BH),left}); }); }
   const over=(A,B)=>{ const ox=Math.min(A.bx,B.bx)+BW/2-Math.max(A.bx,B.bx)+BW/2, oy=Math.min(A.by+BH/2,B.by+BH/2)-Math.max(A.by-BH/2,B.by-BH/2); return [ox,oy]; };
-  for(let it=0;it<80;it++){ let moved=false; for(let i=0;i<boxes.length;i++) for(let j=i+1;j<boxes.length;j++){ const A=boxes[i], B=boxes[j], [ox,oy]=over(A,B);
-    if(ox>0&&oy>-6){ const lo=A.by<=B.by?B:A, hi=lo===A?B:A, d=oy+6; lo.by=clampY(lo.by+d/2,BH); hi.by=clampY(hi.by-d/2,BH); moved=true; } } if(!moved) break; }
-  let ok=true; for(let i=0;i<boxes.length&&ok;i++) for(let j=i+1;j<boxes.length;j++){ const [ox,oy]=over(boxes[i],boxes[j]); if(ox>0&&oy>0){ ok=false; break; } }
-  return {P,boxes,z,x0,y0,ok};
+  const keepOut=[{l:0,t:0,r:140,b:150},{l:mw-210,t:0,r:mw,b:44}];   // north arrow + legend (top left), scale bar (top right)
+  const hitsRect=(k,R)=>k.bx-BW/2<R.r&&k.bx+BW/2>R.l&&k.by-BH/2<R.b&&k.by+BH/2>R.t;
+  const pinIn=k=>P.find(q=>q.x>k.bx-BW/2-6&&q.x<k.bx+BW/2+6&&q.y>k.by-BH/2-6&&q.y<k.by+BH/2+6);   // a box must never cover a spot
+  for(let it=0;it<120;it++){ let moved=false;
+    for(let i=0;i<boxes.length;i++) for(let j=i+1;j<boxes.length;j++){ const A=boxes[i], B=boxes[j], [ox,oy]=over(A,B);
+      if(ox>0&&oy>-6){ const lo=A.by<=B.by?B:A, hi=lo===A?B:A, d=oy+6; lo.by=clampY(lo.by+d/2,BH); hi.by=clampY(hi.by-d/2,BH); moved=true; } }
+    for(const k of boxes){ for(const R of keepOut) if(hitsRect(k,R)){ k.by=clampY(R.b+BH/2+6,BH); moved=true; }
+      const q=pinIn(k); if(q){ k.by=clampY(q.y>k.by?q.y-BH/2-8:q.y+BH/2+8,BH); moved=true; } }
+    if(!moved) break; }
+  let ok=!boxes.some(k=>keepOut.some(R=>hitsRect(k,R))||pinIn(k));
+  for(let i=0;i<boxes.length&&ok;i++) for(let j=i+1;j<boxes.length;j++){ const [ox,oy]=over(boxes[i],boxes[j]); if(ox>0&&oy>0){ ok=false; break; } }
+  return {P,boxes,z,x0,y0,ok,opt:opt||"none",BW,BH};
 }
 async function pdfMapCanvas(L,onTile){
-  const mw=PM_W, mh=PM_H, K=2, c=document.createElement("canvas"); c.width=mw*K; c.height=mh*K; const g=c.getContext("2d"); g.scale(K,K);
+  PM_BW=L.BW; PM_BH=L.BH; const opt=L.opt||"none";
+  const mw=PM_W, mh=PM_H, K=opt==="none"?2:3, c=document.createElement("canvas"); c.width=mw*K; c.height=mh*K; const g=c.getContext("2d"); g.scale(K,K);
   g.fillStyle="#2a2d31"; g.fillRect(0,0,mw,mh);
   const tz=Math.min(L.z+1,20), f=Math.pow(2,tz-L.z), T=256/f, tn=Math.pow(2,tz), jobs=[], holes=[];   // one zoom deeper, drawn at half size: sharp at 2x
   for(let tx=Math.floor(L.x0/T);tx<=Math.floor((L.x0+mw)/T);tx++) for(let ty=Math.floor(L.y0/T);ty<=Math.floor((L.y0+mh)/T);ty++){ if(ty<0||ty>=tn) continue;
@@ -3317,12 +3330,26 @@ async function pdfMapCanvas(L,onTile){
   g.lineCap="round";
   for(const k of L.boxes){ g.strokeStyle="rgba(0,0,0,.45)"; g.lineWidth=3.2; g.beginPath(); g.moveTo(k.q.x,k.q.y); g.lineTo(k.bx+(k.left?PM_BW/2:-PM_BW/2),k.by); g.stroke();
     g.strokeStyle="#fff"; g.lineWidth=1.6; g.stroke(); }
+  const covers=new Map();   // each action's cover photo (its first), from the original where reachable: sharp when zoomed in
+  if(opt!=="none") for(const k of L.boxes){ const p=actPhotos(k.q.a)[0]; if(!p) continue; try{ const c=await cardImage(p); if(c&&c.im){ covers.set(k.q.a.id,{p,im:c.im}); if(c.url) setTimeout(()=>URL.revokeObjectURL(c.url),60000); } }catch(e){} }
+  const photo=(a,x,y,w,h)=>{ g.save(); rr(x,y,w,h,4); g.clip(); g.fillStyle="#111"; g.fillRect(x,y,w,h); const c=covers.get(a.id);
+    if(c){ const s3=Math.min(w/c.im.width,h/c.im.height), dw=c.im.width*s3, dh=c.im.height*s3, dx=x+(w-dw)/2, dy=y+(h-dh)/2; g.imageSmoothingQuality="high"; g.drawImage(c.im,dx,dy,dw,dh);
+      if(c.p.marks&&c.p.marks.length) paintMarks(g,dx,dy,dw,dh,Math.min(dw,dh)*0.0012,c.p.marks,(c.p.mkw!=null?c.p.mkw:null),(c.p.mth!=null?c.p.mth:null),true); }
+    g.restore(); };
+  const title=(a,x,y,w,lines2,fs)=>{ g.font=(fs||11)+"px Helvetica,Arial,sans-serif"; const words=String(a.text||"").split(/\s+/), lines=[]; let line="";
+    for(const wd of words){ const t=line?line+" "+wd:wd; if(g.measureText(t).width>w&&line){ lines.push(line); line=wd; } else line=t; } if(line) lines.push(line);
+    lines.slice(0,lines2).forEach((l,i)=>{ let t=l; if(i===lines2-1&&lines.length>lines2){ while(g.measureText(t+"…").width>w&&t.length>1) t=t.slice(0,-1); t+="…"; } g.fillText(t,x,y+i*13); }); };
   for(const k of L.boxes){ const a=k.q.a, s2=st(a), x=k.bx-PM_BW/2, y=k.by-PM_BH/2;
+    if(opt==="side"){   // photo on the far side of a normal callout box
+      const PW=72, TW=PM_BW-PW-4, tx=k.left?x+PW+4:x, px=k.left?x:x+TW+4, ty=y+(PM_BH-40)/2;
+      photo(a,px,y,PW,PM_BH); g.strokeStyle="#fff"; g.lineWidth=1.4; rr(px,y,PW,PM_BH,4); g.stroke();
+      g.fillStyle=COL[s2]; g.strokeStyle=RING[s2]; g.lineWidth=1.6; rr(tx,ty,TW,40,6); g.fill(); g.stroke();
+      g.fillStyle=TXT[s2]; g.font="bold 12px Helvetica,Arial,sans-serif"; g.fillText(actNo(a),tx+7,ty+17); title(a,tx+36,ty+16,TW-44,2); continue; }
     g.fillStyle=COL[s2]; g.strokeStyle=RING[s2]; g.lineWidth=1.6; rr(x,y,PM_BW,PM_BH,6); g.fill(); g.stroke();
-    g.fillStyle=TXT[s2]; g.font="bold 12px Helvetica,Arial,sans-serif"; g.textBaseline="alphabetic"; g.fillText(actNo(a),x+7,y+15);
-    g.font="11px Helvetica,Arial,sans-serif"; const words=String(a.text||"").split(/\s+/), lines=[]; let line="";
-    for(const w of words){ const t=line?line+" "+w:w; if(g.measureText(t).width>PM_BW-44&&line){ lines.push(line); line=w; } else line=t; } if(line) lines.push(line);
-    lines.slice(0,2).forEach((l,i)=>{ let t=l; if(i===1&&lines.length>2){ while(g.measureText(t+"\u2026").width>PM_BW-44&&t.length>1) t=t.slice(0,-1); t+="\u2026"; } g.fillText(t,x+36,y+14+i*13); }); }
+    g.fillStyle=TXT[s2]; g.textBaseline="alphabetic";
+    if(opt==="left"){ photo(a,x+4,y+4,66,PM_BH-8); g.fillStyle=TXT[s2]; g.font="bold 12px Helvetica,Arial,sans-serif"; g.fillText(actNo(a),x+78,y+17); title(a,x+78,y+32,PM_BW-86,2); continue; }
+    if(opt==="top"){ photo(a,x+4,y+4,PM_BW-8,PM_BH-44); g.fillStyle=TXT[s2]; g.font="bold 12px Helvetica,Arial,sans-serif"; g.fillText(actNo(a),x+7,y+PM_BH-24); title(a,x+36,y+PM_BH-24,PM_BW-44,2,10.5); continue; }
+    g.font="bold 12px Helvetica,Arial,sans-serif"; g.fillText(actNo(a),x+7,y+15); title(a,x+36,y+14,PM_BW-44,2); }
   for(const q of L.P){ g.fillStyle="#E8281E"; g.strokeStyle="#fff"; g.lineWidth=2; g.beginPath(); g.arc(q.x,q.y,4.5,0,7); g.fill(); g.stroke(); }
   // north arrow, legend, scale bar
   g.fillStyle="rgba(255,255,255,.92)"; rr(10,10,30,38,5); g.fill(); g.fillStyle="#1e1f22"; g.beginPath(); g.moveTo(25,14); g.lineTo(32,36); g.lineTo(25,31); g.lineTo(18,36); g.closePath(); g.fill(); g.font="bold 10px Helvetica,Arial"; g.fillText("N",21.5,46);
@@ -3354,7 +3381,8 @@ async function exportActionsPdf(){
 
     /* ---- Map pages */
     const located=order.filter(a=>pdfMapPoint(a)), mapPages=[];
-    { let rest=located; while(rest.length){ let n=rest.length, L=pdfMapLayout(rest); while(!L.ok&&n>1){ n=Math.max(1,Math.floor(n*0.75)); L=pdfMapLayout(rest.slice(0,n)); } mapPages.push(L); rest=rest.slice(n); } }
+    const copt=window._pdfCoverOpt||"none";   // cover photo in each callout box: style chosen in settings below
+    { let rest=located; while(rest.length){ let n=rest.length, L=pdfMapLayout(rest,copt); while(!L.ok&&n>1){ n=Math.max(1,Math.floor(n*0.75)); L=pdfMapLayout(rest.slice(0,n),copt); } mapPages.push(L); rest=rest.slice(n); } }
     for(let i=0;i<mapPages.length;i++){ const L=mapPages[i]; if(i) doc.addPage();
       let y=title(mapPages.length>1?"Map "+(i+1)+" of "+mapPages.length:"Map");
       const cnt=s=>L.P.filter(q=>(q.a.done?"d":q.a.hold?"h":"o")===s).length;
