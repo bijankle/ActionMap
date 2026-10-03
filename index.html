@@ -1776,8 +1776,8 @@ function stepLetter(i){ let t=""; do{ t=String.fromCharCode(97+(i%26))+t; i=Math
 function actNo(a){ return String(a&&a.id!=null?a.id:a).padStart(3,"0"); }   /* the action NUMBER: creation-sequential id, 001-style */
 function actsShown(){ return actions.filter(a=>(a.done?actShowDone:a.hold?actShowHold:actShowOpen)&&actInDates(a)).sort((x,y)=>actRank(x)-actRank(y)); }   // the list as rendered: open, plus on hold / done when their pill is on
 function actRank(a){ return a.done?2:(a.hold?1:0); }   // list order: open, then on hold, then completed (display only — stored order unchanged)
-function setActionDone(a,done){ const before=actState(a); a.done=!!done; a.doneAt=a.done?Date.now():null; recordActEdit(a,before); afterFolderChange(); dropIfHidden(a,"done"); }
-function setActionHold(a,hold){ const before=actState(a); a.hold=!!hold; recordActEdit(a,before); afterFolderChange(); dropIfHidden(a,"on hold"); }
+function setActionDone(a,done){ const before=actState(a); a.done=!!done; a.doneAt=a.done?Date.now():null; if(a.done) a.hold=false; /* done and on hold never both: ticking one clears the other (one undo step) */ recordActEdit(a,before); afterFolderChange(); dropIfHidden(a,"done"); }
+function setActionHold(a,hold){ const before=actState(a); a.hold=!!hold; if(a.hold&&a.done){ a.done=false; a.doneAt=null; } recordActEdit(a,before); afterFolderChange(); dropIfHidden(a,"on hold"); }
 function dropIfHidden(a,what){   // its card just left the list (that filter is off): let go of it everywhere else too, and say where it went
   if(a.done?actShowDone:a.hold?actShowHold:actShowOpen) return;
   if(selActs.has(a.id)){ selActs.delete(a.id); rebuildActionFilter(); renderActions(); drawActionRings(); updateGallery(); buildCluster(); renderClusters(); }
@@ -7156,6 +7156,7 @@ async function checkFieldChanges(){
       if(typeof c.hold==="boolean") a.hold=c.hold;
       if(c.done===true&&!a.done){ a.done=true; a.doneAt=c.doneAt||Date.now(); }
       if(c.done===false&&a.done){ a.done=false; a.doneAt=null; }
+      if(a.done&&a.hold){ if(c.hold===true&&c.done!==true){ a.done=false; a.doneAt=null; } else a.hold=false; }   // never both: what the phone just set wins
       recordActEdit(a,before);
     }
     if(ordIds.length>1){   // phone priority reorder: pack actions permute among their own slots, everything else stays put
@@ -7175,7 +7176,7 @@ async function checkFieldChanges(){
       const ex=(na&&na.u)?actions.find(x=>x.fu===na.u):null;
       if(ex){   // already here: later phone edits to it (title, flags, its sub-actions) still land
         const bx=actState(ex); const t=String(na.text||"").trim(); if(t) ex.text=t;
-        ex.hold=!!na.hold; if(na.done&&!ex.done){ ex.done=true; ex.doneAt=na.doneAt||Date.now(); } if(!na.done&&ex.done){ ex.done=false; ex.doneAt=null; }
+        ex.hold=!!na.hold; if(na.done&&!ex.done){ ex.done=true; ex.doneAt=na.doneAt||Date.now(); } if(!na.done&&ex.done){ ex.done=false; ex.doneAt=null; } if(ex.done&&ex.hold) ex.hold=false;
         if(!Array.isArray(ex.steps)) ex.steps=[];
         for(const st of (na.steps||[])){ const tt=String(st&&st.t||"").trim(); if(!tt) continue;
           let o=st.u?ex.steps.find(x=>x.id===st.u):ex.steps.find(x=>x.t===tt);
