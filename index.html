@@ -1664,7 +1664,7 @@ map.on("click",e=>{
    An action is a task with a tick box (tick = completed). Actions link to photos (one action to
    many photos, or many actions to one photo). Stored in the .json like tags; photos untouched. */
 let actions=[], nextActId=1, selActs=new Set(), actionFilter=null;
-let actShowOpen=true, actShowHold=false, actShowDone=false, rightTab="photo";   // Open / On hold / Done pills: which actions show (list + map); open on by default
+let actShowOpen=true, actShowHold=false, actShowDone=false, rightTab="photo", sideBase=null;   /* sideBase: the right panel's width without a photo (see applySideW) */   // Open / On hold / Done pills: which actions show (list + map); open on by default
 let _aIdx=null,_aArr=null;
 function actById(id){
   if(_aIdx&&_aArr===actions){ const i=_aIdx.get(id); if(i!=null){ const a=actions[i]; if(a&&a.id===id) return a; } }
@@ -2262,6 +2262,7 @@ function setTab(t){
   document.getElementById("tabGallery").classList.toggle("active",rightTab==="gallery");
   document.getElementById("tabHistory").classList.toggle("active",rightTab==="history");
   if(rightTab==="history") renderHistory();
+  applySideW();   // no photo on show: back to the base width
   if(changed) setTimeout(()=>{ map.invalidateSize(); renderClusters(); positionTools(); if(rightTab==="photo"&&lb.classList.contains("open")) refit(); },30);   // no relayout jolt when the tab is already active
 }
 document.getElementById("tabPhoto").addEventListener("click",()=>{ setTab("photo"); persistState(); });
@@ -4498,9 +4499,8 @@ function openViewer(p){
   let i=lightboxList.findIndex(x=>x.id===p.id); if(i<0){ lightboxList=[p].concat(lightboxList); i=0; }
   lightboxIndex=i;
   const wasOpen=lb.classList.contains("open");
-  if(rightTab==="gallery"){ const w=sideWNow(), w2=Math.round(Math.min(window.innerWidth*0.75,w*2));   // from the Gallery to a photo: the panel doubles — the Gallery is always half the photo view (the × halves it back)
-    if(w2>w){ document.documentElement.style.setProperty("--side-w",w2+"px"); setTimeout(()=>{ map.invalidateSize(); positionTools(); persistState(); },40); } }
   lb.classList.add("open"); if(rightTab!=="photo") setTab("photo");
+  applySideW();   // a photo shows at twice the panel's base width (the Gallery is always half the photo view)
   loadViewer(); renderMapTags();
   if(!wasOpen){ setTimeout(()=>{ map.invalidateSize(); renderClusters(); positionTools(); },30); }
 }
@@ -4693,16 +4693,19 @@ function vStep(d){ if(!lightboxList.length)return;
   if(aid!=null){ const list=actPhotos(actById(aid)); if(list.length>1){ const i=list.indexOf(p), q=list[(i+d+list.length)%list.length];
       let k=lightboxList.indexOf(q); if(k<0){ lightboxList=list.slice(); k=lightboxList.indexOf(q); } lightboxIndex=k; loadViewer(); return; } }
   lightboxIndex=(lightboxIndex+d+lightboxList.length)%lightboxList.length; loadViewer(); }
-function closeViewer(){ if(!lb.classList.contains("open")) return; if(selMark) deselectText(); closeFileInfo(); if(typeof closeFolderPop==="function") closeFolderPop(); setMarkTool("none"); setEditOpen(false); draft=null; polyPrev=null; clearHighlight(); lb.classList.remove("open"); fullToken++; if(curUrl){URL.revokeObjectURL(curUrl);curUrl=null;} lbImg.src=""; renderMapTags(); refreshActCurClasses(); setTimeout(()=>{ map.invalidateSize(); renderClusters(); positionTools(); },30); }
-/* The photo's ×: you closed it to see more map — the side panel halves (never under 300 px) and shows
-   the Gallery; opening a photo from the Gallery doubles it again (see openViewer). (Escape just closes.) */
+function closeViewer(){ if(!lb.classList.contains("open")) return; if(selMark) deselectText(); closeFileInfo(); if(typeof closeFolderPop==="function") closeFolderPop(); setMarkTool("none"); setEditOpen(false); draft=null; polyPrev=null; clearHighlight(); lb.classList.remove("open"); fullToken++; if(curUrl){URL.revokeObjectURL(curUrl);curUrl=null;} lbImg.src=""; renderMapTags(); refreshActCurClasses(); setTimeout(()=>{ map.invalidateSize(); renderClusters(); positionTools(); },30);  applySideW(); }
+/* The right panel has ONE base width — the Gallery / History / no-photo width. Showing a photo doubles it
+   (at most ¾ of the window); leave the photo any way (its ×, Escape, the Gallery or History tab) and it is
+   back to the base, so a big photo never stays covering the map. Dragging the panel's edge sets the base
+   (half of what you drag it to while a photo shows). The photo's × also switches to the Gallery. */
 function sideWNow(){ return parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--side-w"))||380; }
-document.getElementById("lbClose").addEventListener("click",()=>{
-  const w=sideWNow(), half=Math.max(300,Math.round(w/2));
-  closeViewer();
-  if(half<w) document.documentElement.style.setProperty("--side-w",half+"px");
-  setTab("gallery"); updateGallery();
-  setTimeout(()=>{ map.invalidateSize(); positionTools(); persistState(); },40); });
+function sideShowsPhoto(){ return lb.classList.contains("open")&&rightTab==="photo"; }
+function applySideW(){ if(sideBase==null) sideBase=sideWNow();
+  const w=sideShowsPhoto()?Math.round(Math.min(window.innerWidth*0.75,sideBase*2)):sideBase;
+  if(Math.abs(w-sideWNow())<1) return;
+  document.documentElement.style.setProperty("--side-w",w+"px");
+  setTimeout(()=>{ map.invalidateSize(); positionTools(); if(sideShowsPhoto()) refit(); },40); }
+document.getElementById("lbClose").addEventListener("click",()=>{ closeViewer(); setTab("gallery"); updateGallery(); persistState(); });
 document.getElementById("lbPrev").addEventListener("click",e=>{e.stopPropagation();vStep(-1);});
 document.getElementById("lbNext").addEventListener("click",e=>{e.stopPropagation();vStep(1);});
 function viewerShown(){ return lb.classList.contains("open")&&rightTab==="photo"; }   // open AND on screen (Gallery/History tabs hide it)
@@ -5450,7 +5453,7 @@ window.addEventListener("mousemove",e=>{ if(!resizing)return; let w=Math.max(240
   document.documentElement.style.setProperty("--side-w",w+"px");   // ONE width for the whole right sidebar — both tabs share it
   if(rightTab==="photo"&&lb.classList.contains("open")) refit();
   mapRelayoutSoon(); });
-window.addEventListener("mouseup",()=>{ if(resizing){resizing=false;document.body.style.userSelect="";persistState();} });
+window.addEventListener("mouseup",()=>{ if(resizing){resizing=false;document.body.style.userSelect=""; const w=sideWNow(); sideBase=Math.max(240,Math.round(sideShowsPhoto()?w/2:w)); persistState();} });   // the edge sets the base width
 
 /* file ops */
 document.getElementById("miProjects").addEventListener("click",()=>showProjectPicker());
@@ -5673,7 +5676,7 @@ document.getElementById("jsonInput").addEventListener("change",async e=>{ const 
 
 function uiSettings(){ return { baseLayer: map.hasLayer(google)?"google":map.hasLayer(esri)?"esri":"none", showNoGeo, sortBy:currentSort,
       thumb:getComputedStyle(document.documentElement).getPropertyValue("--thumb").trim(),
-      sideW:getComputedStyle(document.documentElement).getPropertyValue("--side-w").trim(),
+      sideW:(sideBase!=null?sideBase+"px":getComputedStyle(document.documentElement).getPropertyValue("--side-w").trim()),
       actW:getComputedStyle(document.documentElement).getPropertyValue("--act-w").trim()||null,
       covW:getComputedStyle(document.documentElement).getPropertyValue("--cov-w").trim()||null,
       recentTags: recentTags.slice(0,10), rightTab, actShowOpen, actShowHold, actShowDone,
@@ -5733,7 +5736,7 @@ function applyState(st){
 }
 function applyUiSettings(s){ s=s||{};
   if(s.thumb){ document.documentElement.style.setProperty("--thumb",s.thumb); document.getElementById("thumbSize").value=parseInt(s.thumb)||120; }
-  if(s.sideW) document.documentElement.style.setProperty("--side-w",s.sideW);
+  if(s.sideW){ document.documentElement.style.setProperty("--side-w",s.sideW); sideBase=parseFloat(s.sideW)||null; }
   else if(s.galleryW) document.documentElement.style.setProperty("--side-w",s.galleryW);   // older files: adopt the gallery width as the sidebar width
   if(s.actW) document.documentElement.style.setProperty("--act-w",s.actW);
   if(s.covW) document.documentElement.style.setProperty("--cov-w",s.covW);
