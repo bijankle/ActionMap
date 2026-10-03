@@ -4307,6 +4307,7 @@ function openViewer(p){
   let i=lightboxList.findIndex(x=>x.id===p.id); if(i<0){ lightboxList=[p].concat(lightboxList); i=0; }
   lightboxIndex=i;
   const wasOpen=lb.classList.contains("open");
+  if(sideWBeforeClose!=null){ document.documentElement.style.setProperty("--side-w",sideWBeforeClose+"px"); sideWBeforeClose=null; setTimeout(()=>{ map.invalidateSize(); positionTools(); },40); }   // back to the width it had before the × halved it
   lb.classList.add("open"); if(rightTab!=="photo") setTab("photo");
   loadViewer(); renderMapTags();
   if(!wasOpen){ setTimeout(()=>{ map.invalidateSize(); renderClusters(); positionTools(); },30); }
@@ -4501,7 +4502,16 @@ function vStep(d){ if(!lightboxList.length)return;
       let k=lightboxList.indexOf(q); if(k<0){ lightboxList=list.slice(); k=lightboxList.indexOf(q); } lightboxIndex=k; loadViewer(); return; } }
   lightboxIndex=(lightboxIndex+d+lightboxList.length)%lightboxList.length; loadViewer(); }
 function closeViewer(){ if(!lb.classList.contains("open")) return; if(selMark) deselectText(); closeFileInfo(); if(typeof closeFolderPop==="function") closeFolderPop(); setMarkTool("none"); setEditOpen(false); draft=null; polyPrev=null; clearHighlight(); lb.classList.remove("open"); fullToken++; if(curUrl){URL.revokeObjectURL(curUrl);curUrl=null;} lbImg.src=""; renderMapTags(); refreshActCurClasses(); setTimeout(()=>{ map.invalidateSize(); renderClusters(); positionTools(); },30); }
-document.getElementById("lbClose").addEventListener("click",closeViewer);
+/* The photo's ×: you closed it to see more map — the side panel halves (never under 300 px) and shows
+   the Gallery. The next photo you open brings the panel back to its old width. (Escape just closes.) */
+let sideWBeforeClose=null;
+function sideWNow(){ return parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--side-w"))||380; }
+document.getElementById("lbClose").addEventListener("click",()=>{
+  const w=sideWNow(), half=Math.max(300,Math.round(w/2));
+  closeViewer();
+  if(half<w){ sideWBeforeClose=w; document.documentElement.style.setProperty("--side-w",half+"px"); }
+  setTab("gallery"); updateGallery();
+  setTimeout(()=>{ map.invalidateSize(); positionTools(); persistState(); },40); });
 document.getElementById("lbPrev").addEventListener("click",e=>{e.stopPropagation();vStep(-1);});
 document.getElementById("lbNext").addEventListener("click",e=>{e.stopPropagation();vStep(1);});
 function viewerShown(){ return lb.classList.contains("open")&&rightTab==="photo"; }   // open AND on screen (Gallery/History tabs hide it)
@@ -5242,7 +5252,7 @@ window.addEventListener("mouseup",()=>{ if(actResizing){ actResizing=false; docu
 
 /* sidebar resize */
 const splitter=document.getElementById("splitter"); let resizing=false;
-splitter.addEventListener("mousedown",e=>{ resizing=true; e.preventDefault(); document.body.style.userSelect="none"; });
+splitter.addEventListener("mousedown",e=>{ resizing=true; sideWBeforeClose=null; e.preventDefault(); document.body.style.userSelect="none"; });   // sized by hand: that width sticks
 window.addEventListener("mousemove",e=>{ if(!resizing)return; let w=Math.max(240,Math.min(window.innerWidth*0.75,window.innerWidth-e.clientX-3));
   document.documentElement.style.setProperty("--side-w",w+"px");   // ONE width for the whole right sidebar — both tabs share it
   if(rightTab==="photo"&&lb.classList.contains("open")) refit();
