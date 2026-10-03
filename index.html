@@ -6504,8 +6504,8 @@ function mFocusCard(k,fromSwipe){   // bring the card up (unless the swipe alrea
     if(!fromSwipe){ mCardScrolling=true; row.scrollTo({left:c.offsetLeft-(row.clientWidth-c.offsetWidth)/2,behavior:"smooth"}); setTimeout(()=>{ mCardScrolling=false; },600); } }
   mFocusDot(k);   // swipe or tap: glide in to its dot, then the arrow
   const a=mHomeActs().find(x=>mCardKey(x)===k); if(a) mWarmCards([a]); }
-/* + New action: a card that drops from the top — the title (place, camera and gallery beside it), its
-   sub-actions, the photos — with Create in its corner. Enter on the title goes straight on to a sub-action,
+/* + New action: a card that drops from the top — the title, its sub-actions, then Place / Photo / Gallery
+   and the photos (several at once from the gallery) — with Create in its corner. Enter on the title goes straight on to a sub-action,
    Enter on a sub-action adds it and stays there for the next; Enter on an empty line puts the keyboard
    away. The map stays live below: a fixed pin in the middle of the clear space marks where the action goes —
    move the map under it. The place button folds the card away to line the pin up on the whole map. The
@@ -6519,10 +6519,10 @@ function mShowAdd(){
     +'<div class="ma-nplace"><span>'+MI.pin+'Move the map under the pin</span><button class="ma-nme" id="mPlMe" type="button" aria-label="My location">'+MI.me+'</button><button class="ma-npill" id="mPlDone" type="button">Done</button></div>'
     +'<div class="ma-add2">'
     +'<textarea class="m-in" id="mNewAct" rows="1" placeholder="What needs doing?" autocomplete="off" enterkeyhint="next">'+esc(d.t)+'</textarea>'
-    +'<div class="ma-ntools"><button class="ma-ntool" id="mAddPl" type="button">'+MI.pin+'Place</button><button class="ma-ntool" id="mAddCam" type="button">'+MI.cam+'Photo</button><button class="ma-ntool" id="mAddGal" type="button">'+MI.gal+'Gallery</button></div>'
     +'<div id="mAddSteps"></div>'
     +'<input class="m-in" id="mAddStep" placeholder="+ Add sub-action" autocomplete="off" enterkeyhint="enter" />'
-    +'<div class="ma-athumbs" id="mAddTh"></div></div>',true);
+    +'<div class="ma-ntools"><button class="ma-ntool" id="mAddPl" type="button">'+MI.pin+'Place</button><button class="ma-ntool" id="mAddCam" type="button">'+MI.cam+'Photo</button><button class="ma-ntool" id="mAddGal" type="button">'+MI.gal+'Gallery</button></div>'
+    +'<div class="ma-athumbs" id="mAddTh"></div></div>',true);   // the action, its sub-actions, then where it goes and its photos
   const inp=document.getElementById("mNewAct"), sin=document.getElementById("mAddStep"), root=document.getElementById("mroot");
   mAdding=true; root.classList.add("m-adding");
   const grow=()=>{ inp.style.height="auto"; inp.style.height=Math.min(inp.scrollHeight+2,120)+"px"; };   // the title wraps instead of scrolling sideways
