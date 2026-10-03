@@ -530,7 +530,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .act-sc{font-weight:600;font-size:var(--fl);color:var(--muted);white-space:nowrap;}   /* folded: how many sub-actions it holds */
   .act-dl{width:30px;height:30px;padding:0!important;display:grid;place-items:center;}.act-dl svg{width:17px;height:17px;}   /* export to Excel + Save, beside the heading */
   .act-head .title{margin-right:3px;}
-  .act-dl.act-xl{width:36px;height:32px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;} .act-dl.act-xl svg{width:14px;height:14px;} .act-dl.act-xl b{font:800 8.5px/1 Arial,sans-serif;color:#1d6f42;letter-spacing:.3px;margin-top:1px;}   /* says it's an Excel file */
+  .act-dl.act-xl{width:36px;height:32px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;} .act-dl.act-xl svg{width:14px;height:14px;} .act-dl.act-xl b{font:800 8.5px/1 Arial,sans-serif;color:#1d6f42;letter-spacing:.3px;margin-top:1px;} .act-dl.act-pdf b{color:#c0392b;}   /* says it's an Excel file */
   .act-dl.act-save{position:relative;width:32px;height:32px;} .act-save .sd{position:absolute;right:-3px;top:-3px;width:9px;height:9px;border-radius:50%;background:#3BA55C;box-shadow:0 0 0 1.5px #fff;}
   .act-save.unsaved .sd{background:#E8A33D;} .act-save.bad .sd{background:#d64541;} .act-save.busy svg{opacity:.55;}
   body.view-only .act-save{display:none!important;}
@@ -1176,7 +1176,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
 
 <div class="main tab-photo" id="main">
   <aside class="actpanel" id="actPanel">
-    <div class="act-head"><span class="title">Actions</span><button class="act-tgl act-dl act-xl" id="actXlsx" type="button" title="Export to Excel: every problem as a row, status, sub-actions and the marked-up photos" aria-label="Export to Excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10.5l5 5 5-5"/><path d="M5 20h14"/></svg><b>XLSX</b></button><button class="act-tgl act-dl act-save" id="actSave" type="button" title="All saved" aria-label="Save now"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"/><path d="M8 4v5h7V4"/><rect x="8" y="13" width="8" height="5" rx="1"/></svg><span class="sd"></span></button><span style="flex:1"></span>
+    <div class="act-head"><span class="title">Actions</span><button class="act-tgl act-dl act-xl" id="actXlsx" type="button" title="Export to Excel: every problem as a row, status, sub-actions and the marked-up photos" aria-label="Export to Excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10.5l5 5 5-5"/><path d="M5 20h14"/></svg><b>XLSX</b></button><button class="act-tgl act-dl act-xl act-pdf" id="actPdf" type="button" title="Export to PDF: the same as the Excel export, landscape \u2014 every action with its status, sub-actions and photos, then the sub-actions list" aria-label="Export to PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10.5l5 5 5-5"/><path d="M5 20h14"/></svg><b>PDF</b></button><button class="act-tgl act-dl act-save" id="actSave" type="button" title="All saved" aria-label="Save now"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"/><path d="M8 4v5h7V4"/><rect x="8" y="13" width="8" height="5" rx="1"/></svg><span class="sd"></span></button><span style="flex:1"></span>
       <button class="act-tgl" id="actShowOpen" title="Open — show the open actions, in this list and on the map (orange dots)"><i class="af-dot open"></i>Open<span class="af-n"></span></button>
       <button class="act-tgl" id="actShowHold" title="On hold — also show the actions that are on hold, in this list and on the map (white dots with an orange ring)"><i class="af-dot hold"></i>On hold<span class="af-n"></span></button>
       <button class="act-tgl" id="actShowDone" title="Done — also show finished actions, in this list and on the map (grey dots)"><i class="af-dot done"></i>Done<span class="af-n"></span></button>
@@ -2224,10 +2224,11 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
   document.getElementById("miRedo").addEventListener("click",()=>redoLatest(lb.classList.contains("open")));
   document.getElementById("miXlsx").addEventListener("click",()=>exportActionsXlsx());
   document.getElementById("actXlsx").addEventListener("click",()=>exportActionsXlsx());
+  document.getElementById("actPdf").addEventListener("click",()=>exportActionsPdf());
   document.getElementById("actSave").addEventListener("click",()=>{ if(!canEdit()) return;   // send it now (autosave would within a second anyway)
     if(onDirty()||ON.err){ clearTimeout(ON.saveT); ON.err=null; onlineSave(); } pumpUploads(); updateSaveBtn();
     if(!onDirty()&&!ON.busy&&!photos.some(p=>!p.h&&!p._upDead)){ loadNote("\u2713 All saved"); setTimeout(()=>loadNote(""),1800); } });
-  document.getElementById("miReport").addEventListener("click",()=>openPendingReport());
+  document.getElementById("miReport").addEventListener("click",()=>exportActionsPdf());
   document.getElementById("miPush")?.addEventListener("click",()=>{ const c=ghCfg(); if(!c.token){ openSettings(); return; } exportMobile(true); loadNote("Syncing to the phone\u2026"); setTimeout(()=>loadNote(""),2500); });
 })();
 /* ---- Find an action: one box searches numbers, titles and sub-actions across
@@ -3240,63 +3241,76 @@ async function exportMobile(manual){
   if(_expAgain){ _expAgain=false; scheduleAutoExport(1500); }
 }
 document.getElementById("btnMobileExport")?.addEventListener("click",()=>exportMobile(true));
-/* ---- Pending actions report: a print-ready document (Save as PDF from the print dialog).
-   Cover + linked table of contents + one section per open/on-hold action; a fixed
-   "Back to contents" link repeats on every printed page. ---- */
-async function openPendingReport(){
-  const pend=actions.filter(a=>!a.done);
-  const w=window.open("","_blank");   // opened inside the click so no popup blocker interferes
-  if(!w){ alert("Your browser blocked the report window — allow pop-ups for this site and try again."); return; }
-  w.document.write('<!doctype html><title>Building report…</title><body style="font:15px system-ui;padding:40px;color:#333">Building the report… preparing '+pend.length+' action'+(pend.length===1?'':'s')+'.</body>');
-  if(isOnline()) await ensurePreviews(pend.flatMap(a=>actPhotos(a)));
-  const proj=String(loadedJsonName||folderName||"ActionMap").replace(/\.json$/i,"");
-  const now=new Date(), nOpen=pend.filter(a=>!a.hold).length, nHold=pend.length-nOpen;
-  const fmtD=t=>t?new Date(t).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"}):"";
-  let toc="", body="";
-  for(const a of pend){
-    const ps=actPhotos(a), st=a.steps||[], sd=st.filter(x=>x.d).length, id="a"+actNo(a);
-    const status=a.hold?'<span class="badge hold">On hold</span>':'<span class="badge open">Open</span>';
-    toc+='<tr><td class="n"><a href="#'+id+'">'+actNo(a)+'</a></td><td><a href="#'+id+'">'+esc(a.text)+'</a></td><td>'+status+'</td><td class="r">'+(st.length?sd+' / '+st.length:'—')+'</td><td class="r">'+ps.length+'</td></tr>';
-    let imgs="";
-    for(const ph of ps){ let src=null; try{ src=await packPreview(ph); }catch(e){}
-      imgs+='<figure>'+(src?'<img src="'+src+'" alt="">':'<div class="noimg">No image</div>')+'<figcaption><b>'+esc(ph.name||"")+'</b>'+(ph.time?' · '+fmtD(ph.time):'')+'</figcaption></figure>'; }
-    const loc=a.loc||(ps.find(p=>p.lat!=null&&!p.noGps)||null);
-    body+='<section class="act" id="'+id+'"><div class="ah"><div class="num">'+actNo(a)+'</div><h2>'+esc(a.text)+'</h2>'+status+'</div>'
-      +'<div class="meta">'+(a.created?'Created '+fmtD(a.created)+' · ':'')+ps.length+' photo'+(ps.length===1?'':'s')
-      +(loc?' · Location '+(+loc.lat).toFixed(6)+', '+(+loc.lng).toFixed(6)+' (<a href="https://www.google.com/maps?q='+(+loc.lat)+','+(+loc.lng)+'">map</a>)':'')+'</div>'
-      +(st.length?'<h3>Sub-actions ('+sd+' of '+st.length+' done)</h3><table class="steps">'+st.map((x,i)=>'<tr class="'+(x.d?'done':'')+'"><td class="l">'+stepLetter(i)+'.</td><td class="b">'+(x.d?'☑':'☐')+'</td><td>'+esc(x.t)+'</td></tr>').join('')+'</table>':'<p class="none">No sub-actions.</p>')
-      +(imgs?'<h3>Photos</h3><div class="grid">'+imgs+'</div>':'')
-      +'<p class="back"><a href="#toc">↑ Back to contents</a></p></section>';
-  }
-  const css=`@page{size:A4;margin:14mm 12mm 16mm;} *{box-sizing:border-box} body{font:11pt/1.45 'Segoe UI',system-ui,-apple-system,sans-serif;color:#1e1f22;margin:0}
-  a{color:#8f600b;text-decoration:none} .wrap{max-width:190mm;margin:0 auto;padding:0 4mm}
-  .cover{min-height:250mm;display:flex;flex-direction:column;justify-content:center;border-bottom:3px solid #e8b44a;page-break-after:always}
-  .cover h1{font-size:28pt;margin:0 0 6mm} .cover .sub{font-size:13pt;color:#555} .cover .stats{margin-top:10mm;font-size:12pt}
-  #toc{page-break-after:always;padding-top:4mm} #toc h1{font-size:18pt;margin:0 0 5mm} table.toc{width:100%;border-collapse:collapse} .toc td,.toc th{padding:5px 6px;border-bottom:1px solid #d9dee5;vertical-align:top;text-align:left}
-  .toc th{font-size:9pt;text-transform:uppercase;letter-spacing:.5px;color:#666} .toc .n{font-family:'Roboto Mono',Consolas,monospace;font-weight:700;width:44px} .toc .r{text-align:right;white-space:nowrap}
-  .act{page-break-before:always;padding-top:2mm} .ah{display:flex;align-items:center;gap:10px;border-bottom:2px solid #e8b44a;padding-bottom:3mm}
-  .ah .num{font:700 14pt 'Roboto Mono',Consolas,monospace;background:#3BA55C;color:#fff;border-radius:6px;padding:2px 8px} .ah h2{font-size:16pt;margin:0;flex:1}
-  .badge{font-size:9pt;font-weight:700;border-radius:5px;padding:2px 8px;white-space:nowrap} .badge.open{background:#E7F6EC;color:#237042} .badge.hold{background:#FDF3D2;color:#7A5C00}
-  .meta{color:#555;font-size:9.5pt;margin:2mm 0 3mm} h3{font-size:11pt;margin:5mm 0 2mm;color:#333}
-  table.steps{border-collapse:collapse;width:100%} .steps td{padding:3px 5px;vertical-align:top;border-bottom:1px solid #f0f1f3} .steps .l{font-family:monospace;color:#8f600b;width:28px} .steps .b{width:22px;font-size:12pt} .steps tr.done td{color:#777;text-decoration:line-through} .steps tr.done .b,.steps tr.done .l{text-decoration:none}
-  .none{color:#888;font-style:italic}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:4mm} figure{margin:0;break-inside:avoid;page-break-inside:avoid} figure img{width:100%;max-height:85mm;object-fit:contain;background:#f3f4f6;border:1px solid #d9dee5;border-radius:4px;display:block}
-  figcaption{font-size:8.5pt;color:#444;margin-top:1mm} .noimg{height:40mm;background:#f3f4f6;border:1px dashed #ccc;display:flex;align-items:center;justify-content:center;color:#999}
-  .back{margin-top:5mm;font-size:9pt}
-  .tocfix{position:fixed;right:0;bottom:0;font-size:8.5pt;background:#fff;padding:2px 6px;border:1px solid #d7d9dd;border-radius:4px}
-  .bar{position:sticky;top:0;background:#e8b44a;color:#1a1307;padding:10px 14px;display:flex;gap:14px;align-items:center;font-size:10pt;z-index:5} .bar button{font:inherit;font-weight:700;border:0;border-radius:6px;padding:6px 14px;cursor:pointer;background:#1d2430;color:#fff}
-  @media print{.bar{display:none}}`;
-  const html='<!doctype html><html><head><meta charset="utf-8"><title>'+esc(proj)+' — pending actions '+now.toISOString().slice(0,10)+'</title>'
-    +'<style>'+css+'</style></head><body>'
-    +'<div class="bar"><button onclick="print()">Save as PDF / Print</button><span>In the print dialog choose <b>Save as PDF</b>. Contents links work in the saved PDF.</span></div>'
-    +'<a class="tocfix" href="#toc">↑ Contents</a>'
-    +'<div class="wrap"><div class="cover"><h1>'+esc(proj)+'</h1><div class="sub">Pending actions report</div>'
-    +'<div class="stats"><b>'+pend.length+'</b> pending action'+(pend.length===1?'':'s')+' — '+nOpen+' open, '+nHold+' on hold<br>Generated '+now.toLocaleString(undefined,{day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"})+' by '+esc(userName())+'</div></div>'
-    +'<div id="toc"><h1>Contents</h1><table class="toc"><tr><th>#</th><th>Action</th><th>Status</th><th class="r">Sub-actions</th><th class="r">Photos</th></tr>'+(toc||'<tr><td colspan="5">No pending actions.</td></tr>')+'</table></div>'
-    +body+'</div><script>window.addEventListener("load",()=>setTimeout(()=>{ try{ print(); }catch(e){} },500));<\/script></body></html>';
-  w.document.open(); w.document.write(html); w.document.close();
-  logChange("Created the pending actions report ("+pend.length+" action"+(pend.length===1?"":"s")+")");
-}
+/* ---- Export to PDF: the Excel export on paper — landscape A4 throughout. Page 1+ "Problems": #, problem,
+   status, sub-actions, then the marked-up photos (they wrap onto more lines when there are many, so the
+   row grows to show them all). Then "Sub-actions": one line each under its action, dated from History. ---- */
+let _jspdfP=null;
+function loadJsPDF(){ if(window.jspdf) return Promise.resolve();
+  if(!_jspdfP) _jspdfP=new Promise((res,rej)=>{ const sc=document.createElement("script"); sc.src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
+    sc.onload=res; sc.onerror=()=>{ _jspdfP=null; rej(new Error("could not load the PDF library — are you online?")); }; document.head.appendChild(sc); });
+  return _jspdfP; }
+async function exportActionsPdf(){
+  const say=t=>loadNote(t?"PDF export — "+t:"");
+  if(!actions.length){ say("nothing to export"); setTimeout(()=>say(""),1800); return; }
+  if(exportActionsPdf._busy) return; exportActionsPdf._busy=true;
+  try{
+    say("loading…"); await loadJsPDF();
+    const doc=new window.jspdf.jsPDF({orientation:"landscape",unit:"mm",format:"a4"});
+    const W=297, H=210, M=10, now=new Date(), proj=String(ON.name||loadedJsonName||"ActionMap").replace(/\.[^.]+$/,"");
+    const order=actions.slice().sort((x,y)=>actRank(x)-actRank(y));
+    const INK=[30,31,34], MUT=[110,110,110], HEAD=[29,111,66], COL={Done:[30,107,58],Open:[29,36,48],"On hold":[138,90,0]}, BG={Done:[227,244,232],"On hold":[253,241,220]};
+
+    const fmt=t=>{ if(!t) return ""; const d=new Date(t), p=n=>String(n).padStart(2,"0"); return p(d.getDate())+"/"+p(d.getMonth()+1)+"/"+d.getFullYear()+" "+p(d.getHours())+":"+p(d.getMinutes()); };
+    const stamp=fmt(now.getTime());
+    const title=t=>{ doc.setFont("helvetica","bold"); doc.setFontSize(15); doc.setTextColor(...INK); doc.text(proj+" — "+t,M,M+5);
+      doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(...MUT); doc.text("Exported "+stamp,M,M+10); doc.setDrawColor(...INK); doc.setLineWidth(.5); doc.line(M,M+12.5,W-M,M+12.5); return M+15; };
+    const header=(y,cols)=>{ doc.setFillColor(...HEAD); doc.rect(M,y,W-2*M,7,"F"); doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.setTextColor(255,255,255);
+      cols.forEach(c=>doc.text(c.h,c.x+1.5,y+4.8)); return y+7; };
+
+    /* ---- Problems */
+    const C1=[{h:"#",x:M,w:12},{h:"Problem",x:M+12,w:52},{h:"Status",x:M+64,w:24},{h:"Sub-actions",x:M+88,w:78},{h:"Photos",x:M+166,w:W-M-(M+166)}];
+    const PW=C1[4].w, PC=3, GAP=2, TW=(PW-2*GAP-(PC-1)*GAP)/PC, TH=TW*0.75;   // three photos a line; more wrap onto further lines
+    let y=header(title("Problems"),C1);
+    for(let k=0;k<order.length;k++){ const a=order[k]; say("page layout "+(k+1)+" / "+order.length+"…");
+      const stat=a.done?"Done":a.hold?"On hold":"Open";
+      doc.setFont("helvetica","bold"); doc.setFontSize(9); const tl=doc.splitTextToSize(a.text||"",C1[1].w-3);
+      doc.setFont("helvetica","normal"); doc.setFontSize(8.5);
+      const sl=[]; (a.steps||[]).forEach((x,i)=>{ doc.splitTextToSize(stepLetter(i)+". "+x.t,C1[3].w-8).forEach((l,j)=>sl.push({l,first:j===0,d:!!x.d})); });
+      const ps=actPhotos(a), srcs=[]; for(const ph of ps){ let u=null; try{ u=await annotatedPreview(ph); }catch(e){} if(u) srcs.push(u); }
+      const pRows=Math.ceil(srcs.length/PC), photoH=pRows?pRows*TH+(pRows-1)*GAP+2*GAP:0;
+      const rowH=Math.max(12,tl.length*4.2+4,sl.length*3.9+4,photoH);
+      if(y+rowH>H-M){ doc.addPage(); y=header(title("Problems (continued)"),C1); }
+      if(BG[stat]){ doc.setFillColor(...BG[stat]); doc.rect(C1[2].x,y,C1[2].w,rowH,"F"); }
+      doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.setTextColor(143,96,11); doc.text(actNo(a),C1[0].x+1.5,y+5);
+      doc.setTextColor(...INK); doc.text(tl,C1[1].x+1.5,y+5,{lineHeightFactor:1.35});
+      doc.setTextColor(...COL[stat]); doc.text(stat,C1[2].x+1.5,y+5); if(a.done&&a.doneAt){ doc.setFont("helvetica","normal"); doc.setFontSize(7.5); doc.text(fmt(a.doneAt),C1[2].x+1.5,y+9); }
+      doc.setFont("helvetica","normal"); doc.setFontSize(8.5);
+      sl.forEach((r,i)=>{ const yy=y+5+i*3.9; doc.setTextColor(...(r.d?[140,140,140]:INK));
+        if(r.first){ doc.setDrawColor(120,120,120); doc.setLineWidth(.25); doc.rect(C1[3].x+1.5,yy-2.6,2.8,2.8); if(r.d){ doc.setDrawColor(30,107,58); doc.setLineWidth(.45); doc.line(C1[3].x+2,yy-1.2,C1[3].x+2.8,yy-.4); doc.line(C1[3].x+2.8,yy-.4,C1[3].x+4.1,yy-2.3); } }
+        doc.text(r.l,C1[3].x+6,yy); if(r.d){ doc.setDrawColor(140,140,140); doc.setLineWidth(.2); doc.line(C1[3].x+6,yy-1.1,C1[3].x+6+doc.getTextWidth(r.l),yy-1.1); } });
+      for(let i=0;i<srcs.length;i++){ const cx=C1[4].x+GAP+(i%PC)*(TW+GAP), cy=y+GAP+Math.floor(i/PC)*(TH+GAP);
+        try{ const im=await loadImg(srcs[i]); const sc=Math.min(TW/im.width,TH/im.height), w=im.width*sc, h=im.height*sc;
+          doc.setFillColor(243,244,246); doc.rect(cx,cy,TW,TH,"F"); doc.addImage(srcs[i],"JPEG",cx+(TW-w)/2,cy+(TH-h)/2,w,h,undefined,"FAST"); }catch(e){} }
+      doc.setDrawColor(221,221,221); doc.setLineWidth(.2); doc.line(M,y+rowH,W-M,y+rowH); y+=rowH; }
+    /* ---- Sub-actions */
+    doc.addPage();
+    const C2=[{h:"Date & time",x:M,w:30},{h:"Status",x:M+30,w:20},{h:"#",x:M+50,w:11},{h:"Action / sub-action",x:M+61,w:136},{h:"Last 24 h",x:M+197,w:17},{h:"Notes",x:M+214,w:W-M-(M+214)}];
+    y=header(title("Sub-actions"),C2);
+    const line=(r,bold,shade)=>{ doc.setFont("helvetica",bold?"bold":"normal"); doc.setFontSize(8.5); const tl=doc.splitTextToSize(r.x,C2[3].w-3-(bold?0:5)), h=Math.max(6,tl.length*3.9+2.4);
+      if(y+h>H-M){ doc.addPage(); y=header(title("Sub-actions (continued)"),C2); }
+      if(shade){ doc.setFillColor(246,241,230); doc.rect(M,y,W-2*M,h,"F"); }
+      if(BG[r.st]){ doc.setFillColor(...BG[r.st]); doc.rect(C2[1].x,y,C2[1].w,h,"F"); }
+      doc.setTextColor(...INK); doc.text(fmt(r.t),C2[0].x+1.5,y+4.2); doc.setTextColor(...COL[r.st]); doc.text(r.st,C2[1].x+1.5,y+4.2);
+      doc.setTextColor(...INK); doc.text(r.no,C2[2].x+1.5,y+4.2); doc.text(tl,C2[3].x+1.5+(bold?0:5),y+4.2,{lineHeightFactor:1.35}); if(r.c) doc.text("Yes",C2[4].x+4,y+4.2);
+      doc.setDrawColor(225,228,232); doc.setLineWidth(.15); doc.line(M,y+h,W-M,y+h); y+=h; };
+    for(const g of subActionRows(order,now.getTime())){ line({t:g.t,st:g.st,no:g.no,x:g.a.text,c:g.recent},true,true);
+      for(const x of g.subs) line({t:x.t,st:x.st,no:g.no,x:x.text,c:g.recent},false,false); }
+    const n=doc.getNumberOfPages(); for(let i=1;i<=n;i++){ doc.setPage(i); doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setTextColor(...MUT); doc.text("Page "+i+" of "+n,W-M,M+10,{align:"right"}); }
+    say("saving…");
+    doc.save(proj+"-problems-"+now.toISOString().slice(0,10)+".pdf");
+    say("✓ saved "+order.length+" problem"+(order.length===1?"":"s")); setTimeout(()=>say(""),2600);
+  }catch(err){ say("failed: "+(err&&err.message||err)); setTimeout(()=>say(""),6000); }
+  finally{ exportActionsPdf._busy=false; } }
 /* ---- Copy an action for a phone: ONE portrait image (2160x3840) — title + satellite map, the main
    photo, the other photos tiled below — every photo whole (black around it, never cropped), from the
    original where reachable, with markup burned in, straight to the clipboard (desktop) or the share sheet (phone). ---- */
