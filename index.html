@@ -1393,7 +1393,8 @@ let hlMarker=null;
 function mkHlDot(lat,lng,r){   // the one selection visual, used everywhere: a red arrow pointing down at the dot / bubble (like the phone's).
   r=r||10;                    // A marker, not a map shape — so it keeps its size while the map zooms (the old gold ring blew up mid-zoom).
   return L.marker([lat,lng],{interactive:false,keyboard:false,zIndexOffset:4000,icon:L.divIcon({className:"",html:'<div class="sel-arrow" style="--r:'+r+'px"><i></i><b></b></div>',iconSize:[0,0],iconAnchor:[0,0]})}); }
-function highlightDot(p){ clearHighlight(); if(!p||p.lat==null)return; hlMarker=mkHlDot(p.lat,p.lng).addTo(highlightLayer); }
+let _openInArrowed=false;   // the open photo sits inside a bubble that already wears the arrow: one arrow, not two
+function highlightDot(p){ clearHighlight(); if(!p||p.lat==null)return; hlMarker=mkHlDot(p.lat,p.lng).addTo(highlightLayer); if(_openInArrowed) hlMarker.setOpacity(0); }
 function clearHighlight(){ if(hlMarker){ highlightLayer.removeLayer(hlMarker); hlMarker=null; } }
 function highlightCurrent(){ if(lb.classList.contains("open")&&lightboxList[lightboxIndex]) highlightDot(lightboxList[lightboxIndex]); else clearHighlight(); }
 // Dots re-cluster immediately when the map settles on a new view (responsive, as originally);
@@ -1437,6 +1438,7 @@ function renderClusters(){
   let w=Math.max(-180,b.getWest()),e=Math.min(180,b.getEast()),s=Math.max(-85,b.getSouth()),n=Math.min(85,b.getNorth());
   const z=Math.round(map.getZoom());
   let cl; try{ cl=cluster.getClusters([w,s,e,n],z); }catch(err){ return; }
+  _openInArrowed=false;
   for(const c of cl){
     const [lng,lat]=c.geometry.coordinates;
     if(c.properties.cluster){
@@ -1471,7 +1473,7 @@ function renderClusters(){
         const ez=Math.min(cluster.getClusterExpansionZoom(cid),map.getMaxZoom()); map.flyTo([lat,lng],ez,{duration:DESK_FLY});   // fallback
       });
       m.on("contextmenu",e=>{ L.DomEvent.stop(e.originalEvent); uiClickT=Date.now(); try{ openBubbleMenu(cluster.getLeaves(cid,Infinity).map(f=>f.properties.pid),[lat,lng],e.originalEvent); }catch(err){} });
-      if(c.properties.hl){ ring=mkHlDot(lat,lng,size/2); markerLayer.addLayer(ring); }   // cluster holds selected photos: the bubble itself flashes
+      if(c.properties.hl){ ring=mkHlDot(lat,lng,size/2); markerLayer.addLayer(ring); if(openIn) _openInArrowed=true; }   // cluster holds selected photos: the bubble itself flashes
       markerLayer.addLayer(m);
     } else {
       const p=photoById(c.properties.pid); if(!p) continue;
@@ -1479,6 +1481,7 @@ function renderClusters(){
     }
   }
   drawActionPins();
+  if(hlMarker) hlMarker.setOpacity(_openInArrowed?0:1);
 }
 function drawActionPins(){   // actions placed at a map spot: a green numbered pin (open ones, plus any selected)
   for(const a of actions){ if(!a.loc) continue; const sel=selActs.has(a.id); if(!actVisible(a)) continue;
@@ -1549,7 +1552,7 @@ map.on("mousemove",e=>{
   if(hlMarker&&dotDrag.viewerPhoto) hlMarker.setLatLng(e.latlng);
   /* dropping onto another dot groups them: the nearest other dot within reach gets a gold ring */
   const moving=new Set(dotDrag.group?dotDrag.group:(dotDrag.p?[dotDrag.p.id]:[])), cp=map.latLngToContainerPoint(e.latlng);
-  let best=null, bd=26; for(const q of photos){ if(moving.has(q.id)||!onMapNow(q)) continue; const d=map.latLngToContainerPoint([q.lat,q.lng]).distanceTo(cp); if(d<bd){ bd=d; best=q; } }
+  let best=null, bd=26; const hasAct=q=>(q.acts||[]).some(id=>actById(id)); for(const q of photos){ if(moving.has(q.id)||!onMapNow(q)) continue; const d=map.latLngToContainerPoint([q.lat,q.lng]).distanceTo(cp); if(d<bd-0.5||(d<=bd+0.5&&best&&hasAct(q)&&!hasAct(best))){ bd=d; best=q; } }   // on a shared spot, an action's photo wins over a loose one
   dotDrag.snap=best; if(best){ if(!snapMk) snapMk=L.marker([best.lat,best.lng],{interactive:false,zIndexOffset:2000,icon:L.divIcon({className:"",html:'<div class="snap-ring"></div><div class="snap-tip">Drop to group with this photo</div>',iconSize:[52,52],iconAnchor:[26,26]})}).addTo(map); else snapMk.setLatLng([best.lat,best.lng]); }
   else if(snapMk){ map.removeLayer(snapMk); snapMk=null; }
 });
@@ -1560,7 +1563,7 @@ function dropSnap(d){   // the dragged photo(s) take the target's exact spot (tr
   const live=ids=>(ids||[]).filter(id=>actById(id));
   for(const p of moved){ keep(p); if(p.glat==null&&!p.noGps){ p.glat=p.lat; p.glng=p.lng; } p.lat=T.lat; p.lng=T.lng; }
   const fixOrder=a=>{ if(!Array.isArray(a.porder)||!a.porder.length) a.porder=actPhotos(a).map(x=>x.id); };   // freeze the order first, so the newcomer goes to the BACK (the cover stays)
-  const dragActs=[...new Set(moved.flatMap(p=>live(p.acts)))], tActs=live(T.acts);
+  const dragActs=[...new Set(moved.flatMap(p=>live(p.acts)))], tActs=[...new Set(photos.filter(q=>q.lat===T.lat&&q.lng===T.lng&&!moved.includes(q)).flatMap(q=>live(q.acts)))];   // the action(s) of ANY photo on the target spot — a loose photo stacked on top must not hide them
   if(dragActs.length){ for(const aid of dragActs){ if((T.acts||[]).includes(aid)) continue; fixOrder(actById(aid)); keep(T); T.acts=(T.acts||[]).concat([aid]); } }   // dragged an action's photo: the target joins that action (and keeps its own)
   else if(tActs.length){ for(const p of moved) for(const aid of tActs){ if((p.acts||[]).includes(aid)) continue; fixOrder(actById(aid)); p.acts=(p.acts||[]).concat([aid]); } }   // dragged a loose photo onto an action's: it joins that action
   for(const [id,before] of snap) items.push({id,before,after:snapshotTags(photoById(id))});
