@@ -3315,8 +3315,7 @@ async function exportMobile(manual){
 }
 document.getElementById("btnMobileExport")?.addEventListener("click",()=>exportMobile(true));
 /* ---- Export to PDF: the Excel export on paper — landscape A4 throughout. Page 1+ "Problems": #, problem,
-   status, sub-actions, then the marked-up photos (they wrap onto more lines when there are many, so the
-   row grows to show them all). Then "Sub-actions": one line each under its action, dated from History. ---- */
+   status, sub-actions, then the marked-up photos in one line as tall as the row (zoom the PDF for detail). Then "Sub-actions": one line each under its action, dated from History. ---- */
 let _jspdfP=null;
 function loadJsPDF(){ if(window.jspdf) return Promise.resolve();
   if(!_jspdfP) _jspdfP=new Promise((res,rej)=>{ const sc=document.createElement("script"); sc.src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js";
@@ -3342,16 +3341,16 @@ async function exportActionsPdf(){
 
     /* ---- Problems */
     const C1=[{h:"#",x:M,w:12},{h:"Problem",x:M+12,w:52},{h:"Status",x:M+64,w:24},{h:"Sub-actions",x:M+88,w:78},{h:"Photos",x:M+166,w:W-M-(M+166)}];
-    const PW=C1[4].w, PC=3, GAP=2, TW=(PW-2*GAP-(PC-1)*GAP)/PC, TH=TW*0.75;   // three photos a line; more wrap onto further lines
+    const PW=C1[4].w, GAP=1.5;   // photos: one line, as tall as the row (its text sets the height); too many for the width → they all shrink to fit
     let y=header(title("Problems"),C1);
     for(let k=0;k<order.length;k++){ const a=order[k]; say("page layout "+(k+1)+" / "+order.length+"…");
       const stat=a.done?"Done":a.hold?"On hold":"Open";
       doc.setFont("helvetica","bold"); doc.setFontSize(9); const tl=doc.splitTextToSize(a.text||"",C1[1].w-3);
       doc.setFont("helvetica","normal"); doc.setFontSize(8.5);
       const sl=[]; (a.steps||[]).forEach((x,i)=>{ doc.splitTextToSize(stepLetter(i)+". "+x.t,C1[3].w-8).forEach((l,j)=>sl.push({l,first:j===0,d:!!x.d})); });
-      const ps=actPhotos(a), srcs=[]; for(const ph of ps){ let u=null; try{ u=await annotatedPreview(ph); }catch(e){} if(u) srcs.push(u); }
-      const pRows=Math.ceil(srcs.length/PC), photoH=pRows?pRows*TH+(pRows-1)*GAP+2*GAP:0;
-      const rowH=Math.max(12,tl.length*4.2+4,sl.length*3.9+4,photoH);
+      const ps=actPhotos(a), ims=[]; for(const ph of ps){ let u=null; try{ u=await annotatedPreview(ph); }catch(e){} if(!u) continue; try{ const im=await loadImg(u); ims.push({u,ar:(im.width/im.height)||1.33}); }catch(e){} }
+      const rowH=Math.max(12,tl.length*4.2+4,sl.length*3.9+4);
+      let ph=rowH-2*GAP; const totW=ims.reduce((t,x)=>t+ph*x.ar+GAP,0)-GAP; if(totW>PW-2*GAP) ph*= (PW-2*GAP)/totW;
       if(y+rowH>H-M){ doc.addPage(); y=header(title("Problems (continued)"),C1); }
       if(BG[stat]){ doc.setFillColor(...BG[stat]); doc.rect(C1[2].x,y,C1[2].w,rowH,"F"); }
       doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.setTextColor(143,96,11); doc.text(actNo(a),C1[0].x+1.5,y+5);
@@ -3361,9 +3360,7 @@ async function exportActionsPdf(){
       sl.forEach((r,i)=>{ const yy=y+5+i*3.9; doc.setTextColor(...(r.d?[140,140,140]:INK));
         if(r.first){ doc.setDrawColor(120,120,120); doc.setLineWidth(.25); doc.rect(C1[3].x+1.5,yy-2.6,2.8,2.8); if(r.d){ doc.setDrawColor(30,107,58); doc.setLineWidth(.45); doc.line(C1[3].x+2,yy-1.2,C1[3].x+2.8,yy-.4); doc.line(C1[3].x+2.8,yy-.4,C1[3].x+4.1,yy-2.3); } }
         doc.text(r.l,C1[3].x+6,yy); if(r.d){ doc.setDrawColor(140,140,140); doc.setLineWidth(.2); doc.line(C1[3].x+6,yy-1.1,C1[3].x+6+doc.getTextWidth(r.l),yy-1.1); } });
-      for(let i=0;i<srcs.length;i++){ const cx=C1[4].x+GAP+(i%PC)*(TW+GAP), cy=y+GAP+Math.floor(i/PC)*(TH+GAP);
-        try{ const im=await loadImg(srcs[i]); const sc=Math.min(TW/im.width,TH/im.height), w=im.width*sc, h=im.height*sc;
-          doc.setFillColor(243,244,246); doc.rect(cx,cy,TW,TH,"F"); doc.addImage(srcs[i],"JPEG",cx+(TW-w)/2,cy+(TH-h)/2,w,h,undefined,"FAST"); }catch(e){} }
+      { let cx=C1[4].x+GAP; for(const x of ims){ const w=ph*x.ar; try{ doc.addImage(x.u,"JPEG",cx,y+GAP,w,ph,undefined,"FAST"); }catch(e){} cx+=w+GAP; } }
       doc.setDrawColor(221,221,221); doc.setLineWidth(.2); doc.line(M,y+rowH,W-M,y+rowH); y+=rowH; }
     /* ---- Sub-actions */
     doc.addPage();
