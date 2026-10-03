@@ -875,7 +875,18 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-cl.hold{border-style:dashed;}
   .ma-cl i{font-style:normal;font-size:12px;font-weight:700;margin-right:1px;}   /* bubbles count actions: ×3 */
   .ma-cl.done{border-color:#6b7580;color:#3f4750;}
-  .ma-ov{position:absolute;inset:0;z-index:800;background:#1d243040;}
+  .ma-ov{position:absolute;inset:0;z-index:800;background:#1d243040;} .ma-ov.clear{background:none;}
+  .ma-sheet.top{top:0;bottom:auto;overflow-x:hidden;border-radius:0 0 22px 22px;box-shadow:0 6px 24px #1d243040;padding:calc(10px + env(safe-area-inset-top)) 0 0;max-height:72%;}
+  .ma-sheet.top .ma-handle{margin:8px auto 10px;}
+  .ma-ntop{display:flex;align-items:center;gap:10px;padding:2px 16px 10px 20px;} .ma-ntop b{flex:1;font-size:21px;font-weight:800;}
+  .ma-npill{display:flex;align-items:center;gap:6px;height:40px;padding:0 16px;border:0;border-radius:20px;background:var(--gold);color:var(--ink);font:inherit;font-size:16px;font-weight:800;box-shadow:none;}
+  .ma-npill svg{width:18px;height:18px;}
+  .ma-nrow{display:flex;gap:8px;align-items:flex-start;} .ma-add2 .ma-nrow textarea{flex:1 1 0;width:auto;min-width:0;resize:none;overflow:hidden;line-height:1.35;}
+  .ma-nico{flex-shrink:0;width:48px;height:48px;padding:0;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--ink);display:grid;place-items:center;box-shadow:none;}
+  .ma-nico svg{width:24px;height:24px;}
+  .m-in.need{border-color:#d0573f;box-shadow:0 0 0 3px #d0573f22;}
+  .ma-newpin{position:absolute;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;background:#F28C28;border:3px solid #fff;box-sizing:border-box;box-shadow:0 0 0 2px #9A520B,0 2px 6px #0006;animation:mapin 1.4s ease-in-out infinite;}
+  @keyframes mapin{50%{box-shadow:0 0 0 2px #9A520B,0 0 0 10px #F28C2833,0 2px 6px #0006;}}   /* where the new action will go */
   .ma-sheet{position:absolute;left:0;right:0;bottom:0;z-index:801;background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -4px 20px #1d24302a;padding:0 0 calc(18px + env(safe-area-inset-bottom));max-height:80%;overflow-y:auto;}
   .ma-handle{width:40px;height:5px;border-radius:3px;background:var(--line2);margin:10px auto 8px;}
   .ma-shh{display:flex;align-items:baseline;padding:2px 20px 12px;gap:8px;}
@@ -6353,11 +6364,12 @@ function mNavHtml(on){
     +tab("mRefB","sync","Refresh",false,"ma-ref"+(mRefBusy?" spin":""))+tab("mNavS","gear","Settings")+'</nav>';
 }
 /* bottom sheets: one at a time, dropped by a tap on the dimmed map/list behind them */
-function mSheet(html){ mDropSheet(); if(!mSheetHist){ mSheetHist=true; mPush({m:"sheet"}); } if(mToastEl&&!mUpBusy) mToastEl.style.display="none"; const root=document.getElementById("mroot");
-  const ov=document.createElement("div"); ov.className="ma-ov"; ov.id="mOv"; ov.addEventListener("click",mCloseSheet);
-  const sh=document.createElement("div"); sh.className="ma-sheet"; sh.id="mSheet"; sh.innerHTML='<div class="ma-handle"></div>'+html;
+function mSheet(html,top){ mDropSheet(); if(!mSheetHist){ mSheetHist=true; mPush({m:"sheet"}); } if(mToastEl&&!mUpBusy) mToastEl.style.display="none"; const root=document.getElementById("mroot");
+  const ov=document.createElement("div"); ov.className="ma-ov"+(top?" clear":""); ov.id="mOv"; ov.addEventListener("click",mCloseSheet);
+  const sh=document.createElement("div"); sh.className="ma-sheet"+(top?" top":""); sh.id="mSheet"; sh.innerHTML=top?html+'<div class="ma-handle"></div>':'<div class="ma-handle"></div>'+html;   // top: drops from the top, the map still showing below
   root.appendChild(ov); root.appendChild(sh); return sh; }
-function mDropSheet(){ ["mOv","mSheet"].forEach(id=>{ const e=document.getElementById(id); if(e) e.remove(); }); }
+let mSheetGone=null;   // run once when the sheet closes (however it closes)
+function mDropSheet(){ ["mOv","mSheet"].forEach(id=>{ const e=document.getElementById(id); if(e) e.remove(); }); if(mSheetGone){ const f=mSheetGone; mSheetGone=null; try{ f(); }catch(e){} } }
 function mCloseSheet(){ mDropSheet(); if(mSheetHist){ mSheetHist=false; mPopQuiet(); } }
 function mShowList(){
   if(mScrHist){ mScrHist=null; mPopQuiet(); }   // back from Setup / Switch project
@@ -6482,40 +6494,51 @@ function mFocusCard(k,fromSwipe){   // bring the card up (unless the swipe alrea
     if(!fromSwipe){ mCardScrolling=true; row.scrollTo({left:c.offsetLeft-(row.clientWidth-c.offsetWidth)/2,behavior:"smooth"}); setTimeout(()=>{ mCardScrolling=false; },600); } }
   mFocusDot(k);   // swipe or tap: glide in to its dot, then the arrow
   const a=mHomeActs().find(x=>mCardKey(x)===k); if(a) mWarmCards([a]); }
-/* + New action: photos (camera / gallery) on top, then the title and its sub-actions — any order, photos
-   optional. The draft survives popping out to the camera or gallery (and closing the sheet by mistake). */
+/* + New action: a card that drops from the top — the title (camera and gallery beside it), its sub-actions,
+   the photos — with Create in its corner, so the keyboard never hides anything that matters. Enter puts
+   the keyboard away. The map stays in view below, the new action's spot marked. The draft survives popping
+   out to the camera or gallery (and closing the card by mistake). */
 let mAddDraft=null, mCollect=null;
 function mShowAdd(){
   if(mRoBlock()) return;
   const d=mAddDraft||(mAddDraft={t:"",steps:[],files:[]});
-  mSheet('<div class="ma-shh"><b>New action</b></div><div class="ma-add2">'
-    +'<div class="ma-tiles"><button class="ma-tile" id="mAddCam" type="button">'+MI.cam+'Take a photo</button><button class="ma-tile" id="mAddGal" type="button">'+MI.gal+'From gallery</button></div>'
-    +'<div class="ma-athumbs" id="mAddTh"></div>'
-    +'<input class="m-in" id="mNewAct" placeholder="What needs doing?" autocomplete="off" enterkeyhint="next" value="'+esc(d.t)+'" />'
+  const sh=mSheet('<div class="ma-ntop"><b>New action</b><button class="ma-npill" id="mNewGo" type="button">'+MI.check+'Create</button></div><div class="ma-add2">'
+    +'<div class="ma-nrow"><textarea class="m-in" id="mNewAct" rows="1" placeholder="What needs doing?" autocomplete="off" enterkeyhint="done">'+esc(d.t)+'</textarea>'
+    +'<button class="ma-nico" id="mAddCam" type="button" aria-label="Take a photo">'+MI.cam+'</button><button class="ma-nico" id="mAddGal" type="button" aria-label="From gallery">'+MI.gal+'</button></div>'
     +'<div id="mAddSteps"></div>'
-    +'<input class="m-in" id="mAddStep" placeholder="+ Add sub-action" autocomplete="off" enterkeyhint="next" />'
-    +'<button class="ma-btn pri" id="mNewGo" type="button">'+MI.check+'Create action</button></div>');
+    +'<input class="m-in" id="mAddStep" placeholder="+ Add sub-action" autocomplete="off" enterkeyhint="done" />'
+    +'<div class="ma-athumbs" id="mAddTh"></div></div>',true);
   const inp=document.getElementById("mNewAct"), sin=document.getElementById("mAddStep");
+  const grow=()=>{ inp.style.height="auto"; inp.style.height=Math.min(inp.scrollHeight+2,120)+"px"; };   // the title wraps instead of scrolling sideways
+  /* where it will go: the first camera shot's spot, else where you stand — marked on the map below */
+  let pin=null; const m2=mTab==="map"?mHomeMap:null;
+  const spot=()=>{ const cam=d.files.find(f=>f.fixed); return cam?cam.fixed:(!d.files.length&&mGeo?{lat:mGeo.lat,lng:mGeo.lng}:null); };
+  const mark=()=>{ if(!m2) return; const at=spot(); if(pin){ m2.removeLayer(pin); pin=null; } if(!at) return;
+    pin=L.marker([at.lat,at.lng],{interactive:false,zIndexOffset:2000,icon:L.divIcon({className:"",html:'<div class="ma-newpin"></div>',iconSize:[0,0],iconAnchor:[0,0]})}).addTo(m2);
+    try{ const cb=sh.getBoundingClientRect(), mc=m2.getContainer().getBoundingClientRect(), pt=m2.latLngToContainerPoint([at.lat,at.lng]), clear=cb.bottom-mc.top+40;
+      const row=document.getElementById("mPeeks"), rr=row&&!row.classList.contains("none")?row.getBoundingClientRect():null, low=(rr&&rr.height?rr.top-mc.top:mc.height)-40;
+      if(pt.y<clear||pt.y>low||pt.x<30||pt.x>mc.width-30) m2.panBy([pt.x-mc.width/2,pt.y-(clear+Math.max(0,low-clear)*0.4)],{animate:true}); }catch(e){} };   // in the clear space between the card and the cards row
+  mSheetGone=()=>{ if(pin&&m2){ m2.removeLayer(pin); pin=null; } };
   const thumbs=()=>{ const el=document.getElementById("mAddTh"); if(!el) return;
     el.innerHTML=d.files.map((f,i)=>'<span class="ma-ath" style="background-image:url(\''+f.url+'\')"><button type="button" data-i="'+i+'" aria-label="Remove photo">×</button></span>').join("");
-    el.querySelectorAll("button[data-i]").forEach(b=>b.addEventListener("click",()=>{ const f=d.files.splice(+b.dataset.i,1)[0]; if(f) URL.revokeObjectURL(f.url); thumbs(); })); };
+    el.querySelectorAll("button[data-i]").forEach(b=>b.addEventListener("click",()=>{ const f=d.files.splice(+b.dataset.i,1)[0]; if(f) URL.revokeObjectURL(f.url); thumbs(); mark(); })); };
   const steps=()=>{ const el=document.getElementById("mAddSteps"); if(!el) return;
     el.innerHTML=d.steps.map((t,i)=>'<div class="ma-astep"><i></i><span>'+esc(t)+'</span><button type="button" data-i="'+i+'" aria-label="Remove">×</button></div>').join("");
     el.querySelectorAll("button[data-i]").forEach(b=>b.addEventListener("click",()=>{ d.steps.splice(+b.dataset.i,1); steps(); })); };
-  thumbs(); steps();
-  inp.addEventListener("input",()=>{ d.t=inp.value; });
-  inp.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"){ e.preventDefault(); if(inp.value.trim()) sin.focus(); } });   // Enter confirms the title, on to sub-actions
+  thumbs(); steps(); grow(); requestAnimationFrame(mark);
+  inp.addEventListener("input",()=>{ d.t=inp.value.replace(/\n/g," "); if(inp.value!==d.t) inp.value=d.t; grow(); inp.classList.remove("need"); });
+  inp.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"){ e.preventDefault(); inp.blur(); } });   // Enter locks the title in and puts the keyboard away
   const addStep=()=>{ const v=sin.value.trim(); if(!v) return false; d.steps.push(v); sin.value=""; steps(); return true; };
-  sin.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"){ e.preventDefault(); addStep(); } });   // Enter adds it, ready for the next
-  const pick=(input)=>{ d.t=inp.value; mCollect=(fs,fixed)=>{ for(const f of fs) d.files.push({file:f,fixed,url:URL.createObjectURL(f)}); thumbs(); };
+  sin.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter"){ e.preventDefault(); addStep(); sin.blur(); } });   // Enter adds it and puts the keyboard away
+  sin.addEventListener("blur",()=>{ addStep(); });   // tapping away keeps what was typed
+  const pick=(input)=>{ d.t=inp.value; mCollect=(fs,fixed)=>{ for(const f of fs) d.files.push({file:f,fixed,url:URL.createObjectURL(f)}); thumbs(); mark(); };
     input.click(); window.mPickT=Date.now(); };
   document.getElementById("mAddCam").addEventListener("click",()=>pick(mCamInput()));
   document.getElementById("mAddGal").addEventListener("click",()=>pick(mUpInput()));
   document.getElementById("mNewGo").addEventListener("click",()=>{
     addStep(); const v=inp.value.trim();
     if(!v){ inp.placeholder="Name the action first"; inp.classList.add("need"); inp.focus(); return; }
-    const u=mUid(), cam=d.files.find(f=>f.fixed);
-    const loc=cam?cam.fixed:(!d.files.length&&mGeo?{lat:mGeo.lat,lng:mGeo.lng}:null);   // where the photo was taken, else where you stand
+    const u=mUid(), loc=spot();   // where the photo was taken, else where you stand
     mMutate(()=>{ const p=mPend(); p.newActs=(p.newActs||[]).concat([{text:v,steps:d.steps.map(t=>({t,d:false,u:mUid()})),done:false,u,loc,cr:Date.now()}]); mPendSave(p); });
     const files=d.files.slice(); mAddDraft=null; mCloseSheet(); mShowList(); mToast("Added “"+v+"”");
     for(const f of files.filter(x=>x.fixed)) mUploadPhotos([f.file],f.fixed,{au:u});   // camera shots: pinned where each was taken
