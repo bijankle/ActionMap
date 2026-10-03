@@ -2694,7 +2694,7 @@ function onLocalChanged(){
     if(onDirty()){ applyOnline(ON.base); ON.cleanJ=canonJ(serializeOnline()); tagUndoStack=[]; tagRedoStack=[]; onRefreshUI();
       if(Date.now()-_roToastT>4000){ _roToastT=Date.now(); loadNote("View only — add your access token in Tools → Settings to make changes"); setTimeout(()=>loadNote(""),4500); } }
     return; }
-  onCacheLocal(); scheduleOnlineSave(1200); pumpUploads(); scheduleAutoExport();
+  onCacheLocal(); scheduleOnlineSave(400); pumpUploads(); scheduleAutoExport();   // sent almost at once: closing soon after an edit rarely finds it unsaved
 }
 function scheduleOnlineSave(ms){ clearTimeout(ON.saveT); ON.saveT=setTimeout(onlineSave,ms==null?1200:ms); }
 let _fieldAck=null, _saveGen=0;   // a phone batch merged in memory, acknowledged once a save that includes it lands
@@ -3473,7 +3473,7 @@ async function copyActionForPhone(a,btn){
   try{
     try{ await navigator.clipboard.write([new ClipboardItem({"image/png":blobP})]); }   // promise form keeps the click's permission while the image renders
     catch(e1){ const b=await blobP; await navigator.clipboard.write([new ClipboardItem({"image/png":b})]); }
-    loadNote("\u2713 Copied "+actNo(a)+" as an image \u2014 paste it anywhere (Ctrl+V)"); logChange("Copied action "+actLbl(a.id)+" as an image",a.id);
+    loadNote("\u2713 Copied "+actNo(a)+" as an image \u2014 paste it anywhere (Ctrl+V)");   // not a change to the project: nothing to save, no History entry
   }catch(err){   // clipboard blocked: fall back to saving the image
     try{ const b=await blobP; const u=URL.createObjectURL(b); const d=document.createElement("a"); d.href=u; d.download=actNo(a)+" "+String(a.text||"action").replace(/[\\/:*?"<>|]+/g,"").slice(0,60)+".png"; document.body.appendChild(d); d.click(); d.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000);
       loadNote("Clipboard unavailable \u2014 saved the image instead"); }catch(e2){ loadNote("Couldn't make the image: "+(err&&err.message||err)); }
