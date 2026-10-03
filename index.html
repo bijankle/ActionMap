@@ -922,6 +922,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-hs::-webkit-scrollbar{display:none;}
   .ma-hs .m-hpage{position:relative;flex:0 0 100%;height:100%;scroll-snap-align:start;overflow:hidden;}
   .ma-hs .m-hpage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;}
+  .ma-px{position:absolute;right:12px;top:12px;z-index:6;width:40px;height:40px;border-radius:50%;border:0;padding:0 0 3px;background:#ffffffee;color:var(--ink);box-shadow:0 2px 8px #0005;font:400 30px/1 var(--font);display:flex;align-items:center;justify-content:center;}   /* takes the photo on show off the action */
+  .ma-px~.ma-cnt{right:62px;top:16px;}
   .ma-cnt{position:absolute;right:12px;top:12px;background:#000a;color:#fff;font-size:14px;font-weight:600;border-radius:999px;padding:4px 12px;pointer-events:none;}
   .ma-thumbs{display:flex;gap:10px;overflow-x:auto;padding:12px 16px 2px;scrollbar-width:none;}
   .ma-thumbs .tb{width:72px;height:54px;border-radius:8px;background:#dfe3e8 center/cover no-repeat;flex-shrink:0;border:0;padding:0;}
@@ -1928,6 +1930,10 @@ function assignActs(actIds,phList){
   if(items.length) pushTagAction(items);
   afterFolderChange();
 }
+async function confirmUnassign(a,p){   // taking a photo off an action asks first, like every photo removal
+  if(!Array.isArray(p.acts)||!p.acts.includes(a.id)) return;
+  if(!(await askYesNo("Remove photo from "+actNo(a)+"?","\u201c"+(p.name||"This photo")+"\u201d stays in the project (on the map and in the gallery) \u2014 it just won\u2019t be part of "+actNo(a)+". Ctrl+Z brings it back.","Remove",true))) return;
+  unassignAct(a,p); }
 function unassignAct(a,p){
   if(!Array.isArray(p.acts)||!p.acts.includes(a.id)) return;
   const before=snapshotTags(p); p.acts=p.acts.filter(x=>x!==a.id);
@@ -2078,7 +2084,7 @@ function renderActions(){
     el.querySelector(".act-st .st-h").addEventListener("click",e=>{ e.stopPropagation(); setActionHold(a,!a.hold); });
     el.querySelector(".act-del").addEventListener("click",e=>{ e.stopPropagation();
       const cp2=lb.classList.contains("open")?curPhoto():null;
-      if(cp2&&Array.isArray(cp2.acts)&&cp2.acts.includes(a.id)) unassignAct(a,cp2);   // open photo is linked: X just removes that link
+      if(cp2&&Array.isArray(cp2.acts)&&cp2.acts.includes(a.id)) confirmUnassign(a,cp2);   // open photo is linked: X removes that link (asks first)
       else confirmDeleteAction(a); });
     wireSteps(el,a);
     wireActRowCommon(el,a);
@@ -5008,7 +5014,7 @@ function photoCtxItems(p){
   mkCtxItem("Copy image",()=>copyWholePhoto(p));
   mkCtxItem("Save image as\u2026",()=>saveWholePhoto(p));
   const ro=!canEdit()&&isOnline();
-  for(const id of (p.acts||[]).filter(id=>actById(id))){ const a=actById(id); mkCtxItem("Remove from action "+actNo(a),()=>unassignAct(a,p),ro,"View only"); }   // unlinks it; the photo stays
+  for(const id of (p.acts||[]).filter(id=>actById(id))){ const a=actById(id); mkCtxItem("Remove from action "+actNo(a)+"\u2026",()=>confirmUnassign(a,p),ro,"View only"); }   // unlinks it; the photo stays
   mkCtxItem("Delete photo\u2026",()=>confirmDeletePhotos([p]),ro,"View only"); }
 function copyWholePhoto(p){
   const blobP=renderHQ(p,4096,true).then(c=>new Promise((ok,no)=>c.toBlob(b=>b?ok(b):no(new Error("render")),"image/png")));
@@ -5978,9 +5984,10 @@ async function ghGetRaw(cfg,path){
   if(!r.ok) throw new Error("GitHub says "+r.status+(r.status===401?" — token rejected":""));
   return await r.text();
 }
+function mPhotos(a){ const u=a&&!a._new?mCh(a.id).unlink:null; return u&&u.length?(a.photos||[]).filter(p=>!u.includes(p.k)):(a.photos||[]); }   // an action's photos, minus any taken off it on this phone
 function mDist(a){   // metres from the phone to the nearest of the action's photos
   if(!mGeo) return null; let best=null;
-  for(const ph of (a.photos||[])){ if(ph.lat==null) continue;
+  for(const ph of mPhotos(a)){ if(ph.lat==null) continue;
     const d=map?map.distance([mGeo.lat,mGeo.lng],[ph.lat,ph.lng]):null;
     if(d!=null&&(best==null||d<best)) best=d; }
   return best;
@@ -6261,7 +6268,7 @@ function mMeta(a){ const out=[];   // cards stay clean: just the title, plus a w
   if(mDone(a)) out.push("completed");
   return out.join(" · "); }
 function mMetaDiv(a){ const m=mMeta(a); return m?'<div class="m">'+m+'</div>':''; }
-function mThumbOf(a){ const p=(a.photos||[]).find(x=>x.img); return p?'<div class="ma-th" style="background-image:url(\''+p.img+'\')"></div>':''; }
+function mThumbOf(a){ const p=mPhotos(a).find(x=>x.img); return p?'<div class="ma-th" style="background-image:url(\''+p.img+'\')"></div>':''; }
 function mActLine(a){ return (a._new?'':'<span class="m-anum">'+actNo(a)+'</span> ')+esc(mTitle(a)); }
 function mStatus(a){ return mDone(a)?"done":mHold(a)?"hold":"open"; }
 /* Home screens (map / list): a slim top strip (project name → project menu, On hold / Done stacked
@@ -6402,7 +6409,7 @@ function mFlash(k){   // the red arrow: bobs twice over the dot, then fades (CSS
   clearTimeout(mFlashT); mFlashT=setTimeout(()=>{ mFlashK=null; if(mHomeMap&&mHomeMap._draw&&!mHomeMap._flying) mHomeMap._draw(); },1700); }
 function mMapCards(acts){   // the actions with a dot on the map, as the filters show them, in Actions-list order
   return acts.filter(a=>{ const st=mStatus(a); if((st==="open"&&!mShowOpen)||(st==="hold"&&!mShowHold)||(st==="done"&&!mShowDone)) return false;
-    const loc=a._new?(mNewActs()[a._ni]||{}).loc:a.loc; return !!loc||(a.photos||[]).some(p=>p.lat!=null); }); }
+    const loc=a._new?(mNewActs()[a._ni]||{}).loc:a.loc; return !!loc||mPhotos(a).some(p=>p.lat!=null); }); }
 let mCardScrolling=false, mFlashK=null, mFlashT=null, mCardsHold=null;
 function mFocusCard(k,fromSwipe){   // bring the card up (unless the swipe already did) and find its dot
   k=String(k); const row=document.getElementById("mPeeks"), c=row&&row.querySelector('.ma-peek[data-k="'+k+'"]');
@@ -6750,7 +6757,7 @@ function mBuildHomeMap(acts){
     const pts=[];
     const setPts=acts=>{ pts.length=0;
       acts.forEach(a=>{ const st=mStatus(a); if((st==="open"&&!mShowOpen)||(st==="hold"&&!mShowHold)||(st==="done"&&!mShowDone)) return; const k=mCardKey(a);
-        for(const ph of (a.photos||[])) if(ph.lat!=null&&isFinite(ph.lat)&&isFinite(ph.lng)) pts.push({lat:+ph.lat,lng:+ph.lng,k,a});
+        for(const ph of mPhotos(a)) if(ph.lat!=null&&isFinite(ph.lat)&&isFinite(ph.lng)) pts.push({lat:+ph.lat,lng:+ph.lng,k,a});
         const loc=a._new?(mNewActs()[a._ni]||{}).loc:a.loc;
         if(loc&&isFinite(loc.lat)&&isFinite(loc.lng)) pts.push({lat:+loc.lat,lng:+loc.lng,k,a}); }); };
     setPts(acts);
@@ -6870,6 +6877,7 @@ async function mSendChanges(){
       if("hold" in prev&&!("hold" in cur)) cur.hold=!!pa.hold;
       for(const k of Object.keys(prev.steps||{})) if(!cur.steps||!(k in cur.steps)){ cur.steps=Object.assign({},cur.steps||{}); const st=(pa.steps||[])[+k]; if(st) cur.steps[k]=!!st.d; }
       for(const k of Object.keys(prev.stepEdits||{})) if(!cur.stepEdits||!(k in cur.stepEdits)){ cur.stepEdits=Object.assign({},cur.stepEdits||{}); const st=(pa.steps||[])[+k]; if(st) cur.stepEdits[k]=st.t; }
+      { const back=(prev.unlink||[]).filter(k=>!(cur.unlink||[]).includes(k)); if(back.length) cur.relink=back; }   // a photo taken off here, then undone: put it back on the desktop too
       const nowU=new Set((cur.newSteps||[]).map(x=>x&&x.u).filter(Boolean)), gone=(prev.newSteps||[]).map(x=>x&&x.u).filter(u=>u&&!nowU.has(u));
       if(gone.length) cur.delU=(cur.delU||[]).concat(gone.filter(u=>!(cur.delU||[]).includes(u)));
     } }catch(e){}
@@ -7012,7 +7020,7 @@ function mShowDetail(ai,keepScroll){
   const a=mActAt(ai); if(!a){ mShowList(); return; }
   mRerender=()=>{ const sc=document.getElementById("mSnap"); mShowDetail(ai,sc?sc.scrollTop:null); };
   mNavPush();
-  const photos=(a.photos||[]), d=mDist(a), key=mCardKey(a);
+  const photos=mPhotos(a), d=mDist(a), key=mCardKey(a);
   const loc=a._new?(mNewActs()[a._ni]||{}).loc:a.loc, onMap=!!loc||photos.some(p=>p.lat!=null);
   const stNow=()=>mDone(a)?"done":mHold(a)?"hold":"open";
   mScr('<div class="ma-top"><button class="ma-back" id="mBack" type="button">'+MI.back+(mTab==="list"?"List":"Map")+'</button><div style="flex:1"></div>'+mUndoHtml()+'</div>'
@@ -7021,7 +7029,7 @@ function mShowDetail(ai,keepScroll){
     +'<div class="ma-strow" id="mState">'+[["open","Open"],["hold","On hold"],["done","Done"]].map(([k,t])=>'<button type="button" class="ma-chip'+(stNow()===k?" on":"")+'" data-s="'+k+'">'+t+'</button>').join("")
       +'</div></div>'
     +(photos.length?'<div class="ma-car"><div class="ma-hs" id="mHsnap">'+photos.map(p=>'<div class="m-hpage">'+(p.img?'<img src="'+p.img+'" alt="'+esc(p.name||"photo")+'" />':'')+'</div>').join("")+'</div>'
-        +(photos.length>1?'<div class="ma-cnt" id="mCnt">1 / '+photos.length+'</div>':'')+(onMap?'<button type="button" class="ma-pinb" id="mDistB" aria-label="Show on map">'+MI.pin+'</button>':'')+'<div class="ma-fl"><button type="button" id="mGalAct" aria-label="Add photos from the gallery">'+MI.gal+'</button><button type="button" id="mCamAct2" aria-label="Take a photo">'+MI.cam+'</button><button type="button" class="g" id="mCopyB" aria-label="Share">'+MI.share+'</button></div>'+'</div>'
+        +(!a._new&&!mRO()?'<button type="button" class="ma-px" id="mPhX" aria-label="Remove this photo from the action">\u00d7</button>':'')+(photos.length>1?'<div class="ma-cnt" id="mCnt">1 / '+photos.length+'</div>':'')+(onMap?'<button type="button" class="ma-pinb" id="mDistB" aria-label="Show on map">'+MI.pin+'</button>':'')+'<div class="ma-fl"><button type="button" id="mGalAct" aria-label="Add photos from the gallery">'+MI.gal+'</button><button type="button" id="mCamAct2" aria-label="Take a photo">'+MI.cam+'</button><button type="button" class="g" id="mCopyB" aria-label="Share">'+MI.share+'</button></div>'+'</div>'
         +'<div class="ma-thumbs" id="mThumbs">'+(photos.length>1?photos.map((p,i)=>'<button type="button" class="tb'+(i?'':' cur')+'" data-i="'+i+'" style="background-image:url(\''+(p.img||'')+'\')" aria-label="Photo '+(i+1)+'"></button>').join(""):'')
         +'</div>'
       :'<div class="ma-car ma-car0"><div class="ma-first">'+MI.cam+'No photos yet</div>'+(onMap?'<button type="button" class="ma-pinb" id="mDistB" aria-label="Show on map">'+MI.pin+'</button>':'')+'<div class="ma-fl"><button type="button" id="mGalAct" aria-label="Add photos from the gallery">'+MI.gal+'</button><button type="button" id="mCamAct2" aria-label="Take a photo">'+MI.cam+'</button><button type="button" class="g" id="mCopyB" aria-label="Share">'+MI.share+'</button></div>'+'</div>')
@@ -7051,6 +7059,12 @@ function mShowDetail(ai,keepScroll){
     if(th) th.querySelectorAll(".tb[data-i]").forEach(b=>b.addEventListener("click",()=>hsEl.scrollTo({left:Number(b.dataset.i)*hsEl.clientWidth,behavior:"smooth"})));
     mWirePinch(hsEl);
     hsEl.addEventListener("click",()=>{ const i=Math.round(hsEl.scrollLeft/Math.max(1,hsEl.clientWidth)); mOpenViewer(a,photos,i,j=>{ hsEl.scrollLeft=j*hsEl.clientWidth; }); });   // a tap opens the full-screen viewer
+    const px=document.getElementById("mPhX"); if(px) px.addEventListener("click",e=>{ e.stopPropagation(); if(mRoBlock()) return;   // × takes the photo on show off this action (asks first)
+      const ph=photos[Math.round(hsEl.scrollLeft/Math.max(1,hsEl.clientWidth))]; if(!ph||!ph.k) return;
+      const sh=mSheet('<div class="ma-shh"><b>Remove this photo?</b></div><div class="m-note" style="padding:0 20px 16px;font-size:15px;color:var(--muted);line-height:1.4">It comes off action '+esc(actNo(a))+' but stays in the project (on the map and on the desktop). Undo brings it back.</div>'
+        +'<div class="ma-sbtns" style="flex-direction:row"><button class="ma-btn" id="mPxNo" type="button" style="flex:1">Cancel</button><button class="ma-btn" id="mPxYes" type="button" style="flex:1;color:#b3261e;border-color:#e2b4ae">Remove</button></div>');
+      sh.querySelector("#mPxNo").addEventListener("click",()=>mCloseSheet());
+      sh.querySelector("#mPxYes").addEventListener("click",()=>{ mCloseSheet(); mMutate(()=>mSetCh(a.id,{unlink:(mCh(a.id).unlink||[]).filter(k=>k!==ph.k).concat([ph.k])})); mToast("Photo removed from "+actNo(a)); mRerender(); }); });
   }
   /* checklist: tick the box, tap the text to edit it, × deletes (undoable), drag the letter to reorder */
   const sub2=document.getElementById("mSub2"), stCnt=document.getElementById("mStCnt");
@@ -7102,7 +7116,7 @@ function mShowDetail(ai,keepScroll){
    card is built in the background when the action opens and is ready when Share is pressed. */
 function mCardName(a){ return (a._new?"":actNo(a)+" ")+String(mTitle(a)||"action").replace(/[\\/:*?"<>|]+/g,"").slice(0,60)+".png"; }
 function mCardBlob(a){   // kept on the phone (see cardCached): Share is instant, even after the app was closed
-  const photos=(a.photos||[]).filter(p=>p.img);
+  const photos=mPhotos(a).filter(p=>p.img);
   const act={text:mTitle(a),num:a._new?null:actNo(a),loc:a._new?(mNewActs()[a._ni]||{}).loc:a.loc,steps:mSteps(a).map(x=>({t:x.t,d:!!x.d}))};
   const me=(ignoreLoc||!mGeo)?"x":mGeo.lat.toFixed(3)+","+mGeo.lng.toFixed(3);
   const sig=[CARD_LAYOUT.head,CARD_K,mCardKey(a),act.num,act.text,act.loc?act.loc.lat+","+act.loc.lng:"",me,JSON.stringify(act.steps.map(x=>[x.t,x.d]))].concat(photos.map(p=>(p.h||p.id)+"@"+p.lat+","+p.lng)).join("|");
@@ -7421,7 +7435,13 @@ async function checkFieldChanges(){
         if(c.steps) for(const k of Object.keys(c.steps)){ const i=+k; if(a.steps[i]) a.steps[i].d=!!c.steps[k]; }
         if(Array.isArray(c.newSteps)) for(const st of c.newSteps){ const t=String(st&&st.t||"").trim(); if(t) a.steps.push({t,d:!!st.d,id:newSid()}); }
       }
-      if(c.steps||c.newSteps||c.stepOrder) stepsDoneLast(a);   // a sub-action ticked on the phone drops to the bottom here too
+      if(c.steps||c.newSteps||c.stepOrder) stepsDoneLast(a);
+      if(Array.isArray(c.unlink)&&c.unlink.length){ const un=[];   // photos taken off this action on the phone (the photos themselves stay)
+        for(const k of c.unlink){ const ph=photos.find(x=>metaKey(x)===k); if(ph&&Array.isArray(ph.acts)&&ph.acts.includes(a.id)){ const b0=snapshotTags(ph); ph.acts=ph.acts.filter(x=>x!==a.id); un.push({id:ph.id,before:b0,after:snapshotTags(ph)}); } }
+        if(un.length) pushUndo({items:un}); }
+      if(Array.isArray(c.relink)&&c.relink.length){ const re=[];   // …and put back (undone on the phone after it was sent)
+        for(const k of c.relink){ const ph=photos.find(x=>metaKey(x)===k); if(ph&&!(ph.acts||[]).includes(a.id)){ const b0=snapshotTags(ph); ph.acts=(ph.acts||[]).concat([a.id]); re.push({id:ph.id,before:b0,after:snapshotTags(ph)}); } }
+        if(re.length) pushUndo({items:re}); }   // a sub-action ticked on the phone drops to the bottom here too
       if(typeof c.hold==="boolean") a.hold=c.hold;
       if(c.done===true&&!a.done){ a.done=true; a.doneAt=c.doneAt||Date.now(); }
       if(c.done===false&&a.done){ a.done=false; a.doneAt=null; }
