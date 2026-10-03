@@ -82,6 +82,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .mb-drop:has(#vmBase){min-width:290px;}
   .guide-win{max-width:640px;max-height:82vh;overflow:auto;} .guide-win h4{margin:16px 0 6px;font-size:15px;} .guide-win ol,.guide-win ul{margin:0;padding-left:20px;line-height:1.55;font-size:14px;} .guide-win li{margin:3px 0;} .guide-win .tip{background:#fdf6e6;border:1px solid var(--gold);border-radius:8px;padding:8px 12px;margin-top:14px;font-size:13.5px;line-height:1.5;}
   .mi{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;text-align:left;font:var(--fb) var(--font);color:var(--ink);background:none;border:none;border-radius:6px;padding:8px 11px;cursor:pointer;white-space:nowrap;}
+  .mi-upd{font-size:12px;color:var(--muted);font-weight:400;} .mi-upd.new{font-weight:700;color:#7A5C00;background:#FFF6E0;border:1.5px solid #E8B341;border-radius:6px;padding:1px 8px;}   /* Help → Update app: up to date, or a new version waiting */
   .mi:hover{background:var(--panel2);color:var(--ink);}
   .mi .mk{margin-left:auto;padding-left:18px;font:var(--fl) var(--font);color:var(--dim);}
   .mi svg{width:16px;height:16px;fill:var(--muted);flex-shrink:0;}
@@ -1121,6 +1122,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
     <div class="mb"><button class="mb-btn" type="button">Help</button><div class="mb-drop">
       <button class="mi" id="miGuide" type="button" title="Step by step: projects, photos, actions, the map, the phone app and exports.">How to use ActionMap…</button>
       <button class="mi" id="miAbout" type="button" title="Save status, this project's link, the app version and where the data lives.">About…</button>
+      <button class="mi" id="miUpdate" type="button" title="Reload the app fresh from the web (the same as Ctrl+F5). Your project is saved online and is not affected.">Update app <span class="mi-upd" id="miUpdTag"></span></button>
     </div></div>
   </nav>
   <div class="hsearch" id="hsWrap"><input type="search" id="hSearch" name="am-action-search" data-lpignore="true" data-1p-ignore placeholder="Search actions   Ctrl+K" title="Find an action by its number, title or a sub-action — active and completed actions" autocomplete="off" spellcheck="false" /><div class="hs-drop" id="hsDrop"></div></div>
@@ -2481,7 +2483,7 @@ async function ghGetBin(cfg,path){
      photos/<h>.jpg                   every photo once, longest side ≤3000px (h = SHA-1 of the file)
      thumbs/<h>.jpg                   its 480px thumbnail
    ===================================================================================== */
-const FULL_PX=3000, FULL_Q=0.86;
+const FULL_PX=2048, FULL_Q=0.80;   // stored size of a pasted / added photo: plenty to zoom into, a fraction of a raw phone photo (like messaging apps do)
 const ON={pid:null,name:"",base:null,sha:null,etag:null,rawText:null,cleanJ:null,live:false,busy:false,again:false,saveT:null,err:null,at:0,denied:false,wait:null};
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function urlParam(k){ try{ return new URLSearchParams(location.search).get(k); }catch(e){ return null; } }
@@ -2837,7 +2839,7 @@ function ensurePreview(p){
   return p._pvP;
 }
 async function ensurePreviews(list){ for(const p of list) if(p&&p.h&&!p.preview) await ensurePreview(p); }
-/* Renditions for the upload: ≤3000px full + 480px thumb, re-encoded upright (orientation applied,
+/* Renditions for the upload: ≤2048px full + 480px thumb, re-encoded upright (orientation applied,
    location/camera metadata dropped from the public file — the map keeps the position). */
 async function makeRenditions(src,unrot){
   let disp=src; if(src instanceof Blob&&isHeic(src)){ try{ disp=await heicToJpegBlob(src,0.92); }catch(e){} }
@@ -3030,7 +3032,12 @@ function copyShareLink(pid){
   const done=()=>{ loadNote("✓ Link copied — anyone with it can view"+(ghRaw().token?"; people with your access token can also edit":"")); setTimeout(()=>loadNote(""),4000); };
   try{ navigator.clipboard.writeText(link).then(done,()=>prompt("Copy this link:",link)); }catch(e){ prompt("Copy this link:",link); }
 }
-function syncMenus(){
+function syncUpdItem(){ const t=document.getElementById("miUpdTag"); if(!t) return;
+  if(window._updAvail){ t.textContent="New version"; t.className="mi-upd new"; return; }
+  const d=new Date(document.lastModified); t.className="mi-upd";
+  t.textContent=isNaN(d)?"":"Up to date \u00b7 "+d.toLocaleString(undefined,{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"}); }
+document.getElementById("miUpdate").addEventListener("click",()=>{ if(typeof window._appHardReload==="function") window._appHardReload(); else location.reload(); });
+function syncMenus(){ syncUpdItem();
   const on=isOnline(), ed=canEdit(), leg=!on&&(photos.length>0||actions.length>0);
   const show=(id,v)=>{ const el=document.getElementById(id); if(el) el.style.display=v?"":"none"; };
   show("miShare",on); show("miAddPhotos",!leg); show("miBackup",on); show("miMigrate",leg||_legacyAvail); show("miNewProj",!!ghRaw().token);
@@ -7297,7 +7304,9 @@ async function bootLegacy(){
     location.replace(ok?location.pathname:location.pathname+"?v="+Date.now());
   }
   function updTriedRecently(){ try{ return Date.now()-(+sessionStorage.getItem("pmUpdTried")||0)<90000; }catch(e){ return false; } }
+  window._appHardReload=hardReload;
   function showPill(tag){
+    if(typeof syncUpdItem==="function") setTimeout(syncUpdItem,0);
     if(pill) return;
     const stuck=updTriedRecently();
     window._updAvail=true; pill=document.createElement("div"); pill.id="updpill";
