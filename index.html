@@ -6716,7 +6716,12 @@ function mBuildHomeMap(acts){
     fit(); draw();
     m2.on("click",()=>{ if(mTapK!=null&&Date.now()-mTapT<700){ const k=mTapK; mTapK=null; mOpenAct(k); } });   // a quick second tap that lands where the label was before the map glided off: still opens it
     m2.on("moveend",()=>mSyncCards());
-    m2.on("moveend",draw);   // after a zoom or pan, wheels settle in the clear part of the screen again
+    m2.on("moveend",()=>{ if(!m2._pinchIn) draw(); });   // after a zoom or pan, wheels settle in the clear part of the screen again
+    /* Leaflet ignores a pinch that starts while the last one is still settling (~¼ s after you let go):
+       a second finger down cuts the settle short, so a quick re-pinch always takes. Labels are redrawn
+       once you let go again, not in the middle of the new pinch. */
+    m2.getContainer().addEventListener("touchstart",e=>{ if(e.touches.length<2||!m2._animatingZoom) return;
+      m2._pinchIn=true; try{ m2._onZoomTransitionEnd(); }catch(err){} m2._pinchIn=false; },{capture:true,passive:true});
     m2.on("moveend",()=>{ mHomeView={c:m2.getCenter(),z:m2.getZoom()}; });
     m2.on("dragstart",()=>{ mHomeTouched=true; mCardsHold=null; });
     { const fb=document.getElementById("mFitB"); if(fb) fb.addEventListener("click",mFitAll); }   // moving the map yourself: the cards follow the dots again
