@@ -318,7 +318,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .gal-more:hover{border-color:var(--accent);color:var(--accent);}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;cursor:pointer;transition:border-color .12s,transform .1s,box-shadow .12s;position:relative;}
   .card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 16px #1e1f2214;}
-  .card .thumb{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;background:#ECEEF1;}
+  .card .thumb{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#ECEEF1;}
   .card .ph{width:100%;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:#ECEEF1;color:var(--faint);font-family:var(--font);font-size:var(--fl);}
   .card .meta{padding:5px 7px 6px;}
   .card .fn{font-size:var(--fl);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);}
@@ -641,8 +641,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ip-actions .ipn-strip:empty{display:block;}
   .ipn-strip{display:flex;gap:8px;overflow-x:auto;scrollbar-width:thin;}
   .ipn-strip:empty{display:none;}
-  .ipn-it{flex:1 0 84px;max-width:140px;min-width:0;background:none;border:0;padding:0;text-align:left;cursor:pointer;font:inherit;}
-  .ipn-it .th{height:58px;border-radius:7px;background:#dfe3e8 center/cover no-repeat;}
+  .ipn-it{flex:0 0 auto;width:78px;min-width:0;background:none;border:0;padding:0;text-align:left;cursor:pointer;font:inherit;}
+  .ipn-it .th{aspect-ratio:4/3;border-radius:7px;background:#dfe3e8 center/cover no-repeat;}
   .ipn-it.cur .th{box-shadow:0 0 0 2.5px var(--gold);}
   .ipn-it:hover .th{box-shadow:0 0 0 2px var(--line2);}
   .ipn-it.cur:hover .th{box-shadow:0 0 0 2.5px var(--gold);}
@@ -2027,7 +2027,7 @@ function showAreaPreviews(a){
    view rescales to suit and every preview re-anchors centred on its dot. */
 let _actRzT=null;
 map.on("resize",()=>{ clearTimeout(_actRzT); _actRzT=setTimeout(()=>{
-  if(selActs.size!==1) return;
+  if(selActs.size!==1||!areaPrevs.length) return;   // only re-fit while an action click's previews are up — a bubble click (which opens the Gallery and resizes the map) must not pop them up
   const a=actById([...selActs][0]);
   if(a&&actPhotos(a).some(p=>p.lat!=null)) actNavigate(a,true);
 },220); });
