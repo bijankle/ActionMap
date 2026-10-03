@@ -740,6 +740,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
     box-shadow:0 10px 30px #1e1f2233;padding:6px;display:none;min-width:214px;}
   #ctxmenu .ci{display:block;width:100%;text-align:left;border:none;background:none;font-family:var(--font);font-size:var(--fb);
     color:var(--ink);padding:8px 10px;border-radius:7px;cursor:pointer;}
+  #ctxmenu .ci-sep{height:1px;background:var(--line);margin:4px 6px;}
   #ctxmenu .ci:hover{background:var(--panel2);color:var(--ink);}
   #ctxmenu .ci[disabled]{color:var(--faint);cursor:default;}
   #ctxmenu .ci[disabled]:hover{background:none;color:var(--faint);}
@@ -1567,6 +1568,7 @@ function openDotMenu(p,ev){
   const targets=selSet.has(p.id)?[...selSet].map(photoById).filter(Boolean):[p];
   const many=targets.length>1;
   ctxMenu.innerHTML="";
+  if(!many){ photoCtxItems(p); const hr=document.createElement("div"); hr.className="ci-sep"; ctxMenu.appendChild(hr); }   // one photo: the photo menu, then the map / action items
   if(selActs.size){
     const ok=selActs.size===1||!many;   // one action to many photos, or many actions to one photo
     mkCtxItem("Assign "+selActs.size+" selected action"+(selActs.size===1?"":"s")+" → "+(many?targets.length+" photos":"this photo"),
@@ -1584,7 +1586,7 @@ function openDotMenu(p,ev){
   const moved=targets.filter(t=>t.glat!=null);
   if(moved.length) mkCtxItem("Restore original GPS"+(many?" ("+moved.length+" photo"+(moved.length>1?"s":"")+")":""),()=>restoreGps(moved));
   else mkCtxItem(many?"Original GPS (none moved)":"Original GPS (not moved)",null,true);
-  mkCtxItem("Remove "+(many?targets.length+" photos":"this photo")+" from the project",()=>removePhotos(targets));   /* metadata only — the image files are never touched; Ctrl+Z restores */
+  if(many) mkCtxItem("Delete "+targets.length+" photos\u2026",()=>confirmDeletePhotos(targets));   /* one photo: Delete photo… is at the top */   /* metadata only — the image files are never touched; Ctrl+Z restores */
   if(selSet.size) mkCtxItem("Deselect all",clearSel);
   showCtxAt(ev.clientX,ev.clientY);
 }
@@ -2092,7 +2094,8 @@ function renderIpActions(){   // the strip under the photo: the action's other p
   const ids=Array.isArray(p.acts)?p.acts:[]; const aid=ids.find(id=>selActs.has(id))||ids.find(id=>actById(id));
   const a=aid!=null?actById(aid):null, ps=a?actPhotos(a):[];
   st.innerHTML=ps.length>1?ps.map(q=>'<button type="button" class="ipn-it'+(q===p?' cur':'')+'" data-pid="'+q.id+'" title="'+esc(q.name||"")+'"><div class="th" style="background-image:url(\''+(thumbSrc(q)||"")+'\')"></div></button>').join(""):"";
-  st.querySelectorAll(".ipn-it").forEach(b=>{ b.addEventListener("mousedown",e=>e.stopPropagation()); b.addEventListener("click",e=>{ e.stopPropagation(); const q=photoById(Number(b.dataset.pid)); if(q&&q!==p) openViewer(q); }); });
+  st.querySelectorAll(".ipn-it").forEach(b=>{ b.addEventListener("mousedown",e=>e.stopPropagation()); b.addEventListener("click",e=>{ e.stopPropagation(); const q=photoById(Number(b.dataset.pid)); if(q&&q!==p) openViewer(q); });
+    b.addEventListener("contextmenu",e=>{ e.preventDefault(); e.stopPropagation(); const q=photoById(Number(b.dataset.pid)); if(!q) return; hideHover(); ctxMenu.innerHTML=""; photoCtxItems(q); showCtxAt(e.clientX,e.clientY); }); });
   ipLayoutNotes();
 }
 /* Room for the note block: the photo is fitted into what's left above it, and the block sits right
@@ -4854,15 +4857,18 @@ lbStage.addEventListener("dblclick",e=>{ if(markTool==="poly"&&draft&&draft.t===
 lbStage.addEventListener("contextmenu",e=>{ if(markTool==="poly"&&draft&&draft.t==="poly"){ e.preventDefault(); endPoly(true); return; }
   if(draft||e.target===tbText||(e.target.closest&&e.target.closest(".ip-marktools,.markpalette,.ip-sizebars"))) return;
   const p=curPhoto(); if(!p) return; e.preventDefault(); hideHover&&hideHover(); if(selMark) deselectText();
-  ctxMenu.innerHTML="";   // the photo as it looks here: the whole picture with its markups baked in
-  ctxMenu.appendChild(mkCtxItem("Copy image",()=>copyWholePhoto(p)));
-  ctxMenu.appendChild(mkCtxItem("Save image as\u2026",()=>saveWholePhoto(p)));
+  ctxMenu.innerHTML=""; photoCtxItems(p); showCtxAt(e.clientX,e.clientY); });
+/* The photo menu — the same wherever a photo is right-clicked (open photo, the strip under it, gallery
+   cards, map labels): copy / save the whole photo from its full-size original with the markups baked
+   in, unlink it from an action, or delete it. */
+function photoCtxItems(p){
+  mkCtxItem("Copy image",()=>copyWholePhoto(p));
+  mkCtxItem("Save image as\u2026",()=>saveWholePhoto(p));
   const ro=!canEdit()&&isOnline();
-  for(const id of (p.acts||[]).filter(id=>actById(id))){ const a=actById(id); ctxMenu.appendChild(mkCtxItem("Remove from action "+actNo(a),()=>unassignAct(a,p),ro,"View only")); }   // unlinks it; the photo stays
-  ctxMenu.appendChild(mkCtxItem("Delete photo\u2026",()=>confirmDeletePhotos([p]),ro,"View only"));
-  showCtxAt(e.clientX,e.clientY); });
+  for(const id of (p.acts||[]).filter(id=>actById(id))){ const a=actById(id); mkCtxItem("Remove from action "+actNo(a),()=>unassignAct(a,p),ro,"View only"); }   // unlinks it; the photo stays
+  mkCtxItem("Delete photo\u2026",()=>confirmDeletePhotos([p]),ro,"View only"); }
 function copyWholePhoto(p){
-  const blobP=renderViewCanvas(p,2048,null,true).then(c=>new Promise((ok,no)=>c.toBlob(b=>b?ok(b):no(new Error("render")),"image/png")));
+  const blobP=renderHQ(p,4096,true).then(c=>new Promise((ok,no)=>c.toBlob(b=>b?ok(b):no(new Error("render")),"image/png")));
   try{ navigator.clipboard.write([new ClipboardItem({"image/png":blobP})]).catch(()=>alert("The browser blocked clipboard access here. Use Save image as\u2026 instead.")); }   // promise form keeps the click's permission while the image renders
   catch(err){ alert("The browser blocked clipboard access here. Use Save image as\u2026 instead."); }
 }
