@@ -259,7 +259,17 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ip-editbtn:hover{border-color:var(--accent);color:var(--accent);}
   .ip-editbtn.on{background:var(--gold);border-color:var(--gold);color:var(--on-accent);}
   .ip-editbtn.on span{color:#ffffffcc;}
-  .imgpanel.edit-open .ip-marktools{display:flex;}
+  .imgpanel.edit-open .ip-marktools{display:grid;}
+  /* drawing toolbar: tools and colours two columns each, the sliders as tall as them — tops/bottoms aligned, 6 px apart */
+  .imgpanel{--tg:5px;--tr:38px;}
+  .imgpanel .ip-marktools{grid-template-columns:repeat(2,41px);grid-auto-rows:var(--tr);gap:var(--tg);padding:8px 6px;max-height:none;overflow:visible;box-sizing:border-box;}
+  .imgpanel .markpalette{grid-template-columns:repeat(2,26px);grid-auto-rows:var(--tr);gap:var(--tg) 6px;align-items:center;justify-items:center;padding:8px 7px;box-sizing:border-box;
+    top:68px;left:calc(12px + 2*41px + var(--tg) + 12px + 2px + 6px);}
+  .imgpanel.edit-open .markpalette{display:grid;}   /* colours always on show while drawing */
+  .imgpanel .markpalette .sw{width:24px;height:24px;}
+  .imgpanel .ip-sizebars{padding:8px 9px;top:68px;box-sizing:border-box;height:calc(5*var(--tr) + 4*var(--tg) + 16px + 2px);
+    left:calc(12px + 2*41px + var(--tg) + 14px + 6px + 2*26px + 6px + 14px + 2px + 6px);}
+  .imgpanel .ip-sizebars .szb input[type=range]{height:calc(5*var(--tr) + 4*var(--tg) - 16px - 7px);}
   .markpalette{position:absolute;top:68px;left:72px;z-index:7;display:none;flex-direction:column;align-items:center;gap:7px;background:#ffffffec;border:1px solid var(--line);padding:8px 7px;border-radius:11px;box-shadow:0 4px 16px #1e1f2226;}
   .ip-sizebars{position:absolute;top:68px;left:126px;z-index:7;display:none;gap:10px;background:#ffffffec;border:1px solid var(--line);padding:9px 8px;border-radius:11px;box-shadow:0 4px 16px #1e1f2226;}
   .imgpanel.edit-open .ip-sizebars{display:flex;}
@@ -1234,8 +1244,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
       <button class="mk" data-tool="poly" title="Line / polyline — double click or right click to finish (L)"><svg viewBox="0 0 24 24"><path d="M4 18L11 9l4 4 5-8"/></svg><b class="hk">L</b></button>
       <button class="mk" data-tool="arrow" title="Arrow (A)"><svg viewBox="0 0 24 24"><path d="M5 19L19 5M19 5h-6M19 5v6"/></svg><b class="hk">A</b></button>
       <button class="mk" data-tool="rect" title="Rectangle — hold Shift for a square (R)"><svg viewBox="0 0 24 24"><rect x="4.5" y="6.5" width="15" height="11"/></svg><b class="hk">R</b></button>
-      <button class="mk" data-tool="oval" title="Ellipse — hold Shift for a circle (O)"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8" ry="6"/></svg><b class="hk">O</b></button>
-      <button class="mk" data-tool="text" title="Text box (T)"><svg viewBox="0 0 24 24"><path d="M5 6h14M12 6v12"/></svg><b class="hk">T</b></button>
+      <button class="mk" data-tool="oval" title="Ellipse — hold Shift for a circle (C)"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8" ry="6"/></svg><b class="hk">C</b></button>
+      <button class="mk" data-tool="text" title="Text box (W)"><svg viewBox="0 0 24 24"><path d="M5 6h14M12 6v12"/></svg><b class="hk">W</b></button>
       <button class="mk" data-tool="call" title="Callout — drag from the target to place the text box, or click the target then click again (Q)"><svg viewBox="0 0 24 24"><rect x="8" y="4" width="13" height="8" rx="1.5"/><path d="M9 12L3 20M3 20l1.2-4.2M3 20l4.2-1.2"/></svg><b class="hk">Q</b></button>
       <button class="mk" data-tool="erase" title="Eraser (E)"><svg viewBox="0 0 24 24"><path d="M4 15l7-7 6 6-4 4H8zM11 8l6 6"/></svg><b class="hk">E</b></button>
       <button class="mk" id="mkRotate" title="Rotate 90° clockwise (Ctrl+Shift +) — Shift-click or Ctrl+Shift − for counter-clockwise"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.4-5.7M20 3v4h-4"/></svg><b class="hk">&#8635;</b></button>
@@ -4574,7 +4584,7 @@ document.addEventListener("keydown",e=>{
   if((e.key==="Delete"||e.key==="Backspace")&&selObj){ e.preventDefault(); const p=curPhoto();
     if(p&&p.marks){ const i=p.marks.indexOf(selObj); if(i>=0){ const before=cpMarks(p.marks); p.marks.splice(i,1); pushMarksSnap(p,before,cpMarks(p.marks)); } }
     selObj=null; afterMarkChange(); return; }
-  if(!e.ctrlKey&&!e.metaKey){ const map={p:"pen",l:"poly",a:"arrow",r:"rect",o:"oval",t:"text",q:"call",e:"erase"}; const k=e.key.toLowerCase(); if(map[k]){ e.preventDefault(); setMarkTool(map[k]===markTool?"none":map[k]); } }
+  if(!e.ctrlKey&&!e.metaKey){ const map={p:"pen",l:"poly",a:"arrow",r:"rect",c:"oval",w:"text",q:"call",e:"erase"}; const k=e.key.toLowerCase(); if(map[k]){ e.preventDefault(); setMarkTool(map[k]===markTool?"none":map[k]); } }
 });
 /* Delete key: the selected photo dots (Select area), or else the photo open in the viewer, leave the
    project straight away (no warning); Ctrl+Z brings them back. A selected drawing on the photo is deleted first. */
