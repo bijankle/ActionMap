@@ -4787,7 +4787,24 @@ function endPoly(addCursor){ if(!draft||draft.t!=="poly")return; if(addCursor&&p
 lbStage.addEventListener("dblclick",e=>{ if(markTool==="poly"&&draft&&draft.t==="poly"){ endPoly(false); return; }
   if(markTool!=="none"||(e.target.closest&&e.target.closest("#tbEditor"))) return;
   const h=hitText(evToNorm(e)); if(h){ selObj=null; selectText(h); } });   // double-click a text box to type in it
-lbStage.addEventListener("contextmenu",e=>{ if(markTool==="poly"&&draft&&draft.t==="poly"){ e.preventDefault(); endPoly(true); } });
+lbStage.addEventListener("contextmenu",e=>{ if(markTool==="poly"&&draft&&draft.t==="poly"){ e.preventDefault(); endPoly(true); return; }
+  if(draft||e.target===tbText||(e.target.closest&&e.target.closest(".ip-marktools,.markpalette,.ip-sizebars"))) return;
+  const p=curPhoto(); if(!p) return; e.preventDefault(); hideHover&&hideHover(); if(selMark) deselectText();
+  ctxMenu.innerHTML="";   // the photo as it looks here: the whole picture with its markups baked in
+  ctxMenu.appendChild(mkCtxItem("Copy image",()=>copyWholePhoto(p)));
+  ctxMenu.appendChild(mkCtxItem("Save image as\u2026",()=>saveWholePhoto(p)));
+  showCtxAt(e.clientX,e.clientY); });
+function copyWholePhoto(p){
+  const blobP=renderViewCanvas(p,2048,null,true).then(c=>new Promise((ok,no)=>c.toBlob(b=>b?ok(b):no(new Error("render")),"image/png")));
+  try{ navigator.clipboard.write([new ClipboardItem({"image/png":blobP})]).catch(()=>alert("The browser blocked clipboard access here. Use Save image as\u2026 instead.")); }   // promise form keeps the click's permission while the image renders
+  catch(err){ alert("The browser blocked clipboard access here. Use Save image as\u2026 instead."); }
+}
+function saveWholePhoto(p){
+  renderHQ(p,4096,true).then(c=>c.toBlob(blob=>{ if(!blob){ alert("Could not render the image."); return; }
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=(p.name||"image").replace(/\.[^.]+$/,"")+((p.marks||[]).length?"-marked":"")+".jpg";
+    document.body.appendChild(a); a.click(); setTimeout(()=>{ a.remove(); URL.revokeObjectURL(a.href); },500);
+  },"image/jpeg",0.92)).catch(()=>alert("No image to save yet."));
+}
 
 /* ---- file info popover ---- */
 let fileInfoShown=false;
@@ -4807,14 +4824,14 @@ function currentViewFrac(){
 }
 // Render what the user sees (current zoom/pan crop + markup) to a canvas.
 // maxDim caps the output: screen size for clipboard (fast, screenshot-quality), 4096 for download (full quality).
-function renderViewCanvas(p,maxDim,srcOverride){
+function renderViewCanvas(p,maxDim,srcOverride,whole){   // whole: the full photo, not just the zoomed-in part
   return new Promise((resolve,reject)=>{
     const src=srcOverride||((curPhoto()===p && lb.classList.contains("open") && lbImg.src)?lbImg.src:(p.preview||p.thumb));
     if(!src){ reject(new Error("no image")); return; }
     const img=new Image();
     img.onload=()=>{
       const natW=img.naturalWidth||img.width, natH=img.naturalHeight||img.height;
-      const f=(curPhoto()===p)?currentViewFrac():{fx:0,fy:0,fw:1,fh:1};
+      const f=(!whole&&curPhoto()===p)?currentViewFrac():{fx:0,fy:0,fw:1,fh:1};
       const sx=f.fx*natW, sy=f.fy*natH, sw=f.fw*natW, sh=f.fh*natH;
       let outW=Math.max(1,Math.round(sw)), outH=Math.max(1,Math.round(sh));
       const cap=Math.min(1,(maxDim||4096)/Math.max(outW,outH));
@@ -4833,12 +4850,12 @@ function renderViewCanvas(p,maxDim,srcOverride){
 function screenshotDim(){ return Math.max(640, Math.ceil(Math.max(fitW||0,fitH||0)*(window.devicePixelRatio||1))); }
 // Full-quality render: stream the ORIGINAL from disk for the crop (prompting to connect the folder
 // if needed), falling back to whatever is displayed when the original is unreachable.
-async function renderHQ(p,maxDim){
+async function renderHQ(p,maxDim,whole){
   let file=null; try{ file=await getOriginalFileSilent(p); }catch(e){}
   if(!file){ try{ file=await fetchOriginal(p); if(file) p.file=file; }catch(e){} }
-  if(!file) return renderViewCanvas(p,maxDim);
+  if(!file) return renderViewCanvas(p,maxDim,null,whole);
   const r=await displayURL(p,file);   // rotation applied so crops + marks line up with what is on screen
-  try{ return await renderViewCanvas(p,maxDim,r.url); }
+  try{ return await renderViewCanvas(p,maxDim,r.url,whole); }
   finally{ URL.revokeObjectURL(r.url); }
 }
 function copyCurrentView(btn,hq){
