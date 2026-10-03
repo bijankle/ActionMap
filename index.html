@@ -131,6 +131,10 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .hs-st.open{background:#E7F6EC;color:#237042;} .hs-st.hold{background:#FDF3D2;color:#7A5C00;} .hs-st.done{background:#EEF0F2;color:#666;}
   .hs-drop mark{background:#FDEBA3;color:inherit;border-radius:2px;padding:0 1px;}
   .hs-empty{padding:12px;color:var(--dim);font-size:var(--fb);}
+  .hs-pills{display:flex;gap:6px;align-items:center;padding:6px 6px 8px;border-bottom:1px solid var(--line);margin-bottom:4px;}   /* On hold / Done: one at a time, or neither (everything) */
+  .hs-pills button{font:600 var(--fl) var(--font);color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:3px 10px;cursor:pointer;white-space:nowrap;}
+  .hs-pills button span{color:var(--muted);font-weight:500;margin-left:3px;} .hs-pills button.on{background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);}
+  .hs-pills i{flex:1;} .hs-pills em{font-style:normal;font-size:var(--fl);color:var(--dim);}
   .brand-t{display:flex;flex-direction:column;line-height:1.05;}
   .savestat{font:var(--fl) var(--font);color:var(--dim);white-space:nowrap;margin-top:2px;}
   .savestat,.savestat:empty{display:none!important;}   /* status lives on the map label + Help → About */
@@ -2319,14 +2323,16 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
    active AND completed actions; picking a result jumps to it (list + map). ---- */
 (function(){
   const inp=document.getElementById("hSearch"), drop=document.getElementById("hsDrop"), wrap=document.getElementById("hsWrap"); if(!inp) return;
-  const openS=()=>{ inp.focus(); inp.select(); if(inp.value.trim()) render(); };   // the field is always there: just put the cursor in it
+  const openS=()=>{ inp.focus(); inp.select(); render(); };   // the field is always there: just put the cursor in it
   const closeS=()=>{ drop.classList.remove("show"); inp.blur(); };
-  let res=[], cur=-1;
+  let res=[], cur=-1, only=null;   // only: "hold" / "done" — the pills under the box (search ignores the list's own filters)
   const hl=(txt,terms)=>{ let h=esc(txt); for(const t of terms){ if(!t) continue; h=h.replace(new RegExp("("+t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")","ig"),"<mark>$1</mark>"); } return h; };
+  const stOf=a=>a.done?"done":a.hold?"hold":"open";
   function search(q){
-    const terms=q.toLowerCase().split(/\s+/).filter(Boolean); if(!terms.length) return [];
+    const terms=q.toLowerCase().split(/\s+/).filter(Boolean);
+    if(!terms.length) return only?actions.filter(a=>stOf(a)===only).map(a=>({a,score:1,where:null})):[];   // a pill and no words: every action in that state
     const out=[];
-    for(const a of actions){
+    for(const a of actions){ if(only&&stOf(a)!==only) continue;
       const fields=[{k:"num",v:actNo(a),w:5},{k:"title",v:a.text||"",w:4}]
         .concat((a.steps||[]).map((st,i)=>({k:"step",v:st.t||"",w:2,lbl:"Sub-action "+stepLetter(i)+"."})));
       let score=0, where=null;
@@ -2339,13 +2345,18 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
     return out.slice(0,30);
   }
   function render(){
-    const q=inp.value.trim(); if(!q){ drop.classList.remove("show"); return; }
+    const q=inp.value.trim();
     res=search(q); cur=res.length?0:-1;
     const terms=q.toLowerCase().split(/\s+/).filter(Boolean);
-    drop.innerHTML=res.length?res.map((r,i)=>{ const a=r.a, stc=a.done?"done":a.hold?"hold":"open", stl=a.done?"Completed":a.hold?"On hold":"Active";
+    const n=st=>actions.filter(a=>stOf(a)===st).length;
+    const pills='<div class="hs-pills"><button type="button" data-f="hold" class="'+(only==="hold"?"on":"")+'"><i class="af-dot hold"></i>On hold<span>'+n("hold")+'</span></button>'
+      +'<button type="button" data-f="done" class="'+(only==="done"?"on":"")+'"><i class="af-dot done"></i>Done<span>'+n("done")+'</span></button><i></i>'
+      +(only?'':'<em>All actions</em>')+'</div>';
+    if(!q&&!only){ drop.innerHTML=pills+'<div class="hs-empty">Type a number, title or sub-action \u2014 or pick On hold / Done to list them.</div>'; drop.classList.add("show"); return; }
+    drop.innerHTML=pills+(res.length?res.map((r,i)=>{ const a=r.a, stc=a.done?"done":a.hold?"hold":"open", stl=a.done?"Completed":a.hold?"On hold":"Active";
       return '<div class="hs-row '+(a.done?'done ':'')+(i===cur?'on':'')+'" data-i="'+i+'"><span class="hs-num">'+actNo(a)+'</span><div class="hs-main"><div class="hs-t">'+hl(a.text,terms)+'</div>'
         +(r.where?'<div class="hs-s">'+esc(r.where.lbl)+': '+hl(r.where.v,terms)+'</div>':'')+'</div><span class="hs-st '+stc+'">'+stl+'</span></div>'; }).join("")
-      :'<div class="hs-empty">No action mentions \u201c'+esc(q)+'\u201d \u2014 searched titles and sub-actions of active and completed actions.</div>';
+      :'<div class="hs-empty">'+(q?'No '+(only==="hold"?'on-hold ':only==="done"?'completed ':'')+'action mentions \u201c'+esc(q)+'\u201d.':'No actions are '+(only==="hold"?'on hold':'done')+'.')+'</div>');
     drop.classList.add("show");
   }
   function mark(){ drop.querySelectorAll(".hs-row").forEach((el,i)=>el.classList.toggle("on",i===cur)); const el=drop.querySelector(".hs-row.on"); if(el) el.scrollIntoView({block:"nearest"}); }
@@ -2359,13 +2370,14 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
     actNavigate(a);
   }
   inp.addEventListener("input",render);
-  inp.addEventListener("focus",()=>{ if(inp.value.trim()) render(); });
+  inp.addEventListener("focus",render);   // the pills show as soon as you're in the box
   inp.addEventListener("keydown",e=>{ e.stopPropagation();
     if(e.key==="ArrowDown"){ e.preventDefault(); if(res.length){ cur=(cur+1)%res.length; mark(); } }
     else if(e.key==="ArrowUp"){ e.preventDefault(); if(res.length){ cur=(cur-1+res.length)%res.length; mark(); } }
     else if(e.key==="Enter"){ e.preventDefault(); if(cur>=0) pick(cur); }
-    else if(e.key==="Escape"){ inp.value=""; closeS(); } });
-  drop.addEventListener("mousedown",e=>{ const r=e.target.closest(".hs-row"); if(r){ e.preventDefault(); pick(Number(r.dataset.i)); } });
+    else if(e.key==="Escape"){ inp.value=""; only=null; closeS(); } });
+  drop.addEventListener("mousedown",e=>{ const f=e.target.closest(".hs-pills button[data-f]"); if(f){ e.preventDefault(); only=only===f.dataset.f?null:f.dataset.f; render(); return; }   // one at a time; tap the lit one to turn it off
+    const r=e.target.closest(".hs-row"); if(r){ e.preventDefault(); pick(Number(r.dataset.i)); } });
   document.addEventListener("mousedown",e=>{ if(!e.target.closest(".hsearch")&&!e.target.closest("#miSearch")) drop.classList.remove("show"); },true);
   window.addEventListener("keydown",e=>{ if((e.ctrlKey||e.metaKey)&&(e.key==="k"||e.key==="K")){ e.preventDefault(); e.stopPropagation(); openS(); } },true);
 })();
