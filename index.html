@@ -864,6 +864,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-dot{position:absolute;left:0;top:0;transform:translate(-50%,-50%);width:auto;padding:0 5px;white-space:nowrap;height:28px;box-sizing:border-box;border-radius:8px;background:#F28C28;border:3px solid #fff;box-shadow:0 0 0 1.5px #9A520B,0 3px 8px #0006;color:#fff;font:800 13px/22px var(--font);text-align:center;letter-spacing:-.2px;}
   .ma-dot.hold{background:#fff;color:#9A520B;border:0;box-shadow:0 0 0 2.5px #F28C28,0 3px 8px #0006;line-height:28px;}
   .ma-dot.done{background:#6b7580;box-shadow:0 0 0 1.5px #3f4750,0 3px 8px #0006;}
+  .ma-zf .ma-dot,.ma-zf .ma-fan{opacity:0;transition:opacity .12s;} .ma-spt{position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;box-sizing:border-box;border-radius:50%;background:#9A520B;border:2px solid #fff;box-shadow:0 1px 3px #0006;opacity:0;} .ma-zf .ma-spt{opacity:1;}   /* mid-zoom: labels and spokes fade, the spots stay */
+  .ma-zin .ma-dot,.ma-zin .ma-fan{animation:mazin .25s ease-out;} @keyframes mazin{from{opacity:0;}to{opacity:1;}}
   .ma-fan{overflow:visible;pointer-events:none;} .ma-fan line{stroke:#fff;stroke-width:2.5;filter:drop-shadow(0 1px 1.5px #000a);} .ma-fan circle{fill:#9A520B;stroke:#fff;stroke-width:2;}   /* stacked actions, fanned out at full zoom */
   .ldot{position:absolute;left:0;top:0;transform:translate(-50%,-50%);width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:#9aa3ad;border:2px solid #fff;box-shadow:0 0 0 1px #6b7580,0 2px 4px #0005;cursor:pointer;}
   .ldot.n{width:auto;min-width:22px;height:22px;border-radius:11px;padding:0 5px;color:#fff;font:700 11px/18px var(--font);text-align:center;}   /* photos on no action, several on one spot */
@@ -6782,7 +6784,7 @@ function mTileUrl(){ return "https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
 function mBuildHomeMap(acts){
   const hm=document.getElementById("mHomeMap"); if(!hm||typeof L==="undefined") return;
   try{
-    const m2=L.map(hm,{zoomControl:false,attributionControl:false});
+    const m2=L.map(hm,{zoomControl:false,attributionControl:false,zoomSnap:0.25});   // letting go of a pinch barely snaps (labels stay put)
     m2._tl=L.tileLayer(mTileUrl(),{subdomains:["mt0","mt1","mt2","mt3"],maxZoom:22,maxNativeZoom:21,keepBuffer:4,updateWhenIdle:false}).addTo(m2);   // tiles load while you pan, and a ring around the screen stays loaded
     m2._tl.on("loading",()=>{ tilesBusy=true; }).on("load",()=>{ tilesBusy=false; });
     const pts=[];
@@ -6795,12 +6797,9 @@ function mBuildHomeMap(acts){
     const lay=L.layerGroup().addTo(m2);
     /* No bubbles: one label per action at each spot; a crowded spot spreads its labels on a ferris wheel
        round it (a spoke back to each one's own place), like the desktop. Wheels that would touch join. */
-    const draw=()=>{ lay.clearLayers(); const z=m2.getZoom(), V=window._mWheel||"wheel", groups=[];
+    const layout=z=>{ const V=window._mWheel||"wheel", groups=[], wheels=[];
       for(const p of pts){ const q=m2.project([p.lat,p.lng],z), t=Object.assign({},p,{q}); const g=groups.find(g2=>Math.hypot(g2.x-q.x,g2.y-q.y)<46);
         if(g) g.items.push(t); else groups.push({x:q.x,y:q.y,items:[t]}); }
-      const dot=(k,a,ll,dx,dy)=>{ const st=mStatus(a);   // one action's label; dx/dy shift it off its spot
-        L.marker(ll,{zIndexOffset:k===mFocusK?800:st==="open"?300:st==="hold"?100:0,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(a._new?' new':st==="open"?'':' '+st)+(k===mFocusK?' focus':'')+(k===mFlashK?' flash':'')+'">'+(a._new?'•':actNo(a))+'</div>',iconSize:[0,0],iconAnchor:[-dx,-dy]})})
-          .on("click",()=>{ if(k===mFocusK){ mTapK=null; mOpenAct(k); } else { mTapK=k; mTapT=Date.now(); mFocusCard(k); } }).addTo(lay); };   // a label brings its card up; tapping it again (or View) opens it
       const settle=g=>{ const by=new Map(); for(const t of g.items) if(!by.has(t.k)) by.set(t.k,t); g.labs=[...by.values()];
         g.cx=g.labs.reduce((s2,t)=>s2+t.q.x,0)/g.labs.length; g.cy=g.labs.reduce((s2,t)=>s2+t.q.y,0)/g.labs.length; };
       groups.forEach(settle);
@@ -6816,7 +6815,7 @@ function mBuildHomeMap(acts){
         for(let i=0;i<groups.length&&!again;i++) for(let j=i+1;j<groups.length&&!again;j++){ const a=groups[i], b=groups[j];
           if(Math.hypot(a.cx-b.cx,a.cy-b.cy)<occ(a)+occ(b)){ a.items=a.items.concat(b.items); settle(a); groups.splice(j,1); again=true; } } }
       for(const g of groups){ const n=g.labs.length;
-        if(n===1){ const t=g.labs[0]; dot(t.k,t.a,m2.unproject([t.q.x,t.q.y],z),0,0); continue; }
+        if(n===1){ wheels.push({one:g.labs[0]}); continue; }
         const sb=safe(), Rr=Math.max(Rmin(n),Math.min(R(n),(sb.x1-sb.x0-64)/2,V==="arc"?sb.y1-sb.y0-44:(sb.y1-sb.y0-44)/2)); let ls;   // a big wheel shrinks to fit the screen (never so far that labels touch)
         if(V==="arc"){   // left-to-right by spot, spread over the upper half circle
           ls=g.labs.slice().sort((x,y)=>x.q.x-y.q.x||String(actNo(x.a)).localeCompare(String(actNo(y.a))));
@@ -6833,10 +6832,39 @@ function mBuildHomeMap(acts){
             if(r-l>sb.x1-sb.x0) dx=(sb.x0+sb.x1-l-r)/2; else if(l<sb.x0) dx=sb.x0-l; else if(r>sb.x1) dx=sb.x1-r;   // still too wide: centred
             if(b-t0>sb.y1-sb.y0) dy=(sb.y0+sb.y1-t0-b)/2; else if(t0<sb.y0) dy=sb.y0-t0; else if(b>sb.y1) dy=sb.y1-b; }
           if(dx||dy) for(const t of ls){ t.lx+=dx; t.ly+=dy; } }
-        const spots=new Set(); const svg=ls.map(t=>{ spots.add(Math.round(t.q.x-g.cx)+","+Math.round(t.q.y-g.cy)); return '<line x1="'+(t.q.x-g.cx).toFixed(1)+'" y1="'+(t.q.y-g.cy).toFixed(1)+'" x2="'+(t.lx-g.cx).toFixed(1)+'" y2="'+(t.ly-g.cy).toFixed(1)+'"/>'; }).join("")
+        for(const t of ls){ t.rx=t.lx-g.cx; t.ry=t.ly-g.cy; }   // each label's place relative to the wheel's centre (kept while a pinch is under way)
+        wheels.push({cx:g.cx,cy:g.cy,ls}); }
+      return wheels; };
+    const dot=(k,a,ll)=>{ const st=mStatus(a);   // one action's label
+      L.marker(ll,{zIndexOffset:k===mFocusK?800:st==="open"?300:st==="hold"?100:0,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(a._new?' new':st==="open"?'':' '+st)+(k===mFocusK?' focus':'')+(k===mFlashK?' flash':'')+'">'+(a._new?'•':actNo(a))+'</div>',iconSize:[0,0],iconAnchor:[0,0]})})
+        .on("click",()=>{ if(k===mFocusK){ mTapK=null; mOpenAct(k); } else { mTapK=k; mTapT=Date.now(); mFocusCard(k); } }).addTo(lay); };   // a label brings its card up; tapping it again (or View) opens it
+    const render=(wheels,z)=>{ lay.clearLayers();
+      if((window._mZoomFx||"live")==="fade"){ const seen=new Set();   // the spots alone stay on show while the labels fade (an SVG dot tracks a pinch exactly)
+        for(const p of pts){ const key=p.lat.toFixed(6)+","+p.lng.toFixed(6); if(seen.has(key)) continue; seen.add(key);
+          L.marker([p.lat,p.lng],{interactive:false,zIndexOffset:-200,icon:L.divIcon({className:"",html:'<div class="ma-spt"></div>',iconSize:[0,0],iconAnchor:[0,0]})}).addTo(lay); } }
+      for(const w of wheels){
+        if(w.one){ dot(w.one.k,w.one.a,[w.one.lat,w.one.lng]); continue; }
+        const spots=new Set(); const svg=w.ls.map(t=>{ spots.add(Math.round(t.q.x-w.cx)+","+Math.round(t.q.y-w.cy)); return '<line x1="'+(t.q.x-w.cx).toFixed(1)+'" y1="'+(t.q.y-w.cy).toFixed(1)+'" x2="'+(t.lx-w.cx).toFixed(1)+'" y2="'+(t.ly-w.cy).toFixed(1)+'"/>'; }).join("")
           +[...spots].map(t=>{ const [x,y]=t.split(","); return '<circle cx="'+x+'" cy="'+y+'" r="4"/>'; }).join("");
-        L.marker(m2.unproject([g.cx,g.cy],z),{interactive:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1">'+svg+'</svg>',iconSize:[0,0],iconAnchor:[0,0]})}).addTo(lay);
-        for(const t of ls) dot(t.k,t.a,m2.unproject([t.lx,t.ly],z),0,0); } };
+        L.marker(m2.unproject([w.cx,w.cy],z),{interactive:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1">'+svg+'</svg>',iconSize:[0,0],iconAnchor:[0,0]})}).addTo(lay);
+        for(const t of w.ls) dot(t.k,t.a,m2.unproject([t.lx,t.ly],z)); } };
+    let wheelsNow=[];
+    const draw=()=>{ const c=m2.getContainer(), was=c.classList.contains("ma-zf"); c.classList.remove("ma-zf"); const z=m2.getZoom(); wheelsNow=layout(z); render(wheelsNow,z);
+      if(was){ c.classList.add("ma-zin"); clearTimeout(m2._zinT); m2._zinT=setTimeout(()=>c.classList.remove("ma-zin"),400); } };   // they fade back in, in their new places
+    /* While a pinch (or a glide) is under way the map moves every frame, but a wheel is drawn in screen
+       pixels: left alone its labels would fly off the spokes (zooming in) or pile up (zooming out).
+       Three looks, chosen by window._mZoomFx (preview): "live" re-forms the wheels every frame; "steady" keeps
+       each wheel as it was and glides it with its spots; "fade" fades labels and spokes out until you let go. */
+    const zoomFrame=()=>{ const fx=window._mZoomFx||"live", z=m2.getZoom(); if(fx==="none") return;
+      if(fx==="live"){ render(layout(z),z); return; }
+      if(fx==="steady"){ for(const w of wheelsNow){ if(w.one) continue;
+          for(const t of w.ls) t.q=m2.project([t.lat,t.lng],z);
+          w.cx=w.ls.reduce((a2,t)=>a2+t.q.x,0)/w.ls.length; w.cy=w.ls.reduce((a2,t)=>a2+t.q.y,0)/w.ls.length;
+          for(const t of w.ls){ t.lx=w.cx+t.rx; t.ly=w.cy+t.ry; } }
+        render(wheelsNow,z); return; }
+      m2.getContainer().classList.add("ma-zf"); };
+    m2.on("zoom",()=>{ if(m2.touchZoom._zooming||m2._flying) zoomFrame(); });
+    m2.on("zoomanim",e=>{ if(!m2.touchZoom._zooming&&Math.abs(e.zoom-m2.getZoom())>0.3) m2.getContainer().classList.add("ma-zf"); });   // a double-tap zoom: hide them for its ¼ s
     const bb=pts.length?L.latLngBounds(pts.map(p=>[p.lat,p.lng])):null;
     const me=(mGeo&&!ignoreLoc)?mGeo:null;   // Ignore my location: no YOU ARE HERE, and the view fits the actions only
     if(me){ m2._geoPin=L.marker([me.lat,me.lng],{icon:youAreHereIcon(30),interactive:false,zIndexOffset:900}).addTo(m2); if(bb) bb.extend([me.lat,me.lng]); }
