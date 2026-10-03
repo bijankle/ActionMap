@@ -1413,7 +1413,6 @@ function passSearch(p){
   return terms.every(t=>hay.includes(t));
 }
 // Multi-tag filter: a photo passes only if it is in EVERY active tag (overlap/intersection).
-let clusterSens=50;   // retired setting (the clustering dial); kept so older saved settings still load
 function hlPhotoSet(){ const s=new Set(selSet); for(const id of selActs) for(const p of actPhotos(actById(id))) s.add(p.id); return s; }
 /* The desktop map, the phone's look: ONE label per action at each spot (its number, snug to it). No
    bubbles: a crowded spot spreads its labels on a "ferris wheel" round it — a spoke from each label to
@@ -1660,7 +1659,7 @@ map.on("click",e=>{
    An action is a task with a tick box (tick = completed). Actions link to photos (one action to
    many photos, or many actions to one photo). Stored in the .json like tags; photos untouched. */
 let actions=[], nextActId=1, selActs=new Set(), actionFilter=null;
-let actShowOpen=true, actShowHold=false, actShowDone=false, actOnlyMap=false, rightTab="photo";   // Open / On hold / Done pills: which actions show (list + map); open on by default
+let actShowOpen=true, actShowHold=false, actShowDone=false, rightTab="photo";   // Open / On hold / Done pills: which actions show (list + map); open on by default
 let _aIdx=null,_aArr=null;
 function actById(id){
   if(_aIdx&&_aArr===actions){ const i=_aIdx.get(id); if(i!=null){ const a=actions[i]; if(a&&a.id===id) return a; } }
@@ -2111,7 +2110,7 @@ function renderIpActions(){   // the strip under the photo: the action's other p
   const a=aid!=null?actById(aid):null, ps=a?actPhotos(a):[];
   st.innerHTML=ps.length>1?ps.map(q=>'<button type="button" class="ipn-it'+(q===p?' cur':'')+'" data-pid="'+q.id+'" title="'+esc(q.name||"")+'"><div class="th" style="background-image:url(\''+(thumbSrc(q)||"")+'\')"></div></button>').join(""):"";
   st.querySelectorAll(".ipn-it").forEach(b=>{ b.addEventListener("mousedown",e=>e.stopPropagation()); b.addEventListener("click",e=>{ e.stopPropagation(); const q=photoById(Number(b.dataset.pid)); if(q&&q!==p) openViewer(q); });
-    b.addEventListener("contextmenu",e=>{ e.preventDefault(); e.stopPropagation(); const q=photoById(Number(b.dataset.pid)); if(!q) return; hideHover(); ctxMenu.innerHTML=""; photoCtxItems(q); showCtxAt(e.clientX,e.clientY); }); });
+    b.addEventListener("contextmenu",e=>{ e.preventDefault(); e.stopPropagation(); const q=photoById(Number(b.dataset.pid)); if(!q) return; hideHover(); openDotMenu(q,e); }); });   // the same photo menu as the map dots and the gallery
   ipLayoutNotes();
 }
 /* Room for the note block: the photo is fitted into what's left above it, and the block sits right
@@ -2175,7 +2174,6 @@ function actFilterChanged(){ renderActions(); renderClusters(); updateGallery();
 document.getElementById("actShowOpen").addEventListener("click",()=>{ actShowOpen=!actShowOpen; actFilterChanged(); });
 document.getElementById("actShowHold").addEventListener("click",()=>{ actShowHold=!actShowHold; actFilterChanged(); });
 document.getElementById("actShowDone").addEventListener("click",()=>{ actShowDone=!actShowDone; actFilterChanged(); });
-document.getElementById("actMapOnly")?.addEventListener("click",()=>{ actOnlyMap=!actOnlyMap; renderClusters(); updateGallery(); renderActions(); renderMapTags(); persistState(); });
 document.getElementById("actList").addEventListener("click",e=>{ if(!e.target.closest("#actExpAll")) return; e.stopPropagation();   // collapse-all lives on the first card, which is rebuilt each render
   if(actions.some(a=>!collActs.has(a.id))) actions.forEach(a=>collActs.add(a.id)); else collActs.clear(); renderActions(); },true);
 /* The box above the list FILTERS it (number, title or a sub-action). New actions come from the + beside
@@ -2273,14 +2271,17 @@ function openActMenu(a,ev){
   ctxMenu.innerHTML="";
   const actIds=(selActs.has(a.id)&&selActs.size>1)?[...selActs]:[a.id];
   const many=actIds.length>1;
-  mkCtxItem("Add photos…",()=>startPickMode(actIds));   // pick mode: click dots/thumbnails, then Assign
+  mkCtxItem("Pick photos on the map…",()=>startPickMode(actIds));   // pick mode: click dots/thumbnails, then Assign (new photos from files: paste / drop with the action selected)
   if(selSet.size){
     const ok=!many||selSet.size===1;
     mkCtxItem("Assign "+(many?actIds.length+" selected actions":"action")+" → "+selSet.size+" selected photo"+(selSet.size===1?"":"s"),
       ()=>assignActs(actIds,[...selSet].map(photoById).filter(Boolean)),
       !ok,"One action to many photos, or many actions to one photo — not many to many");
   }
-  mkCtxItem(a.done?"Reopen action":"Mark completed",()=>setActionDone(a,!a.done));
+  /* the same things the card's own buttons do, the same way */
+  mkCtxItem(a.hold?"Take off hold":"Put on hold",()=>setActionHold(a,!a.hold));
+  mkCtxItem(a.done?"Reopen action":"Mark done",()=>setActionDone(a,!a.done));
+  mkCtxItem("Copy image",()=>copyActionForPhone(a,null));
   mkCtxItem("Rename…",()=>renameAction(a));
   mkCtxItem("Delete action…",()=>confirmDeleteAction(a));
   showCtxAt(ev.clientX,ev.clientY);
@@ -2313,7 +2314,6 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
     if(onDirty()||ON.err){ clearTimeout(ON.saveT); ON.err=null; onlineSave(); } pumpUploads(); updateSaveBtn();
     if(!onDirty()&&!ON.busy&&!photos.some(p=>!p.h&&!p._upDead)){ loadNote("\u2713 All saved"); setTimeout(()=>loadNote(""),1800); } });
   document.getElementById("miReport").addEventListener("click",()=>exportActionsPdf());
-  document.getElementById("miPush")?.addEventListener("click",()=>{ const c=ghCfg(); if(!c.token){ openSettings(); return; } exportMobile(true); loadNote("Syncing to the phone\u2026"); setTimeout(()=>loadNote(""),2500); });
 })();
 /* ---- Find an action: one box searches numbers, titles and sub-actions across
    active AND completed actions; picking a result jumps to it (list + map). ---- */
@@ -3098,7 +3098,7 @@ function showGuide(){
     +sec("Actions",["The round <b>+</b> beside the filter box (or <b>N</b>) opens a new action: type it, Enter, then its sub-actions (Enter after each), add photos (button, paste or drop) and move the map so the pin sits where it goes \u2014 then <b>Create</b>. The box itself filters the list.","<b>On hold</b> / <b>Done</b> on each card set its status; the pills at the top (Open / On hold / Done) and the date bar choose what shows on the list, map, gallery and exports.","The <b>date bar</b> shows actions created in a range: drag its two handles, or pick <b>1 week</b> / <b>1 month</b> / <b>3 months</b> (these keep rolling with the days) or <b>All</b>. The range belongs to the project, so every desktop and phone on it sees the same one; on the phone it\u2019s the calendar button beside the project name.","Link photos to an action: select the action, then right-click a photo dot. The first photo is the cover \u2014 drag in the gallery to reorder.","The <b>copy</b> icon on a card copies one picture of the action (title, map, photos, sub-actions) to paste into chat or email."],true)
     +sec("Phone",["Open the same link on your phone: the map shows every action; swipe the cards, tap <b>View</b> to open one.","Tick sub-actions, add photos (camera or gallery) and new actions in the field \u2014 they reach the desktop by themselves."])
     +sec("Reports",["The <b>XLSX</b> and <b>PDF</b> buttons beside \u201cActions\u201d export every action with its status, sub-actions and photos. The Excel file also has a <b>Sub-actions</b> tab with dates, a \u201cChanged in last 24 h\u201d filter and a Notes column \u2014 handy for end-of-shift reports.","<b>File \u2192 Download backup</b> saves a zip of the whole project."])
-    +sec("Good to know",["Everything saves by itself. The dot on the <b>save</b> button is green when it\u2019s all online, amber while a change is on its way.","<b>Ctrl+Z</b> undoes (File \u2192 Undo), <b>Ctrl+Y</b> redoes \u2014 deleting an action asks first and can be undone.","<b>Ctrl+K</b> jumps to the search box. <b>View</b> holds the map imagery, your location, clustering and thumbnail size.","Projects live in your GitHub data repository \u2014 nothing is stored only on this PC."])
+    +sec("Good to know",["Everything saves by itself. The dot on the <b>save</b> button is green when it\u2019s all online, amber while a change is on its way.","<b>Ctrl+Z</b> undoes (File \u2192 Undo), <b>Ctrl+Y</b> redoes \u2014 deleting an action asks first and can be undone.","<b>Ctrl+K</b> jumps to the search box. <b>View</b> holds the map imagery, your location and thumbnail size.","Projects live in your GitHub data repository \u2014 nothing is stored only on this PC."])
     +'<div class="yn-btns"><button class="yn-yes" id="guideClose" type="button">Close</button></div></div>';
   m.classList.add("show"); m.querySelector("#guideClose").onclick=()=>m.classList.remove("show"); }
 function showAbout(){
@@ -3280,7 +3280,7 @@ let _expBackoffUntil=0;
 function scheduleAutoExport(delay){ let d=delay==null?8000:delay; const w=_expBackoffUntil-Date.now(); if(w>d) d=w; clearTimeout(_expT); _expT=setTimeout(()=>exportMobile(false),d); }
 async function exportMobile(manual){
   if(mIsEngPhone()) return;
-  const st=document.getElementById("mobExpStatus"), btn=document.getElementById("btnMobileExport");
+  const st=document.getElementById("mobExpStatus");
   if(!ghCfg().token&&ghRaw().token) await ghFindRepo();
   const cfg=ghCfg();
   if(!cfg.token){ if(manual) st.textContent=ghRaw().token?"Couldn't find the data repository for this token \u2014 type it in above.":"Paste your GitHub token above first."; return; }
@@ -3291,7 +3291,7 @@ async function exportMobile(manual){
   const key="pmPackSig:"+cfg.repo+(ON.pid?"|"+ON.pid:"");
   let last=""; try{ last=localStorage.getItem(key)||""; }catch(e){}
   if(!manual&&sig===last) return;   // nothing the phone would see has changed
-  _expBusy=true; if(btn) btn.disabled=true;
+  _expBusy=true;
   const openN=actions.filter(a=>!a.done).length;
   try{
     st.textContent="Building pack…";
@@ -3311,10 +3311,9 @@ async function exportMobile(manual){
     st.textContent="Auto-sync to phone failed: "+(err&&err.message||err)+" — retrying";
     _expBackoffUntil=Date.now()+60000; scheduleAutoExport(60000);
   }
-  _expBusy=false; if(btn) btn.disabled=false;
+  _expBusy=false;
   if(_expAgain){ _expAgain=false; scheduleAutoExport(1500); }
 }
-document.getElementById("btnMobileExport")?.addEventListener("click",()=>exportMobile(true));
 /* ---- Export to PDF: the Excel export on paper — landscape A4 throughout. Page 1+ "Problems": #, problem,
    status, sub-actions, then the marked-up photos in one line as tall as the row (zoom the PDF for detail). Then "Sub-actions": one line each under its action, dated from History. ---- */
 let _jspdfP=null;
@@ -3839,7 +3838,6 @@ document.getElementById("setGhToken").addEventListener("change",e=>{ try{ localS
   ON.denied=false; ON.tokenBad=false; syncMenus(); renderSaveStatus(); renderProjHead(); if(isOnline()){ onlinePoll(); if(canEdit()){ pumpUploads(); scheduleOnlineSave(500); } }   // a token turns view-only into editing straight away
   ghFindRepo().then(r=>{ const el=document.getElementById("setGhRepo"); if(r&&el&&!el.value) el.value=r; }); });
 document.getElementById("setUserName").addEventListener("input",e=>{ try{ localStorage.setItem("pmUserName",e.target.value.trim()); }catch(err){} });
-document.getElementById("setActMap")?.addEventListener("change",e=>{ actOnlyMap=e.target.checked; renderClusters(); updateGallery(); renderActions(); persistState(); });
 
 /* right-click: on/near a dot -> the DOT menu; only genuinely empty map gets the general commands */
 function dotAtPoint(pt){   // the label / grey dot under a map point (right-clicks that miss the marker itself)
@@ -3860,7 +3858,6 @@ map.on("contextmenu",e=>{
 /* file loading */
 const IMG_RE=/\.(jpe?g|jfif|png|tiff?|heic|heif|webp|avif|gif|bmp)$/i;
 const hasFSA="showDirectoryPicker" in window;
-document.getElementById("btnFolder")?.addEventListener("click",openFolder);
 document.getElementById("folderInput").addEventListener("change",async e=>{
   const fl=Array.from(e.target.files||[]);
   const items=fl.filter(f=>IMG_RE.test(f.name)).map(f=>({name:f.name,path:f.webkitRelativePath||f.name,getFile:async()=>f}));
@@ -3904,7 +3901,7 @@ function scanReport(r,quiet){
   if(!r) return;
   const n=r.created.length, noLoc=r.created.filter(p=>p.lat==null), hid=r.created.filter(p=>p.lat!=null&&!onMapNow(p));
   if(quiet&&!n) return;
-  const why=[]; if(actOnlyMap) why.push("\u201cActions only\u201d is on"); if(nameFilter) why.push("the search box has text");
+  const why=[]; if(nameFilter) why.push("the search box has text");
   let msg="Scanned <b>"+esc(r.root)+"</b>: "+r.seen+" photo"+(r.seen===1?"":"s")+" \u2014 <b>"+n+" new</b>";
   if(!n) msg+=" (everything there is already in the project)";
   if(hid.length) msg+=". "+hid.length+" of the new ones "+(hid.length===1?"is":"are")+" hidden because "+(why.join(" and ")||"of a filter");
@@ -3919,7 +3916,7 @@ function showNewPhotos(list){
   hideBanner();
   const loc=list.filter(p=>p.lat!=null);
   if(loc.some(p=>!onMapNow(p))){   // lift exactly the filters that hide them
-    actOnlyMap=false; if(boxBounds){ boxBounds=null; if(boxRect){ map.removeLayer(boxRect); boxRect=null; } setAreaBtn(); }
+    if(boxBounds){ boxBounds=null; if(boxRect){ map.removeLayer(boxRect); boxRect=null; } setAreaBtn(); }
     if(nameFilter){ nameFilter=""; document.getElementById("nameFilter").value=""; }
     if(tagFilters.size){ tagFilters.clear(); }
   }
@@ -4707,7 +4704,7 @@ document.addEventListener("keydown",async e=>{
   if(!list.length) return;
   e.preventDefault(); if(roBlock()) return;
   const n=list.length, what=n===1?"\u201c"+list[0].name+"\u201d":n+" photos";
-  removePhotos(list); clearSel();
+  removePhotos(list); clearSel();   // the key is the quick way: no question, Ctrl+Z brings it back
   loadNote("Deleted "+what+" \u2014 Ctrl+Z undoes"); setTimeout(()=>loadNote(""),3500);
 });
 function refit(){ if(lbImg.naturalWidth) setupFit(lbImg.naturalWidth,lbImg.naturalHeight); }
@@ -4974,7 +4971,7 @@ lbStage.addEventListener("dblclick",e=>{ if(markTool==="poly"&&draft&&draft.t===
 lbStage.addEventListener("contextmenu",e=>{ if(markTool==="poly"&&draft&&draft.t==="poly"){ e.preventDefault(); endPoly(true); return; }
   if(draft||e.target===tbText||(e.target.closest&&e.target.closest(".ip-marktools,.markpalette,.ip-sizebars"))) return;
   const p=curPhoto(); if(!p) return; e.preventDefault(); hideHover&&hideHover(); if(selMark) deselectText();
-  ctxMenu.innerHTML=""; photoCtxItems(p); showCtxAt(e.clientX,e.clientY); });
+  openDotMenu(p,e); });   // the same photo menu as the map dots and the gallery
 /* The photo menu — the same wherever a photo is right-clicked (open photo, the strip under it, gallery
    cards, map labels): copy / save the whole photo from its full-size original with the markups baked
    in, unlink it from an action, or delete it. */
@@ -5450,17 +5447,6 @@ function closeProject(){   // the app forgets the project file + folder, so noth
   setSaveStatus("","");
 }
 // Refresh = re-scan the remembered main photos folder: incremental add + removal sync.
-document.getElementById("btnRefresh")?.addEventListener("click",async()=>{
-  if(photos.length&&!(await askYesNo("Re-scan the photo folder?","New photos in the folder are added to the map, and photos whose files were deleted or moved out of the folder are REMOVED from the map (with their notes and action links).\n\nYou can undo the removals with Ctrl+Z.","Yes, re-scan",true))) return;
-  refreshFolder();
-});
-async function refreshFolder(){
-  if(!dirHandle){ try{ dirHandle=await idbGet("dirHandle"); }catch(e){} }
-  if(dirHandle && await ensurePermission(dirHandle)){
-    invalidateDirIndex(); folderName=dirHandle.name; hideBanner();
-    scanReport(await loadFromHandle(dirHandle,true,{prune:photos.length>0}));
-  } else openFolder();   // no remembered folder yet -> pick one
-}
 function clearAll(redraw){
   dateWin=null;   // each project has its own range
   if(lb.classList.contains("open")) closeViewer();   // the viewer must never keep showing a photo from the old project
@@ -5647,29 +5633,7 @@ async function adoptNewJson(){
   } else downloadJson(serializeMeta(),suggested);
 }
 // Save = flush the auto-save immediately onto the current file (or pick one). Auto-save means it's optional.
-document.getElementById("btnSave")?.addEventListener("click",async()=>{
-  if(!photos.length){ alert("Nothing to save yet."); return; }
-  if(!jsonHandle){ adoptNewJson(); return; }
-  if(autoDisabled){ autoDisabled=false; }   // Save = user explicitly retrying; clear the paused state and try once
-  let r=await flushAutoSave(true,true);   // manual Save always writes (captures current view, bumps last-saved)
-  if(r.status==="busy"){ await new Promise(res=>setTimeout(res,1200)); r=await flushAutoSave(true,true); }   // a background save was mid-flight; wait and retry once
-  if(r.status==="error"){
-    const msg=(r.error&&(r.error.message||r.error.name))||"unknown error";
-    alert("Could not write to "+(loadedJsonName||"the file")+" — auto-save is paused.\n\nReason: "+msg+"\n\nThis file is on the P: network drive; browser file-writing there is unreliable. Best fix: click Save As and choose a LOCAL folder (e.g. Documents). Also delete any leftover Photos2.json.crswap, and close the file if it's open elsewhere.");
-  } else if(r.status==="no-permission"){
-    alert("The browser didn't grant write access to the file. Click Save again and choose Allow when prompted, or use Save As.");
-  }
-  // unchanged / saved / busy(after retry) -> no alert
-});
-document.getElementById("btnSaveAs")?.addEventListener("click",adoptNewJson);
 function downloadJson(data,name){ const blob=new Blob([data],{type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=name||((folderName||"photomap")+".json"); a.click(); setTimeout(()=>URL.revokeObjectURL(url),500); }
-document.getElementById("btnOpenJson")?.addEventListener("click",async()=>{
-  if((photos.length||actions.length)&&!(await askYesNo("Open a different project?","\u201c"+(loadedJsonName||folderName||"The current project")+"\u201d will be closed (it's already saved) and replaced on screen by the project you pick.","Yes, choose a project"))) return;
-  if(hasFSA&&window.showOpenFilePicker){
-    try{ const [h]=await window.showOpenFilePicker({types:[{description:"JSON",accept:{"application/json":[".json"]}}]}); saveFileHandle=h; jsonHandle=h; loadedJsonName=h.name; try{await idbSet("jsonHandle",h);}catch(e){} const f=await h.getFile(); etaStart("json",Math.max(0.05,(f.size||1e6)/1048576),"Loading — reading "+(h.name||".json")+"…"); loadStateText(await f.text()); etaEnd(); fileLoadedOnce=true; lastWrittenSig=metaSignature(); setSaveStatus("Saved","ok"); armFileSync(); }
-    catch(err){ if(err&&err.name==="AbortError") return; console.warn(err); document.getElementById("jsonInput").click(); }   // FSA picker can fail (e.g. file:// pages); fall back to the file input
-  } else document.getElementById("jsonInput").click();
-});
 document.getElementById("jsonInput").addEventListener("change",async e=>{ const f=e.target.files[0]; if(f){ loadedJsonName=f.name; loadStateText(await f.text()); } });
 
 function uiSettings(){ return { baseLayer: map.hasLayer(google)?"google":map.hasLayer(esri)?"esri":"none", showNoGeo, sortBy:currentSort,
@@ -5677,7 +5641,7 @@ function uiSettings(){ return { baseLayer: map.hasLayer(google)?"google":map.has
       sideW:getComputedStyle(document.documentElement).getPropertyValue("--side-w").trim(),
       actW:getComputedStyle(document.documentElement).getPropertyValue("--act-w").trim()||null,
       covW:getComputedStyle(document.documentElement).getPropertyValue("--cov-w").trim()||null,
-      recentTags: recentTags.slice(0,10), rightTab, actShowOpen, actShowHold, actShowDone, actOnlyMap, clusterSens,
+      recentTags: recentTags.slice(0,10), rightTab, actShowOpen, actShowHold, actShowDone,
       view:{ center:[map.getCenter().lat, map.getCenter().lng], zoom:map.getZoom() } }; }   // this device's view of the project (layout, filters, map view) — never shared
 function serializeState(includeImages){
   return {
@@ -5741,9 +5705,8 @@ function applyUiSettings(s){ s=s||{};
   if(s.baseLayer==="esri"){ map.removeLayer(google); esri.addTo(map); } else if(s.baseLayer==="none"){ map.removeLayer(google); map.removeLayer(esri); } else if(s.baseLayer==="google"&&!map.hasLayer(google)){ map.removeLayer(esri); google.addTo(map); }
   showNoGeo=true;   // photos without a location always list in the gallery (the toggle is gone)
   if(Array.isArray(s.recentTags)) recentTags=s.recentTags.slice(0,10);
-  actShowOpen=s.actShowOpen!==false; actShowHold=!!s.actShowHold; actShowDone=!!s.actShowDone; if(Array.isArray(s.actDates)&&(s.actDates[0]||s.actDates[1])&&!dateWin) dateWin={lo:s.actDates[0]||null,hi:s.actDates[1]||null,at:1};   /* an older file kept it per device */ actOnlyMap=false; setTab(s.rightTab==="gallery"?"gallery":"photo"); renderActions();
+  actShowOpen=s.actShowOpen!==false; actShowHold=!!s.actShowHold; actShowDone=!!s.actShowDone; if(Array.isArray(s.actDates)&&(s.actDates[0]||s.actDates[1])&&!dateWin) dateWin={lo:s.actDates[0]||null,hi:s.actDates[1]||null,at:1};   /* an older file kept it per device */ setTab(s.rightTab==="gallery"?"gallery":"photo"); renderActions();
   currentSort="date_desc";   // the gallery is always newest first (Sort is gone)
-  clusterSens=(typeof s.clusterSens==="number"?Math.max(0,Math.min(100,s.clusterSens)):50);
   if(boxRect){map.removeLayer(boxRect);boxRect=null;} boxBounds=null;
   setAreaBtn();
   renderClusters(); updateStats(); updateGallery(); map.invalidateSize();
@@ -6593,12 +6556,7 @@ function mCamInput(){
     const fixed=mGeo?{lat:mGeo.lat,lng:mGeo.lng}:null;   // where you are standing right now = where the photo was taken
     if(!fixed) mToast("No GPS fix yet \u2014 photo will place from your trail if possible",true);
     if(mCollect){ const f=mCollect; mCollect=null; f(fs,fixed); return; }   // into the + New action draft
-    let link=mCamLink; mCamLink=null;
-    if(link&&link.newAction){   // "New action from a photo": name it, create it, link the shot to it
-      const v=prompt("Name the new action for this photo:","");
-      if(v&&v.trim()){ const u=mUid(); mMutate(()=>{ const p=mPend(); p.newActs=(p.newActs||[]).concat([{text:v.trim(),steps:[],done:false,u,loc:fixed||null,cr:Date.now()}]); mPendSave(p); }); link={au:u}; if(document.getElementById("mList")) mShowList(); }
-      else link=null;   // cancelled: the photo still goes to the map, unlinked
-    }
+    const link=mCamLink; mCamLink=null;
     mUploadPhotos(fs,fixed,link);
   });
   return el;
