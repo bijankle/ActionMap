@@ -440,6 +440,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .lb-ref{z-index:4;}
   .lb-stage.drawing{cursor:crosshair;}
   .lb-stage.drawing.tool-text{cursor:text;}
+  .lb-stage.drawing.tool-text.ghosting{cursor:none;}   /* placing a text box: only its faded preview shows, no pointer */
+  .tb-ghost{position:absolute;z-index:6;pointer-events:none;box-sizing:content-box;background:#fff;opacity:.45;white-space:pre;font-weight:600;font-family:'Aptos',sans-serif;display:none;}
   .lb-stage.copying,.lb-stage.copying *{cursor:copy!important;}
   .lb-textbtn.on{background:var(--gold);color:var(--on-accent);border-color:var(--gold);}
   .lb-close{z-index:8;}
@@ -4612,7 +4614,7 @@ szText.addEventListener("input",()=>{ const p=curPhoto(); if(!p) return; sizeSna
 szText.addEventListener("change",sizeSnapEnd);
 ["mousedown","pointerdown","dblclick"].forEach(ev=>document.getElementById("ipSizebars").addEventListener(ev,e=>e.stopPropagation()));
 setColor(markColor);
-function setMarkTool(t){ if(selMark) deselectText(); if(selObj){ selObj=null; } markTool=t; draft=null; polyPrev=null; lbStage.classList.toggle("drawing",t!=="none"); lbStage.classList.toggle("tool-text",t==="text"); syncPalette(); document.querySelectorAll(".ip-marktools .mk[data-tool]").forEach(b=>b.classList.toggle("on",b.dataset.tool===t));
+function setMarkTool(t){ if(typeof hideTbGhost==="function") hideTbGhost(); if(selMark) deselectText(); if(selObj){ selObj=null; } markTool=t; draft=null; polyPrev=null; lbStage.classList.toggle("drawing",t!=="none"); lbStage.classList.toggle("tool-text",t==="text"); syncPalette(); document.querySelectorAll(".ip-marktools .mk[data-tool]").forEach(b=>b.classList.toggle("on",b.dataset.tool===t));
   if(t!=="none") setEditOpen(true);   // selecting a tool (e.g. via hotkey) reveals the tool column
   redrawMarks(); }
 function setEditOpen(open){ lb.classList.toggle("edit-open",open); const eb=document.getElementById("lbEdit"); if(eb) eb.classList.toggle("on",open); if(!open&&markTool!=="none") setMarkTool("none"); }
@@ -4683,6 +4685,21 @@ function hitMark(m,n){ const np=[n.x*fitW,n.y*fitH], thr=11;
   const x0=Math.min(m.x,m.x+m.w)*fitW, x1=Math.max(m.x,m.x+m.w)*fitW, y0=Math.min(m.y,m.y+m.h)*fitH, y1=Math.max(m.y,m.y+m.h)*fitH;
   return np[0]>=x0-thr&&np[0]<=x1+thr&&np[1]>=y0-thr&&np[1]<=y1+thr;
 }
+/* Text tool: a faded copy of the box (final look, 45%) follows the pointer — left edge on the pointer,
+   centred on it — so you see exactly where it will land. Hidden over an existing text box (a click selects that). */
+const tbGhost=document.createElement("div"); tbGhost.className="tb-ghost"; tbGhost.textContent="Text"; lbStage.appendChild(tbGhost);
+function hideTbGhost(){ tbGhost.style.display="none"; lbStage.classList.remove("ghosting"); }
+lbStage.addEventListener("mousemove",e=>{
+  if(markTool!=="text"||selMark||draft||!lb.classList.contains("open")){ hideTbGhost(); return; }
+  if(e.target.closest&&e.target.closest(".ip-marktools,.markpalette,.ip-sizebars,.tbtext,button")){ hideTbGhost(); return; }
+  const n=evToNorm(e); if(n.x<0||n.y<0||n.x>1||n.y>1||hitText(n)){ hideTbGhost(); return; }
+  const p=curPhoto(), sy=fitH*vScale, fpx=Math.max(9,((p&&p.mth!=null)?p.mth:DEF_MTH)*sy);
+  const lw=Math.max(1,Math.min(fitW,fitH)*0.0012*((p&&p.mkw!=null)?p.mkw:markThick)), bl=Math.max(1.5,lw);
+  const r=lbStage.getBoundingClientRect(), h=fpx*1.8;
+  Object.assign(tbGhost.style,{display:"block",left:(e.clientX-r.left)+"px",top:(e.clientY-r.top-h/2)+"px",fontSize:fpx+"px",lineHeight:(fpx*1.2)+"px",padding:(fpx*0.3)+"px "+(fpx*0.42)+"px",color:markColor,outline:bl+"px solid "+markColor,outlineOffset:"0px"});
+  lbStage.classList.add("ghosting"); });
+lbStage.addEventListener("mouseleave",hideTbGhost);
+lbStage.addEventListener("mousedown",hideTbGhost,true);
 function hitText(n){ const ms=curMarks(); for(let i=ms.length-1;i>=0;i--){ if((ms[i].t==="text"||ms[i].t==="call")&&hitMark(ms[i],n)) return ms[i]; } return null; }
 function eraseAt(n){ const ms=curMarks(); for(let i=ms.length-1;i>=0;i--){ if(hitMark(ms[i],n)){ if(ms[i]===selMark){ selMark=null; selPhoto=null; tbEditor.style.display="none"; } if(ms[i]===selObj) selObj=null; ms.splice(i,1); afterMarkChange(); return; } } }
 
@@ -4698,7 +4715,7 @@ function selectText(m){ if(selMark&&selMark!==m) deselectText(); selMark=m; selP
 function deselectText(){ if(!selMark)return; const m=selMark, ph=selPhoto; const txt=tbText.innerText.replace(/\u00a0/g," ").replace(/\s+$/,"").replace(/^\s+/,""); m.s=txt; selMark=null; selPhoto=null; tbEditor.style.display="none"; if(!txt&&ph&&ph.marks){ const i=ph.marks.indexOf(m); if(i>=0) ph.marks.splice(i,1); }
   const sn=tbSnap; tbSnap=null; if(sn&&sn.p===ph&&ph){ redoMarks=[]; pushMarksSnap(ph,sn.before,cpMarks(ph.marks)); logAnnot(ph); }   // Ctrl+Z undoes the text box, not something older
   redrawMarks(); persistState(); }
-function newText(n){ const p=curPhoto(); if(p&&!tbSnap) tbSnap={p,before:cpMarks(p.marks)}; const m={t:"text",x:Math.min(0.96,Math.max(0,n.x)),y:Math.min(0.96,Math.max(0,n.y)),s:"",th:(p&&p.mth!=null)?p.mth:DEF_MTH,c:markColor}; curMarks().push(m); selectText(m); }
+function newText(n){ const p=curPhoto(); if(p&&!tbSnap) tbSnap={p,before:cpMarks(p.marks)}; const th0=(p&&p.mth!=null)?p.mth:DEF_MTH; n={x:n.x,y:n.y-0.9*th0};   /* the box's LEFT edge lands on the click, centred on it vertically (one line is 1.8 x the text size tall) */ const m={t:"text",x:Math.min(0.96,Math.max(0,n.x)),y:Math.min(0.96,Math.max(0,n.y)),s:"",th:(p&&p.mth!=null)?p.mth:DEF_MTH,c:markColor}; curMarks().push(m); selectText(m); }
 /* the text box's edge, all the way round, is its handle: drag it to move (Ctrl+drag drops a copy);
    inside the edge is for typing */
 function tbOnEdge(e){ const r=tbText.getBoundingClientRect(), g=Math.max(7,parseFloat(tbText.style.borderWidth)||2)+3;
