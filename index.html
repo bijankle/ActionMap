@@ -375,9 +375,6 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .leaflet-interactive.photo-dot{cursor:pointer;}
 
   /* action "relevant area" previews: hover-preview-sized mini-maps floating above each photo group */
-  .areaprev{position:absolute;z-index:1500;background:#fff;border:1px solid var(--accent);border-radius:10px;padding:5px;box-shadow:0 14px 40px #1e1f2233;pointer-events:none;}
-  .areaprev .ap-map{width:min(270px,40vh);height:min(270px,40vh);border-radius:6px;overflow:hidden;background:#ECEEF1;}
-  .areaprev .ap-tail{position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-top:9px solid var(--accent);}
   .hoverview{position:fixed;z-index:1600;display:none;background:#fff;border:1px solid var(--accent);border-radius:10px;padding:5px;box-shadow:0 14px 40px #1e1f2233;pointer-events:none;}
   .hoverview.show{display:block;}
   .hoverview img{display:block;width:min(270px,40vh);height:min(270px,40vh);object-fit:cover;border-radius:6px;background:#ECEEF1;}
@@ -1087,7 +1084,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .slider-wrap input[type=range]::-moz-range-thumb{background:#fff!important;border:2px solid var(--gold)!important;}
   input[type=range]{accent-color:var(--gold);}
   /* map cards: white, slate outline, 8px corners */
-  .projhead,.datebar,.leaflet-control-layers,.leaflet-bar,.scalebar,.reconnect,#updpill,.hoverview,.areaprev,.measure-lbl{background:#fff!important;border:var(--ctl-bd)!important;border-radius:var(--ctl-r)!important;backdrop-filter:none!important;}
+  .projhead,.datebar,.leaflet-control-layers,.leaflet-bar,.scalebar,.reconnect,#updpill,.hoverview,.measure-lbl{background:#fff!important;border:var(--ctl-bd)!important;border-radius:var(--ctl-r)!important;backdrop-filter:none!important;}
 </style>
 </head>
 <body>
@@ -1766,7 +1763,7 @@ function showSpot(ids){ spotIds=new Set(ids); setTab("gallery"); updateGallery()
 function clearSpot(){ if(!spotIds) return; spotIds=null; updateGallery(); }
 function rebuildActionFilter(){ if(selActs.size) spotIds=null; actionFilter=selActs.size?new Set([...selActs].flatMap(id=>actPhotos(actById(id)).map(p=>p.id))):null; }
 function drawActionRings(){ buildCluster(); renderClusters(); }   // highlights are rendered with the clusters (bubbles flash when they contain selected photos)
-function clearActSel(){ if(!selActs.size) return; selActs.clear(); actionFilter=null; if(typeof clearAreaPreviews==="function") clearAreaPreviews(); renderActions(); drawActionRings(); updateGallery(); }
+function clearActSel(){ if(!selActs.size) return; selActs.clear(); actionFilter=null; renderActions(); drawActionRings(); updateGallery(); }
 function createAction(text,pids,loc){
   text=(text||"").trim(); if(!text) return null;
   const a={id:nextActId++,text,done:false,created:Date.now(),doneAt:null,steps:[]};
@@ -1785,7 +1782,7 @@ function setActionDone(a,done){ const before=actState(a); a.done=!!done; a.doneA
 function setActionHold(a,hold){ const before=actState(a); a.hold=!!hold; recordActEdit(a,before); afterFolderChange(); dropIfHidden(a,"on hold"); }
 function dropIfHidden(a,what){   // its card just left the list (that filter is off): let go of it everywhere else too, and say where it went
   if(a.done?actShowDone:a.hold?actShowHold:actShowOpen) return;
-  if(selActs.has(a.id)){ selActs.delete(a.id); rebuildActionFilter(); if(typeof clearAreaPreviews==="function"&&!selActs.size) clearAreaPreviews(); renderActions(); drawActionRings(); updateGallery(); buildCluster(); renderClusters(); }
+  if(selActs.has(a.id)){ selActs.delete(a.id); rebuildActionFilter(); renderActions(); drawActionRings(); updateGallery(); buildCluster(); renderClusters(); }
   loadNote(actNo(a)+" marked "+what+" \u2014 hidden from the list (turn on "+(a.done?"Done":"On hold")+" to see it) \u00b7 Ctrl+Z undoes"); setTimeout(()=>loadNote(""),4500); }
 /* Inline editing (titles and descriptions, in both the Actions panel and the under-photo strip):
    double-click the text to edit in place. Enter (Shift+Enter = new line in a description) or
@@ -1993,61 +1990,7 @@ function selectActionOf(p){   // a photo opened from the map selects its action 
   if(selActs.size===1&&selActs.has(aid)) return;
   selActs=new Set([aid]); lastActClick=aid; rebuildActionFilter(); refreshActSelClasses(); drawActionRings(); updateGallery();
   const row=document.querySelector('#actList .act-row[data-aid="'+aid+'"]'); if(row) row.scrollIntoView({block:"nearest"}); }
-/* "Relevant area" previews: on a plain action click, each spatial group of the action's photos
-   gets a hover-preview-sized mini-map floating above it, zoomed to just that group's photos.
-   They stay until the map is touched (pan / zoom / any click) or the selection changes. */
-let areaPrevs=[];
-function clearAreaPreviews(){
-  if(!areaPrevs.length) return;
-  for(const ap of areaPrevs){ try{ ap.map.remove(); }catch(e){} try{ ap.el.remove(); }catch(e){} }
-  areaPrevs=[];
-  map.off("movestart",clearAreaPreviews); map.off("zoomstart",clearAreaPreviews);
-  map.getContainer().removeEventListener("mousedown",clearAreaPreviews,true);
-}
-function showAreaPreviews(a){
-  clearAreaPreviews();
-  if(!selActs.has(a.id)) return;
-  const pts=actPhotos(a).filter(p=>p.lat!=null);
-  if(!pts.length) return;
-  const groups=[];   // group by on-screen proximity at the settled view
-  for(const p of pts){
-    const cp=map.latLngToContainerPoint([p.lat,p.lng]);
-    const g=groups.find(g2=>Math.hypot(g2.cx-cp.x,g2.cy-cp.y)<150);
-    if(g){ g.ps.push(p); g.cx=(g.cx*(g.ps.length-1)+cp.x)/g.ps.length; g.cy=(g.cy*(g.ps.length-1)+cp.y)/g.ps.length; }
-    else groups.push({ps:[p],cx:cp.x,cy:cp.y});
-  }
-  const cont=map.getContainer();
-  for(const g of groups.slice(0,4)){   // cap the mini-map instances
-    const el=document.createElement("div"); el.className="areaprev";
-    el.innerHTML='<div class="ap-map"></div><div class="ap-tail"></div>';
-    cont.appendChild(el);
-    const topY=Math.min.apply(null,g.ps.map(p=>map.latLngToContainerPoint([p.lat,p.lng]).y));
-    const w=el.offsetWidth||282, h=el.offsetHeight||282;
-    const x=Math.max(6,Math.min(Math.round(g.cx-w/2),cont.clientWidth-w-6));
-    const y=Math.max(6,Math.min(Math.round(topY-h-16),cont.clientHeight-h-6));
-    el.style.left=x+"px"; el.style.top=y+"px";
-    el.querySelector(".ap-tail").style.left=Math.max(14,Math.min(w-14,Math.round(g.cx-x)))+"px";   // tail points at the dot even if the card was clamped at an edge
-    const mm=L.map(el.querySelector(".ap-map"),{zoomControl:false,attributionControl:false,dragging:false,touchZoom:false,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false});
-    L.tileLayer("https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",{subdomains:["mt0","mt1","mt2","mt3"],maxZoom:22,maxNativeZoom:21}).addTo(mm);
-    for(const p of g.ps) L.circleMarker([p.lat,p.lng],{radius:8,color:"#ffffff",weight:3,fillColor:"#FFD21F",fillOpacity:1,className:"hl-dot",interactive:false}).addTo(mm);   // yellow: the spot this photo was taken
-    const bb=L.latLngBounds(g.ps.map(p=>[p.lat,p.lng]));
-    setTimeout(()=>{ try{ mm.invalidateSize(); if(g.ps.length>1) mm.fitBounds(bb,{padding:[26,26],maxZoom:20}); else mm.setView([g.ps[0].lat,g.ps[0].lng],20); }catch(e){} },60);
-    areaPrevs.push({el,map:mm});
-  }
-  if(areaPrevs.length) setTimeout(()=>{ if(!areaPrevs.length) return;   // arm dismissal once our own flight has settled
-    map.on("movestart",clearAreaPreviews); map.on("zoomstart",clearAreaPreviews);
-    map.getContainer().addEventListener("mousedown",clearAreaPreviews,true);
-  },100);
-}
-/* Resizing a side panel changes the map viewport: re-run the fit for the selected action so the
-   view rescales to suit and every preview re-anchors centred on its dot. */
-let _actRzT=null;
-map.on("resize",()=>{ clearTimeout(_actRzT); _actRzT=setTimeout(()=>{
-  if(selActs.size!==1||!areaPrevs.length) return;   // only re-fit while an action click's previews are up — a bubble click (which opens the Gallery and resizes the map) must not pop them up
-  const a=actById([...selActs][0]);
-  if(a&&actPhotos(a).some(p=>p.lat!=null)) actNavigate(a,true);
-},220); });
-function actNavigate(a,refitOnly){
+function actNavigate(a){
   if(!selActs.has(a.id)) return;   // selection moved on before a deferred zoom fired — the newest click wins
   const ps=actPhotos(a);
   const geo=ps.filter(p=>p.lat!=null);
@@ -2062,18 +2005,15 @@ function actNavigate(a,refitOnly){
     const all=ctx.length?ctx:geo;
     const bb=L.latLngBounds(all.map(p=>[p.lat,p.lng]));
     if(myLoc()) bb.extend(myLoc());   // keep yourself in the picture (unless Ignore my location is on)
-    /* asymmetric padding: enough headroom above the dots for the area previews to sit centred */
-    const fitOpts={paddingTopLeft:[150,310],paddingBottomRight:[150,80],maxZoom:19};
+    const fitOpts={padding:[80,80],maxZoom:19};
     /* already showing this view? flying to it anyway makes the map do a zoom-out-in "shake" */
     let skip=false;
     try{ const tgt=map._getBoundsCenterZoom(bb,fitOpts);
       skip=Math.abs(map.getZoom()-tgt.zoom)<0.5 && map.latLngToContainerPoint(tgt.center).distanceTo(map.latLngToContainerPoint(map.getCenter()))<40;
     }catch(e){}
-    clearAreaPreviews();
-    if(!skip){ map.once("moveend",()=>setTimeout(()=>showAreaPreviews(a),40)); map.flyToBounds(bb,Object.assign({duration:DESK_FLY},fitOpts)); }
-    else setTimeout(()=>showAreaPreviews(a),40);
+    if(!skip) map.flyToBounds(bb,Object.assign({duration:DESK_FLY},fitOpts));
   }
-  if(ps.length&&!refitOnly) setTab("gallery");   // always the gallery (a resize refit leaves the tab alone), even for one photo — its thumbnail carries the unassign X
+  if(ps.length) setTab("gallery");   // always the gallery, even for one photo — its thumbnail carries the unassign X
 }
 /* Current location on the desktop map: a blue you-are-here dot with a sonar ripple.
    The browser remembers the Allow per site (the app is served over https), so after the first
@@ -5316,7 +5256,7 @@ async function refreshFolder(){
 function clearAll(redraw){
   if(lb.classList.contains("open")) closeViewer();   // the viewer must never keep showing a photo from the old project
   if(pickMode) endPickMode(false);
-  clearAreaPreviews(); clearHighlight();
+  clearHighlight();
   if(boxRect){map.removeLayer(boxRect);boxRect=null;} boxBounds=null; setAreaBtn();
   photos=[]; nextId=1; cluster=null; markerLayer.clearLayers(); lightboxList=[]; lightboxIndex=0; sizeIndex=new Map();
   projLog=[];
