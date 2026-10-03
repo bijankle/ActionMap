@@ -361,7 +361,9 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .snap-tip{position:absolute;left:60px;top:-10px;background:#1d2430;color:#fff;font:600 13px var(--font);padding:5px 10px;border-radius:8px;white-space:nowrap;pointer-events:none;}
   .act-dates{padding:0 12px 10px;} .act-dates[hidden]{display:none;}   /* date window: two handles over a bar chart of actions created per day */
   .ad-hist{display:flex;align-items:flex-end;gap:2px;height:26px;margin:0 6px 2px;} .ad-hist i{flex:1;min-height:2px;background:#ead8b0;border-radius:2px 2px 0 0;} .ad-hist i.on{background:#b8862e;}
-  .ad-ends{display:flex;justify-content:space-between;font:700 11.5px var(--font);color:var(--muted);margin-top:3px;}
+  .ad-ends{display:flex;justify-content:space-between;gap:8px;font:700 11.5px var(--font);color:var(--muted);margin-top:3px;} .ad-ends b{color:var(--ink);font-weight:800;}
+  .ad-pre{display:flex;gap:5px;margin-top:7px;} .ad-pre button{flex:1;min-width:0;height:auto;padding:4px 0;border-radius:12px;border:1px solid var(--line2);background:#fff;color:var(--ink);font:700 11.5px var(--font);white-space:nowrap;box-shadow:none;cursor:pointer;}
+  .ad-pre button:hover{border-color:var(--gold);} .ad-pre button.on{background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);}   /* rolling presets: always counted back from today */
   .slider-track{position:absolute;top:6.5px;left:0;right:0;height:3px;background:var(--line2);border-radius:2px;}
   .slider-fill{position:absolute;top:6.5px;height:3px;background:var(--gold);border-radius:2px;}
   .slider-wrap input[type=range]{-webkit-appearance:none;appearance:none;position:absolute;top:0;left:0;width:100%;height:16px;background:none;pointer-events:none;margin:0;}
@@ -803,7 +805,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-nav button.on{color:var(--ink);background:#fdf6e6;box-shadow:inset 0 0 0 2px var(--gold);}   /* the selected tab: cream tile, gold outline */
   .ma-nav button.on span{font-weight:800;}
   body.mobile{--m-topgap:calc((10px + env(safe-area-inset-top))/2);}   /* half the old gap above the top strip (it was status bar + 10 px) */
-  .ma-top2{flex-shrink:0;display:flex;align-items:center;gap:12px;background:#fff;border-bottom:1px solid var(--line);padding:var(--m-topgap) 14px 8px;position:relative;z-index:700;}
+  .ma-top2{flex-shrink:0;display:flex;align-items:center;gap:8px;background:#fff;border-bottom:1px solid var(--line);padding:var(--m-topgap) 14px 8px;position:relative;z-index:700;}
   .ma-pname{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px;background:none;border:0;padding:0;font:inherit;text-align:left;color:var(--ink);}
   .ma-pname .nm{font-size:22px;font-weight:800;line-height:1.15;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;}
   .ma-pname .nm i{font-style:normal;color:var(--faint);font-size:14px;font-weight:400;margin-left:5px;}
@@ -899,7 +901,29 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   #mNewGo{flex:none;min-height:52px;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--gold);border-color:#c9952e;color:#1a1307;font-size:17px;}
   .ma-add2 .m-in{flex:none;}
   .ma-sbtns .ma-btn{flex:none;}
-  .ma-lwrap{flex:1;min-height:0;display:flex;flex-direction:column;background:#f3f4f6;}
+  .ma-lwrap{flex:1;min-height:0;display:flex;flex-direction:column;background:#f3f4f6;position:relative;}
+  #mList .m-card.dt-off{display:none;}
+  /* the date range: a button beside the project name, a panel that drops from the header */
+  .ma-dtb{flex-shrink:0;display:flex;align-items:center;gap:5px;height:40px;padding:0 9px;border-radius:20px;background:#fff;border:1.5px solid var(--line);font:inherit;font-size:14px;font-weight:700;color:var(--ink);box-shadow:none;}
+  .ma-dtb svg{width:16px;height:16px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;}
+  .ma-dtb.on{background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);}
+  .ma-dtb .two{display:flex;flex-direction:column;line-height:1.12;font-size:11.5px;text-align:left;white-space:nowrap;} .ma-dtb .two i{font-style:normal;font-weight:600;color:var(--muted);}
+  .ma-dpan{position:absolute;z-index:690;left:0;right:0;top:0;background:#fff;border-bottom:1.5px solid var(--line);border-radius:0 0 18px 18px;box-shadow:0 10px 28px #1d243038;padding:12px 16px 14px;}
+  .ma-dh{display:flex;align-items:center;justify-content:space-between;font-size:15px;margin-bottom:2px;}
+  .ma-dh .clr{background:none;border:0;padding:4px 2px;font:inherit;font-size:14px;font-weight:700;color:#9A520B;box-shadow:none;}
+  .ma-dpan .sum{font-size:19px;font-weight:800;line-height:1.25;} .ma-dpan .dts{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:10px;}
+  .ma-dhist{display:flex;align-items:flex-end;gap:2px;height:46px;margin:0 6px;} .ma-dhist i{flex:1;min-height:2px;background:#ead8b0;border-radius:3px 3px 0 0;} .ma-dhist i.on{background:#b8862e;}
+  .ma-dsl{position:relative;height:32px;margin:0 0;}
+  .ma-dtr,.ma-dfi{position:absolute;top:14px;height:4px;border-radius:2px;} .ma-dtr{left:14px;right:14px;background:#e1e4e8;} .ma-dfi{background:var(--gold);}
+  .ma-dsl input[type=range]{-webkit-appearance:none;appearance:none;position:absolute;top:0;left:0;width:100%;height:32px;background:none;pointer-events:none;margin:0;}
+  .ma-dsl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;pointer-events:auto;width:28px;height:28px;border-radius:50%;background:var(--gold);border:3px solid #fff;box-shadow:0 0 0 1.5px #b8862e,0 2px 6px #1d243040;}
+  .ma-dsl input[type=range]::-moz-range-thumb{pointer-events:auto;width:22px;height:22px;border-radius:50%;background:var(--gold);border:3px solid #fff;}
+  .ma-dends{display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;color:var(--muted);margin-top:2px;}
+  .ma-dpre{display:flex;gap:5px;margin-top:12px;}
+  .ma-dpre button{flex:1 1 auto;white-space:nowrap;font:inherit;font-size:12.5px;font-weight:700;padding:8px 6px;border-radius:18px;border:1.5px solid var(--line);background:#fff;color:var(--ink);box-shadow:none;}
+  .ma-dpre button.on{background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);}
+  .ma-dfoot{display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:13px;color:var(--muted);}
+  .ma-dfoot button{font:inherit;font-size:15px;font-weight:800;padding:9px 22px;border-radius:20px;border:0;background:var(--gold);color:var(--ink);box-shadow:none;}
   .ma-lhead{display:flex;gap:10px;align-items:center;padding:14px 16px 10px;}
   .ma-search{flex:1;min-width:0;display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:0 14px;color:var(--faint);height:52px;box-sizing:border-box;}
   .ma-search input{flex:1;min-width:0;border:0;outline:none;font:inherit;font-size:17px;background:none;color:var(--ink);padding:0;}
@@ -1200,7 +1224,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
       <button class="act-tgl" id="actShowHold" title="On hold — also show the actions that are on hold, in this list and on the map (white dots with an orange ring)"><i class="af-dot hold"></i>On hold<span class="af-n"></span></button>
       <button class="act-tgl" id="actShowDone" title="Done — also show finished actions, in this list and on the map (grey dots)"><i class="af-dot done"></i>Done<span class="af-n"></span></button>
 </div>
-    <div class="act-dates" id="actDates" hidden><div class="ad-hist" id="adHist"></div><div class="slider-wrap"><div class="slider-track"></div><div class="slider-fill" id="adFill"></div><input type="range" id="adLo" min="0" max="1" step="1" aria-label="From date" /><input type="range" id="adHi" min="0" max="1" step="1" aria-label="To date" /></div><div class="ad-ends"><span id="adFrom"></span><span id="adTo"></span></div></div>
+    <div class="act-dates" id="actDates" hidden><div class="ad-hist" id="adHist"></div><div class="slider-wrap"><div class="slider-track"></div><div class="slider-fill" id="adFill"></div><input type="range" id="adLo" min="0" max="1" step="1" aria-label="From date" /><input type="range" id="adHi" min="0" max="1" step="1" aria-label="To date" /></div><div class="ad-ends"><span id="adFrom"></span><span id="adTo"></span></div><div class="ad-pre" id="adPre"><button type="button" data-p="1w">1 week</button><button type="button" data-p="1m">1 month</button><button type="button" data-p="3m">3 months</button><button type="button" data-p="">All</button></div></div>
     <div class="act-new"><input type="text" id="actNewInput" placeholder="+ New action" autocomplete="off" /></div>
     <div class="act-list" id="actList"></div>
   </aside>
@@ -1707,12 +1731,43 @@ function photoStatus(p){   // open beats on-hold beats complete, when a photo be
   for(const id of p.acts){ const a=actById(id); if(!a) continue; any=true; if(a.done) done=true; else if(a.hold) hold=true; else return "open"; }
   return !any?"none":hold?"hold":done?"done":"none"; }
 function actVisible(a){ return selActs.has(a.id)||((a.done?actShowDone:a.hold?actShowHold:actShowOpen)&&actInDates(a)); }
-/* Date window (the bar under the pills): actions CREATED between the two handles. Days, local time; null = open-ended. */
-let actDateLo=null, actDateHi=null;
+/* Date window: actions CREATED in it show. It belongs to the PROJECT — every desktop and phone on it
+   shares one range. {lo,hi} are day starts (null = open-ended; hi null = up to today); p is a rolling
+   preset ("1w" / "1m" / "3m") that always counts back from today; at = when it was set (the newest
+   setting wins when devices merge). {at} alone = no filter (All). */
+let dateWin=null;
 const DAY_MS=86400000, dayStart=t=>{ const d=new Date(t); d.setHours(0,0,0,0); return d.getTime(); };
+function monthsBack(t,m){ const d=new Date(t), day=d.getDate(); d.setDate(1); d.setMonth(d.getMonth()-m);
+  d.setDate(Math.min(day,new Date(d.getFullYear(),d.getMonth()+1,0).getDate())); return dayStart(d.getTime()); }   // 31 Mar - 1 month = 28/29 Feb
+const DATE_PRE={"1w":{n:"1 week",lo:t=>dayStart(t-7*DAY_MS+DAY_MS/2)},"1m":{n:"1 month",lo:t=>monthsBack(t,1)},"3m":{n:"3 months",lo:t=>monthsBack(t,3)}};
+function dwEff(w){ if(w===undefined) w=dateWin; const today=dayStart(Date.now());   // the range in force today: {lo,hi} day starts, null = open
+  if(!w) return {lo:null,hi:null};
+  if(w.p&&DATE_PRE[w.p]) return {lo:DATE_PRE[w.p].lo(today),hi:null,p:w.p};
+  const lo=w.lo!=null?dayStart(+w.lo):null; let hi=w.hi!=null?dayStart(+w.hi):null; if(hi!=null&&hi>=today) hi=null;
+  return {lo,hi}; }
+function dwOn(w){ const e=dwEff(w); return e.lo!=null||e.hi!=null; }
+function dwSpan(lo,hi){   // the length in days, weeks or months — whichever reads best
+  const days=Math.round((hi-lo)/DAY_MS);
+  for(let m=1;m<=36;m++){ const b=monthsBack(hi,m); if(b===lo) return m+" month"+(m>1?"s":""); if(b<lo) break; }
+  if(days===7||days===14) return (days/7)+" week"+(days>7?"s":"");
+  if(days<21) return days+" day"+(days===1?"":"s");
+  if(days<84) return Math.round(days/7)+" weeks";
+  return Math.round(days/30.44)+" months"; }
+const MON3=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function dwDate(t){ const d=new Date(t); return d.getDate()+" "+MON3[d.getMonth()]+(d.getFullYear()===new Date().getFullYear()?"":" "+d.getFullYear()); }   // "26 Sep" on every device
+/* the words for a range: counted back from its end — "1 week ago → Today", or "4 days → 27 Sep" when it
+   ends before today — plus the exact dates. null when there's no filter. */
+function dwLabel(w){ const e=dwEff(w); if(e.lo==null&&e.hi==null) return null;
+  const today=dayStart(Date.now()), hi=e.hi==null?today:e.hi, toToday=hi===today, end=toToday?"Today":dwDate(hi);
+  if(e.lo==null) return {sum:"Up to "+end,l1:"Up to",l2:end,dates:"Start – "+dwDate(hi)};
+  const days=Math.round((hi-e.lo)/DAY_MS);
+  if(days<=0) return {sum:end+" only",l1:end,l2:"only",dates:dwDate(hi)};
+  const sp=dwSpan(e.lo,hi);
+  return {sum:(toToday?sp+" ago":sp)+" → "+end,l1:toToday?sp+" ago":sp,l2:"→ "+end,dates:dwDate(e.lo)+" – "+dwDate(hi)}; }
 function actCreated(a){ if(a.created) return a.created; const no=actNo(a); for(const e of projLog) if(e&&typeof e.d==="string"&&e.d.startsWith("Created action "+no+" ")) return e.t; return null; }
-function actInDates(a){ if(actDateLo==null&&actDateHi==null) return true; const c=actCreated(a); if(!c) return true;   // undated: always shows
-  return (actDateLo==null||c>=actDateLo)&&(actDateHi==null||c<actDateHi+DAY_MS); }   // open always; on hold / done when their pill is on; a selected action always
+function inDateWin(c,w){ const e=dwEff(w); if(e.lo==null&&e.hi==null) return true; if(!c) return true;   // undated: always shows
+  return (e.lo==null||c>=e.lo)&&(e.hi==null||c<e.hi+DAY_MS); }
+function actInDates(a){ return inDateWin(actCreated(a)); }   // open always; on hold / done when their pill is on; a selected action always
 function passActs(p){ if(!Array.isArray(p.acts)||!p.acts.length) return true;   /* photos on no action always show */
   let any=false; for(const id of p.acts){ const a=actById(id); if(!a) continue; any=true; if(actVisible(a)) return true; } return !any; }
 function normActs(list){ let mx=0; const out=(list||[]).map(a=>{
@@ -2035,7 +2090,7 @@ function renderActions(){
   document.getElementById("actShowOpen").classList.toggle("on",actShowOpen);
   document.getElementById("actShowHold").classList.toggle("on",actShowHold);
   renderActDates();
-  { let no=0,nh=0,nd=0; for(const a of actions){ if(a.done) nd++; else if(a.hold) nh++; else no++; }   // how many each pill holds
+  { let no=0,nh=0,nd=0; for(const a of actions){ if(!actInDates(a)) continue; if(a.done) nd++; else if(a.hold) nh++; else no++; }   // how many each pill holds (within the date range, like the phone)
     [["actShowOpen",no],["actShowHold",nh],["actShowDone",nd]].forEach(([id,n])=>{ const e=document.querySelector("#"+id+" .af-n"); if(e) e.textContent=n; }); }
   document.getElementById("actShowDone").classList.toggle("on",actShowDone);
 
@@ -2124,28 +2179,47 @@ function ipPlaceNotes(){ const box=document.getElementById("ipActions"); if(!box
   const fr=document.getElementById("lbFrame"); if(fr){ fr.style.width=fw+"px"; fr.style.height=fh+"px"; fr.style.left=Math.round(cx-fw/2)+"px"; fr.style.top=Math.round(cy-fh/2)+"px"; }
   box.style.top=Math.round(cy+fh/2+10)+"px";   // under the frame: the same spot for every photo
   const mid=Math.round(cy)+"px"; ["lbPrev","lbNext"].forEach(id=>{ const b=document.getElementById(id); if(b) b.style.top=mid; }); }   // ‹ › centred on the frame
-function renderActDates(){   // the bar chart + handles span the first action's day to today
+/* the chart under both date pickers: the first action's day (or further back, when a preset reaches
+   further) to today; ≤60 bars — a bar per day, or per few days on long projects. t0Min keeps a
+   stretched chart in place while a handle is being dragged. */
+function dwChart(ts,w,t0Min){ const e=dwEff(w), today=dayStart(Date.now());
+  let t0=ts.length?dayStart(Math.min(...ts)):today; if(e.lo!=null&&e.lo<t0) t0=e.lo; if(e.hi!=null&&e.hi<t0) t0=e.hi; if(t0Min!=null&&t0Min<t0) t0=t0Min;
+  const n=Math.round((today-t0)/DAY_MS)+1, per=Math.max(1,Math.ceil(n/60)), nb=Math.ceil(n/per), cnt=new Array(nb).fill(0);
+  for(const t of ts) cnt[Math.max(0,Math.min(nb-1,Math.floor(Math.round((dayStart(t)-t0)/DAY_MS)/per)))]++;
+  const ix=t=>Math.max(0,Math.min(n-1,Math.round((t-t0)/DAY_MS)));
+  const li=e.lo==null?0:ix(e.lo), hiI=e.hi==null?n-1:Math.max(li,ix(e.hi));
+  return {t0,n,per,cnt,li,hiI}; }
+function dwFromIdx(C,a,b){ const day=i=>dayStart(C.t0+i*DAY_MS+DAY_MS/2);   // handle positions -> a range (at the ends: open, so new days keep showing)
+  return {lo:a<=0?null:day(a),hi:b>=C.n-1?null:day(b)}; }
+function dwPreset(p){ return p&&DATE_PRE[p]?{p,at:Date.now()}:{at:Date.now()}; }   // "" = All
+function dwBarsHtml(C,hpx,minpx){ const mx=Math.max(...C.cnt,1);
+  return C.cnt.map((c,i)=>'<i class="'+((i*C.per+C.per-1)>=C.li&&(i*C.per)<=C.hiI?'on':'')+'" style="height:'+(c?minpx+hpx*c/mx:2)+'px" title="'+c+' action'+(c===1?'':'s')+'"></i>').join(""); }
+function renderActDates(){
   const box=document.getElementById("actDates"); if(!box) return;
-  const ts=actions.map(actCreated).filter(Boolean); if(ts.length<2){ box.hidden=true; return; }
-  const t0=dayStart(Math.min(...ts)), t1=dayStart(Date.now()), n=Math.round((t1-t0)/DAY_MS)+1; if(n<2){ box.hidden=true; return; }
-  box.hidden=false;
-  const per=Math.max(1,Math.ceil(n/60)), nb=Math.ceil(n/per), cnt=new Array(nb).fill(0);   // ≤60 bars: a bar per day, or per few days on long projects
-  for(const t of ts) cnt[Math.min(nb-1,Math.floor((dayStart(t)-t0)/DAY_MS/per))]++;
+  const ts=actions.map(actCreated).filter(Boolean); if(ts.length<2&&!dwOn()){ box.hidden=true; return; }
+  const C=dwChart(ts,undefined,box._drag&&box._C?box._C.t0:null); if(C.n<2){ box.hidden=true; return; }
+  box.hidden=false; box._C=C;
   const lo=document.getElementById("adLo"), hi=document.getElementById("adHi");
-  lo.max=hi.max=n-1;
-  const li=actDateLo==null?0:Math.max(0,Math.min(n-1,Math.round((actDateLo-t0)/DAY_MS))), hiI=actDateHi==null?n-1:Math.max(li,Math.min(n-1,Math.round((actDateHi-t0)/DAY_MS)));
-  lo.value=li; hi.value=hiI; box._t0=t0; box._n=n;
-  const mx=Math.max(...cnt,1);
-  document.getElementById("adHist").innerHTML=cnt.map((c,i)=>'<i class="'+((i*per+per-1)>=li&&(i*per)<=hiI?'on':'')+'" style="height:'+(c?4+22*c/mx:2)+'px" title="'+c+' action'+(c===1?'':'s')+'"></i>').join("");
-  const f=document.getElementById("adFill"); f.style.left=(li/(n-1)*100)+"%"; f.style.width=((hiI-li)/(n-1)*100)+"%";
-  const lab=i=>{ const d=new Date(t0+i*DAY_MS); return i===n-1?"Today":d.toLocaleDateString(undefined,{day:"numeric",month:"short"}); };
-  document.getElementById("adFrom").textContent=lab(li); document.getElementById("adTo").textContent=lab(hiI); }
+  lo.max=hi.max=C.n-1; lo.value=C.li; hi.value=C.hiI;
+  document.getElementById("adHist").innerHTML=dwBarsHtml(C,22,4);
+  const f=document.getElementById("adFill"); f.style.left=(C.li/(C.n-1)*100)+"%"; f.style.width=((C.hiI-C.li)/(C.n-1)*100)+"%";
+  const dl=dwLabel();
+  document.getElementById("adFrom").innerHTML=dl?'<b>'+esc(dl.sum)+'</b>':esc(dwDate(C.t0));
+  document.getElementById("adTo").textContent=dl?dl.dates:"Today";
+  const cur=dwOn()?((dateWin&&dateWin.p)||null):"";
+  document.querySelectorAll("#adPre button").forEach(b=>b.classList.toggle("on",b.dataset.p===cur)); }
+function setDateWin(w){ dateWin=w; renderActDates(); actFilterChanged(); }   // shared with the project: saved, merged, sent to the phones
 (function(){ const lo=document.getElementById("adLo"), hi=document.getElementById("adHi"); if(!lo) return;
-  const set=(which)=>{ const box=document.getElementById("actDates"), n=box._n, t0=box._t0; let a=+lo.value, b=+hi.value;
+  const box=document.getElementById("actDates");
+  const set=(which)=>{ const C=box._C; if(!C) return; let a=+lo.value, b=+hi.value;
     if(a>b){ if(which==="lo") lo.value=a=b; else hi.value=b=a; }
-    actDateLo=a<=0?null:t0+a*DAY_MS; actDateHi=b>=n-1?null:t0+b*DAY_MS;   // at the ends: open-ended (new days keep showing)
+    dateWin=Object.assign(dwFromIdx(C,a,b),{at:Date.now()});
     renderActDates(); clearTimeout(set._t); set._t=setTimeout(actFilterChanged,60); };
-  lo.addEventListener("input",()=>set("lo")); hi.addEventListener("input",()=>set("hi")); })();
+  const grab=()=>{ box._drag=true; }, drop=()=>{ if(!box._drag) return; box._drag=false; renderActDates(); };   // the chart holds still while you drag
+  for(const el of [lo,hi]){ el.addEventListener("pointerdown",grab); el.addEventListener("change",drop); }
+  window.addEventListener("pointerup",drop);
+  lo.addEventListener("input",()=>set("lo")); hi.addEventListener("input",()=>set("hi"));
+  document.getElementById("adPre").addEventListener("click",e=>{ const b=e.target.closest("button[data-p]"); if(!b) return; setDateWin(dwPreset(b.dataset.p)); }); })();
 function actFilterChanged(){ renderActions(); buildCluster(); renderClusters(); updateGallery(); persistState(); }   // the pills filter the list AND the map
 document.getElementById("actShowOpen").addEventListener("click",()=>{ actShowOpen=!actShowOpen; actFilterChanged(); });
 document.getElementById("actShowHold").addEventListener("click",()=>{ actShowHold=!actShowHold; actFilterChanged(); });
@@ -2589,12 +2663,13 @@ function serializeOnline(){
       if(p.mkw!=null) o.mkw=p.mkw; if(p.mth!=null) o.mth=p.mth; if(p.noGps) o.noGps=1; if(p.adhoc) o.adhoc=1;
       if(p.repoPath) o.repoPath=p.repoPath; if(p.pendFu) o.pendFu=p.pendFu; if(p.added) o.added=p.added;
       return o; }),
+    dates: dateWin||undefined,
     log: projLog.slice(-3000) };
 }
 const J=x=>JSON.stringify(x);
 function canonJ(doc){ if(!doc) return ""; const c={...doc}; delete c.updatedAt; delete c.by; return J(c); }
 function applyOnline(st){
-  st=st||{}; gpsSnapDone=!!st.snap1;
+  st=st||{}; gpsSnapDone=!!st.snap1; dateWin=st.dates||null;
   const oldA=new Map(actions.filter(a=>a.u).map(a=>[a.u,a])), acts=[]; let mx=0;
   for(const s of (st.actions||[])){ if(!s||!s.u||acts.some(x=>x.u===s.u)) continue;
     const a=oldA.get(s.u)||{steps:[]};
@@ -2677,6 +2752,8 @@ function merge3(b,l,r){
   m.log=[...seen.values()].sort((x,y)=>x.t-y.t).slice(-3000);
   m.mergedFrom=[l.mergedFrom,r.mergedFrom].filter(Boolean).sort().pop()||null;
   if(b.snap1||l.snap1||r.snap1) m.snap1=true;
+  { const dl=J(l.dates)!==J(b.dates), dr=J(r.dates)!==J(b.dates);   // the date range: whoever set it last
+    const d=dl&&dr?((+(l.dates&&l.dates.at)||0)>=(+(r.dates&&r.dates.at)||0)?l.dates:r.dates):dl?l.dates:r.dates; if(d) m.dates=d; }
   return m;
 }
 
@@ -3028,7 +3105,7 @@ function showGuide(){
   m.innerHTML='<div class="yn-win pj-win guide-win"><h3>How to use ActionMap</h3>'
     +sec("Getting started",["<b>File \u2192 Settings</b>: paste your GitHub access token once (it stays in this browser only). Without it you can view but not change anything.","<b>File \u2192 Projects</b> opens a project; <b>New project</b> starts one. <b>Share link</b> copies a link anyone can open."],true)
     +sec("Photos",["Paste (Ctrl+V), drag photos onto the map, or use <b>File \u2192 Add photos</b>. Photos with GPS land where they were taken; others go where you drop them.","Each action shows on the map as its number; where several share a spot they spread round it like a ferris wheel. Photos on no action are grey dots. Hover a number to see the action\u2019s cover photo; click it to open its photos. Draw on a photo with the pencil (arrows, boxes, text).","To move photos: open one (or pick dots with <b>Select area</b>), then drag its number or dot. Drop it on another number to group them there \u2014 a photo dropped on an action\u2019s number joins that action. The photo\u2019s true GPS is always kept."],true)
-    +sec("Actions",["Type in <b>+ New action</b> and press Enter. Add <b>sub-actions</b> under it; tick them off as they\u2019re done.","<b>On hold</b> / <b>Done</b> on each card set its status; the pills at the top (Open / On hold / Done) and the date bar choose what shows on the list, map and gallery.","Link photos to an action: select the action, then right-click a photo dot. The first photo is the cover \u2014 drag in the gallery to reorder.","The <b>copy</b> icon on a card copies one picture of the action (title, map, photos, sub-actions) to paste into chat or email."],true)
+    +sec("Actions",["Type in <b>+ New action</b> and press Enter. Add <b>sub-actions</b> under it; tick them off as they\u2019re done.","<b>On hold</b> / <b>Done</b> on each card set its status; the pills at the top (Open / On hold / Done) and the date bar choose what shows on the list, map, gallery and exports.","The <b>date bar</b> shows actions created in a range: drag its two handles, or pick <b>1 week</b> / <b>1 month</b> / <b>3 months</b> (these keep rolling with the days) or <b>All</b>. The range belongs to the project, so every desktop and phone on it sees the same one; on the phone it\u2019s the calendar button beside the project name.","Link photos to an action: select the action, then right-click a photo dot. The first photo is the cover \u2014 drag in the gallery to reorder.","The <b>copy</b> icon on a card copies one picture of the action (title, map, photos, sub-actions) to paste into chat or email."],true)
     +sec("Phone",["Open the same link on your phone: the map shows every action; swipe the cards, tap <b>View</b> to open one.","Tick sub-actions, add photos (camera or gallery) and new actions in the field \u2014 they reach the desktop by themselves."])
     +sec("Reports",["The <b>XLSX</b> and <b>PDF</b> buttons beside \u201cActions\u201d export every action with its status, sub-actions and photos. The Excel file also has a <b>Sub-actions</b> tab with dates, a \u201cChanged in last 24 h\u201d filter and a Notes column \u2014 handy for end-of-shift reports.","<b>File \u2192 Download backup</b> saves a zip of the whole project."])
     +sec("Good to know",["Everything saves by itself. The dot on the <b>save</b> button is green when it\u2019s all online, amber while a change is on its way.","<b>Ctrl+Z</b> undoes (File \u2192 Undo), <b>Ctrl+Y</b> redoes \u2014 deleting an action asks first and can be undone.","<b>Ctrl+K</b> jumps to the search box. <b>View</b> holds the map imagery, your location, clustering and thumbnail size.","Projects live in your GitHub data repository \u2014 nothing is stored only on this PC."])
@@ -3187,13 +3264,13 @@ async function buildMobilePack(){
   if(isOnline()){ try{ const rd=await repoReadJson(repoP("pack.json")); for(const a of ((rd&&rd.obj&&rd.obj.actions)||[])) for(const ph of (a.photos||[])) if(ph.vs&&ph.h) prevLook.set(ph.vs,ph.h); }catch(e){}
     await ensurePreviews(open.flatMap(a=>actPhotos(a)).filter(p=>!prevLook.has(lookSig(p)))); }
   let mergedFrom=null; try{ mergedFrom=localStorage.getItem(mfKey())||null; }catch(e){}
-  const pk={ v:2, exportedAt:new Date().toISOString(), project:loadedJsonName||folderName||"ActionMap", pid:ON.pid||null, mergedFrom, actions:[] };   // mergedFrom = ack: the phone lets go of sent edits only once this covers them
+  const pk={ v:2, exportedAt:new Date().toISOString(), project:loadedJsonName||folderName||"ActionMap", pid:ON.pid||null, mergedFrom, dates:dateWin||null, actions:[] };   // mergedFrom = ack: the phone lets go of sent edits only once this covers them
   for(const a of open){
     const ps=[];
     for(const p of actPhotos(a)){ const vs=lookSig(p), ph0=prevLook.get(vs);
       ps.push(Object.assign({ id:p.id, k:metaKey(p), name:p.name, note:(p.note||""), lat:(p.lat!=null?p.lat:null), lng:(p.lng!=null?p.lng:null), vs },ph0?{h:ph0}:{img:await packPreview(p)})); }   // exportMobile swaps img for a content hash
     for(const st of (a.steps||[])) if(!st.id) st.id=newSid();   // every exported step gets its permanent id
-    pk.actions.push({ id:a.id, text:a.text, hold:!!a.hold, done:!!a.done, doneAt:a.doneAt||null, fu:a.fu||null, loc:a.loc||null, steps:(a.steps||[]).map(stepCopy), photos:ps });
+    pk.actions.push({ id:a.id, text:a.text, hold:!!a.hold, done:!!a.done, created:actCreated(a)||null, doneAt:a.doneAt||null, fu:a.fu||null, loc:a.loc||null, steps:(a.steps||[]).map(stepCopy), photos:ps });
   }
   return pk;
 }
@@ -3205,7 +3282,7 @@ function packSig(){
   for(const a of open) for(const st of (a.steps||[])) if(!st.id) st.id=newSid();
   let ack=""; try{ ack=localStorage.getItem(mfKey())||""; }catch(e){}
   const noT=m=>Array.isArray(m)?m.map(x=>{ if(x&&x._t!=null){ const c={...x}; delete c._t; return c; } return x; }):m;   // session timestamps must not change the signature
-  return JSON.stringify([loadedJsonName||folderName||"ActionMap",ack,open.map(a=>[a.id,a.text,!!a.hold,!!a.done,a.fu||null,a.loc||null,(a.steps||[]).map(st=>[st.id,st.t,!!st.d]),
+  return JSON.stringify([loadedJsonName||folderName||"ActionMap",ack,dateWin||null,open.map(a=>[a.id,a.text,actCreated(a)||null,!!a.hold,!!a.done,a.fu||null,a.loc||null,(a.steps||[]).map(st=>[st.id,st.t,!!st.d]),
     actPhotos(a).map(ph=>[ph.id,metaKey(ph),ph.note||"",ph.lat,ph.lng,JSON.stringify([noT(ph.marks||[]),ph.mkw||0,ph.mth||0,ph.rot||0])])])]);
 }
 let _expBusy=false,_expAgain=false,_expT=null;
@@ -3277,7 +3354,7 @@ function exportActs(){ return actsShown(); }
 function exportFilterNote(){ const parts=[];
   const sts=[["Open",actShowOpen],["On hold",actShowHold],["Done",actShowDone]];
   if(!sts.every(x=>x[1])) parts.push(sts.filter(x=>x[1]).map(x=>x[0]).join(" + ")||"none");
-  if(actDateLo!=null||actDateHi!=null){ const f=t=>new Date(t).toLocaleDateString(undefined,{day:"numeric",month:"short"}); parts.push((actDateLo!=null?f(actDateLo):"start")+" \u2192 "+(actDateHi!=null?f(actDateHi):"today")); }
+  const dl=dwLabel(); if(dl) parts.push("Created "+dl.sum+" ("+dl.dates+")");
   return parts.length?"Filters: "+parts.join(" \u00b7 "):""; }
 /* ---- PDF map pages: every action on satellite imagery with a callout box (number + title) joined to
    its spot, plus a status legend. If the boxes can't all fit without overlapping, the rest go onto
@@ -5415,6 +5492,7 @@ async function refreshFolder(){
   } else openFolder();   // no remembered folder yet -> pick one
 }
 function clearAll(redraw){
+  dateWin=null;   // each project has its own range
   if(lb.classList.contains("open")) closeViewer();   // the viewer must never keep showing a photo from the old project
   if(pickMode) endPickMode(false);
   clearHighlight();
@@ -5625,7 +5703,7 @@ document.getElementById("btnOpenJson")?.addEventListener("click",async()=>{
 });
 document.getElementById("jsonInput").addEventListener("change",async e=>{ const f=e.target.files[0]; if(f){ loadedJsonName=f.name; loadStateText(await f.text()); } });
 
-function uiSettings(){ return { baseLayer: map.hasLayer(google)?"google":map.hasLayer(esri)?"esri":"none", showNoGeo, sortBy:currentSort, actDates:[actDateLo,actDateHi],
+function uiSettings(){ return { baseLayer: map.hasLayer(google)?"google":map.hasLayer(esri)?"esri":"none", showNoGeo, sortBy:currentSort,
       thumb:getComputedStyle(document.documentElement).getPropertyValue("--thumb").trim(),
       sideW:getComputedStyle(document.documentElement).getPropertyValue("--side-w").trim(),
       actW:getComputedStyle(document.documentElement).getPropertyValue("--act-w").trim()||null,
@@ -5634,7 +5712,7 @@ function uiSettings(){ return { baseLayer: map.hasLayer(google)?"google":map.has
       view:{ center:[map.getCenter().lat, map.getCenter().lng], zoom:map.getZoom() } }; }   // this device's view of the project (layout, filters, map view) — never shared
 function serializeState(includeImages){
   return {
-    version:3, folderName, savedAt:new Date().toISOString(), nextActId, log:projLog,
+    version:3, folderName, savedAt:new Date().toISOString(), nextActId, log:projLog, dates:dateWin||null,
     actions: actions.map(a=>{ const o={id:a.id,text:a.text,done:!!a.done,created:a.created||null,doneAt:a.doneAt||null}; if(a.hold)o.hold=true; if(a.fu)o.fu=a.fu; if(a.loc)o.loc=a.loc; if(a.steps&&a.steps.length)o.steps=a.steps.map(stepCopy); if(Array.isArray(a.porder)&&a.porder.length){o.porder=a.porder; o.porderK=a.porder.map(id=>{const ph=photoById(id);return ph?metaKey(ph):null;}).filter(Boolean);} return o; }),
     settings:uiSettings(),
     photos: photos.map(p=>{ const o={path:p.path,name:p.name,lat:p.lat,lng:p.lng,time:p.time,dir:p.dir,size:p.size,isHeic:p.isHeic};
@@ -5664,7 +5742,7 @@ function loadStateText(text){
   applyState(st);
 }
 function applyState(st){
-  clearAll(false); folderName=st.folderName||"";
+  clearAll(false); folderName=st.folderName||""; dateWin=st.dates||null;
   actions=normActs(st.actions);
   if(st.savedAt){ const t=Date.parse(st.savedAt); if(!isNaN(t)) lastSavedAt=t; }
   (st.photos||[]).forEach(m=>{
@@ -5694,7 +5772,7 @@ function applyUiSettings(s){ s=s||{};
   if(s.baseLayer==="esri"){ map.removeLayer(google); esri.addTo(map); } else if(s.baseLayer==="none"){ map.removeLayer(google); map.removeLayer(esri); } else if(s.baseLayer==="google"&&!map.hasLayer(google)){ map.removeLayer(esri); google.addTo(map); }
   showNoGeo=true;   // photos without a location always list in the gallery (the toggle is gone)
   if(Array.isArray(s.recentTags)) recentTags=s.recentTags.slice(0,10);
-  actShowOpen=s.actShowOpen!==false; actShowHold=!!s.actShowHold; actShowDone=!!s.actShowDone; actDateLo=(s.actDates&&s.actDates[0])||null; actDateHi=(s.actDates&&s.actDates[1])||null; actOnlyMap=false; setTab(s.rightTab==="gallery"?"gallery":"photo"); renderActions();
+  actShowOpen=s.actShowOpen!==false; actShowHold=!!s.actShowHold; actShowDone=!!s.actShowDone; if(Array.isArray(s.actDates)&&(s.actDates[0]||s.actDates[1])&&!dateWin) dateWin={lo:s.actDates[0]||null,hi:s.actDates[1]||null,at:1};   /* an older file kept it per device */ actOnlyMap=false; setTab(s.rightTab==="gallery"?"gallery":"photo"); renderActions();
   currentSort="date_desc";   // the gallery is always newest first (Sort is gone)
   clusterSens=(typeof s.clusterSens==="number"?Math.max(0,Math.min(100,s.clusterSens)):50);
   if(boxRect){map.removeLayer(boxRect);boxRect=null;} boxBounds=null;
@@ -5836,7 +5914,7 @@ function mSetCh(id,patch){ const p=mPend(); p.changes=p.changes||{}; const c=Obj
 function mPn(pid){ const p=mPend(); const e=(p.pnotes||{})[String(pid)]; return e?e.t:null; }   // pending photo (field) note on this phone
 function mPhotoKey(pid){ for(const a of ((mPack&&mPack.actions)||[])) for(const ph of (a.photos||[])) if(String(ph.id)===String(pid)) return ph.k||null; return null; }
 function mSetPn(pid,name,v){ const p=mPend(); p.pnotes=p.pnotes||{}; if(v) p.pnotes[String(pid)]={n:name||"",t:v,k:mPhotoKey(pid)}; else delete p.pnotes[String(pid)]; mPendSave(p); }
-function mPendSnap(p){ return JSON.stringify({c:p.changes||{},n:p.pnotes||{},a:p.newActs||[],o:p.actOrder||[]}); }
+function mPendSnap(p){ return JSON.stringify({c:p.changes||{},n:p.pnotes||{},a:p.newActs||[],o:p.actOrder||[],d:p.dates||null}); }
 function mChCount(){ const p=mPend();
   let snap=null; if(p.sentSnap){ try{ snap=JSON.parse(p.sentSnap); }catch(e){} }
   const J=x=>JSON.stringify(x==null?null:x), S=snap||{c:{},n:{},a:[],o:[]};
@@ -5845,6 +5923,7 @@ function mChCount(){ const p=mPend();
   for(const k of new Set(Object.keys(p.pnotes||{}).concat(Object.keys(S.n||{})))) if(J((p.pnotes||{})[k])!==J((S.n||{})[k])) n++;
   const sentA=new Set((S.a||[]).map(J)); for(const x of (p.newActs||[])) if(!sentA.has(J(x))) n++;
   if(Array.isArray(p.actOrder)&&p.actOrder.length&&J(p.actOrder)!==J(S.o||[])) n++;
+  if(p.dates&&J(p.dates)!==J(S.d)) n++;   // the date range set on this phone
   return n; }
 function mDropSent(p){   // after a re-export the pack already holds what we sent: keep only edits made since
   let S=null; try{ S=JSON.parse(p.sentSnap||"null"); }catch(e){} if(!S) return {};
@@ -5854,6 +5933,7 @@ function mDropSent(p){   // after a re-export the pack already holds what we sen
   for(const k of Object.keys(p.pnotes||{})) if(J(p.pnotes[k])!==J((S.n||{})[k])){ out.pnotes=out.pnotes||{}; out.pnotes[k]=p.pnotes[k]; }
   const sentA=new Set((S.a||[]).map(J)); const na=(p.newActs||[]).filter(x=>!sentA.has(J(x))); if(na.length) out.newActs=na;   // edited after sending: still travels (the desktop updates it by uid)
   if(Array.isArray(p.actOrder)&&p.actOrder.length&&J(p.actOrder)!==J(S.o||[])) out.actOrder=p.actOrder;
+  if(p.dates&&J(p.dates)!==J(S.d)) out.dates=p.dates;
   return out; }
 /* Field editing: the phone can add actions, add sub-actions, and edit titles/sub-action text
    (no deleting). Everything lands in pmField and syncs back via changes.json:
@@ -6160,13 +6240,63 @@ let mShowDone=(()=>{ try{ return localStorage.getItem("pmMDone")==="1"; }catch(e
 let mTab=(()=>{ try{ return localStorage.getItem("pmMTab")==="list"?"list":"map"; }catch(e){ return "map"; } })();
 let mListScroll=0, mLQ="", mHomeView=null, mHomeTouched=false, mHomeFocus=null;
 function mSetTab(t){ mTab=t; try{ localStorage.setItem("pmMTab",t); }catch(e){} }
-function mHomeActs(){
+function mHomeActs(allDates,w){   // allDates: ignore the date range; w: try a range out (while a handle is dragged)
   const packActs=mActOrder().map(i=>(mPack.actions||[])[i]).filter(Boolean);   /* priority order: pack order with the phone's pending reorder applied */
   const packFu=new Set((mPack.actions||[]).map(a=>a.fu).filter(Boolean));   // once merged, the pack's copy is the one shown (and edited)
-  const news=mNewActs().map((x,i)=>({id:"n"+i,_new:true,_ni:i,text:x.text,steps:x.steps||[],photos:[],done:!!x.done,u:x.u})).filter(x=>!(x.u&&packFu.has(x.u)));
+  const news=mNewActs().map((x,i)=>({id:"n"+i,_new:true,_ni:i,text:x.text,steps:x.steps||[],photos:[],done:!!x.done,u:x.u,created:x.cr||null})).filter(x=>!(x.u&&packFu.has(x.u)));
   const mRank=a=>mDone(a)?2:(mHold(a)?1:0);   // on hold / completed sink to the bottom, like the desktop
-  return news.concat(packActs.map((a,i)=>({a,i})).sort((x,y)=>(mRank(x.a)-mRank(y.a))||(x.i-y.i)).map(x=>x.a));   // phone-created actions sit on top until they're merged on desktop
+  const dw=allDates?null:(w!==undefined?w:mDateWin());
+  return news.concat(packActs.map((a,i)=>({a,i})).sort((x,y)=>(mRank(x.a)-mRank(y.a))||(x.i-y.i)).map(x=>x.a))   // phone-created actions sit on top until they're merged on desktop
+    .filter(a=>a._new||inDateWin(a.created||null,dw));   // the project's date range (an action just made here always shows)
 }
+/* The date range is the PROJECT's (shared with every desktop and phone): the newest setting wins —
+   the pack's, or one made on this phone that hasn't come back in a pack yet. */
+function mDatesKey(){ return "pmMDates:"+(mPid||(mPack&&mPack.project)||""); }
+function mDateWin(){ let mine=null; try{ mine=JSON.parse(localStorage.getItem(mDatesKey())||"null"); }catch(e){}
+  const all=[(mPack&&mPack.dates)||null,mPend().dates||null,mine].filter(Boolean);
+  return all.sort((x,y)=>(+y.at||0)-(+x.at||0))[0]||null; }
+function mSetDates(w){ w=Object.assign({},w,{at:Date.now()});
+  try{ localStorage.setItem(mDatesKey(),JSON.stringify(w)); }catch(e){}
+  if(!mRO()){ const p=mPend(); p.dates=w; mPendSave(p); } }   // sent like any other phone edit (view-only: just this phone)
+let mDatesOpen=false;
+const M_CAL='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>';
+function mDatesBtnHtml(w){ const dl=dwLabel(w===undefined?mDateWin():w);
+  return M_CAL+(dl?'<span class="two">'+esc(dl.l1)+'<i>'+esc(dl.l2)+'</i></span>':'<span>Dates</span>'); }
+function mDatesTs(){ const ts=[]; for(const a of (mPack.actions||[])) if(a.created) ts.push(+a.created); for(const x of mNewActs()) ts.push(+(x.cr||Date.now())); return ts; }
+function mDatesPanel(){   // drops down under the header: chart, two handles, 1 week / 1 month / 3 months / All
+  const host=document.querySelector(".ma-mapwrap")||document.querySelector(".ma-lwrap"); if(!host) return;
+  let pan=document.getElementById("mDPan"); if(pan) pan.remove();
+  pan=document.createElement("div"); pan.className="ma-dpan"; pan.id="mDPan"; host.appendChild(pan);
+  const ts=mDatesTs(); let w=mDateWin(), C=dwChart(ts,w), drag=false;
+  const paint=()=>{ const dl=dwLabel(w), all=mHomeActs(true), inR=mHomeActs(false,w), st=a=>{ const k=mStatus(a); return (k==="open"&&mShowOpen)||(k==="hold"&&mShowHold)||(k==="done"&&mShowDone); };
+    const cur=dwOn(w)?((w&&w.p)||null):"";
+    pan.querySelector(".sum").textContent=dl?dl.sum:"All dates";
+    pan.querySelector(".dts").textContent=dl?dl.dates:(dwDate(C.t0)+" \u2013 Today");
+    pan.querySelector(".ma-dhist").innerHTML=dwBarsHtml(C,40,6);
+    const fi=pan.querySelector(".ma-dfi"), N=Math.max(1,C.n-1); fi.style.left="calc(14px + "+(C.li/N)+" * (100% - 28px))"; fi.style.width="calc("+((C.hiI-C.li)/N)+" * (100% - 28px))";   // thumb centres run 14 px in from each end
+    const lo=pan.querySelector("#mDLo"), hi=pan.querySelector("#mDHi"); lo.max=hi.max=Math.max(1,C.n-1); if(!drag){ lo.value=C.li; hi.value=C.hiI; }
+    const day=i=>i>=C.n-1?"Today":dwDate(C.t0+i*DAY_MS+DAY_MS/2);
+    pan.querySelector(".ma-dends").innerHTML='<span>'+esc(day(C.li))+'</span><span>'+esc(day(C.hiI))+'</span>';
+    pan.querySelectorAll(".ma-dpre button").forEach(b=>b.classList.toggle("on",b.dataset.p===cur));
+    pan.querySelector(".cnt").textContent=inR.filter(st).length+" of "+all.filter(st).length+" actions";
+    const b=document.getElementById("mDatesB"); if(b){ b.innerHTML=mDatesBtnHtml(w); b.classList.toggle("on",dwOn(w)); } };
+  pan.innerHTML='<div class="ma-dh"><b>Created</b><button type="button" class="clr" id="mDClr">Clear</button></div><div class="sum"></div><div class="dts"></div>'
+    +'<div class="ma-dhist"></div><div class="ma-dsl"><div class="ma-dtr"></div><div class="ma-dfi"></div><input type="range" id="mDLo" min="0" step="1" aria-label="From date" /><input type="range" id="mDHi" min="0" step="1" aria-label="To date" /></div>'
+    +'<div class="ma-dends"></div><div class="ma-dpre"><button type="button" data-p="1w">1 week</button><button type="button" data-p="1m">1 month</button><button type="button" data-p="3m">3 months</button><button type="button" data-p="">All</button></div>'
+    +'<div class="ma-dfoot"><span class="cnt"></span><button type="button" id="mDDone">Done</button></div>';
+  const live=()=>{ const m2=mHomeMap; if(mTab==="map"&&m2&&m2._setActs){ m2._setActs(mHomeActs(false,w)); mSyncCards(); }   // the map follows as you drag
+    else { const keep=new Set(mHomeActs(false,w).map(mCardKey)); document.querySelectorAll("#mList .m-card").forEach(el=>{ el.classList.toggle("dt-off",!keep.has(el.dataset.k)); }); } };
+  const commit=nw=>{ mSetDates(nw); mShowList(); };   // counts, cards and list rebuilt; the panel stays open
+  const lo=pan.querySelector("#mDLo"), hi=pan.querySelector("#mDHi");
+  const onInput=which=>{ drag=true; let a=+lo.value, b=+hi.value; if(a>b){ if(which==="lo") lo.value=a=b; else hi.value=b=a; }
+    w=Object.assign(dwFromIdx(C,a,b),{at:Date.now()}); C=dwChart(ts,w,C.t0); paint(); live(); };
+  lo.addEventListener("input",()=>onInput("lo")); hi.addEventListener("input",()=>onInput("hi"));
+  const release=()=>{ if(!drag) return; drag=false; commit(w); };
+  lo.addEventListener("change",release); hi.addEventListener("change",release);
+  pan.querySelector(".ma-dpre").addEventListener("click",e=>{ const b=e.target.closest("button[data-p]"); if(!b) return; commit(dwPreset(b.dataset.p)); });
+  pan.querySelector("#mDClr").addEventListener("click",()=>commit(dwPreset("")));
+  pan.querySelector("#mDDone").addEventListener("click",()=>{ mDatesOpen=false; pan.remove(); });
+  paint(); }
 function mCardKey(a){ return a._new?a.id:String((mPack.actions||[]).indexOf(a)); }
 function mOpenAct(k){ mShowDetail(mIsNew(k)?k:Number(k)); }
 function mHeadSub(){ if(!mPack) return "";
@@ -6189,7 +6319,8 @@ function mStatus(a){ return mDone(a)?"done":mHold(a)?"hold":"open"; }
 function mTopStrip(){   // just the project name (→ project menu), with the sync line under it when needed
   const st=mHeadSub();
   return '<div class="ma-top2"><button type="button" class="ma-pname" id="mProjB"><span class="nm">'+esc(mPack.project||"Project")+'<i>▾</i></span>'
-    +'<span class="ma-ps ma-cs" id="mSendNote"'+(st?'':' style="display:none"')+'>'+esc(st)+'</span></button></div>';
+    +'<span class="ma-ps ma-cs" id="mSendNote"'+(st?'':' style="display:none"')+'>'+esc(st)+'</span></button>'
+    +'<button type="button" class="ma-dtb'+(dwOn(mDateWin())?' on':'')+'" id="mDatesB" aria-label="Date range">'+mDatesBtnHtml()+'</button></div>';
 }
 function mFltHtml(){   // On hold / Done side by side: top left of the map, top of the list
   let no=0,nh=0,nd=0; for(const a of mHomeActs()){ if(mDone(a)) nd++; else if(mHold(a)) nh++; else no++; }
@@ -6241,6 +6372,7 @@ function mShowList(){
   }
   mWireNav(false);
   document.getElementById("mProjB").addEventListener("click",()=>mShowMenu("project"));
+  document.getElementById("mDatesB").addEventListener("click",()=>{ mDatesOpen=!mDatesOpen; if(mDatesOpen) mDatesPanel(); else { const x=document.getElementById("mDPan"); if(x) x.remove(); } });
   document.getElementById("mShowO").addEventListener("click",()=>{ mShowOpen=!mShowOpen; try{ localStorage.setItem("pmMOpen",mShowOpen?"1":"0"); }catch(e){} mShowList(); });
   document.getElementById("mShowH").addEventListener("click",()=>{ mShowHold=!mShowHold; try{ localStorage.setItem("pmMHold",mShowHold?"1":"0"); }catch(e){} mShowList(); });   // one setting for the map and the list
   document.getElementById("mShowD").addEventListener("click",()=>{ mShowDone=!mShowDone; try{ localStorage.setItem("pmMDone",mShowDone?"1":"0"); }catch(e){} mShowList(); });
@@ -6269,6 +6401,7 @@ function mShowList(){
     document.querySelectorAll("#mList .m-card").forEach(el=>el.addEventListener("click",()=>{ if(Date.now()-mCardDropT<500) return; mOpenAct(el.dataset.k); }));
     mWireCardDrag();   // hold-press + drag sets priority
   }
+  if(mDatesOpen) mDatesPanel();   // a refresh keeps the date panel open
 }
 /* the card under the map: the open action nearest to you (else the first open one on the map) */
 /* the map card was tapped: zoom to that action's dot (ringed in gold), in the clear space above the card */
@@ -6373,7 +6506,7 @@ function mShowAdd(){
     if(!v){ inp.placeholder="Name the action first"; inp.classList.add("need"); inp.focus(); return; }
     const u=mUid(), cam=d.files.find(f=>f.fixed);
     const loc=cam?cam.fixed:(!d.files.length&&mGeo?{lat:mGeo.lat,lng:mGeo.lng}:null);   // where the photo was taken, else where you stand
-    mMutate(()=>{ const p=mPend(); p.newActs=(p.newActs||[]).concat([{text:v,steps:d.steps.map(t=>({t,d:false,u:mUid()})),done:false,u,loc}]); mPendSave(p); });
+    mMutate(()=>{ const p=mPend(); p.newActs=(p.newActs||[]).concat([{text:v,steps:d.steps.map(t=>({t,d:false,u:mUid()})),done:false,u,loc,cr:Date.now()}]); mPendSave(p); });
     const files=d.files.slice(); mAddDraft=null; mCloseSheet(); mShowList(); mToast("Added “"+v+"”");
     for(const f of files.filter(x=>x.fixed)) mUploadPhotos([f.file],f.fixed,{au:u});   // camera shots: pinned where each was taken
     const gal=files.filter(x=>!x.fixed).map(x=>x.file); if(gal.length) mUploadPhotos(gal,null,{au:u});
@@ -6488,7 +6621,7 @@ function mCamInput(){
     let link=mCamLink; mCamLink=null;
     if(link&&link.newAction){   // "New action from a photo": name it, create it, link the shot to it
       const v=prompt("Name the new action for this photo:","");
-      if(v&&v.trim()){ const u=mUid(); mMutate(()=>{ const p=mPend(); p.newActs=(p.newActs||[]).concat([{text:v.trim(),steps:[],done:false,u,loc:fixed||null}]); mPendSave(p); }); link={au:u}; if(document.getElementById("mList")) mShowList(); }
+      if(v&&v.trim()){ const u=mUid(); mMutate(()=>{ const p=mPend(); p.newActs=(p.newActs||[]).concat([{text:v.trim(),steps:[],done:false,u,loc:fixed||null,cr:Date.now()}]); mPendSave(p); }); link={au:u}; if(document.getElementById("mList")) mShowList(); }
       else link=null;   // cancelled: the photo still goes to the map, unlinked
     }
     mUploadPhotos(fs,fixed,link);
@@ -6653,10 +6786,12 @@ function mBuildHomeMap(acts){
     m2._tl=L.tileLayer(mTileUrl(),{subdomains:["mt0","mt1","mt2","mt3"],maxZoom:22,maxNativeZoom:21,keepBuffer:4,updateWhenIdle:false}).addTo(m2);   // tiles load while you pan, and a ring around the screen stays loaded
     m2._tl.on("loading",()=>{ tilesBusy=true; }).on("load",()=>{ tilesBusy=false; });
     const pts=[];
-    acts.forEach(a=>{ const st=mStatus(a); if((st==="open"&&!mShowOpen)||(st==="hold"&&!mShowHold)||(st==="done"&&!mShowDone)) return; const k=mCardKey(a);
-      for(const ph of (a.photos||[])) if(ph.lat!=null&&isFinite(ph.lat)&&isFinite(ph.lng)) pts.push({lat:+ph.lat,lng:+ph.lng,k,a});
-      const loc=a._new?(mNewActs()[a._ni]||{}).loc:a.loc;
-      if(loc&&isFinite(loc.lat)&&isFinite(loc.lng)) pts.push({lat:+loc.lat,lng:+loc.lng,k,a}); });
+    const setPts=acts=>{ pts.length=0;
+      acts.forEach(a=>{ const st=mStatus(a); if((st==="open"&&!mShowOpen)||(st==="hold"&&!mShowHold)||(st==="done"&&!mShowDone)) return; const k=mCardKey(a);
+        for(const ph of (a.photos||[])) if(ph.lat!=null&&isFinite(ph.lat)&&isFinite(ph.lng)) pts.push({lat:+ph.lat,lng:+ph.lng,k,a});
+        const loc=a._new?(mNewActs()[a._ni]||{}).loc:a.loc;
+        if(loc&&isFinite(loc.lat)&&isFinite(loc.lng)) pts.push({lat:+loc.lat,lng:+loc.lng,k,a}); }); };
+    setPts(acts);
     const lay=L.layerGroup().addTo(m2);
     /* No bubbles: one label per action at each spot; a crowded spot spreads its labels on a ferris wheel
        round it (a spoke back to each one's own place), like the desktop. Wheels that would touch join. */
@@ -6705,7 +6840,7 @@ function mBuildHomeMap(acts){
     const bb=pts.length?L.latLngBounds(pts.map(p=>[p.lat,p.lng])):null;
     const me=(mGeo&&!ignoreLoc)?mGeo:null;   // Ignore my location: no YOU ARE HERE, and the view fits the actions only
     if(me){ m2._geoPin=L.marker([me.lat,me.lng],{icon:youAreHereIcon(30),interactive:false,zIndexOffset:900}).addTo(m2); if(bb) bb.extend([me.lat,me.lng]); }
-    mHomeMap=m2; mHomeBB=bb; m2._pts=pts; m2._draw=draw;
+    mHomeMap=m2; mHomeBB=bb; m2._pts=pts; m2._draw=draw; m2._setActs=a=>{ setPts(a); draw(); };   // the date panel swaps the set live
     const fit=()=>{ m2.invalidateSize();
       if(mHomeFocus!=null){ const fp=pts.filter(p=>p.k===String(mHomeFocus)); mHomeFocus=null;
         if(fp.length){ mHomeTouched=true; const fb=L.latLngBounds(fp.map(p=>[p.lat,p.lng])), z=M_FOCUS_Z;   // area level (a crowd there fans out, so its label still shows)
@@ -6751,8 +6886,9 @@ async function mSendChanges(){
   const payloadSrc=JSON.parse(JSON.stringify(p));
   try{
     const payload={v:2,updatedAt:new Date().toISOString(),project:mPack.project||null,packAt:mPack.exportedAt||null,changes:payloadSrc.changes||{},photoNotes:payloadSrc.pnotes||{},
-      newActs:(payloadSrc.newActs||[]).map(x=>({u:x.u||null,loc:x.loc||null,text:x.text,steps:(x.steps||[]).map(s=>({t:s.t,d:!!s.d,u:s.u||null})),done:!!x.done,doneAt:x.doneAt||null,hold:!!x.hold})),
+      newActs:(payloadSrc.newActs||[]).map(x=>({u:x.u||null,loc:x.loc||null,cr:x.cr||null,text:x.text,steps:(x.steps||[]).map(s=>({t:s.t,d:!!s.d,u:s.u||null})),done:!!x.done,doneAt:x.doneAt||null,hold:!!x.hold})),
       actOrder:(Array.isArray(payloadSrc.actOrder)&&payloadSrc.actOrder.length)?mActOrder().map(i=>(mPack.actions[i]||{}).id).filter(x=>x!=null):[]};
+    if(payloadSrc.dates) payload.dates=payloadSrc.dates;
     payload.device=mDeviceId(); payload.by=mUserName(); if(mEng.on) payload.self=Date.now();   // the phone merges this batch itself
     payload.changes=Object.assign({},payload.changes);   // reverts below must not leak into the sent-snapshot bookkeeping
     /* undo removes keys; the desktop needs explicit values to take a sent edit back */
@@ -6776,6 +6912,7 @@ async function mSendChanges(){
       const seenU=new Set((payload.newActs||[]).map(x=>x.u).filter(Boolean));
       out.newActs=(payload.newActs||[]).concat((cur.newActs||[]).filter(x=>!(x&&x.u&&seenU.has(x.u))));
       if(!(out.actOrder&&out.actOrder.length)) out.actOrder=cur.actOrder||[];
+      if(cur.dates&&(!out.dates||(+cur.dates.at||0)>(+out.dates.at||0))) out.dates=cur.dates;   // two phones set the range: the later one
       return out; },"Field changes from phone");   // resends are idempotent on the desktop
     const p2=mPend(); p2.sentAt=Date.now(); p2.sentUpd=payload.updatedAt; p2.sentSnap=mPendSnap(payloadSrc); _mpQuiet=true; mPendSave(p2); _mpQuiet=false;   // snapshot what WAS sent (edits made mid-send stay unsent)
     mSyncState="idle"; mSyncErr="";
@@ -6818,7 +6955,7 @@ function mPackFromEngine(){
   const old=mPack||{actions:[]}, byKey=new Map();
   for(const a of (old.actions||[])) for(const ph of (a.photos||[])) if(ph&&ph.k) byKey.set(ph.k,ph);
   let mf=null; try{ mf=localStorage.getItem(mfKey())||null; }catch(e){}
-  const pk={v:2,eng:true,exportedAt:old.exportedAt||null,project:loadedJsonName||ON.name||old.project||"Project",pid:ON.pid,mergedFrom:mf,actions:[]};
+  const pk={v:2,eng:true,exportedAt:old.exportedAt||null,project:loadedJsonName||ON.name||old.project||"Project",pid:ON.pid,mergedFrom:mf,dates:dateWin||null,actions:[]};
   const need=[];
   for(const a of actions){
     const ps=[];
@@ -6826,7 +6963,7 @@ function mPackFromEngine(){
       const img=(o&&o.img)||p.preview||p.thumb||null;
       if(!img&&p.h) need.push(p);
       ps.push({id:o?o.id:("h"+String(p.h||p.id)),k,name:p.name,note:p.note||"",lat:(p.lat!=null?p.lat:null),lng:(p.lng!=null?p.lng:null),img,h:o?o.h:null}); }
-    pk.actions.push({id:a.id,text:a.text,hold:!!a.hold,done:!!a.done,doneAt:a.doneAt||null,fu:a.fu||null,loc:a.loc||null,steps:(a.steps||[]).map(stepCopy),photos:ps});
+    pk.actions.push({id:a.id,text:a.text,hold:!!a.hold,done:!!a.done,created:actCreated(a)||null,doneAt:a.doneAt||null,fu:a.fu||null,loc:a.loc||null,steps:(a.steps||[]).map(stepCopy),photos:ps});
   }
   if(need.length) mEngineThumbs(need);
   return pk;
@@ -7263,6 +7400,7 @@ function batchDiff(data,last){   // only what changed since the previous merged 
   const lastNA=new Map(((last.newActs)||[]).filter(x=>x&&x.u).map(x=>[x.u,J(x)]));
   out.newActs=(data.newActs||[]).filter(x=>!(x&&x.u&&lastNA.get(x.u)===J(x)));
   if(J(data.actOrder||[])===J(last.actOrder||[])) out.actOrder=[];
+  if(J(data.dates)===J(last.dates)) delete out.dates;
   return out;
 }
 async function syncTick(){ try{ await checkFieldChanges(); }catch(e){} try{ await checkPhotoUploads(); }catch(e){} try{ await healMissingImages(); }catch(e){} }
@@ -7286,7 +7424,8 @@ async function checkFieldChanges(){
     const ids=Object.keys(ch), pids=Object.keys(pnCh);
     const cur=loadedJsonName||folderName||"ActionMap";
     if(!isOnline()&&raw.project&&raw.project!==cur){ loadNote("Phone changes are for “"+data.project+"” — open that project to merge them"); setTimeout(()=>loadNote(""),6000); return; }   // left in place for the right project
-    if(!ids.length&&!pids.length&&!nActs.length&&ordIds.length<2){   // a resend with nothing new: just acknowledge it
+    const dNew=data.dates&&(+data.dates.at||0)>(+(dateWin&&dateWin.at)||0)?data.dates:null;   // the phone set the range after anyone else did
+    if(!ids.length&&!pids.length&&!nActs.length&&ordIds.length<2&&!dNew){   // a resend with nothing new: just acknowledge it
       try{ localStorage.setItem(mfKey(),raw.updatedAt); localStorage.setItem(lmKey,JSON.stringify(raw)); if(isOnline()) persistState(); }catch(e){}
       scheduleAutoExport(1500); return; }
     for(const id of ids){
@@ -7349,6 +7488,7 @@ async function checkFieldChanges(){
       linkPendingFu(a2);   // phone photos taken for this action before it existed here
       a2.steps=(na.steps||[]).map(st=>({t:String(st&&st.t||"").trim(),d:!!(st&&st.d),id:(st&&st.u)||newSid()})).filter(st=>st.t);
       if(na.hold) a2.hold=true;
+      if(na.cr) a2.created=na.cr;   // created when it was made on the phone, not when it got here
       if(na.done){ a2.done=true; a2.doneAt=na.doneAt||Date.now(); }
       recordActEdit(a2,b2); newN++;
     }
@@ -7364,6 +7504,7 @@ async function checkFieldChanges(){
       items.push({id:ph.id,before,after:snapshotTags(ph)});
     }
     if(items.length) pushUndo({items});
+    if(dNew){ dateWin=Object.assign({},dNew); renderActDates(); }
     afterFolderChange();
     const ack=async()=>{   // the batch is marked merged and changes.json cleared…
       try{ localStorage.setItem(mfKey(),raw.updatedAt||String(Date.now())); if(isOnline()) persistState(); localStorage.setItem(lmKey,JSON.stringify(raw)); }catch(e){}
@@ -7372,7 +7513,7 @@ async function checkFieldChanges(){
         return {v:2,changes:{},photoNotes:{},newActs:[],actOrder:[],clearedAt:new Date().toISOString(),mergedFrom:raw.updatedAt}; },"Field changes merged on desktop"); };
     if(mIsEngPhone()) _fieldAck={raw,run:ack,gen:++_saveGen};   // …on the phone only once the project file with them is SAVED (else a failed save + closed app lost them)
     else await ack();
-    const n=ids.length+pids.length+newN+(ordIds.length>1?1:0);
+    const n=ids.length+pids.length+newN+(ordIds.length>1?1:0)+(dNew?1:0);
     if(n) loadNote("Merged "+n+" field change"+(n===1?"":"s")+" from the phone ✓ — Ctrl+Z undoes"); setTimeout(()=>loadNote(""),3500);
   }catch(e){ console.warn("field-changes check failed",e); }
   finally{ _chMerging=false; _logBy=null; }
