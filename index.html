@@ -178,7 +178,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .imgpanel.open + .imgsplit{display:block;}
   .ip-close{position:absolute;top:10px;right:12px;z-index:6;background:#ffffffe6;border:1px solid var(--line);color:var(--text);font-size:22px;line-height:1;width:32px;height:32px;border-radius:8px;cursor:pointer;box-shadow:0 2px 8px #1e1f221f;}
   .ip-close:hover{color:var(--accent);border-color:var(--accent);}
-  .ip-topright{position:absolute;top:10px;right:52px;z-index:6;display:flex;gap:8px;}
+  .ip-topright{position:absolute;top:10px;right:calc(12px + 32px + var(--btn-gap));z-index:6;display:flex;gap:var(--btn-gap);}
   .ip-iconbtn{width:34px;height:32px;border-radius:8px;background:#ffffffe6;border:1px solid var(--line);color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;box-shadow:0 2px 8px #1e1f221f;transition:color .12s,border-color .12s,background .12s;padding:2px 0 1px;}
   .ip-iconbtn svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   .ip-iconbtn .pct{font:700 7px var(--font);letter-spacing:.2px;color:var(--dim);line-height:1;}
@@ -325,7 +325,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .leftstack,.toolstack{display:none;}   /* hidden until mounted into the map container */
   .leftstack.onmap{display:flex;flex-direction:column;gap:5px;align-items:flex-start;
     position:absolute !important;top:10px !important;left:10px !important;right:auto !important;bottom:auto !important;z-index:1200;}
-  .toolstack.onmap{display:flex;flex-direction:column;gap:5px;align-items:stretch;
+  .toolstack.onmap{display:flex;flex-direction:column;gap:var(--btn-gap);align-items:stretch;
     position:absolute !important;left:10px !important;bottom:14px !important;right:auto !important;top:auto !important;z-index:1200;}
   .north-arrow{background:#fff;border:var(--ctl-bd);border-radius:var(--ctl-r);padding:5px 8px 3px;box-shadow:0 6px 18px #1e1f2222;line-height:0;}
   .areabtn{font-family:var(--font);font-size:var(--fb);font-weight:600;color:var(--text);background:#ffffffe8;backdrop-filter:blur(8px);border:1px solid var(--line2);border-radius:8px;padding:6px 9px;cursor:pointer;box-shadow:0 4px 14px #1e1f221f;white-space:nowrap;}
@@ -485,7 +485,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .act-row .act-exp:hover,.act-row .act-del:hover{border-color:var(--gold);}
   /* Navisworks-style tree: ⊟ / ⊞ box before "010 | title", dotted lines to each sub-action */
   .act-top{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
-  .act-top .act-st{flex-direction:row;gap:5px;}
+  .act-top .act-st{flex-direction:row;gap:var(--btn-gap);}
   .act-top .act-st button{width:auto;padding:1px 9px;}
   .act-top .act-st .act-all{width:22px;padding:0;display:flex;align-items:center;justify-content:center;color:#4a525c;border-color:#cfd4da;background:#fff;}   /* same height and outline as On hold beside it */
   .act-top .act-st .act-all:hover{border-color:var(--gold);color:var(--ink);}
@@ -510,7 +510,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ipa-row .act-exp{font-size:14px;padding:2px 4px;}   /* strip rows are shorter — keep icons ~30% of THEIR collapsed height */
   .ipa-row .ipa-x{font-size:16px;padding:0 3px;}
   .act-empty{padding:18px 16px;color:var(--muted);font-size:var(--fb);line-height:1.5;}
-  .act-head{display:flex;align-items:center;flex-wrap:wrap;gap:6px 4px;padding:12px 12px 8px;}
+  .act-head{display:flex;align-items:center;flex-wrap:wrap;gap:var(--btn-gap);padding:12px 12px 8px;}
   .act-head .title{font-weight:700;color:var(--ink);font-size:var(--fh);}
   .act-head .count{font-family:var(--font);font-size:var(--fl);color:var(--dim);flex:1;font-variant-numeric:tabular-nums}
   .act-tgl{font:600 var(--fl) var(--font);white-space:nowrap;color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:4px 6px;cursor:pointer;}
@@ -518,7 +518,12 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .af-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:-1px;box-sizing:border-box;}   /* the map's dot for each pill */
   .af-dot.open{background:#F28C28;}.af-dot.hold{background:#fff;border:2px solid #F28C28;}.af-dot.done{background:#6b7580;}
   .act-sc{font-weight:600;font-size:var(--fl);color:var(--muted);white-space:nowrap;}   /* folded: how many sub-actions it holds */
-  .act-dl{width:30px;height:30px;padding:0!important;display:grid;place-items:center;margin-left:6px;}.act-dl svg{width:17px;height:17px;}   /* export to Excel, beside the heading */
+  .act-dl{width:30px;height:30px;padding:0!important;display:grid;place-items:center;}.act-dl svg{width:17px;height:17px;}   /* export to Excel + Save, beside the heading */
+  .act-head .title{margin-right:3px;}
+  .act-dl.act-xl{width:36px;height:32px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;} .act-dl.act-xl svg{width:14px;height:14px;} .act-dl.act-xl b{font:800 8.5px/1 Arial,sans-serif;color:#1d6f42;letter-spacing:.3px;margin-top:1px;}   /* says it's an Excel file */
+  .act-dl.act-save{position:relative;width:32px;height:32px;} .act-save .sd{position:absolute;right:-3px;top:-3px;width:9px;height:9px;border-radius:50%;background:#3BA55C;box-shadow:0 0 0 1.5px #fff;}
+  .act-save.unsaved .sd{background:#E8A33D;} .act-save.bad .sd{background:#d64541;} .act-save.busy svg{opacity:.55;}
+  body.view-only .act-save{display:none!important;}
   .af-n{color:var(--dim);font-weight:500;margin-left:4px;font-variant-numeric:tabular-nums;}
   .act-tgl.on{background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);color:var(--ink);}   /* on: gold edge */
   .act-new{padding:0 12px 10px;}
@@ -527,7 +532,12 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .act-new input.arm{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-tint);}
   .act-new input.arm::placeholder{color:var(--accent);}
   .act-list{flex:1;overflow-y:auto;padding:0 10px 12px;display:flex;flex-direction:column;gap:6px;}
-  .act-row{display:flex;align-items:flex-start;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 9px;cursor:pointer;user-select:none;}
+  .act-row{position:relative;display:flex;align-items:flex-start;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 9px;cursor:pointer;user-select:none;}
+  .act-row .act-cnr{position:absolute;top:6px;z-index:3;width:24px;height:24px;box-sizing:border-box;padding:0;border:1.5px solid #cfd4da;border-radius:6px;background:#fff;color:#4a525c;display:grid;place-items:center;line-height:1;}   /* Copy + × share the top-right corner, square like the pills */
+  .act-row .act-del.act-cnr{right:6px;width:24px;height:24px;border-radius:6px;font-size:15px;}
+  .act-row .act-copy.act-cnr{right:calc(6px + 24px + var(--btn-gap));width:26px;} .act-row .act-copy.act-cnr svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.9;}
+  .act-row .act-cnr:hover{border-color:var(--gold);color:var(--ink)!important;}
+  .act-row .act-top{padding-right:58px;}
   /* cover photo column: shared width (drag any cover's left edge to resize them all), flush to
      the tile's right edge; the letterbox is the tile's own background so it blends in */
   .act-cover{flex:0 0 var(--cov-w,84px);width:var(--cov-w,84px);align-self:stretch;margin:-8px -9px -8px 2px;border-radius:0 9px 9px 0;overflow:hidden;position:relative;display:flex;align-items:center;justify-content:center;min-height:34px;}
@@ -987,7 +997,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   /* ===================== Design system A — one look for every control type =====================
      Surfaces: white + 1.5px slate outline, 8px corners. ON / selected: gold edge + cream fill.
      Tabs: gold underline. Fields: gold edge while typing. Primary buttons: gold. One font, 3 sizes. */
-  :root{ --ctl-bd:1.5px solid var(--line); --ctl-r:8px; --ctl-on-bg:#fdf6e6; --ctl-on:inset 0 0 0 1px var(--gold); }
+  :root{ --btn-gap:5px; --ctl-bd:1.5px solid var(--line); --ctl-r:8px; --ctl-on-bg:#fdf6e6; --ctl-on:inset 0 0 0 1px var(--gold); }
   /* toggles (on/off) */
   .act-tgl,.ipa-tgl,.lb-fullchk,.lb-textbtn,.mt-btn,.areabtn{background:#fff!important;border:var(--ctl-bd)!important;border-radius:var(--ctl-r)!important;color:var(--ink)!important;backdrop-filter:none!important;font-weight:600;}
   .act-tgl.on,.ipa-tgl.on,.lb-textbtn.on,.mt-btn.on,.areabtn.active,.lb-fullchk:has(input:checked){background:var(--ctl-on-bg)!important;border-color:var(--gold)!important;box-shadow:var(--ctl-on)!important;color:var(--ink)!important;}
@@ -1029,7 +1039,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ip-marktools .mk:hover,.lb-btn:hover,.ip-arrow:hover{border-color:var(--gold)!important;color:var(--ink)!important;}
   .act-copy:hover,.act-exp:hover,.act-del:hover,.st-x:hover{color:var(--accent)!important;}
   /* one-of choices: base map + settings radios become a segmented outline */
-  .leaflet-control-layers-base{display:flex;flex-direction:column;gap:4px;}
+  .leaflet-control-layers-base{display:flex;flex-direction:column;gap:var(--btn-gap);}
   .leaflet-control-layers-base label{display:block;margin:0;}
   .leaflet-control-layers-base label>span,.leaflet-control-layers-base label>div{display:flex;align-items:center;gap:0;border:var(--ctl-bd);border-radius:var(--ctl-r);padding:3px 10px;cursor:pointer;font-size:var(--fl);font-weight:600;color:var(--ink);background:#fff;}
   .leaflet-control-layers-base input{display:none;}
@@ -1184,7 +1194,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
 
 <div class="main tab-photo" id="main">
   <aside class="actpanel" id="actPanel">
-    <div class="act-head"><span class="title">Actions</span><button class="act-tgl act-dl" id="actXlsx" type="button" title="Export to Excel: every problem as a row, status, sub-actions and the marked-up photos" aria-label="Export to Excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10.5l5 5 5-5"/><path d="M5 20h14"/></svg></button><span style="flex:1"></span>
+    <div class="act-head"><span class="title">Actions</span><button class="act-tgl act-dl act-xl" id="actXlsx" type="button" title="Export to Excel: every problem as a row, status, sub-actions and the marked-up photos" aria-label="Export to Excel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10.5l5 5 5-5"/><path d="M5 20h14"/></svg><b>XLSX</b></button><button class="act-tgl act-dl act-save" id="actSave" type="button" title="All saved" aria-label="Save now"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1z"/><path d="M8 4v5h7V4"/><rect x="8" y="13" width="8" height="5" rx="1"/></svg><span class="sd"></span></button><span style="flex:1"></span>
       <button class="act-tgl" id="actShowOpen" title="Open — show the open actions, in this list and on the map (orange dots)"><i class="af-dot open"></i>Open<span class="af-n"></span></button>
       <button class="act-tgl" id="actShowHold" title="On hold — also show the actions that are on hold, in this list and on the map (white dots with an orange ring)"><i class="af-dot hold"></i>On hold<span class="af-n"></span></button>
       <button class="act-tgl" id="actShowDone" title="Done — also show finished actions, in this list and on the map (grey dots)"><i class="af-dot done"></i>Done<span class="af-n"></span></button>
@@ -1847,7 +1857,11 @@ function wireActRowCommon(el,a){
   const ex=el.querySelector(".act-exp");
   if(ex) ex.addEventListener("click",e=>{ e.stopPropagation(); if(collActs.has(a.id)) collActs.delete(a.id); else collActs.add(a.id); refreshActUI(); });
 }
-function deleteAction(a){   // no confirm needed: Ctrl+Z restores the action and all its photo links
+async function confirmDeleteAction(a){   // deleting is rare: always ask first
+  const n=(a.steps||[]).length;
+  if(!(await askYesNo("Delete action "+actNo(a)+"?","\u201c"+(a.text||"")+"\u201d"+(n?" and its "+n+" sub-action"+(n===1?"":"s"):"")+" will be deleted. Its photos stay on the map. Ctrl+Z brings it back.","Delete",true))) return;
+  if(actions.includes(a)) deleteAction(a); }
+function deleteAction(a){   // (callers ask first — confirmDeleteAction); Ctrl+Z restores the action and all its photo links
   const items=[];
   for(const p of photos){ if(Array.isArray(p.acts)&&p.acts.includes(a.id)){ const before=snapshotTags(p); p.acts=p.acts.filter(x=>x!==a.id); items.push({id:p.id,before,after:snapshotTags(p)}); } }
   const idx=actions.indexOf(a);
@@ -2059,13 +2073,13 @@ function renderActions(){
     const cov='<div class="act-cover"><div class="cov-rs" title="Drag to resize all covers"></div>'
       +((n&&ap[0].thumb)?('<img data-cov="'+ap[0].id+'" src="'+thumbSrc(ap[0])+'" alt="" draggable="false"/>')
         :'<svg class="cov-ph"'+(n?' data-covph="'+ap[0].id+'"':'')+' viewBox="0 0 48 36"><rect x="1.5" y="1.5" width="45" height="33" rx="4" fill="#E9EBEE" stroke="#B8BCC2" stroke-width="2.5"/><circle cx="31.5" cy="12" r="4.2" fill="#9AA0A8"/><path d="M6.5 30.5 18 17.5l8.5 8.5 6-6 9 10.5z" fill="#9AA0A8"/></svg>')
-      +'<button class="act-copy" type="button" title="Copy image: one portrait picture of this action (title, map, photos with markup) to paste into any chat or email"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>Copy</button>'+'</div>';   // Copy sits on the cover photo, as a labelled pill
+      +'</div>';   // Copy sits on the cover photo, as a labelled pill
     const isCur=!!(cp&&Array.isArray(cp.acts)&&cp.acts.includes(a.id));
     const exp=!collActs.has(a.id);
     return '<div class="act-row'+(a.done?' done':'')+(a.hold?' hold':'')+(selActs.has(a.id)?' sel':'')+(isCur?' cur':'')+'" data-aid="'+a.id+'" draggable="true">'
       +'<div class="act-body"><div class="act-top"><div class="act-st">'+(a===shown[0]?allBtn:'')+'<button type="button" class="st-h'+(a.hold?' on':'')+'" title="'+(a.hold?'Take this action off hold':'Put this action on hold')+'">On hold</button>'
         +'<button type="button" class="st-d'+(a.done?' on':'')+'" title="'+(a.done?'Reopen this action':'Mark this action done')+'">Done</button></div><span style="flex:1"></span>'
-        +'<button class="ipa-x act-del" type="button" title="'+(isCur?'Remove this action from the open photo':'Delete this action')+'">&times;</button></div>'   // status along the top, so the left side is free for the tree
+        +'</div>'+'<button class="act-copy act-cnr" type="button" title="Copy image: one portrait picture of this action (title, map, photos with markup) to paste into any chat or email"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg></button><button class="ipa-x act-del act-cnr" type="button" title="'+(isCur?'Remove this action from the open photo':'Delete this action')+'">&times;</button>'   // status along the top, so the left side is free for the tree
       +'<div class="bh"><div class="t"><button type="button" class="act-exp act-tri" aria-expanded="'+exp+'" title="'+(exp?'Hide':'Show')+' sub-actions">'+(exp?'\u2212':'+')+'</button>'
         +'<span class="ttx"><span class="a-num">'+actNo(a)+'</span> <span class="a-bar">|</span> '+esc(a.text)+'</span></div></div>'
       +(exp?('<div class="asec act-tree">'+stepsHtml(a)+'</div>')
@@ -2078,7 +2092,7 @@ function renderActions(){
     el.querySelector(".act-del").addEventListener("click",e=>{ e.stopPropagation();
       const cp2=lb.classList.contains("open")?curPhoto():null;
       if(cp2&&Array.isArray(cp2.acts)&&cp2.acts.includes(a.id)) unassignAct(a,cp2);   // open photo is linked: X just removes that link
-      else deleteAction(a); });
+      else confirmDeleteAction(a); });
     wireSteps(el,a);
     wireActRowCommon(el,a);
     /* single click selects/navigates (slightly delayed so a double-click can win); double click edits in place */
@@ -2202,7 +2216,7 @@ function openActMenu(a,ev){
   }
   mkCtxItem(a.done?"Reopen action":"Mark completed",()=>setActionDone(a,!a.done));
   mkCtxItem("Rename…",()=>renameAction(a));
-  mkCtxItem("Delete action…",()=>deleteAction(a));
+  mkCtxItem("Delete action…",()=>confirmDeleteAction(a));
   showCtxAt(ev.clientX,ev.clientY);
 }
 renderActions();   // initial (empty) state of the panel
@@ -2228,6 +2242,9 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
   document.getElementById("miRedo").addEventListener("click",()=>redoLatest(lb.classList.contains("open")));
   document.getElementById("miXlsx").addEventListener("click",()=>exportActionsXlsx());
   document.getElementById("actXlsx").addEventListener("click",()=>exportActionsXlsx());
+  document.getElementById("actSave").addEventListener("click",()=>{ if(!canEdit()) return;   // send it now (autosave would within a second anyway)
+    if(onDirty()||ON.err){ clearTimeout(ON.saveT); ON.err=null; onlineSave(); } pumpUploads(); updateSaveBtn();
+    if(!onDirty()&&!ON.busy&&!photos.some(p=>!p.h&&!p._upDead)){ loadNote("\u2713 All saved"); setTimeout(()=>loadNote(""),1800); } });
   document.getElementById("miReport").addEventListener("click",()=>openPendingReport());
   document.getElementById("miPush")?.addEventListener("click",()=>{ const c=ghCfg(); if(!c.token){ openSettings(); return; } exportMobile(true); loadNote("Syncing to the phone\u2026"); setTimeout(()=>loadNote(""),2500); });
 })();
@@ -2694,7 +2711,7 @@ function onLocalChanged(){
     if(onDirty()){ applyOnline(ON.base); ON.cleanJ=canonJ(serializeOnline()); tagUndoStack=[]; tagRedoStack=[]; onRefreshUI();
       if(Date.now()-_roToastT>4000){ _roToastT=Date.now(); loadNote("View only — add your access token in Tools → Settings to make changes"); setTimeout(()=>loadNote(""),4500); } }
     return; }
-  onCacheLocal(); scheduleOnlineSave(400); pumpUploads(); scheduleAutoExport();   // sent almost at once: closing soon after an edit rarely finds it unsaved
+  onCacheLocal(); scheduleOnlineSave(400); pumpUploads(); scheduleAutoExport(); updateSaveBtn();   // sent almost at once: closing soon after an edit rarely finds it unsaved
 }
 function scheduleOnlineSave(ms){ clearTimeout(ON.saveT); ON.saveT=setTimeout(onlineSave,ms==null?1200:ms); }
 let _fieldAck=null, _saveGen=0;   // a phone batch merged in memory, acknowledged once a save that includes it lands
@@ -5185,7 +5202,14 @@ let _saveSt={txt:"",cls:""};
 function setSaveStatus(txt,cls){ _saveSt={txt:txt||"",cls:cls||""}; renderSaveStatus(); }
 function agoText(t){ const s2=Math.max(0,(Date.now()-t)/1000); if(s2<60) return "just now"; const m=Math.round(s2/60); if(m<60) return m+" min"+(m===1?"":"s")+" ago";
   const h=Math.round(m/60); if(h<24) return h+" hr"+(h===1?"":"s")+" ago"; return "on "+new Date(t).toLocaleDateString(undefined,{day:"numeric",month:"short"}); }
-function renderSaveStatus(){ const el=document.getElementById("saveStatus"); if(!el) return;
+function updateSaveBtn(){   // the floppy beside XLSX: green dot = all on GitHub, amber = a change still to send, red = a save is failing
+  const b=document.getElementById("actSave"); if(!b) return; try{
+  const on=isOnline()&&ON.live&&canEdit(); b.style.display=on?"":"none"; if(!on) return;
+  const upN=photos.filter(p=>!p.h&&!p._upDead).length, dirty=onDirty()||upN>0;
+  b.classList.toggle("busy",!!ON.busy||_upBusy); b.classList.toggle("unsaved",dirty&&!ON.err); b.classList.toggle("bad",!!ON.err&&dirty);
+  const t=ON.err&&dirty?"Not saved yet \u2014 click to try again":ON.busy?"Saving\u2026":upN?"Uploading "+upN+" photo"+(upN===1?"":"s")+"\u2026":dirty?"Save now":"All saved";
+  b.title=t; b.setAttribute("aria-label",t); }catch(e){} }   // (start-up: the upload state may not exist yet)
+function renderSaveStatus(){ updateSaveBtn(); const el=document.getElementById("saveStatus"); if(!el) return;
   if(isOnline()){ let t="",cls="",tip="";
     const upN=photos.filter(p=>!p.h&&!p._upDead).length;
     if(ON.tokenBad){ t="Access token rejected"; tip=TOKEN_BAD; cls="bad"; }
@@ -5462,7 +5486,7 @@ async function idbSet(k,v){ const db=await idbOpen(); return new Promise((res,re
 async function idbGet(k){ const db=await idbOpen(); return new Promise((res,rej)=>{ const t=db.transaction("kv","readonly"); const r=t.objectStore("kv").get(k); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
 async function idbDel(k){ const db=await idbOpen(); return new Promise((res,rej)=>{ const t=db.transaction("kv","readwrite"); t.objectStore("kv").delete(k); t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); }
 let persistTimer=null;
-function persistState(){ clearTimeout(persistTimer); persistTimer=setTimeout(()=>{ if(isOnline()){ onLocalChanged(); return; } idbSet("lastState",serializeState(false)).catch(()=>{}); scheduleAutoSave(); scheduleAutoExport(); },400); }   // online: every change is saved to the project (merged with everyone else's)   // every change funnels here — the phone pack follows (change-detected)
+function persistState(){ try{ const sb=document.getElementById("actSave"); if(sb&&ON.live) sb.classList.add("unsaved"); }catch(e){}   /* the Save dot goes amber at once */ clearTimeout(persistTimer); persistTimer=setTimeout(()=>{ if(isOnline()){ onLocalChanged(); return; } idbSet("lastState",serializeState(false)).catch(()=>{}); scheduleAutoSave(); scheduleAutoExport(); },400); }   // online: every change is saved to the project (merged with everyone else's)   // every change funnels here — the phone pack follows (change-detected)
 // Cache the image-bearing session to IndexedDB (browser-local, no .crswap) so reopen shows photos
 // instantly without reconnecting the folder. The .json file itself stays small (metadata only).
 let fullCacheTimer=null;
