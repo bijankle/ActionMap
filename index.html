@@ -347,6 +347,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .datebar.hidden{display:none;}
   .datebar .vals{display:flex;justify-content:space-between;font-family:var(--font);font-size:var(--fl);color:var(--accent2);margin-bottom:2px;}
   .slider-wrap{position:relative;height:16px;}
+  .snap-ring{width:52px;height:52px;border-radius:50%;border:3px dashed var(--gold);background:#e8b44a33;box-sizing:border-box;pointer-events:none;}   /* drag onto a dot: the drop target */
+  .snap-tip{position:absolute;left:60px;top:-10px;background:#1d2430;color:#fff;font:600 13px var(--font);padding:5px 10px;border-radius:8px;white-space:nowrap;pointer-events:none;}
   .act-dates{padding:0 12px 10px;} .act-dates[hidden]{display:none;}   /* date window: two handles over a bar chart of actions created per day */
   .ad-hist{display:flex;align-items:flex-end;gap:2px;height:26px;margin:0 6px 2px;} .ad-hist i{flex:1;min-height:2px;background:#ead8b0;border-radius:2px 2px 0 0;} .ad-hist i.on{background:#b8862e;}
   .ad-ends{display:flex;justify-content:space-between;font:700 11.5px var(--font);color:var(--muted);margin-top:3px;}
@@ -1440,6 +1442,8 @@ function renderClusters(){
         uiClickT=Date.now();
         if(Date.now()-dotDropT<450) return;   // the click after dropping a dragged cluster must not zoom
         try{ const leaves=cluster.getLeaves(cid,Infinity);
+          { const ids=leaves.map(f=>f.properties.pid), acts=new Set(); ids.forEach(id=>{ const q=photoById(id); (q&&q.acts||[]).forEach(a=>{ if(actById(a)) acts.add(a); }); });
+            if(acts.size<2){ showSpot(ids); return; } }   // one action (or none): show its photos; 2+ actions: zoom in to split them
           if(leaves.length){
             const bb=L.latLngBounds(leaves.map(f=>[f.geometry.coordinates[1],f.geometry.coordinates[0]]));
             const ez=Math.min(cluster.getClusterExpansionZoom(cid),22);   // zoom at which this cluster actually breaks apart
@@ -1450,6 +1454,7 @@ function renderClusters(){
           } }catch(err){}
         const ez=Math.min(cluster.getClusterExpansionZoom(cid),map.getMaxZoom()); map.flyTo([lat,lng],ez,{duration:.45});   // fallback
       });
+      m.on("contextmenu",e=>{ L.DomEvent.stop(e.originalEvent); uiClickT=Date.now(); try{ openBubbleMenu(cluster.getLeaves(cid,Infinity).map(f=>f.properties.pid),[lat,lng],e.originalEvent); }catch(err){} });
       if(c.properties.hl){ ring=L.circleMarker([lat,lng],{radius:size/2+5,color:"#ffffff",weight:3,fillColor:"#e8b44a",fillOpacity:.3,interactive:false,className:"hl-dot"}); markerLayer.addLayer(ring); }   // cluster holds selected photos: the bubble itself flashes
       markerLayer.addLayer(m);
     } else {
@@ -1522,12 +1527,45 @@ map.on("mousemove",e=>{
   if(dotDrag.ring) dotDrag.ring.setLatLng(e.latlng);
   if(dotDrag.p){ const gm=dotMarkers.get(dotDrag.p.id); if(gm&&gm.hl) gm.hl.setLatLng(e.latlng); }
   if(hlMarker&&dotDrag.viewerPhoto) hlMarker.setLatLng(e.latlng);
+  /* dropping onto another dot groups them: the nearest other dot within reach gets a gold ring */
+  const moving=new Set(dotDrag.group?dotDrag.group:(dotDrag.p?[dotDrag.p.id]:[])), cp=map.latLngToContainerPoint(e.latlng);
+  let best=null, bd=26; for(const q of photos){ if(moving.has(q.id)||!onMapNow(q)) continue; const d=map.latLngToContainerPoint([q.lat,q.lng]).distanceTo(cp); if(d<bd){ bd=d; best=q; } }
+  dotDrag.snap=best; if(best){ if(!snapMk) snapMk=L.marker([best.lat,best.lng],{interactive:false,zIndexOffset:2000,icon:L.divIcon({className:"",html:'<div class="snap-ring"></div><div class="snap-tip">Drop to group with this photo</div>',iconSize:[52,52],iconAnchor:[26,26]})}).addTo(map); else snapMk.setLatLng([best.lat,best.lng]); }
+  else if(snapMk){ map.removeLayer(snapMk); snapMk=null; }
 });
+let snapMk=null;
+function dropSnap(d){   // the dragged photo(s) take the target's exact spot (true GPS kept); action links follow the action
+  const T=d.snap, moved=(d.group?d.group.map(photoById):[d.p]).filter(Boolean).filter(p=>p!==T); if(!T||!moved.length) return false;
+  const items=[], snap=new Map(), keep=p=>{ if(!snap.has(p.id)) snap.set(p.id,snapshotTags(p)); };
+  const live=ids=>(ids||[]).filter(id=>actById(id));
+  for(const p of moved){ keep(p); if(p.glat==null&&!p.noGps){ p.glat=p.lat; p.glng=p.lng; } p.lat=T.lat; p.lng=T.lng; }
+  const fixOrder=a=>{ if(!Array.isArray(a.porder)||!a.porder.length) a.porder=actPhotos(a).map(x=>x.id); };   // freeze the order first, so the newcomer goes to the BACK (the cover stays)
+  const dragActs=[...new Set(moved.flatMap(p=>live(p.acts)))], tActs=live(T.acts);
+  if(dragActs.length){ for(const aid of dragActs){ if((T.acts||[]).includes(aid)) continue; fixOrder(actById(aid)); keep(T); T.acts=(T.acts||[]).concat([aid]); } }   // dragged an action's photo: the target joins that action (and keeps its own)
+  else if(tActs.length){ for(const p of moved) for(const aid of tActs){ if((p.acts||[]).includes(aid)) continue; fixOrder(actById(aid)); p.acts=(p.acts||[]).concat([aid]); } }   // dragged a loose photo onto an action's: it joins that action
+  for(const [id,before] of snap) items.push({id,before,after:snapshotTags(photoById(id))});
+  pushTagAction(items); afterFolderChange(); return true; }
+/* right-click a bubble: spread its photos in a small ring (so each can be dragged), show them, or zoom in */
+function openBubbleMenu(ids,ll,ev){
+  hideHover(); ctxMenu.innerHTML="";
+  const n=ids.length;
+  ctxMenu.appendChild(mkCtxItem("Spread these "+n+" photos out",()=>spreadPhotos(ids,ll),!canEdit()&&isOnline(),"View only"));
+  ctxMenu.appendChild(mkCtxItem("Show them in the Gallery",()=>showSpot(ids)));
+  ctxMenu.appendChild(mkCtxItem("Zoom in",()=>map.flyTo(ll,Math.min(map.getZoom()+2,22),{duration:.45})));
+  showCtxAt(ev.clientX,ev.clientY); }
+function spreadPhotos(ids,ll){
+  const ps=ids.map(photoById).filter(p=>p&&p.lat!=null); if(ps.length<2) return;
+  const c=map.latLngToContainerPoint(ll), R=Math.max(22,ps.length*7), items=[];
+  ps.forEach((p,i)=>{ const before=snapshotTags(p), ang=-Math.PI/2+i*2*Math.PI/ps.length, q=map.containerPointToLatLng(L.point(c.x+Math.cos(ang)*R,c.y+Math.sin(ang)*R));
+    if(p.glat==null&&!p.noGps){ p.glat=p.lat; p.glng=p.lng; } p.lat=q.lat; p.lng=q.lng; items.push({id:p.id,before,after:snapshotTags(p)}); });
+  pushTagAction(items); afterFolderChange(); }
 window.addEventListener("mouseup",()=>{
   if(!dotDrag) return; const d=dotDrag; dotDrag=null;
   map.getContainer().style.cursor=""; if(!drawing&&!measuring){ try{ map.dragging.enable(); }catch(e){} }
+  if(snapMk){ map.removeLayer(snapMk); snapMk=null; }
   if(!d.moved) return;
   dotDropT=Date.now();   // swallow the click that follows the drop so it doesn't re-open the viewer
+  if(d.snap&&dropSnap(d)) return;   // dropped on another dot: grouped there
   const ll=d.dot.getLatLng(), dLat=ll.lat-d.start.lat, dLng=ll.lng-d.start.lng;
   const targets=d.group?d.group.map(photoById).filter(Boolean):[d.p];
   const items=[];
@@ -1539,7 +1577,7 @@ window.addEventListener("mouseup",()=>{
   }
   pushTagAction(items); afterFolderChange();
 });
-window.addEventListener("keydown",e=>{ if(e.key==="Escape"&&dotDrag){ e.stopPropagation(); dotDrag=null; map.getContainer().style.cursor=""; if(!drawing&&!measuring){ try{ map.dragging.enable(); }catch(er){} } renderClusters(); highlightCurrent(); } },true);
+window.addEventListener("keydown",e=>{ if(e.key==="Escape"&&dotDrag){ e.stopPropagation(); dotDrag=null; if(snapMk){ map.removeLayer(snapMk); snapMk=null; } map.getContainer().style.cursor=""; if(!drawing&&!measuring){ try{ map.dragging.enable(); }catch(er){} } renderClusters(); highlightCurrent(); } },true);
 
 /* right-click menu on a dot: restore the original GPS of that photo (or the whole selection) */
 const ctxMenu=document.createElement("div"); ctxMenu.id="ctxmenu"; document.body.appendChild(ctxMenu);
@@ -1700,7 +1738,10 @@ function migrateActNotes(){   // notes live on PHOTOS now: any old action-level 
     const p=photos.find(x=>Array.isArray(x.acts)&&x.acts.includes(a.id)); if(!p) continue;
     p.note=(p.note?p.note+"\n":"")+t; }
 }
-function rebuildActionFilter(){ actionFilter=selActs.size?new Set([...selActs].flatMap(id=>actPhotos(actById(id)).map(p=>p.id))):null; }
+let spotIds=null;   // a clicked bubble's photos, shown on their own in the gallery ("Show all" clears it)
+function showSpot(ids){ spotIds=new Set(ids); setTab("gallery"); updateGallery(); }
+function clearSpot(){ if(!spotIds) return; spotIds=null; updateGallery(); }
+function rebuildActionFilter(){ if(selActs.size) spotIds=null; actionFilter=selActs.size?new Set([...selActs].flatMap(id=>actPhotos(actById(id)).map(p=>p.id))):null; }
 function drawActionRings(){ buildCluster(); renderClusters(); }   // highlights are rendered with the clusters (bubbles flash when they contain selected photos)
 function clearActSel(){ if(!selActs.size) return; selActs.clear(); actionFilter=null; if(typeof clearAreaPreviews==="function") clearAreaPreviews(); renderActions(); drawActionRings(); updateGallery(); }
 function createAction(text,pids,loc){
@@ -2475,21 +2516,7 @@ const ON={pid:null,name:"",base:null,sha:null,etag:null,rawText:null,cleanJ:null
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function urlParam(k){ try{ return new URLSearchParams(location.search).get(k); }catch(e){ return null; } }
 function onRepo(){ return ghRaw().repo; }
-/* One time per project: every photo of an action moves to the action's first (cover) photo's spot, so an
-   action is one dot. The photo's true GPS is kept (glat/glng) and Ctrl+Z undoes it; the project remembers
-   it was done (snap1), so photos placed apart later stay apart. A photo on two actions is left alone. */
-let gpsSnapDone=false;
-function snapActionPhotosOnce(){
-  if(gpsSnapDone||!canEdit()) return;
-  const items=[];
-  for(const a of actions){ const ps=orderActPhotos(a,actPhotos(a)).filter(p=>p.lat!=null&&p.lng!=null), f=ps[0]; if(!f) continue;
-    for(const p of ps.slice(1)){ if((p.acts||[]).filter(id=>actById(id)).length>1) continue; if(p.lat===f.lat&&p.lng===f.lng) continue;
-      const before=snapshotTags(p); if(p.glat==null&&!p.noGps){ p.glat=p.lat; p.glng=p.lng; } p.lat=f.lat; p.lng=f.lng;
-      items.push({id:p.id,before,after:snapshotTags(p)}); } }
-  gpsSnapDone=true;
-  if(items.length){ pushUndo({items}); afterFolderChange();
-    loadNote("Moved "+items.length+" photo"+(items.length===1?"":"s")+" onto their action\u2019s first photo \u2014 Ctrl+Z undoes it"); setTimeout(()=>loadNote(""),6000); }
-  else onLocalChanged(); }
+let gpsSnapDone=false;   // (old one-time "line up" flag — kept so saved projects round-trip; grouping is now done by dragging dots together)
 function canEdit(){ return !!(ON.pid&&ON.live&&ghRaw().token&&onRepo()&&!ON.denied); }
 function isOnline(){ return !!ON.pid; }
 function projPath(x){ return "projects/"+ON.pid+"/"+x; }
@@ -4169,8 +4196,8 @@ function updateGallery(keepLimit){
   if(!photos.length){ body.innerHTML='<div class="empty-msg"><b>No photos in this project.</b><br/>Paste (Ctrl+V), drag photos onto the map, or use File → Add photos…</div>'; document.getElementById("galCount").textContent="0 shown"; document.getElementById("stView").textContent="0"; renderMapTags(); return; }
   const bounds=map.getBounds(), center=map.getCenter();
   const spatial=boxBounds||bounds;
-  const passName=p=>passSearch(p)&&passTags(p)&&passActs(p)&&passAlt(p)&&(!actionFilter||actionFilter.has(p.id));   // shared with the map so gallery + dots stay in sync; actionFilter narrows to the selected actions' photos
-  const spatialOK=p=>actionFilter?true:spatial.contains([p.lat,p.lng]);   // an action's photos list regardless of where the map sits
+  const passName=p=>passSearch(p)&&passTags(p)&&passActs(p)&&passAlt(p)&&(!actionFilter||actionFilter.has(p.id))&&(!spotIds||spotIds.has(p.id));   // shared with the map so gallery + dots stay in sync; actionFilter narrows to the selected actions' photos
+  const spatialOK=p=>(actionFilter||spotIds)?true:spatial.contains([p.lat,p.lng]);   // an action's photos list regardless of where the map sits
   /* two sections: photos on an action ("On map"), then photos on no action ("No action") — located ones in the map view, plus any without a location */
   const pool=sortPhotos(photos.filter(p=>passDate(p)&&passName(p)&&(p.lat==null||spatialOK(p))),center);
   const onAct=p=>Array.isArray(p.acts)&&p.acts.some(id=>actById(id));
@@ -4194,6 +4221,7 @@ function updateGallery(keepLimit){
   const hidden=(inView.length-inShow.length)+(noGeo.length-geoShow.length);
   let html="";
   if(actionFilter) html+='<div class="act-note">Photos for '+selActs.size+' selected action'+(selActs.size===1?'':'s')+' <button id="actNoteX" type="button">Show all</button></div>';
+  else if(spotIds) html+='<div class="act-note">\u{1F4CD} '+spotIds.size+' photo'+(spotIds.size===1?'':'s')+' at this spot <button id="spotX" type="button">Show all</button></div>';
   if(inView.length) html+='<div class="section-label">On Map ('+inView.length+')</div><div class="grid">'+inShow.map(p=>cardHtml(p,p.lat==null)).join("")+'</div>';
   if(geoShow.length) html+='<div class="section-label">No Action ('+noGeo.length+')</div><div class="grid">'+geoShow.map(p=>cardHtml(p,p.lat==null)).join("")+'</div>';
   if(hidden>0) html+='<button class="gal-more" id="galMore">Show more ('+hidden.toLocaleString()+' remaining)</button>';
@@ -4229,6 +4257,7 @@ function updateGallery(keepLimit){
     } });
   const more=body.querySelector("#galMore"); if(more) more.addEventListener("click",()=>{ galleryLimit+=GALLERY_CHUNK*2; updateGallery(true); });
   const anx=body.querySelector("#actNoteX"); if(anx) anx.addEventListener("click",clearActSel);
+  const spx=body.querySelector("#spotX"); if(spx) spx.addEventListener("click",clearSpot);
   if(!body._moreWired){ body._moreWired=true; body.addEventListener("scroll",()=>{ if(!document.getElementById("galMore")) return; if(body.scrollTop+body.clientHeight>body.scrollHeight-320){ galleryLimit+=GALLERY_CHUNK*2; updateGallery(true); } }); }
   document.getElementById("galCount").textContent=lightboxList.length+" shown";
   document.getElementById("stView").textContent=inView.length;
