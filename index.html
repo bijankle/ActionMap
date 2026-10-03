@@ -4533,7 +4533,12 @@ lbStage.addEventListener("wheel",e=>{ e.preventDefault(); const r=lbStage.getBou
   const factor=e.deltaY<0?1.18:1/1.18; let ns=Math.min(MAXS,Math.max(1,vScale*factor)); vTx=cx-(cx-vTx)*ns/vScale; vTy=cy-(cy-vTy)*ns/vScale; vScale=ns; applyView(); },{passive:false});
 let panning=false,panX=0,panY=0;
 /* pointer handling consolidated in the markup engine below */
-function vStep(d){ if(!lightboxList.length)return; lightboxIndex=(lightboxIndex+d+lightboxList.length)%lightboxList.length; loadViewer(); }
+function vStep(d){ if(!lightboxList.length)return;
+  /* a photo on an action: ‹ › go round THAT action's photos (last → first), never into another action's */
+  const p=curPhoto(), ids=(p&&Array.isArray(p.acts)?p.acts:[]).filter(id=>actById(id)), aid=ids.find(id=>selActs.has(id))!=null?ids.find(id=>selActs.has(id)):ids[0];
+  if(aid!=null){ const list=actPhotos(actById(aid)); if(list.length>1){ const i=list.indexOf(p), q=list[(i+d+list.length)%list.length];
+      let k=lightboxList.indexOf(q); if(k<0){ lightboxList=list.slice(); k=lightboxList.indexOf(q); } lightboxIndex=k; loadViewer(); return; } }
+  lightboxIndex=(lightboxIndex+d+lightboxList.length)%lightboxList.length; loadViewer(); }
 function closeViewer(){ if(!lb.classList.contains("open")) return; if(selMark) deselectText(); closeFileInfo(); if(typeof closeFolderPop==="function") closeFolderPop(); setMarkTool("none"); setEditOpen(false); draft=null; polyPrev=null; clearHighlight(); lb.classList.remove("open"); fullToken++; if(curUrl){URL.revokeObjectURL(curUrl);curUrl=null;} lbImg.src=""; renderMapTags(); refreshActCurClasses(); setTimeout(()=>{ map.invalidateSize(); renderClusters(); positionTools(); },30); }
 document.getElementById("lbClose").addEventListener("click",closeViewer);
 document.getElementById("lbPrev").addEventListener("click",e=>{e.stopPropagation();vStep(-1);});
