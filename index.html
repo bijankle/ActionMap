@@ -6157,7 +6157,7 @@ function mFlyTo(pts,z,landed,dur){   // glide to these points at zoom z, landing
   const c=m2.project(fb.getCenter(),z).add([0,mc.height/2-(top+bot)/2]);
   const to=m2.unproject(c,z);
   mHomeTouched=true; mHomeView={c:to,z};   // the destination is the view to keep: a screen rebuild mid-flight lands here, not back where it started
-  m2._flying=true; m2.flyTo(to,z,{duration:dur||1.0});   // every phone glide takes 1 s
+  m2._flying=true; m2.flyTo(to,z,{duration:dur||1.2});   // every phone glide takes 1.2 s
   const fid=m2._fid=(m2._fid||0)+1;   // a newer flight (a quick second swipe) takes over: only the last one lands
   let done=false; const end=()=>{ if(done) return; done=true; m2.off("moveend",end); if(fid!==m2._fid) return; m2._flying=false; m2._draw(); if(landed) landed(); };
   m2.on("moveend",end); setTimeout(end,2600); }   // (a flight to where it already is may not report back)
@@ -6167,7 +6167,7 @@ function mFitAll(){   // zoom to extents: every action dot the filters show, and
   const mc=m2.getContainer().getBoundingClientRect(), flt=document.querySelector(".ma-mapwrap .ma-flt"), row=document.getElementById("mPeeks");
   const top=(flt?flt.getBoundingClientRect().bottom-mc.top:0)+30, bot=((row&&!row.classList.contains("none"))?mc.bottom-row.getBoundingClientRect().top:0)+30;
   mHomeTouched=true; mCardsHold=null; m2._flying=true;
-  m2.flyToBounds(L.latLngBounds(ll),{paddingTopLeft:[36,top],paddingBottomRight:[36,bot],maxZoom:18,duration:1.0});
+  m2.flyToBounds(L.latLngBounds(ll),{paddingTopLeft:[36,top],paddingBottomRight:[36,bot],maxZoom:18,duration:1.2});
   m2.once("moveend",()=>{ m2._flying=false; m2._draw(); mSyncCards(); }); }
 const M_FOCUS_Z=18;   // how far a tap / swipe / bubble zooms in: area level (closer actions fan out there)
 function mApartZoom(group,others){   // the closest-in zoom (up to 22) needed for these dots to stand clear of the others
