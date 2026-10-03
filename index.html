@@ -6149,7 +6149,7 @@ function mSyncCards(){
   const fb=document.getElementById("mFitB"); if(fb) fb.style.bottom=(any?row.offsetHeight+18:16)+"px";   // the extents button rides just above the cards
   const cur=row.querySelector(".ma-peek.on:not(.off)")||row.querySelector(".ma-peek:not(.off)");
   if(cur){ mCardScrolling=true; row.scrollLeft=cur.offsetLeft-(row.clientWidth-cur.offsetWidth)/2; setTimeout(()=>{ mCardScrolling=false; },250); } }
-function mFlyTo(pts,z,landed){   // glide to these points at zoom z, landing them in the clear space between the filters and the cards
+function mFlyTo(pts,z,landed,dur){   // glide to these points at zoom z, landing them in the clear space between the filters and the cards
   const m2=mHomeMap; const fb=L.latLngBounds(pts.map(p=>[p.lat,p.lng]));
   if(pts.length>1) z=Math.min(z,m2.getBoundsZoom(fb.pad(0.25),false));
   const mc=m2.getContainer().getBoundingClientRect(), card=document.getElementById("mPeeks"), flt=document.querySelector(".ma-mapwrap .ma-flt");
@@ -6157,7 +6157,7 @@ function mFlyTo(pts,z,landed){   // glide to these points at zoom z, landing the
   const c=m2.project(fb.getCenter(),z).add([0,mc.height/2-(top+bot)/2]);
   const to=m2.unproject(c,z);
   mHomeTouched=true; mHomeView={c:to,z};   // the destination is the view to keep: a screen rebuild mid-flight lands here, not back where it started
-  m2._flying=true; m2.flyTo(to,z,{duration:1.6});   // an unhurried glide
+  m2._flying=true; m2.flyTo(to,z,{duration:dur||1.6});   // an unhurried glide
   const fid=m2._fid=(m2._fid||0)+1;   // a newer flight (a quick second swipe) takes over: only the last one lands
   let done=false; const end=()=>{ if(done) return; done=true; m2.off("moveend",end); if(fid!==m2._fid) return; m2._flying=false; m2._draw(); if(landed) landed(); };
   m2.on("moveend",end); setTimeout(end,2600); }   // (a flight to where it already is may not report back)
@@ -6191,7 +6191,7 @@ function mZoomBunch(items){   // a numbered bubble: fly in until its dots stand 
       if(g.some(p=>{ const a=m2.project([p.lat,p.lng],z); return o.some(q=>{ const b=m2.project([q.lat,q.lng],z); return Math.hypot(a.x-b.x,a.y-b.y)<46; }); })){ ok=false; break; } }
     if(ok) break; }
   mHomeTouched=true; mCardsHold=null;
-  mFlyTo(items,Math.min(z,M_FOCUS_Z)); }   // no deeper than area level: still-close ones fan out there
+  mFlyTo(items,Math.min(z,M_FOCUS_Z),null,1.2); }   // into a bubble: 1.2 s (between the old 0.8 and the 1.6 of the other glides)   // no deeper than area level: still-close ones fan out there
 function mMapCards(acts){   // the actions with a dot on the map, as the filters show them, in Actions-list order
   return acts.filter(a=>{ const st=mStatus(a); if((st==="hold"&&!mShowHold)||(st==="done"&&!mShowDone)) return false;
     const loc=a._new?(mNewActs()[a._ni]||{}).loc:a.loc; return !!loc||(a.photos||[]).some(p=>p.lat!=null); }); }
