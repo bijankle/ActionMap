@@ -6272,7 +6272,7 @@ function mShowList(){
 }
 /* the card under the map: the open action nearest to you (else the first open one on the map) */
 /* the map card was tapped: zoom to that action's dot (ringed in gold), in the clear space above the card */
-let mFocusK=null;
+let mFocusK=null, mTapK=null, mTapT=0;
 /* the cards list only the actions whose dots are on screen right now (re-checked whenever the map stops moving) */
 function mSyncCards(){
   const m2=mHomeMap, row=document.getElementById("mPeeks"); if(!m2||!m2._pts||!row) return;
@@ -6665,7 +6665,7 @@ function mBuildHomeMap(acts){
         if(g) g.items.push(t); else groups.push({x:q.x,y:q.y,items:[t]}); }
       const dot=(k,a,ll,dx,dy)=>{ const st=mStatus(a);   // one action's label; dx/dy shift it off its spot
         L.marker(ll,{zIndexOffset:k===mFocusK?800:st==="open"?300:st==="hold"?100:0,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(a._new?' new':st==="open"?'':' '+st)+(k===mFocusK?' focus':'')+(k===mFlashK?' flash':'')+'">'+(a._new?'•':actNo(a))+'</div>',iconSize:[0,0],iconAnchor:[-dx,-dy]})})
-          .on("click",()=>mFocusCard(k)).addTo(lay); };   // a label brings its card up; View opens it
+          .on("click",()=>{ if(k===mFocusK){ mTapK=null; mOpenAct(k); } else { mTapK=k; mTapT=Date.now(); mFocusCard(k); } }).addTo(lay); };   // a label brings its card up; tapping it again (or View) opens it
       const settle=g=>{ const by=new Map(); for(const t of g.items) if(!by.has(t.k)) by.set(t.k,t); g.labs=[...by.values()];
         g.cx=g.labs.reduce((s2,t)=>s2+t.q.x,0)/g.labs.length; g.cy=g.labs.reduce((s2,t)=>s2+t.q.y,0)/g.labs.length; };
       groups.forEach(settle);
@@ -6714,6 +6714,7 @@ function mBuildHomeMap(acts){
       if(bb){ if(pts.length>1||me) m2.fitBounds(bb,{padding:[40,40],maxZoom:18}); else m2.setView(bb.getCenter(),17); }
       else if(me) m2.setView([me.lat,me.lng],16); else m2.setView([0,0],2); };
     fit(); draw();
+    m2.on("click",()=>{ if(mTapK!=null&&Date.now()-mTapT<700){ const k=mTapK; mTapK=null; mOpenAct(k); } });   // a quick second tap that lands where the label was before the map glided off: still opens it
     m2.on("moveend",()=>mSyncCards());
     m2.on("moveend",draw);   // after a zoom or pan, wheels settle in the clear part of the screen again
     m2.on("moveend",()=>{ mHomeView={c:m2.getCenter(),z:m2.getZoom()}; });
