@@ -1883,9 +1883,7 @@ function wireSteps(el,a){
     row.addEventListener("drop",e=>{ e.preventDefault(); e.stopPropagation(); const before=row.classList.contains("drop-b"); row.classList.remove("drop-b","drop-a");
       if(dragStep&&dragStep.aid===a.id&&dragStep.si!==i){ let to=i; if(!before) to++; if(dragStep.si<to) to--; reorderStep(a,dragStep.si,to); } dragStep=null; });
     row.querySelector(".st-chk").addEventListener("click",()=>{ const b=actState(a); s.d=!s.d; stepMoveOnTick(a,s); recordActEdit(a,b); afterFolderChange(); });   // ticked: to the very bottom; unticked: back to the end of the open ones
-    row.querySelector(".st-x").addEventListener("click",async()=>{ const st=a.steps[i]; if(!st) return;   // every delete asks first
-      if(!(await askYesNo("Delete sub-action?","\u201c"+st.t+"\u201d will be removed from "+actNo(a)+". Ctrl+Z brings it back.","Delete",true))) return;
-      const k=a.steps.indexOf(st); if(k<0) return; const b=actState(a); a.steps.splice(k,1); recordActEdit(a,b); afterFolderChange(); });
+    row.querySelector(".st-x").addEventListener("click",()=>{ const b=actState(a); a.steps.splice(i,1); recordActEdit(a,b); afterFolderChange(); });   // no question for a sub-action (Ctrl+Z brings it back)
     row.querySelector(".st-t").addEventListener("dblclick",()=>{
       inlineEdit(row.querySelector(".st-t"),s.t,false,v=>{ const t=(v==null?"":v.trim()); if(t&&t!==s.t){ const b=actState(a); s.t=t; recordActEdit(a,b); afterFolderChange(); } else refreshActUI(); });
     });
@@ -5926,12 +5924,6 @@ function mSteps(a){   // pack sub-actions (with pending text edits, minus pendin
   }
   return base.filter(x=>!x.d).concat(base.filter(x=>x.d));   // done ones below the open ones, as on the desktop
 }
-function mAskDelete(title,msg){ return new Promise(res=>{   // every delete asks first
-  const sh=mSheet('<div class="ma-shh"><b>'+esc(title)+'</b></div><div class="m-note" style="padding:0 20px 14px">'+esc(msg)+'</div>'
-    +'<div class="ma-sbtns" style="flex-direction:row"><button class="ma-btn" id="mDelNo" type="button" style="flex:1">Cancel</button><button class="ma-btn" id="mDelYes" type="button" style="flex:1;color:#b3261e;border-color:#e2b4ae">Delete</button></div>');
-  let done=false; const fin=v=>{ if(done) return; done=true; mSheetGone=null; mCloseSheet(); res(v); };
-  mSheetGone=()=>{ if(!done){ done=true; res(false); } };
-  sh.querySelector("#mDelNo").addEventListener("click",()=>fin(false)); sh.querySelector("#mDelYes").addEventListener("click",()=>fin(true)); }); }
 function mDeleteStep(a,s){
   if(a._new){ mEditNewAct(a._ni,x=>{ x.steps.splice(s.i,1); }); return; }
   if(s.kind==="pack"){ mMutate(()=>mSetCh(a.id,{delSteps:(mCh(a.id).delSteps||[]).concat([s.i])})); return; }
@@ -7072,9 +7064,7 @@ function mShowDetail(ai,keepScroll){
       el2.querySelector(".k2").addEventListener("click",e=>{ e.stopPropagation(); const s=mSteps(a)[si]; if(s){ mToggleStep(a,s); fill(); } });
       el2.querySelector(".t").addEventListener("click",e=>{ e.stopPropagation(); const s=mSteps(a)[si]; if(!s) return;
         mInline(el2.querySelector(".t"),s.t,v=>{ if(v!=null&&v.trim()&&v.trim()!==s.t) mEditStep(a,s,v.trim()); fill(); }); });
-      el2.querySelector(".s2x").addEventListener("click",async e=>{ e.stopPropagation(); const s=mSteps(a)[si]; if(!s) return;
-        if(!(await mAskDelete("Delete sub-action?","\u201c"+s.t+"\u201d will be removed from this action."))) return;
-        const s2=mSteps(a).find(x=>x.t===s.t&&x.kind===s.kind&&x.i===s.i); if(s2){ mDeleteStep(a,s2); fill(); } });
+      el2.querySelector(".s2x").addEventListener("click",e=>{ e.stopPropagation(); const s=mSteps(a)[si]; if(s){ mDeleteStep(a,s); fill(); } });   // no question for a sub-action
       el2.querySelector(".n").addEventListener("touchstart",e=>{ e.preventDefault(); e.stopPropagation();
         s2drag={si,rows:Array.from(sub2.querySelectorAll(".s2row")),to:null}; el2.classList.add("s2drag"); },{passive:false});
     });
