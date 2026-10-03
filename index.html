@@ -373,6 +373,9 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .hoverview .cap{font-family:var(--font);font-size:var(--fl);color:var(--muted);margin-top:5px;text-align:center;max-width:min(270px,40vh);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
   @keyframes hlpulse{0%,100%{stroke-opacity:1;}50%{stroke-opacity:.25;}}
   .hl-dot{animation:hlpulse 1.2s ease-in-out infinite;}
+  .sel-arrow{position:relative;width:0;height:0;pointer-events:none;}   /* selected dot / bubble: red arrow above it, the phone's arrow */
+  .sel-arrow i{position:absolute;left:-4px;top:calc(-1 * var(--r) - 33px);width:8px;height:14px;background:#E8281E;border-radius:2px;box-shadow:0 0 0 1px #fff;}
+  .sel-arrow b{position:absolute;left:-11px;top:calc(-1 * var(--r) - 21px);border-left:11px solid transparent;border-right:11px solid transparent;border-top:15px solid #E8281E;filter:drop-shadow(0 1px 0 #fff) drop-shadow(0 2px 2px #0006);}
 
   .leaflet-control-layers,.leaflet-bar{background:#fff!important;border:1px solid var(--line2)!important;border-radius:9px!important;box-shadow:0 6px 18px #1e1f2222!important;color:var(--text)!important;}
   .leaflet-control-layers-expanded{padding:9px 12px!important;font-family:var(--font);font-size:var(--fb);}
@@ -1379,7 +1382,9 @@ map.keyboard.disable();
   },true);
 })();
 let hlMarker=null;
-function mkHlDot(lat,lng){ return L.circleMarker([lat,lng],{radius:13,color:"#ffffff",weight:3,fillColor:"#e8b44a",fillOpacity:.55,interactive:false,className:"hl-dot"}); }   // the one selection visual, used everywhere
+function mkHlDot(lat,lng,r){   // the one selection visual, used everywhere: a red arrow pointing down at the dot / bubble (like the phone's).
+  r=r||10;                    // A marker, not a map shape — so it keeps its size while the map zooms (the old gold ring blew up mid-zoom).
+  return L.marker([lat,lng],{interactive:false,keyboard:false,zIndexOffset:4000,icon:L.divIcon({className:"",html:'<div class="sel-arrow" style="--r:'+r+'px"><i></i><b></b></div>',iconSize:[0,0],iconAnchor:[0,0]})}); }
 function highlightDot(p){ clearHighlight(); if(!p||p.lat==null)return; hlMarker=mkHlDot(p.lat,p.lng).addTo(highlightLayer); }
 function clearHighlight(){ if(hlMarker){ highlightLayer.removeLayer(hlMarker); hlMarker=null; } }
 function highlightCurrent(){ if(lb.classList.contains("open")&&lightboxList[lightboxIndex]) highlightDot(lightboxList[lightboxIndex]); else clearHighlight(); }
@@ -1457,7 +1462,7 @@ function renderClusters(){
         const ez=Math.min(cluster.getClusterExpansionZoom(cid),map.getMaxZoom()); map.flyTo([lat,lng],ez,{duration:DESK_FLY});   // fallback
       });
       m.on("contextmenu",e=>{ L.DomEvent.stop(e.originalEvent); uiClickT=Date.now(); try{ openBubbleMenu(cluster.getLeaves(cid,Infinity).map(f=>f.properties.pid),[lat,lng],e.originalEvent); }catch(err){} });
-      if(c.properties.hl){ ring=L.circleMarker([lat,lng],{radius:size/2+5,color:"#ffffff",weight:3,fillColor:"#e8b44a",fillOpacity:.3,interactive:false,className:"hl-dot"}); markerLayer.addLayer(ring); }   // cluster holds selected photos: the bubble itself flashes
+      if(c.properties.hl){ ring=mkHlDot(lat,lng,size/2); markerLayer.addLayer(ring); }   // cluster holds selected photos: the bubble itself flashes
       markerLayer.addLayer(m);
     } else {
       const p=photoById(c.properties.pid); if(!p) continue;
