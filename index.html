@@ -131,10 +131,9 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .hs-st.open{background:#E7F6EC;color:#237042;} .hs-st.hold{background:#FDF3D2;color:#7A5C00;} .hs-st.done{background:#EEF0F2;color:#666;}
   .hs-drop mark{background:#FDEBA3;color:inherit;border-radius:2px;padding:0 1px;}
   .hs-empty{padding:12px;color:var(--dim);font-size:var(--fb);}
-  .hs-pills{display:flex;gap:6px;align-items:center;padding:6px 6px 8px;border-bottom:1px solid var(--line);margin-bottom:4px;}   /* On hold / Done: one at a time, or neither (everything) */
-  .hs-pills button{font:600 var(--fl) var(--font);color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:3px 10px;cursor:pointer;white-space:nowrap;}
-  .hs-pills button span{color:var(--muted);font-weight:500;margin-left:3px;} .hs-pills button.on{background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);}
-  .hs-pills i{flex:1;} .hs-pills em{font-style:normal;font-size:var(--fl);color:var(--dim);}
+  .hs-grp{font:700 11px var(--font);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:8px 10px 3px;}
+  .hs-g{font:600 var(--fl) var(--font);color:var(--dim);flex-shrink:0;margin-top:1px;} .hs-k{font:700 11px var(--font);color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 6px;flex-shrink:0;margin-top:1px;}
+  .hs-act .hs-t{color:#9A520B;font-weight:700;}
   .brand-t{display:flex;flex-direction:column;line-height:1.05;}
   .savestat{font:var(--fl) var(--font);color:var(--dim);white-space:nowrap;margin-top:2px;}
   .savestat,.savestat:empty{display:none!important;}   /* status lives on the map label + Help → About */
@@ -1114,7 +1113,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
       <button class="mi" id="miUpdate" type="button" title="Reload the app fresh from the web (the same as Ctrl+F5). Your project is saved online and is not affected.">Update app <span class="mi-upd" id="miUpdTag"></span></button>
     </div></div>
   </nav>
-  <div class="hsearch" id="hsWrap"><input type="search" id="hSearch" name="am-action-search" data-lpignore="true" data-1p-ignore placeholder="Search actions   Ctrl+K" title="Find an action by its number, title or a sub-action — active and completed actions" autocomplete="off" spellcheck="false" /><div class="hs-drop" id="hsDrop"></div></div>
+  <div class="hsearch" id="hsWrap"><input type="search" id="hSearch" name="am-feature-search" data-lpignore="true" data-1p-ignore placeholder="Search features   Ctrl+K" title="Find any feature or command: exports, map tools, views, projects, settings. (Actions themselves: the filter box above the Actions list.)" autocomplete="off" spellcheck="false" /><div class="hs-drop" id="hsDrop"></div></div>
   <input id="folderInput" type="file" webkitdirectory directory multiple style="display:none" />
   <input id="origInput" type="file" webkitdirectory directory multiple style="display:none" />
   <input id="jsonInput" type="file" accept="application/json,.json" style="display:none" />
@@ -1884,7 +1883,9 @@ function wireSteps(el,a){
     row.addEventListener("drop",e=>{ e.preventDefault(); e.stopPropagation(); const before=row.classList.contains("drop-b"); row.classList.remove("drop-b","drop-a");
       if(dragStep&&dragStep.aid===a.id&&dragStep.si!==i){ let to=i; if(!before) to++; if(dragStep.si<to) to--; reorderStep(a,dragStep.si,to); } dragStep=null; });
     row.querySelector(".st-chk").addEventListener("click",()=>{ const b=actState(a); s.d=!s.d; stepMoveOnTick(a,s); recordActEdit(a,b); afterFolderChange(); });   // ticked: to the very bottom; unticked: back to the end of the open ones
-    row.querySelector(".st-x").addEventListener("click",()=>{ const b=actState(a); a.steps.splice(i,1); recordActEdit(a,b); afterFolderChange(); });
+    row.querySelector(".st-x").addEventListener("click",async()=>{ const st=a.steps[i]; if(!st) return;   // every delete asks first
+      if(!(await askYesNo("Delete sub-action?","\u201c"+st.t+"\u201d will be removed from "+actNo(a)+". Ctrl+Z brings it back.","Delete",true))) return;
+      const k=a.steps.indexOf(st); if(k<0) return; const b=actState(a); a.steps.splice(k,1); recordActEdit(a,b); afterFolderChange(); });
     row.querySelector(".st-t").addEventListener("dblclick",()=>{
       inlineEdit(row.querySelector(".st-t"),s.t,false,v=>{ const t=(v==null?"":v.trim()); if(t&&t!==s.t){ const b=actState(a); s.t=t; recordActEdit(a,b); afterFolderChange(); } else refreshActUI(); });
     });
@@ -2319,67 +2320,87 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
     if(!onDirty()&&!ON.busy&&!photos.some(p=>!p.h&&!p._upDead)){ loadNote("\u2713 All saved"); setTimeout(()=>loadNote(""),1800); } });
   document.getElementById("miReport").addEventListener("click",()=>exportActionsPdf());
 })();
-/* ---- Find an action: one box searches numbers, titles and sub-actions across
-   active AND completed actions; picking a result jumps to it (list + map). ---- */
+/* ---- The top bar finds a FEATURE: every command in the app, by name (actions themselves are found with the
+   filter box above the Actions list). Each one does exactly what its menu item or button does. ---- */
 (function(){
-  const inp=document.getElementById("hSearch"), drop=document.getElementById("hsDrop"), wrap=document.getElementById("hsWrap"); if(!inp) return;
-  const openS=()=>{ inp.focus(); inp.select(); render(); };   // the field is always there: just put the cursor in it
-  const closeS=()=>{ drop.classList.remove("show"); inp.blur(); };
-  let res=[], cur=-1, only=null;   // only: "hold" / "done" — the pills under the box (search ignores the list's own filters)
+  const inp=document.getElementById("hSearch"), drop=document.getElementById("hsDrop"); if(!inp) return;
+  const click=id=>()=>{ const el=document.getElementById(id); if(el) el.click(); };
+  const pill=id=>()=>{ const el=document.getElementById(id); if(el) el.click(); };
+  const on=()=>true, hasPhoto=()=>lb.classList.contains("open")&&!!curPhoto(), edit=()=>!document.body.classList.contains("view-only");
+  const CMDS=[
+    {g:"Actions",t:"New action",k:"N",w:"add create",run:()=>openActForm(),when:edit},
+    {g:"Actions",t:"Filter the Actions list",w:"find search action",run:()=>{ const f=document.getElementById("actNewInput"); f.focus(); f.select(); }},
+    {g:"Actions",t:"Show / hide open actions",w:"pill filter open",run:pill("actShowOpen")},
+    {g:"Actions",t:"Show / hide on-hold actions",w:"pill filter hold",run:pill("actShowHold")},
+    {g:"Actions",t:"Show / hide completed actions",w:"pill filter done finished",run:pill("actShowDone")},
+    {g:"Actions",t:"Collapse / expand all action cards",w:"sub-actions fold",run:()=>{ const b=document.getElementById("actExpAll"); if(b) b.click(); }},
+    {g:"Dates",t:"Created in the last week",w:"date range filter 1 week 7 days",run:()=>setDateWin(dwPreset("1w"))},
+    {g:"Dates",t:"Created in the last month",w:"date range filter 1 month 30 days",run:()=>setDateWin(dwPreset("1m"))},
+    {g:"Dates",t:"Created in the last 3 months",w:"date range filter quarter",run:()=>setDateWin(dwPreset("3m"))},
+    {g:"Dates",t:"All dates",w:"date range clear reset",run:()=>setDateWin(dwPreset(""))},
+    {g:"Map",t:"Select area",k:"S",w:"box drag pick photos",run:()=>toggleSelect()},
+    {g:"Map",t:"Measure distance",k:"M",w:"ruler length metres",run:()=>toggleMeasure()},
+    {g:"Map",t:"Zoom to all photos",w:"fit extents whole site",run:()=>fitToPhotos()},
+    {g:"Map",t:"Clear selections",w:"deselect",run:()=>{ clearSel(); clearActSel(); },when:()=>selSet.size||selActs.size},
+    {g:"View",t:"Map imagery: Google",w:"satellite base layer",run:()=>{ const b=document.querySelector('#vmBase button[data-v="google"]'); if(b) b.click(); }},
+    {g:"View",t:"Map imagery: Esri",w:"satellite base layer",run:()=>{ const b=document.querySelector('#vmBase button[data-v="esri"]'); if(b) b.click(); }},
+    {g:"View",t:"Map imagery: none",w:"blank base layer",run:()=>{ const b=document.querySelector('#vmBase button[data-v="none"]'); if(b) b.click(); }},
+    {g:"View",t:"Show / hide my location on the map",w:"you are here gps",run:click("vmLoc")},
+    {g:"View",t:"Photo tab",w:"viewer panel",run:()=>setTab("photo")},
+    {g:"View",t:"Gallery",w:"thumbnails photos grid",run:()=>setTab("gallery")},
+    {g:"View",t:"History",w:"log changes who",run:()=>setTab("history")},
+    {g:"Photo",t:"Rotate photo right",k:"Ctrl+Shift++",w:"turn clockwise",run:()=>rotatePhoto(90),when:()=>hasPhoto()&&edit()},
+    {g:"Photo",t:"Rotate photo left",k:"Ctrl+Shift+−",w:"turn anticlockwise",run:()=>rotatePhoto(-90),when:()=>hasPhoto()&&edit()},
+    {g:"Photo",t:"Copy image",w:"clipboard picture markup",run:()=>copyWholePhoto(curPhoto()),when:hasPhoto},
+    {g:"Photo",t:"Save image as…",w:"download picture",run:()=>saveWholePhoto(curPhoto()),when:hasPhoto},
+    {g:"Photo",t:"Delete this photo…",w:"remove",run:()=>confirmDeletePhotos([curPhoto()]),when:()=>hasPhoto()&&edit()},
+    {g:"Photo",t:"Close the photo",w:"viewer",run:()=>closeViewer(),when:hasPhoto},
+    {g:"File",t:"Add photos…",w:"upload import pictures",run:click("miAddPhotos"),when:edit},
+    {g:"File",t:"Export to PDF",w:"report print",run:click("miReport")},
+    {g:"File",t:"Export to Excel",w:"xlsx spreadsheet",run:click("miXlsx")},
+    {g:"File",t:"Download a backup (zip)",w:"save copy archive",run:click("miBackup")},
+    {g:"File",t:"Undo",k:"Ctrl+Z",w:"back revert",run:click("miUndo")},
+    {g:"File",t:"Redo",k:"Ctrl+Y",w:"again",run:click("miRedo")},
+    {g:"Project",t:"Switch / open project…",w:"projects rename open another",run:click("miProjects")},
+    {g:"Project",t:"New project…",w:"create start",run:click("miNewProj")},
+    {g:"Project",t:"Copy the project's share link",w:"share link url colleague",run:click("miShare")},
+    {g:"Project",t:"Close project",w:"exit",run:click("btnClear")},
+    {g:"Settings",t:"Settings…",w:"token repository name phone sync",run:click("btnSettings")},
+    {g:"Help",t:"How to use ActionMap…",w:"guide help manual",run:click("miGuide")},
+    {g:"Help",t:"About…",w:"version save status",run:click("miAbout")},
+    {g:"Help",t:"Update app",w:"refresh reload new version",run:click("miUpdate")}];
+  let res=[], cur=-1;
   const hl=(txt,terms)=>{ let h=esc(txt); for(const t of terms){ if(!t) continue; h=h.replace(new RegExp("("+t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")","ig"),"<mark>$1</mark>"); } return h; };
-  const stOf=a=>a.done?"done":a.hold?"hold":"open";
-  function search(q){
-    const terms=q.toLowerCase().split(/\s+/).filter(Boolean);
-    if(!terms.length) return only?actions.filter(a=>stOf(a)===only).map(a=>({a,score:1,where:null})):[];   // a pill and no words: every action in that state
-    const out=[];
-    for(const a of actions){ if(only&&stOf(a)!==only) continue;
-      const fields=[{k:"num",v:actNo(a),w:5},{k:"title",v:a.text||"",w:4}]
-        .concat((a.steps||[]).map((st,i)=>({k:"step",v:st.t||"",w:2,lbl:"Sub-action "+stepLetter(i)+"."})));
-      let score=0, where=null;
-      for(const t of terms){ let best=0,bw=null;
-        for(const f of fields){ const v=f.v.toLowerCase(); if(!v.includes(t)) continue; const sc=f.w*(v.startsWith(t)?2:1); if(sc>best){ best=sc; bw=f; } }
-        if(!best){ score=0; break; } score+=best; if(bw&&bw.k!=="title"&&bw.k!=="num"&&!where) where=bw; }
-      if(score) out.push({a,score,where});
-    }
-    out.sort((x,y)=>(actRank(x.a)-actRank(y.a))||(y.score-x.score));   // active first, then best match
-    return out.slice(0,30);
-  }
-  function render(){
-    const q=inp.value.trim();
-    res=search(q); cur=res.length?0:-1;
-    const terms=q.toLowerCase().split(/\s+/).filter(Boolean);
-    const n=st=>actions.filter(a=>stOf(a)===st).length;
-    const pills='<div class="hs-pills"><button type="button" data-f="hold" class="'+(only==="hold"?"on":"")+'"><i class="af-dot hold"></i>On hold<span>'+n("hold")+'</span></button>'
-      +'<button type="button" data-f="done" class="'+(only==="done"?"on":"")+'"><i class="af-dot done"></i>Done<span>'+n("done")+'</span></button><i></i>'
-      +(only?'':'<em>All actions</em>')+'</div>';
-    if(!q&&!only){ drop.innerHTML=pills+'<div class="hs-empty">Type a number, title or sub-action \u2014 or pick On hold / Done to list them.</div>'; drop.classList.add("show"); return; }
-    drop.innerHTML=pills+(res.length?res.map((r,i)=>{ const a=r.a, stc=a.done?"done":a.hold?"hold":"open", stl=a.done?"Completed":a.hold?"On hold":"Active";
-      return '<div class="hs-row '+(a.done?'done ':'')+(i===cur?'on':'')+'" data-i="'+i+'"><span class="hs-num">'+actNo(a)+'</span><div class="hs-main"><div class="hs-t">'+hl(a.text,terms)+'</div>'
-        +(r.where?'<div class="hs-s">'+esc(r.where.lbl)+': '+hl(r.where.v,terms)+'</div>':'')+'</div><span class="hs-st '+stc+'">'+stl+'</span></div>'; }).join("")
-      :'<div class="hs-empty">'+(q?'No '+(only==="hold"?'on-hold ':only==="done"?'completed ':'')+'action mentions \u201c'+esc(q)+'\u201d.':'No actions are '+(only==="hold"?'on hold':'done')+'.')+'</div>');
-    drop.classList.add("show");
-  }
-  function mark(){ drop.querySelectorAll(".hs-row").forEach((el,i)=>el.classList.toggle("on",i===cur)); const el=drop.querySelector(".hs-row.on"); if(el) el.scrollIntoView({block:"nearest"}); }
-  function pick(i){ const r=res[i]; if(!r) return; const a=r.a;
-    inp.value=""; closeS();
-    if(a.done) actShowDone=true; else if(a.hold) actShowHold=true; else actShowOpen=true;   // a search hit must be visible in the list
-    collActs.delete(a.id);
-    selActs=new Set([a.id]); lastActClick=a.id; if(typeof rebuildActionFilter==="function") rebuildActionFilter();
-    renderActions(); renderClusters(); drawActionRings(); updateGallery(); persistState();   // gallery follows the pick (and a turned-on filter is remembered)
-    const row=document.querySelector('#actList .act-row[data-aid="'+a.id+'"]'); if(row){ row.scrollIntoView({block:"center",behavior:"smooth"}); }
-    actNavigate(a);
-  }
+  function search(q){ const terms=q.toLowerCase().split(/\s+/).filter(Boolean);
+    const live=CMDS.filter(c=>!c.when||c.when());
+    if(!terms.length) return live.map(c=>({c,score:0}));
+    const out=[]; for(const c of live){ const t=c.t.toLowerCase(), w=(c.g+" "+(c.w||"")).toLowerCase(); let sc=0;
+      for(const x of terms){ if(t.startsWith(x)||t.includes(" "+x)) sc+=3; else if(t.includes(x)) sc+=2; else if(w.includes(x)) sc+=1; else { sc=0; break; } }
+      if(sc) out.push({c,score:sc}); }
+    return out.sort((x,y)=>y.score-x.score); }
+  function render(){ const q=inp.value.trim(), terms=q.toLowerCase().split(/\s+/).filter(Boolean);
+    res=search(q); cur=res.length?0:-1; let g=null;
+    drop.innerHTML=res.map((r,i)=>{ const head=!q&&r.c.g!==g?'<div class="hs-grp">'+esc(g=r.c.g)+'</div>':'';
+      return head+'<div class="hs-row'+(i===cur?' on':'')+'" data-i="'+i+'"><div class="hs-main"><div class="hs-t">'+hl(r.c.t,terms)+'</div></div>'+(q?'<span class="hs-g">'+esc(r.c.g)+'</span>':'')+(r.c.k?'<span class="hs-k">'+esc(r.c.k)+'</span>':'')+'</div>'; }).join("")
+      +(q?'<div class="hs-row hs-act'+(res.length?'':' on')+'" data-act="1"><div class="hs-main"><div class="hs-t">Find actions mentioning \u201c'+esc(q)+'\u201d</div></div><span class="hs-g">Filter the list</span></div>':'');
+    if(q&&!res.length) cur=-2;
+    drop.classList.add("show"); }
+  const rows=()=>[...drop.querySelectorAll(".hs-row")];
+  function mark(){ const r=rows(); r.forEach((el,i)=>el.classList.toggle("on",cur===-2?el.dataset.act:i===cur)); const el=drop.querySelector(".hs-row.on"); if(el) el.scrollIntoView({block:"nearest"}); }
+  const toActs=q=>{ const f=document.getElementById("actNewInput"); f.value=q; actQ=q.trim(); renderActions(); f.focus(); };   // anything else: the actions themselves
+  function pick(i){ const q=inp.value.trim(); inp.value=""; drop.classList.remove("show"); inp.blur();
+    if(i===-2){ toActs(q); return; } const r=res[i]; if(r) r.c.run(); }
   inp.addEventListener("input",render);
-  inp.addEventListener("focus",render);   // the pills show as soon as you're in the box
-  inp.addEventListener("keydown",e=>{ e.stopPropagation();
-    if(e.key==="ArrowDown"){ e.preventDefault(); if(res.length){ cur=(cur+1)%res.length; mark(); } }
-    else if(e.key==="ArrowUp"){ e.preventDefault(); if(res.length){ cur=(cur-1+res.length)%res.length; mark(); } }
-    else if(e.key==="Enter"){ e.preventDefault(); if(cur>=0) pick(cur); }
-    else if(e.key==="Escape"){ inp.value=""; only=null; closeS(); } });
-  drop.addEventListener("mousedown",e=>{ const f=e.target.closest(".hs-pills button[data-f]"); if(f){ e.preventDefault(); only=only===f.dataset.f?null:f.dataset.f; render(); return; }   // one at a time; tap the lit one to turn it off
-    const r=e.target.closest(".hs-row"); if(r){ e.preventDefault(); pick(Number(r.dataset.i)); } });
-  document.addEventListener("mousedown",e=>{ if(!e.target.closest(".hsearch")&&!e.target.closest("#miSearch")) drop.classList.remove("show"); },true);
-  window.addEventListener("keydown",e=>{ if((e.ctrlKey||e.metaKey)&&(e.key==="k"||e.key==="K")){ e.preventDefault(); e.stopPropagation(); openS(); } },true);
+  inp.addEventListener("focus",render);   // the whole list, grouped, before you type
+  inp.addEventListener("keydown",e=>{ e.stopPropagation(); const n=res.length+(inp.value.trim()?1:0);
+    const idx=()=>cur===-2?res.length:cur, set=j=>{ cur=(j===res.length)?-2:j; mark(); };
+    if(e.key==="ArrowDown"){ e.preventDefault(); if(n) set((idx()+1)%n); }
+    else if(e.key==="ArrowUp"){ e.preventDefault(); if(n) set((idx()-1+n)%n); }
+    else if(e.key==="Enter"){ e.preventDefault(); if(cur!==-1) pick(cur); }
+    else if(e.key==="Escape"){ inp.value=""; drop.classList.remove("show"); inp.blur(); } });
+  drop.addEventListener("mousedown",e=>{ const r=e.target.closest(".hs-row"); if(!r) return; e.preventDefault(); pick(r.dataset.act?-2:Number(r.dataset.i)); });
+  document.addEventListener("mousedown",e=>{ if(!e.target.closest(".hsearch")) drop.classList.remove("show"); },true);
+  window.addEventListener("keydown",e=>{ if((e.ctrlKey||e.metaKey)&&(e.key==="k"||e.key==="K")){ e.preventDefault(); e.stopPropagation(); inp.focus(); inp.select(); render(); } },true);
 })();
 /* yes/no confirmation for anything that closes, replaces or removes work. "No" is the default. */
 function askYesNo(title,msg,yesLabel,danger){
@@ -3110,7 +3131,7 @@ function showGuide(){
     +sec("Actions",["The round <b>+</b> beside the filter box (or <b>N</b>) opens a new action: type it, Enter, then its sub-actions (Enter after each), add photos (button, paste or drop) and move the map so the pin sits where it goes \u2014 then <b>Create</b>. The box itself filters the list.","<b>On hold</b> / <b>Done</b> on each card set its status; the pills at the top (Open / On hold / Done) and the date bar choose what shows on the list, map, gallery and exports.","The <b>date bar</b> shows actions created in a range: drag its two handles, or pick <b>1 week</b> / <b>1 month</b> / <b>3 months</b> (these keep rolling with the days) or <b>All</b>. The range belongs to the project, so every desktop and phone on it sees the same one; on the phone it\u2019s the calendar button beside the project name.","Link photos to an action: select the action, then right-click a photo dot. The first photo is the cover \u2014 drag in the gallery to reorder.","The <b>copy</b> icon on a card copies one picture of the action (title, map, photos, sub-actions) to paste into chat or email."],true)
     +sec("Phone",["Open the same link on your phone: the map shows every action; swipe the cards, tap <b>View</b> to open one.","Tick sub-actions, add photos (camera or gallery) and new actions in the field \u2014 they reach the desktop by themselves."])
     +sec("Reports",["The <b>XLSX</b> and <b>PDF</b> buttons beside \u201cActions\u201d export every action with its status, sub-actions and photos. The Excel file also has a <b>Sub-actions</b> tab with dates, a \u201cChanged in last 24 h\u201d filter and a Notes column \u2014 handy for end-of-shift reports.","<b>File \u2192 Download backup</b> saves a zip of the whole project."])
-    +sec("Good to know",["Everything saves by itself. The dot on the <b>save</b> button is green when it\u2019s all online, amber while a change is on its way.","<b>Ctrl+Z</b> undoes (File \u2192 Undo), <b>Ctrl+Y</b> redoes \u2014 deleting an action asks first and can be undone.","<b>Ctrl+K</b> jumps to the search box. <b>View</b> holds the map imagery, your location and thumbnail size.","Projects live in your GitHub data repository \u2014 nothing is stored only on this PC."])
+    +sec("Good to know",["Everything saves by itself. The dot on the <b>save</b> button is green when it\u2019s all online, amber while a change is on its way.","<b>Ctrl+Z</b> undoes (File \u2192 Undo), <b>Ctrl+Y</b> redoes \u2014 deleting an action asks first and can be undone.","<b>Ctrl+K</b> finds any feature by name (exports, map tools, views, projects…); actions themselves are found with the filter box above the Actions list. <b>View</b> holds the map imagery, your location and thumbnail size.","Projects live in your GitHub data repository \u2014 nothing is stored only on this PC."])
     +'<div class="yn-btns"><button class="yn-yes" id="guideClose" type="button">Close</button></div></div>';
   m.classList.add("show"); m.querySelector("#guideClose").onclick=()=>m.classList.remove("show"); }
 function showAbout(){
@@ -4715,9 +4736,7 @@ document.addEventListener("keydown",async e=>{
   const list=selSet.size?[...selSet].map(photoById).filter(Boolean):(viewerShown()&&curPhoto()?[curPhoto()]:[]);   // never a photo hidden behind the Gallery/History tab
   if(!list.length) return;
   e.preventDefault(); if(roBlock()) return;
-  const n=list.length, what=n===1?"\u201c"+list[0].name+"\u201d":n+" photos";
-  removePhotos(list); clearSel();   // the key is the quick way: no question, Ctrl+Z brings it back
-  loadNote("Deleted "+what+" \u2014 Ctrl+Z undoes"); setTimeout(()=>loadNote(""),3500);
+  confirmDeletePhotos(list);   // every delete asks first (the same as right-click → Delete photo… and the gallery ×)
 });
 function refit(){ if(lbImg.naturalWidth) setupFit(lbImg.naturalWidth,lbImg.naturalHeight); }
 function positionTools(){ try{ const ls=document.getElementById("leftstack"), mainEl=document.getElementById("main"); const mr=map.getContainer().getBoundingClientRect(), pr=mainEl.getBoundingClientRect(); ls.style.left=((mr.left-pr.left)+mr.width/2)+"px"; }catch(e){} }
@@ -5907,6 +5926,12 @@ function mSteps(a){   // pack sub-actions (with pending text edits, minus pendin
   }
   return base.filter(x=>!x.d).concat(base.filter(x=>x.d));   // done ones below the open ones, as on the desktop
 }
+function mAskDelete(title,msg){ return new Promise(res=>{   // every delete asks first
+  const sh=mSheet('<div class="ma-shh"><b>'+esc(title)+'</b></div><div class="m-note" style="padding:0 20px 14px">'+esc(msg)+'</div>'
+    +'<div class="ma-sbtns" style="flex-direction:row"><button class="ma-btn" id="mDelNo" type="button" style="flex:1">Cancel</button><button class="ma-btn" id="mDelYes" type="button" style="flex:1;color:#b3261e;border-color:#e2b4ae">Delete</button></div>');
+  let done=false; const fin=v=>{ if(done) return; done=true; mSheetGone=null; mCloseSheet(); res(v); };
+  mSheetGone=()=>{ if(!done){ done=true; res(false); } };
+  sh.querySelector("#mDelNo").addEventListener("click",()=>fin(false)); sh.querySelector("#mDelYes").addEventListener("click",()=>fin(true)); }); }
 function mDeleteStep(a,s){
   if(a._new){ mEditNewAct(a._ni,x=>{ x.steps.splice(s.i,1); }); return; }
   if(s.kind==="pack"){ mMutate(()=>mSetCh(a.id,{delSteps:(mCh(a.id).delSteps||[]).concat([s.i])})); return; }
@@ -7047,7 +7072,9 @@ function mShowDetail(ai,keepScroll){
       el2.querySelector(".k2").addEventListener("click",e=>{ e.stopPropagation(); const s=mSteps(a)[si]; if(s){ mToggleStep(a,s); fill(); } });
       el2.querySelector(".t").addEventListener("click",e=>{ e.stopPropagation(); const s=mSteps(a)[si]; if(!s) return;
         mInline(el2.querySelector(".t"),s.t,v=>{ if(v!=null&&v.trim()&&v.trim()!==s.t) mEditStep(a,s,v.trim()); fill(); }); });
-      el2.querySelector(".s2x").addEventListener("click",e=>{ e.stopPropagation(); const s=mSteps(a)[si]; if(s){ mDeleteStep(a,s); fill(); } });
+      el2.querySelector(".s2x").addEventListener("click",async e=>{ e.stopPropagation(); const s=mSteps(a)[si]; if(!s) return;
+        if(!(await mAskDelete("Delete sub-action?","\u201c"+s.t+"\u201d will be removed from this action."))) return;
+        const s2=mSteps(a).find(x=>x.t===s.t&&x.kind===s.kind&&x.i===s.i); if(s2){ mDeleteStep(a,s2); fill(); } });
       el2.querySelector(".n").addEventListener("touchstart",e=>{ e.preventDefault(); e.stopPropagation();
         s2drag={si,rows:Array.from(sub2.querySelectorAll(".s2row")),to:null}; el2.classList.add("s2drag"); },{passive:false});
     });
