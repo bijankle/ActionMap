@@ -788,6 +788,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-show button.on{background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);}
   .ma-show button span{color:var(--muted);font-weight:500;}
   .ma-sym{width:18px;height:18px;box-sizing:border-box;border-radius:50%;flex-shrink:0;}
+  .ma-sym.open{background:#F28C28;border:2px solid #fff;box-shadow:0 0 0 1.5px #9A520B;}
   .ma-sym.hold{background:#fff;box-shadow:0 0 0 2.5px #F28C28;}
   .ma-sym.done{background:#6b7580;border:2px solid #fff;box-shadow:0 0 0 1.5px #3f4750;}
   .ma-mapwrap{flex:1;min-height:0;position:relative;}
@@ -809,6 +810,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-cs.warn{color:#9a5b00;}
   .ma-flt{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
   .ma-mapwrap .ma-flt{position:absolute;z-index:600;top:12px;left:12px;right:72px;}
+  .ma-mapwrap .ma-flt{gap:6px;} .ma-mapwrap .ma-flt button{padding:0 9px;gap:5px;} .ma-mapwrap .ma-flt button span{padding-left:0;}   /* compact, so Open / On hold / Done share one row whenever the screen is wide enough (they wrap otherwise) */
   .ma-lwrap .ma-flt{padding:12px 16px 0;}
   .ma-flt button{height:40px;box-sizing:border-box;display:flex;align-items:center;gap:7px;padding:0 12px;border-radius:20px;background:#fff;border:1.5px solid var(--line);font:inherit;font-size:15px;font-weight:600;color:var(--ink);white-space:nowrap;}
   .ma-mapwrap .ma-flt button{box-shadow:0 2px 8px #1d243020;}
@@ -856,7 +858,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-cl.flash::before,.ma-dot.flash::before,.ma-cl.flash::after,.ma-dot.flash::after{animation:maarrow 1.5s ease-in-out forwards;}
   @keyframes maarrow{0%,30%,60%{transform:translateY(0);opacity:1;}15%,45%{transform:translateY(-8px);}80%{opacity:1;}100%{transform:translateY(0);opacity:0;}}
   .ma-peek .m{font-size:15px;color:var(--muted);margin-top:6px;}
-  .ma-dot{position:relative;width:50px;height:28px;box-sizing:border-box;border-radius:8px;background:#F28C28;border:3px solid #fff;box-shadow:0 0 0 1.5px #9A520B,0 3px 8px #0006;color:#fff;font:800 13px/22px var(--font);text-align:center;letter-spacing:-.2px;}
+  .ma-dot{position:absolute;left:0;top:0;transform:translate(-50%,-50%);width:auto;padding:0 5px;white-space:nowrap;height:28px;box-sizing:border-box;border-radius:8px;background:#F28C28;border:3px solid #fff;box-shadow:0 0 0 1.5px #9A520B,0 3px 8px #0006;color:#fff;font:800 13px/22px var(--font);text-align:center;letter-spacing:-.2px;}
   .ma-dot.hold{background:#fff;color:#9A520B;border:0;box-shadow:0 0 0 2.5px #F28C28,0 3px 8px #0006;line-height:28px;}
   .ma-dot.done{background:#6b7580;box-shadow:0 0 0 1.5px #3f4750,0 3px 8px #0006;}
   .ma-fan{overflow:visible;pointer-events:none;} .ma-fan line{stroke:#fff;stroke-width:2.5;filter:drop-shadow(0 1px 1.5px #000a);} .ma-fan circle{fill:#9A520B;stroke:#fff;stroke-width:2;}   /* stacked actions, fanned out at full zoom */
@@ -6040,6 +6042,7 @@ const MI={
   sync:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.6-4.5M4 4v3.5h3.5M4 13a8 8 0 0 0 14.6 4.5M20 20v-3.5h-3.5"/></svg>',
   up:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg>',
 };
+let mShowOpen=(()=>{ try{ return localStorage.getItem("pmMOpen")!=="0"; }catch(e){ return true; } })();   // Open is on unless you switched it off
 let mShowHold=(()=>{ try{ return localStorage.getItem("pmMHold")==="1"; }catch(e){ return false; } })();
 let mShowDone=(()=>{ try{ return localStorage.getItem("pmMDone")==="1"; }catch(e){ return false; } })();
 let mTab=(()=>{ try{ return localStorage.getItem("pmMTab")==="list"?"list":"map"; }catch(e){ return "map"; } })();
@@ -6077,8 +6080,9 @@ function mTopStrip(){   // just the project name (→ project menu), with the sy
     +'<span class="ma-ps ma-cs" id="mSendNote"'+(st?'':' style="display:none"')+'>'+esc(st)+'</span></button></div>';
 }
 function mFltHtml(){   // On hold / Done side by side: top left of the map, top of the list
-  let nh=0,nd=0; for(const a of mHomeActs()){ if(mDone(a)) nd++; else if(mHold(a)) nh++; }
-  return '<div class="ma-flt"><button type="button" id="mShowH" class="'+(mShowHold?"on":"")+'" aria-pressed="'+mShowHold+'"><i class="ma-sym hold"></i>On hold<span>'+nh+'</span></button>'
+  let no=0,nh=0,nd=0; for(const a of mHomeActs()){ if(mDone(a)) nd++; else if(mHold(a)) nh++; else no++; }
+  return '<div class="ma-flt"><button type="button" id="mShowO" class="'+(mShowOpen?"on":"")+'" aria-pressed="'+mShowOpen+'"><i class="ma-sym open"></i>Open<span>'+no+'</span></button>'
+    +'<button type="button" id="mShowH" class="'+(mShowHold?"on":"")+'" aria-pressed="'+mShowHold+'"><i class="ma-sym hold"></i>On hold<span>'+nh+'</span></button>'
     +'<button type="button" id="mShowD" class="'+(mShowDone?"on":"")+'" aria-pressed="'+mShowDone+'"><i class="ma-sym done"></i>Done<span>'+nd+'</span></button></div>';
 }
 function mWireNav(inDetail){   // the bar stays on the action screen too: Map / Actions go back to that view
@@ -6117,7 +6121,7 @@ function mShowList(){
       +(pks.length?'<div class="ma-peeks" id="mPeeks">'+pks.map(a=>{ const st=mStatus(a);   // one card per action on the map, in Actions-list order: swipe through them
           return '<div class="ma-peek'+(st==="open"?"":" "+st)+'" role="button" tabindex="0" data-k="'+mCardKey(a)+'">'+mThumbOf(a)+'<div class="ma-rt"><div class="t">'+mActLine(a)+'</div>'+mMetaDiv(a)+'</div><button class="ma-view" type="button">View</button></div>'; }).join("")+'</div>':'')+'</div>'+mNavHtml("map"));
   } else {
-    const shown=acts.filter(a=>{ const st=mStatus(a); return st==="open"||(st==="hold"&&mShowHold)||(st==="done"&&mShowDone); });
+    const shown=acts.filter(a=>{ const st=mStatus(a); return (st==="open"&&mShowOpen)||(st==="hold"&&mShowHold)||(st==="done"&&mShowDone); });
     mScr(mTopStrip()+'<div class="ma-lwrap"><div class="ma-ptr" id="mPtr">'+MI.sync+'<span>Pull to refresh</span></div>'+mFltHtml()+'<div class="ma-lhead"><label class="ma-search">'+MI.search+'<input id="mQ" type="search" placeholder="Search actions" autocomplete="off" value="'+esc(mLQ)+'" /></label></div>'
       +'<div class="ma-list" id="mList">'+(shown.length?shown.map(a=>{ const done=mDone(a), hold=!done&&mHold(a);
           return '<div class="m-card'+(done?' done':'')+(hold?' hold':'')+'" data-k="'+mCardKey(a)+'" data-s="'+esc(((a._new?'':actNo(a)+' ')+mTitle(a)).toLowerCase())+'"><div class="ma-rt"><div class="t">'+mActLine(a)+'</div>'+mMetaDiv(a)+'</div>'+mThumbOf(a)+'</div>'; }).join("")
@@ -6125,6 +6129,7 @@ function mShowList(){
   }
   mWireNav(false);
   document.getElementById("mProjB").addEventListener("click",()=>mShowMenu("project"));
+  document.getElementById("mShowO").addEventListener("click",()=>{ mShowOpen=!mShowOpen; try{ localStorage.setItem("pmMOpen",mShowOpen?"1":"0"); }catch(e){} mShowList(); });
   document.getElementById("mShowH").addEventListener("click",()=>{ mShowHold=!mShowHold; try{ localStorage.setItem("pmMHold",mShowHold?"1":"0"); }catch(e){} mShowList(); });   // one setting for the map and the list
   document.getElementById("mShowD").addEventListener("click",()=>{ mShowDone=!mShowDone; try{ localStorage.setItem("pmMDone",mShowDone?"1":"0"); }catch(e){} mShowList(); });
   if(mTab==="map"){
@@ -6212,7 +6217,7 @@ function mZoomBunch(items){   // a numbered bubble: fly in until its dots stand 
   mHomeTouched=true; mCardsHold=null;
   mFlyTo(items,Math.min(z,M_FOCUS_Z)); }   // no deeper than area level: still-close ones fan out there
 function mMapCards(acts){   // the actions with a dot on the map, as the filters show them, in Actions-list order
-  return acts.filter(a=>{ const st=mStatus(a); if((st==="hold"&&!mShowHold)||(st==="done"&&!mShowDone)) return false;
+  return acts.filter(a=>{ const st=mStatus(a); if((st==="open"&&!mShowOpen)||(st==="hold"&&!mShowHold)||(st==="done"&&!mShowDone)) return false;
     const loc=a._new?(mNewActs()[a._ni]||{}).loc:a.loc; return !!loc||(a.photos||[]).some(p=>p.lat!=null); }); }
 let mCardScrolling=false, mFlashK=null, mFlashT=null, mCardsHold=null;
 function mFocusCard(k,fromSwipe){   // bring the card up (unless the swipe already did) and find its dot
@@ -6536,7 +6541,7 @@ function mBuildHomeMap(acts){
     m2._tl=L.tileLayer(mTileUrl(),{subdomains:["mt0","mt1","mt2","mt3"],maxZoom:22,maxNativeZoom:21,keepBuffer:4,updateWhenIdle:false}).addTo(m2);   // tiles load while you pan, and a ring around the screen stays loaded
     m2._tl.on("loading",()=>{ tilesBusy=true; }).on("load",()=>{ tilesBusy=false; });
     const pts=[];
-    acts.forEach(a=>{ const st=mStatus(a); if((st==="hold"&&!mShowHold)||(st==="done"&&!mShowDone)) return; const k=mCardKey(a);
+    acts.forEach(a=>{ const st=mStatus(a); if((st==="open"&&!mShowOpen)||(st==="hold"&&!mShowHold)||(st==="done"&&!mShowDone)) return; const k=mCardKey(a);
       for(const ph of (a.photos||[])) if(ph.lat!=null&&isFinite(ph.lat)&&isFinite(ph.lng)) pts.push({lat:+ph.lat,lng:+ph.lng,k,a});
       const loc=a._new?(mNewActs()[a._ni]||{}).loc:a.loc;
       if(loc&&isFinite(loc.lat)&&isFinite(loc.lng)) pts.push({lat:+loc.lat,lng:+loc.lng,k,a}); });
@@ -6545,14 +6550,14 @@ function mBuildHomeMap(acts){
       for(const p of pts){ const q=m2.project([p.lat,p.lng],z); const g=groups.find(g2=>Math.hypot(g2.x-q.x,g2.y-q.y)<46);
         if(g) g.items.push(p); else groups.push({x:q.x,y:q.y,items:[p]}); }
       const dot=(k,a,ll,dx,dy)=>{ const st=mStatus(a);   // one action's label; dx/dy shift it off its spot (a fanned-out stack)
-        L.marker(ll,{zIndexOffset:k===mFocusK?800:st==="open"?300:st==="hold"?100:0,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(a._new?' new':st==="open"?'':' '+st)+(k===mFocusK?' focus':'')+(k===mFlashK?' flash':'')+'">'+(a._new?'•':actNo(a))+'</div>',iconSize:[50,28],iconAnchor:[25-dx,14-dy]})})
+        L.marker(ll,{zIndexOffset:k===mFocusK?800:st==="open"?300:st==="hold"?100:0,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(a._new?' new':st==="open"?'':' '+st)+(k===mFocusK?' focus':'')+(k===mFlashK?' flash':'')+'">'+(a._new?'•':actNo(a))+'</div>',iconSize:[0,0],iconAnchor:[-dx,-dy]})})
           .on("click",()=>mFocusCard(k)).addTo(lay); };   // a dot brings its card up; View opens it
       for(const g of groups){ const ks=[...new Set(g.items.map(p=>p.k))], ll=m2.unproject([g.x,g.y],z);
         if(ks.length===1) dot(ks[0],g.items[0].a,ll,0,0);
         else if(z>=M_FOCUS_Z){   // zoomed in to area level and still crowded: the labels fan out in rows above the spot, a line from each down to its own place
           const as=ks.map(k=>({k,a:g.items.find(p=>p.k===k).a,q:m2.project(g.items.find(p=>p.k===k),z)})).sort((x,y)=>String(actNo(x.a)).localeCompare(String(actNo(y.a))));
           const n=as.length, cols=Math.min(n,4);
-          as.forEach((o,i)=>{ const r=Math.floor(i/cols), rc=Math.min(cols,n-r*cols); o.dx=((i%cols)-(rc-1)/2)*56; o.dy=-34-r*34; o.ox=Math.round(o.q.x-g.x); o.oy=Math.round(o.q.y-g.y); });
+          as.forEach((o,i)=>{ const r=Math.floor(i/cols), rc=Math.min(cols,n-r*cols); o.dx=((i%cols)-(rc-1)/2)*50; o.dy=-34-r*34; o.ox=Math.round(o.q.x-g.x); o.oy=Math.round(o.q.y-g.y); });
           const svg=as.map(o=>'<line x1="'+o.ox+'" y1="'+o.oy+'" x2="'+o.dx+'" y2="'+(o.dy+14)+'"/>').join("")+as.map(o=>'<circle cx="'+o.ox+'" cy="'+o.oy+'" r="4"/>').join("");
           L.marker(ll,{interactive:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1">'+svg+'</svg>',iconSize:[0,0],iconAnchor:[0,0]})}).addTo(lay);
           as.forEach(o=>dot(o.k,o.a,ll,o.dx,o.dy)); }
