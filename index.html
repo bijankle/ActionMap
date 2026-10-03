@@ -1439,11 +1439,12 @@ function renderClusters(){
           for(const f of cluster.getLeaves(c.properties.cluster_id,Infinity)){ const p2=photoById(f.properties.pid); const n2=p2?photoActNum(p2):null; if(n2!=null) st.add(n2); }
           if(st.size){ const arr=[...st].sort((x,y)=>x-y); label=actNo(arr[0])+(arr.length>1?"\u2026":""); size=34; fs=arr.length>1?11:12; }   // same size/font as a single numbered dot
         }catch(err){} }
-      const grabbable=(c.properties.sel||0)>0&&selSet.size>0;   // holds selected photos: dragging the bubble moves the whole selection
+      const openIn=(()=>{ const op=lb.classList.contains("open")?curPhoto():null; if(!op) return null; try{ return cluster.getLeaves(c.properties.cluster_id,Infinity).some(f=>f.properties.pid===op.id)?op:null; }catch(e){ return null; } })();
+      const grabbable=((c.properties.sel||0)>0&&selSet.size>0)||!!openIn;   // holds selected photos, or the open photo: dragging the bubble moves them (and every photo linked to them)
       const icon=L.divIcon({className:"",html:'<div class="cl-bubble '+clClass(c.properties)+(c.properties.hl?' cl-hl':'')+'" style="width:'+size+'px;height:'+size+'px;font-size:'+fs+'px'+(grabbable?';cursor:move':'')+'">'+label+'</div>',iconSize:[size,size],iconAnchor:[size/2,size/2]});
       const m=L.marker([lat,lng],{icon}); const cid=c.properties.cluster_id;
       let ring=null;
-      if(grabbable) m.on("mousedown",e=>{ const oe=e.originalEvent; if(oe&&oe.button===0){ L.DomEvent.stop(oe); startClusterDrag(m,ring); } });
+      if(grabbable) m.on("mousedown",e=>{ const oe=e.originalEvent; if(oe&&oe.button===0){ L.DomEvent.stop(oe); startClusterDrag(m,ring,openIn); } });
       m.on("click",()=>{   // zoom to the extent of ALL the photos in this cluster — deep enough that only they fill the view
         uiClickT=Date.now();
         if(Date.now()-dotDropT<450) return;   // the click after dropping a dragged cluster must not zoom
@@ -1513,16 +1514,19 @@ function dotSelected(p){ return lb.classList.contains("open") && curPhoto()===p;
 function startDotDrag(p,hit,dot){
   hideHover(); try{ map.dragging.disable(); }catch(e){}
   map.getContainer().style.cursor="grabbing";
-  const group=selSet.has(p.id)?[...selSet]:null;
+  let group=linkedTo(selSet.has(p.id)?[...selSet]:[p.id]); if(group.length<2) group=null;   // a dot joined to others moves with them
   let origs=null;
   if(group){ origs=new Map(); for(const pid of group){ if(pid===p.id) continue; const mk=dotMarkers.get(pid); if(mk&&mk.dot) origs.set(pid,{ll:mk.dot.getLatLng(),hit:mk.hit,dot:mk.dot,hl:mk.hl}); } }
   dotDrag={p,hit,dot,ring:null,start:dot.getLatLng(),group,origs,viewerPhoto:dotSelected(p),moved:false};
 }
-function startClusterDrag(marker,ring){   // dragging a flashing cluster moves the WHOLE selection, same as dragging a selected dot
-  if(!selSet.size) return;
+/* Photos on the very same spot (joined by dragging one onto another) are LINKED: they move together. */
+function linkedTo(ids){ const out=new Set(ids), keys=new Set(); for(const id of ids){ const p=photoById(id); if(p&&p.lat!=null) keys.add(p.lat+","+p.lng); }
+  for(const q of photos) if(q.lat!=null&&keys.has(q.lat+","+q.lng)) out.add(q.id); return [...out]; }
+function startClusterDrag(marker,ring,openP){   // dragging a flashing cluster moves the WHOLE selection (or the open photo), with everything linked to it
+  if(!selSet.size&&!openP) return;
   hideHover(); try{ map.dragging.disable(); }catch(e){}
   map.getContainer().style.cursor="grabbing";
-  const group=[...selSet], origs=new Map();
+  const group=linkedTo(selSet.size?[...selSet]:[openP.id]), origs=new Map();
   for(const pid of group){ const mk=dotMarkers.get(pid); if(mk&&mk.dot) origs.set(pid,{ll:mk.dot.getLatLng(),hit:mk.hit,dot:mk.dot,hl:mk.hl}); }
   dotDrag={p:null,hit:marker,dot:marker,ring:ring||null,start:marker.getLatLng(),group,origs,viewerPhoto:false,moved:false};
 }
