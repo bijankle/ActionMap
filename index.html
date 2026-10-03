@@ -3617,11 +3617,12 @@ function subActionRows(order,now){
   for(const a of order){ const no=actNo(a), st=a.done?"Done":a.hold?"On hold":"Open";
     const opened=(logFirst("Created action "+no+" ")||{}).t||a.created||null;
     const at=a.done?(a.doneAt||(logLast("Completed action "+no+" ")||{}).t||opened):a.hold?((logLast("Put action "+no+" ")||{}).t||opened):opened;
-    const recent=projLog.some(e=>e&&e.a===a.id&&e.t>=day&&e.t<=now)||(at&&at>=day);
+    const inDay=t=>!!t&&t>=day&&t<=now;   /* "changed in the last 24 h" = only real progress: the action created, completed or reopened, a sub-action added, ticked or unticked (not renames, photos, markups or on hold) */
+    const recent=projLog.some(e=>e&&e.a===a.id&&inDay(e.t)&&typeof e.d==="string"&&/^(Created action|Completed action|Reopened action|Added sub-action|Ticked |Unticked )/.test(e.d))||inDay(a.created)||(a.done&&inDay(a.doneAt));
     const subs=(a.steps||[]).map((x,i)=>{ const q=qT(x.t);
       const added=(logFirst("Added sub-action "+q+" to "+no)||{}).t||opened, ticked=x.d?((logLast("Ticked "+q+" on "+no)||{}).t||at):null;
       return {t:x.d?ticked:added,st:x.d?"Done":(st==="On hold"?"On hold":"Open"),text:stepLetter(i)+". "+x.t}; });
-    out.push({a,no,st,t:at,what:a.done?"Completed":a.hold?"On hold since":"Opened",recent:recent||subs.some(x=>x.t&&x.t>=day),subs}); }
+    out.push({a,no,st,t:at,what:a.done?"Completed":a.hold?"On hold since":"Opened",recent,subs}); }
   return out; }
 const XL_HEAD="FF1D6F42", XL_FILL={Done:"FFE3F4E8",Open:"FFFFFFFF","On hold":"FFFDF1DC"}, XL_FONT={Done:"FF1E6B3A",Open:"FF1D2430","On hold":"FF8A5A00"};
 function xlHeadRow(ws,r){ const hr=ws.getRow(r); hr.font={bold:true,color:{argb:"FFFFFFFF"}}; hr.alignment={vertical:"middle",wrapText:true}; hr.height=20;
