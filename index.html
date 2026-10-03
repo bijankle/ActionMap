@@ -864,7 +864,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-dot{position:absolute;left:0;top:0;transform:translate(-50%,-50%);width:auto;padding:0 5px;white-space:nowrap;height:28px;box-sizing:border-box;border-radius:8px;background:#F28C28;border:3px solid #fff;box-shadow:0 0 0 1.5px #9A520B,0 3px 8px #0006;color:#fff;font:800 13px/22px var(--font);text-align:center;letter-spacing:-.2px;}
   .ma-dot.hold{background:#fff;color:#9A520B;border:0;box-shadow:0 0 0 2.5px #F28C28,0 3px 8px #0006;line-height:28px;}
   .ma-dot.done{background:#6b7580;box-shadow:0 0 0 1.5px #3f4750,0 3px 8px #0006;}
-  .ma-zf .ma-dot,.ma-zf .ma-fan{opacity:0;transition:opacity .12s;} .ma-spt{position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;box-sizing:border-box;border-radius:50%;background:#9A520B;border:2px solid #fff;box-shadow:0 1px 3px #0006;opacity:0;} .ma-zf .ma-spt{opacity:1;}   /* mid-zoom: labels and spokes fade, the spots stay */
+  .ma-zf .ma-dot,.ma-zf .ma-fan{opacity:0;transition:opacity .12s;}   /* a double-tap zoom: labels and spokes hide for its quarter second */
   .ma-zin .ma-dot,.ma-zin .ma-fan{animation:mazin .25s ease-out;} @keyframes mazin{from{opacity:0;}to{opacity:1;}}
   .ma-fan{overflow:visible;pointer-events:none;} .ma-fan line{stroke:#fff;stroke-width:2.5;filter:drop-shadow(0 1px 1.5px #000a);} .ma-fan circle{fill:#9A520B;stroke:#fff;stroke-width:2;}   /* stacked actions, fanned out at full zoom */
   .ldot{position:absolute;left:0;top:0;transform:translate(-50%,-50%);width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:#9aa3ad;border:2px solid #fff;box-shadow:0 0 0 1px #6b7580,0 2px 4px #0005;cursor:pointer;}
@@ -1429,6 +1429,12 @@ function highlightCurrent(){ if(lb.classList.contains("open")&&lightboxList[ligh
 // Dots re-cluster immediately when the map settles on a new view (responsive, as originally);
 // only the heavy gallery rebuild + state persistence wait for 1 full second of no map motion.
 map.on("moveend",()=>renderClusters());   // a zoom also fires moveend — listening to both rendered every dot twice
+/* Labels must stay on their spokes while the map zooms (a wheel is drawn in screen pixels): a stepped zoom
+   (wheel, trackpad, double-click) re-forms the wheels for where it lands as it starts; a glide or a pinch
+   re-forms them every frame. */
+let _zAnimT=0, _zRaf=0;
+map.on("zoomanim",e=>{ _zAnimT=Date.now(); renderClusters(e); });
+map.on("zoom",()=>{ if(map._animatingZoom||Date.now()-_zAnimT<400||_zRaf) return; _zRaf=requestAnimationFrame(()=>{ _zRaf=0; renderClusters(); }); });
 let mapIdleTimer=null;
 const onMapMotion=()=>{ clearTimeout(mapIdleTimer); mapIdleTimer=setTimeout(()=>{ updateGallery(); persistState(); },1000); };
 map.on("move zoom movestart zoomstart moveend zoomend",onMapMotion);
@@ -1455,9 +1461,10 @@ function actSelPhotoSet(){ const s=new Set(); for(const id of selActs) for(const
 let mapHits=[];
 const LBL_W=54;
 function wheelR(n){ return n<2?0:Math.max(n===2?38:n===3?42:48,n*(LBL_W+8)/(2*Math.PI)); }
-function renderClusters(){
+function renderClusters(anim){   // anim: a zoom animation just starting — lay the wheels out for where it lands
   markerLayer.clearLayers(); dotMarkers.clear(); mapHits=[]; _openInArrowed=false;
-  const z=map.getZoom(), bnd=map.getBounds().pad(0.3), hlSet=hlPhotoSet(), op=lb.classList.contains("open")?curPhoto():null;
+  const z=anim?anim.zoom:map.getZoom(), hlSet=hlPhotoSet(), op=lb.classList.contains("open")?curPhoto():null;
+  const bnd=anim?(()=>{ const c=map.project(anim.center,z), h=map.getSize().divideBy(2); return L.latLngBounds(map.unproject(c.subtract(h),z),map.unproject(c.add(h),z)).pad(0.3); })():map.getBounds().pad(0.3);
   const pts=[], loose=[];
   for(const p of photos){ if(p.lat==null||!passDate(p)||!passSearch(p)||!passTags(p)||!passActs(p)||!passAlt(p)||(boxBounds&&!boxBounds.contains([p.lat,p.lng]))||!bnd.contains([p.lat,p.lng])) continue;
     const q=map.project([p.lat,p.lng],z), as=(p.acts||[]).map(actById).filter(a=>a&&actVisible(a));
@@ -1501,6 +1508,7 @@ function renderClusters(){
       if(!sp.has(k)) sp.set(k,{ll:llOf(o.q.x,o.q.y),pids:[],rep:null,act:null,spot:true}); const h=sp.get(k); for(const p of ps) h.pids.push(p.id); if(!h.rep||(o.l&&!(h.rep.acts||[]).length)) h.rep=ps[0]; }
     for(const h of sp.values()) mapHits.push(h); }
   for(const g of lg) if(!g.used) mkLoose(g,g.x,g.y);
+  if(anim) markerLayer.eachLayer(l=>{ if(l._animateZoom) l._animateZoom(anim); });   // placed straight at the landing spot (no slide from the old layout)
   if(hlMarker) hlMarker.setOpacity(_openInArrowed&&op&&hlMarker._pid===op.id?0:1);   // the open photo's label already wears the arrow
   function mkLoose(g,x,y){ const ps=g.items.map(t=>t.p), pids=ps.map(p=>p.id), n=ps.length, ll=llOf(x,y);
     const hl=pids.some(id=>hlSet.has(id)), hasOpen=!!op&&pids.includes(op.id), grab=pids.some(id=>selSet.has(id))||hasOpen;
@@ -6797,7 +6805,7 @@ function mBuildHomeMap(acts){
     const lay=L.layerGroup().addTo(m2);
     /* No bubbles: one label per action at each spot; a crowded spot spreads its labels on a ferris wheel
        round it (a spoke back to each one's own place), like the desktop. Wheels that would touch join. */
-    const layout=z=>{ const V=window._mWheel||"wheel", groups=[], wheels=[];
+    const layout=z=>{ const groups=[], wheels=[];
       for(const p of pts){ const q=m2.project([p.lat,p.lng],z), t=Object.assign({},p,{q}); const g=groups.find(g2=>Math.hypot(g2.x-q.x,g2.y-q.y)<46);
         if(g) g.items.push(t); else groups.push({x:q.x,y:q.y,items:[t]}); }
       const settle=g=>{ const by=new Map(); for(const t of g.items) if(!by.has(t.k)) by.set(t.k,t); g.labs=[...by.values()];
@@ -6807,20 +6815,15 @@ function mBuildHomeMap(acts){
         const top=flt?Math.max(0,flt.getBoundingClientRect().bottom-mc.top):0, rr=row&&!row.classList.contains("none")?row.getBoundingClientRect():null;
         const bot=rr&&rr.height?Math.min(mc.height,rr.top-mc.top):mc.height;   // under the Open/On hold/Done pills, above the cards
         return {x0:pb.min.x,x1:pb.max.x,y0:pb.min.y+top,y1:pb.min.y+bot}; };
-      const Rmin=n=>n<2?0:V==="arc"?Math.max(58,n*50/Math.PI):Math.max(n===2?38:n===3?42:48,n*62/(2*Math.PI));   // the least room that keeps labels apart
-      const R=n=>{ if(n<2) return 0; const base=Rmin(n);
-        return V==="roomy"?Math.max(base*1.3,56):V==="arc"?Math.max(base,n*60/Math.PI):base; };   // roomy: more room for a finger; arc: a half wheel above the spot
+      const R=n=>n<2?0:Math.max(n===2?38:n===3?42:48,n*62/(2*Math.PI));   // the least room that keeps labels apart (as on the desktop)
       const occ=g=>R(g.labs.length)+24;
       for(let again=true;again;){ again=false;
         for(let i=0;i<groups.length&&!again;i++) for(let j=i+1;j<groups.length&&!again;j++){ const a=groups[i], b=groups[j];
           if(Math.hypot(a.cx-b.cx,a.cy-b.cy)<occ(a)+occ(b)){ a.items=a.items.concat(b.items); settle(a); groups.splice(j,1); again=true; } } }
       for(const g of groups){ const n=g.labs.length;
         if(n===1){ wheels.push({one:g.labs[0]}); continue; }
-        const sb=safe(), Rr=Math.max(Rmin(n),Math.min(R(n),(sb.x1-sb.x0-64)/2,V==="arc"?sb.y1-sb.y0-44:(sb.y1-sb.y0-44)/2)); let ls;   // a big wheel shrinks to fit the screen (never so far that labels touch)
-        if(V==="arc"){   // left-to-right by spot, spread over the upper half circle
-          ls=g.labs.slice().sort((x,y)=>x.q.x-y.q.x||String(actNo(x.a)).localeCompare(String(actNo(y.a))));
-          ls.forEach((t,i)=>{ const ang=-Math.PI+(i+0.5)*Math.PI/n; t.lx=g.cx+Math.cos(ang)*Rr; t.ly=g.cy+Math.sin(ang)*Rr; }); }
-        else {
+        const sb=safe(), Rr=R(n); let ls;
+        {
           const ang=t=>{ const dx=t.q.x-g.cx, dy=t.q.y-g.cy; return Math.hypot(dx,dy)<3?null:Math.atan2(dy,dx); };
           ls=g.labs.map(t=>Object.assign(t,{an:ang(t)})).sort((x,y)=>{ if(x.an==null||y.an==null||Math.abs(x.an-y.an)<1e-6) return (x.an==null?-9:x.an)-(y.an==null?-9:y.an)||String(actNo(x.a)).localeCompare(String(actNo(y.a))); return x.an-y.an; });
           let best=null; for(let k=0;k<n*12;k++){ const off=-Math.PI/2+k*2*Math.PI/(n*12); let cost=0;   // turn the wheel so labels sit on their own spot's side
@@ -6832,37 +6835,24 @@ function mBuildHomeMap(acts){
             if(r-l>sb.x1-sb.x0) dx=(sb.x0+sb.x1-l-r)/2; else if(l<sb.x0) dx=sb.x0-l; else if(r>sb.x1) dx=sb.x1-r;   // still too wide: centred
             if(b-t0>sb.y1-sb.y0) dy=(sb.y0+sb.y1-t0-b)/2; else if(t0<sb.y0) dy=sb.y0-t0; else if(b>sb.y1) dy=sb.y1-b; }
           if(dx||dy) for(const t of ls){ t.lx+=dx; t.ly+=dy; } }
-        for(const t of ls){ t.rx=t.lx-g.cx; t.ry=t.ly-g.cy; }   // each label's place relative to the wheel's centre (kept while a pinch is under way)
         wheels.push({cx:g.cx,cy:g.cy,ls}); }
       return wheels; };
     const dot=(k,a,ll)=>{ const st=mStatus(a);   // one action's label
       L.marker(ll,{zIndexOffset:k===mFocusK?800:st==="open"?300:st==="hold"?100:0,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(a._new?' new':st==="open"?'':' '+st)+(k===mFocusK?' focus':'')+(k===mFlashK?' flash':'')+'">'+(a._new?'•':actNo(a))+'</div>',iconSize:[0,0],iconAnchor:[0,0]})})
         .on("click",()=>{ if(k===mFocusK){ mTapK=null; mOpenAct(k); } else { mTapK=k; mTapT=Date.now(); mFocusCard(k); } }).addTo(lay); };   // a label brings its card up; tapping it again (or View) opens it
     const render=(wheels,z)=>{ lay.clearLayers();
-      if((window._mZoomFx||"live")==="fade"){ const seen=new Set();   // the spots alone stay on show while the labels fade (an SVG dot tracks a pinch exactly)
-        for(const p of pts){ const key=p.lat.toFixed(6)+","+p.lng.toFixed(6); if(seen.has(key)) continue; seen.add(key);
-          L.marker([p.lat,p.lng],{interactive:false,zIndexOffset:-200,icon:L.divIcon({className:"",html:'<div class="ma-spt"></div>',iconSize:[0,0],iconAnchor:[0,0]})}).addTo(lay); } }
       for(const w of wheels){
         if(w.one){ dot(w.one.k,w.one.a,[w.one.lat,w.one.lng]); continue; }
         const spots=new Set(); const svg=w.ls.map(t=>{ spots.add(Math.round(t.q.x-w.cx)+","+Math.round(t.q.y-w.cy)); return '<line x1="'+(t.q.x-w.cx).toFixed(1)+'" y1="'+(t.q.y-w.cy).toFixed(1)+'" x2="'+(t.lx-w.cx).toFixed(1)+'" y2="'+(t.ly-w.cy).toFixed(1)+'"/>'; }).join("")
           +[...spots].map(t=>{ const [x,y]=t.split(","); return '<circle cx="'+x+'" cy="'+y+'" r="4"/>'; }).join("");
         L.marker(m2.unproject([w.cx,w.cy],z),{interactive:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1">'+svg+'</svg>',iconSize:[0,0],iconAnchor:[0,0]})}).addTo(lay);
         for(const t of w.ls) dot(t.k,t.a,m2.unproject([t.lx,t.ly],z)); } };
-    let wheelsNow=[];
-    const draw=()=>{ const c=m2.getContainer(), was=c.classList.contains("ma-zf"); c.classList.remove("ma-zf"); const z=m2.getZoom(); wheelsNow=layout(z); render(wheelsNow,z);
+    const draw=()=>{ const c=m2.getContainer(), was=c.classList.contains("ma-zf"); c.classList.remove("ma-zf"); const z=m2.getZoom(); render(layout(z),z);
       if(was){ c.classList.add("ma-zin"); clearTimeout(m2._zinT); m2._zinT=setTimeout(()=>c.classList.remove("ma-zin"),400); } };   // they fade back in, in their new places
     /* While a pinch (or a glide) is under way the map moves every frame, but a wheel is drawn in screen
-       pixels: left alone its labels would fly off the spokes (zooming in) or pile up (zooming out).
-       Three looks, chosen by window._mZoomFx (preview): "live" re-forms the wheels every frame; "steady" keeps
-       each wheel as it was and glides it with its spots; "fade" fades labels and spokes out until you let go. */
-    const zoomFrame=()=>{ const fx=window._mZoomFx||"live", z=m2.getZoom(); if(fx==="none") return;
-      if(fx==="live"){ render(layout(z),z); return; }
-      if(fx==="steady"){ for(const w of wheelsNow){ if(w.one) continue;
-          for(const t of w.ls) t.q=m2.project([t.lat,t.lng],z);
-          w.cx=w.ls.reduce((a2,t)=>a2+t.q.x,0)/w.ls.length; w.cy=w.ls.reduce((a2,t)=>a2+t.q.y,0)/w.ls.length;
-          for(const t of w.ls){ t.lx=w.cx+t.rx; t.ly=w.cy+t.ry; } }
-        render(wheelsNow,z); return; }
-      m2.getContainer().classList.add("ma-zf"); };
+       pixels: left alone its labels would fly off the spokes (zooming in) or pile up (zooming out). So the
+       wheels are re-formed on every frame — labels always sit on their spokes. */
+    const zoomFrame=()=>{ const z=m2.getZoom(); render(layout(z),z); };
     m2.on("zoom",()=>{ if(m2.touchZoom._zooming||m2._flying) zoomFrame(); });
     m2.on("zoomanim",e=>{ if(!m2.touchZoom._zooming&&Math.abs(e.zoom-m2.getZoom())>0.3) m2.getContainer().classList.add("ma-zf"); });   // a double-tap zoom: hide them for its ¼ s
     const bb=pts.length?L.latLngBounds(pts.map(p=>[p.lat,p.lng])):null;
