@@ -1692,6 +1692,10 @@ function reorderActPhoto(a,dragId,targetId,before){   // gallery drag: photo ord
   ids.splice(to,0,dragId);
   const b=actState(a); a.porder=ids; recordActEdit(a,b); afterFolderChange();
 }
+/* Done sub-actions sit below the open ones (each group keeps its own order). */
+function stepMoveOnTick(a,x){ if(!Array.isArray(a.steps)) return; const L=a.steps.filter(y=>y!==x);
+  if(x.d) L.push(x); else { const k=L.findIndex(y=>y.d); L.splice(k<0?L.length:k,0,x); } a.steps=L; }
+function stepsDoneLast(a){ if(!Array.isArray(a.steps)) return; a.steps=a.steps.filter(x=>!x.d).concat(a.steps.filter(x=>x.d)); }
 function hasOpenAct(p){ return Array.isArray(p.acts)&&p.acts.some(id=>{ const a=actById(id); return a&&!a.done&&!a.hold; }); }
 function clClass(pr){   // a bubble takes the colour most of its photos have — same as their dots (open orange, on hold ringed, done grey, none white)
   const n=pr.point_count||1, op=pr.asg||0, h=pr.hld||0, d=pr.dn||0, none=n-op-h-d;
@@ -1862,7 +1866,7 @@ function wireSteps(el,a){
     row.addEventListener("dragleave",()=>row.classList.remove("drop-b","drop-a"));
     row.addEventListener("drop",e=>{ e.preventDefault(); e.stopPropagation(); const before=row.classList.contains("drop-b"); row.classList.remove("drop-b","drop-a");
       if(dragStep&&dragStep.aid===a.id&&dragStep.si!==i){ let to=i; if(!before) to++; if(dragStep.si<to) to--; reorderStep(a,dragStep.si,to); } dragStep=null; });
-    row.querySelector(".st-chk").addEventListener("click",()=>{ const b=actState(a); s.d=!s.d; recordActEdit(a,b); afterFolderChange(); });
+    row.querySelector(".st-chk").addEventListener("click",()=>{ const b=actState(a); s.d=!s.d; stepMoveOnTick(a,s); recordActEdit(a,b); afterFolderChange(); });   // ticked: to the very bottom; unticked: back to the end of the open ones
     row.querySelector(".st-x").addEventListener("click",()=>{ const b=actState(a); a.steps.splice(i,1); recordActEdit(a,b); afterFolderChange(); });
     row.querySelector(".st-t").addEventListener("dblclick",()=>{
       inlineEdit(row.querySelector(".st-t"),s.t,false,v=>{ const t=(v==null?"":v.trim()); if(t&&t!==s.t){ const b=actState(a); s.t=t; recordActEdit(a,b); afterFolderChange(); } else refreshActUI(); });
@@ -5873,7 +5877,7 @@ function mIsNew(k){ return typeof k==="string"&&k.charAt(0)==="n"; }
 function mActAt(ai){ if(mIsNew(ai)){ const x=mNewActs()[+ai.slice(1)]; return x?{id:ai,_new:true,_ni:+ai.slice(1),text:x.text,steps:x.steps||[],photos:[],done:!!x.done}:null; } return (mPack.actions||[])[ai]; }
 function mTitle(a){ if(a._new) return a.text; const c=mCh(a.id); return (c.title&&c.title.trim())?c.title:a.text; }
 function mSteps(a){   // pack sub-actions (with pending text edits, minus pending deletions) + phone-added ones, in pending order
-  if(a._new) return (a.steps||[]).map((s,i)=>({t:s.t,d:!!s.d,kind:"new",i}));
+  if(a._new){ const L=(a.steps||[]).map((s,i)=>({t:s.t,d:!!s.d,kind:"new",i})); return L.filter(x=>!x.d).concat(L.filter(x=>x.d)); }
   const c=mCh(a.id);
   const del=new Set((c.delSteps||[]).map(Number));
   const base=(a.steps||[]).map((s,i)=>({t:(c.stepEdits&&c.stepEdits[String(i)]!=null)?c.stepEdits[String(i)]:s.t,d:mStepDone(a,i),kind:"pack",i})).filter(s=>!del.has(s.i))
@@ -5882,9 +5886,9 @@ function mSteps(a){   // pack sub-actions (with pending text edits, minus pendin
     const used=new Set(), out=[];
     for(const t of c.stepOrder){ const idx=base.findIndex((s,j)=>!used.has(j)&&t&&s.kind===t.k&&s.i===t.i); if(idx>=0){ used.add(idx); out.push(base[idx]); } }
     base.forEach((s,j)=>{ if(!used.has(j)) out.push(s); });
-    return out;
+    return out.filter(x=>!x.d).concat(out.filter(x=>x.d));
   }
-  return base;
+  return base.filter(x=>!x.d).concat(base.filter(x=>x.d));   // done ones below the open ones, as on the desktop
 }
 function mDeleteStep(a,s){
   if(a._new){ mEditNewAct(a._ni,x=>{ x.steps.splice(s.i,1); }); return; }
@@ -7276,6 +7280,7 @@ async function checkFieldChanges(){
         if(c.steps) for(const k of Object.keys(c.steps)){ const i=+k; if(a.steps[i]) a.steps[i].d=!!c.steps[k]; }
         if(Array.isArray(c.newSteps)) for(const st of c.newSteps){ const t=String(st&&st.t||"").trim(); if(t) a.steps.push({t,d:!!st.d,id:newSid()}); }
       }
+      if(c.steps||c.newSteps||c.stepOrder) stepsDoneLast(a);   // a sub-action ticked on the phone drops to the bottom here too
       if(typeof c.hold==="boolean") a.hold=c.hold;
       if(c.done===true&&!a.done){ a.done=true; a.doneAt=c.doneAt||Date.now(); }
       if(c.done===false&&a.done){ a.done=false; a.doneAt=null; }
