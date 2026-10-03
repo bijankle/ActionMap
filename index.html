@@ -73,6 +73,14 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .mb-btn:hover,.mb.open .mb-btn{background:var(--panel2);color:var(--ink);}
   .mb-drop{display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:7000;min-width:290px;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 32px #1e1f2233;padding:5px;}
   .mb.open .mb-drop{display:block;}
+  .mi-sub{font:700 11px var(--font);letter-spacing:.5px;color:var(--dim);padding:8px 14px 3px;text-transform:uppercase;}   /* View menu */
+  .mi-seg{display:flex;gap:var(--btn-gap);padding:4px 14px 8px;}
+  .mi-seg button{flex:1;border:1.5px solid var(--line);border-radius:8px;background:#fff;padding:4px 10px;font:600 13px var(--font);color:var(--ink);cursor:pointer;}
+  .mi-seg button.on{border-color:var(--gold);background:#fdf6e6;box-shadow:inset 0 0 0 1px var(--gold);}
+  .mi-row{display:flex;align-items:center;gap:12px;padding:7px 14px;font:var(--fb) var(--font);color:var(--ink);white-space:nowrap;}
+  .mi-row input[type=range]{flex:1;min-width:110px;accent-color:var(--accent);}
+  .mb-drop:has(#vmBase){min-width:290px;}
+  .guide-win{max-width:640px;max-height:82vh;overflow:auto;} .guide-win h4{margin:16px 0 6px;font-size:15px;} .guide-win ol,.guide-win ul{margin:0;padding-left:20px;line-height:1.55;font-size:14px;} .guide-win li{margin:3px 0;} .guide-win .tip{background:#fdf6e6;border:1px solid var(--gold);border-radius:8px;padding:8px 12px;margin-top:14px;font-size:13.5px;line-height:1.5;}
   .mi{display:flex;align-items:center;gap:8px;width:100%;box-sizing:border-box;text-align:left;font:var(--fb) var(--font);color:var(--ink);background:none;border:none;border-radius:6px;padding:8px 11px;cursor:pointer;white-space:nowrap;}
   .mi:hover{background:var(--panel2);color:var(--ink);}
   .mi .mk{margin-left:auto;padding-left:18px;font:var(--fl) var(--font);color:var(--dim);}
@@ -1071,27 +1079,31 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
       <button class="mi" id="miNewProj" type="button" title="Start a new, empty project. It lives online in the data repository — share its link with anyone.">New project…</button>
       <button class="mi" id="miShare" type="button" title="Copy this project's link. Anyone with it can view the actions and photos; people with your access token can also edit.">Share link</button>
       <div class="msep"></div>
+      <button class="mi" id="miUndo" type="button" title="Undo the last change — edits, ticks, moves, notes, links, deletions.">Undo<span class="mk">Ctrl+Z</span></button>
+      <button class="mi" id="miRedo" type="button" title="Redo the change you just undid.">Redo<span class="mk">Ctrl+Y</span></button>
+      <div class="msep"></div>
       <button class="mi" id="miAddPhotos" type="button" title="Choose photos to add to this project — or just paste (Ctrl+V) or drag them onto the map. They're uploaded to the project online; photos with GPS land where they were taken.">Add photos…</button>
       <div class="msep"></div>
-      <button class="mi" id="miReport" type="button" title="Pending actions report: every open and on-hold action with its photos and sub-actions, a linked contents page and a 'Back to contents' link on every page. Save it as a PDF from the print dialog.">Report (PDF)…</button>
+      <button class="mi" id="miReport" type="button" title="The same as Export to Excel, as a landscape PDF: every action with its status, sub-actions and marked-up photos, then the sub-actions list.">Export to PDF…</button>
       <button class="mi" id="miXlsx" type="button" title="Every problem as a spreadsheet row — status and sub-actions — with the annotated photos embedded.">Export to Excel…</button>
       <button class="mi" id="miBackup" type="button" title="Download a zip of this project — actions, notes, markup, history and every photo at full size — to keep as your own copy. Not needed to use or share the project.">Download backup</button>
+      <div class="msep"></div>
+      <button class="mi" id="btnSettings" type="button" title="Data repository, access token, phone sync and your name.">Settings…</button>
       <div class="msep"></div>
       <button class="mi" id="miMigrate" type="button" style="display:none" title="One time: copy the project stored on this PC (from before ActionMap went online) into the data repository — every photo, action, note and markup. Nothing on this PC is changed.">Move this project online…</button>
       <button class="mi danger" id="btnClear" type="button" title="Close this project on this device. Nothing online is deleted — reopen it any time from Projects.">Close project…</button>
     </div></div>
-    <div class="mb"><button class="mb-btn" type="button">Edit</button><div class="mb-drop">
-      <button class="mi" id="miUndo" type="button" title="Undo the last change — edits, ticks, moves, notes, links, deletions.">Undo<span class="mk">Ctrl+Z</span></button>
-      <button class="mi" id="miRedo" type="button" title="Redo the change you just undid.">Redo<span class="mk">Ctrl+Y</span></button>
-    </div></div>
     <div class="mb"><button class="mb-btn" type="button">View</button><div class="mb-drop">
-      <label class="mi mi-chk" title="Also list photos that have no GPS position (they can't be placed on the map) in the gallery."><input type="checkbox" id="showNoGeo" /><span>Photos without location</span></label>
-    </div></div>
-    <div class="mb"><button class="mb-btn" type="button">Tools</button><div class="mb-drop">
-      <button class="mi" id="btnSettings" type="button" title="Map, photo, filter, action and phone-sync settings — including your name for the change history."><svg viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm8.6 3.5c0-.6-.05-1.1-.15-1.6l2-1.55-2-3.4-2.35.95a8 8 0 0 0-2.75-1.6L14.95 2h-4l-.4 2.8a8 8 0 0 0-2.75 1.6L5.45 5.45l-2 3.4 2 1.55c-.1.5-.15 1-.15 1.6s.05 1.1.15 1.6l-2 1.55 2 3.4 2.35-.95a8 8 0 0 0 2.75 1.6l.4 2.8h4l.4-2.8a8 8 0 0 0 2.75-1.6l2.35.95 2-3.4-2-1.55c.1-.5.15-1 .15-1.6z"/><circle cx="12" cy="12" r="4.4" fill="#fff"/><circle cx="12" cy="12" r="2.6" fill="var(--accent)"/></svg><span>Settings…</span></button>
+      <div class="mi-sub">Map</div>
+      <div class="mi-seg" id="vmBase"><button type="button" data-v="google">Google</button><button type="button" data-v="esri">Esri</button><button type="button" data-v="none">None</button></div>
+      <label class="mi mi-chk" title="Show YOU ARE HERE, and include where you are when the map zooms to fit. Off: the map fits the actions only. The phone app has the same switch."><input type="checkbox" id="vmLoc" /><span>Show my location on the map</span></label>
+      <div class="mi-row" title="How readily dots merge into numbered bubbles: left = they never merge, right = they merge very easily.">Clustering<input type="range" id="vmClus" min="0" max="100" step="5" /></div>
+      <div class="msep"></div>
+      <div class="mi-sub">Gallery</div>
+      <div class="mi-row" title="Card size in the gallery.">Thumbnail size<input type="range" id="vmThumb" min="64" max="260" /></div>
     </div></div>
     <div class="mb"><button class="mb-btn" type="button">Help</button><div class="mb-drop">
-      <button class="mi" id="miSearch" type="button" title="Find an action by its number, title or a sub-action — active and completed actions.">Search…<span class="mk">Ctrl+K</span></button>
+      <button class="mi" id="miGuide" type="button" title="Step by step: projects, photos, actions, the map, the phone app and exports.">How to use ActionMap…</button>
       <button class="mi" id="miAbout" type="button" title="Save status, this project's link, the app version and where the data lives.">About…</button>
     </div></div>
   </nav>
@@ -1120,44 +1132,12 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   <div class="set-win">
     <div class="set-side">
       <div class="set-title">Settings</div>
-      <button class="set-tab on" data-sec="map">Map</button>
-      <button class="set-tab" data-sec="photos">Photos</button>
-      <button class="set-tab" data-sec="actions">Actions</button>
-      <button class="set-tab" data-sec="mobile">Online</button>
+      <button class="set-tab on" data-sec="mobile">Online</button>
+      <button class="set-tab" data-sec="actions">You</button>
     </div>
     <div class="set-main">
       <button class="set-close" id="setClose">&times;</button>
-      <div class="set-sec on" data-sec="map">
-        <h3>Map</h3>
-        <div class="set-row">
-          <div class="set-lbl">Cluster sensitivity<span class="set-sub">How readily dots merge into numbered clusters. 0% = dots never cluster, 100% = they cluster very easily.</span></div>
-          <div class="set-ctl"><input type="range" id="setClusterSens" min="0" max="100" step="5" /><b class="set-val" id="setClusterVal">50%</b></div>
-        </div>
-        <div class="set-row">
-          <div class="set-lbl">Base map<span class="set-sub">The imagery behind the dots.</span></div>
-          <div class="set-ctl set-radios">
-            <label><input type="radio" name="setBase" value="google" /> Google</label>
-            <label><input type="radio" name="setBase" value="esri" /> Esri</label>
-            <label><input type="radio" name="setBase" value="none" /> None</label>
-          </div>
-        </div>
-        <div class="set-row">
-          <div class="set-lbl">Ignore my location<span class="set-sub">Hide YOU ARE HERE, and zoom to the actions only (never to where you are). The phone app has the same switch.</span></div>
-          <div class="set-ctl"><input type="checkbox" id="setIgnoreLoc" /></div>
-        </div>
-      </div>
-      <div class="set-sec" data-sec="photos">
-        <h3>Photos</h3>
-        <div class="set-row">
-          <div class="set-lbl">Show photos without location<span class="set-sub">Adds a "No Location" section to the gallery.</span></div>
-          <div class="set-ctl"><input type="checkbox" id="setNoGeo" /></div>
-        </div>
-        <div class="set-row">
-          <div class="set-lbl">Thumbnail size<span class="set-sub">Card size in the gallery.</span></div>
-          <div class="set-ctl"><input type="range" id="setThumb" min="64" max="260" /></div>
-        </div>
-      </div>
-      <div class="set-sec" data-sec="mobile">
+      <div class="set-sec on" data-sec="mobile">
         <h3>Online</h3>
         <div class="set-row">
           <div class="set-lbl">Data repository<span class="set-sub">The GitHub repo that holds every project and photo (owner/name). Filled in by itself from a shared link or from your token.</span></div>
@@ -1312,7 +1292,7 @@ const THUMB_VER = 3;                         // bump when rendition sizes change
 let photos=[], nextId=1, folderName="";
 let sizeIndex=new Map();   // byte size -> kept photo, for de-duplicating overlapping folders on load
 let existingPaths=new Map();   // path -> photo already loaded, so re-opening a folder only processes what's new (or heals missing thumbs)
-let currentSort="date_desc", showNoGeo=false, nameFilter="";
+let currentSort="date_desc", showNoGeo=true, nameFilter="";
 let tagFilters=new Set();   // active tag filters (folder paths) — photos must be in ALL of them (intersection)
 let dateMin=null,dateMax=null,dateLo=null,dateHi=null;
 let lightboxList=[], lightboxIndex=0;
@@ -2021,7 +2001,7 @@ let ignoreLoc=(()=>{ try{ return localStorage.getItem("pmIgnoreLoc")!=="0"; }cat
 function myLoc(){ return (geoMarker&&!ignoreLoc)?geoMarker.getLatLng():null; }
 function setIgnoreLoc(on){ ignoreLoc=!!on; try{ localStorage.setItem("pmIgnoreLoc",ignoreLoc?"1":"0"); }catch(e){}
   if(geoMarker){ if(ignoreLoc) map.removeLayer(geoMarker); else geoMarker.addTo(map); }
-  const b=document.getElementById("setIgnoreLoc"); if(b) b.checked=ignoreLoc; }
+  const b=document.getElementById("vmLoc"); if(b) b.checked=!ignoreLoc; }
 function youAreHereIcon(w){   // the red YOU ARE HERE pin, tip anchored on the position (desktop map + phone)
   const h=Math.round(w*80/64);
   return L.divIcon({className:"",html:'<div class="geo-pin"><svg viewBox="0 0 64 80" width="'+w+'" height="'+h+'">'
@@ -2232,9 +2212,9 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
   const closeAll=()=>bar.querySelectorAll(".mb.open").forEach(m=>m.classList.remove("open"));
   bar.querySelectorAll(".mb").forEach(mb=>{
     const b=mb.querySelector(".mb-btn");
-    b.addEventListener("click",e=>{ e.stopPropagation(); const was=mb.classList.contains("open")&&!(mb._hoverT&&Date.now()-mb._hoverT<600); closeAll(); if(!was) mb.classList.add("open"); mb._hoverT=0; });   // a click on a menu that just slid open by hover keeps it open
-    b.addEventListener("mouseenter",()=>{ if(bar.querySelector(".mb.open")&&!mb.classList.contains("open")){ closeAll(); mb.classList.add("open"); mb._hoverT=Date.now(); } });   // slide between open menus like a desktop app
-    mb.querySelectorAll(".mb-drop button.mi").forEach(it=>it.addEventListener("click",()=>closeAll()));
+    b.addEventListener("click",e=>{ e.stopPropagation(); const was=mb.classList.contains("open")&&!(mb._hoverT&&Date.now()-mb._hoverT<600); closeAll(); if(!was){ mb.classList.add("open"); if(mb.querySelector("#vmBase")) syncViewMenu(); } mb._hoverT=0; });   // a click on a menu that just slid open by hover keeps it open
+    b.addEventListener("mouseenter",()=>{ if(bar.querySelector(".mb.open")&&!mb.classList.contains("open")){ closeAll(); mb.classList.add("open"); if(mb.querySelector("#vmBase")) syncViewMenu(); mb._hoverT=Date.now(); } });   // slide between open menus like a desktop app
+    mb.querySelectorAll(".mb-drop button.mi").forEach(it=>it.addEventListener("click",()=>closeAll()));   // (the View menu's switches and sliders keep it open)
   });
   document.addEventListener("mousedown",e=>{ if(!bar.contains(e.target)) closeAll(); },true);
   window.addEventListener("keydown",e=>{ if(e.key==="Escape"&&bar.querySelector(".mb.open")){ e.stopPropagation(); closeAll(); } },true);
@@ -2254,7 +2234,6 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
   const inp=document.getElementById("hSearch"), drop=document.getElementById("hsDrop"), wrap=document.getElementById("hsWrap"); if(!inp) return;
   const openS=()=>{ inp.focus(); inp.select(); if(inp.value.trim()) render(); };   // the field is always there: just put the cursor in it
   const closeS=()=>{ drop.classList.remove("show"); inp.blur(); };
-  document.getElementById("miSearch").addEventListener("click",()=>setTimeout(openS,0));
   let res=[], cur=-1;
   const hl=(txt,terms)=>{ let h=esc(txt); for(const t of terms){ if(!t) continue; h=h.replace(new RegExp("("+t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")","ig"),"<mark>$1</mark>"); } return h; };
   function search(q){
@@ -2325,29 +2304,25 @@ setModal.querySelectorAll(".set-tab").forEach(b=>b.addEventListener("click",()=>
   setModal.querySelectorAll(".set-sec").forEach(s=>s.classList.toggle("on",s.dataset.sec===b.dataset.sec));
 }));
 function syncSettingsUI(){
-  document.getElementById("setClusterSens").value=clusterSens;
-  document.getElementById("setClusterVal").textContent=clusterSens+"%";
-  const base=map.hasLayer(google)?"google":map.hasLayer(esri)?"esri":"none";
-  setModal.querySelectorAll('input[name="setBase"]').forEach(r=>r.checked=(r.value===base));
-  document.getElementById("setNoGeo").checked=showNoGeo;
-  document.getElementById("setThumb").value=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--thumb"))||120;
 
   { let n=""; try{ n=localStorage.getItem("pmUserName")||""; }catch(e){} document.getElementById("setUserName").value=n; }
   const g=ghRaw(); document.getElementById("setGhRepo").value=g.repo||(typeof siteRepo==="function"?siteRepo():"")||""; document.getElementById("setGhToken").value=g.token;   // the repo in use shows even when it came from the link
   let le=0; try{ le=+localStorage.getItem("pmLastExport")||0; }catch(e){}
   document.getElementById("mobExpStatus").textContent=le?("Last export: "+new Date(le).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})):"";
 }
-document.getElementById("setClusterSens").addEventListener("input",e=>{
-  clusterSens=Math.max(0,Math.min(100,+e.target.value||0));
-  document.getElementById("setClusterVal").textContent=clusterSens+"%";
-  filterRefreshSoon();   // live preview behind the window, once per frame
-});
-setModal.querySelectorAll('input[name="setBase"]').forEach(r=>r.addEventListener("change",()=>{
-  [google,esri,none].forEach(l=>{ if(map.hasLayer(l)) map.removeLayer(l); });
-  ({google,esri,none})[r.value].addTo(map); persistState();
-}));
-document.getElementById("setNoGeo").addEventListener("change",e=>{ showNoGeo=e.target.checked; document.getElementById("showNoGeo").checked=showNoGeo; updateGallery(); persistState(); });
-document.getElementById("setThumb").addEventListener("input",e=>{ document.documentElement.style.setProperty("--thumb",e.target.value+"px"); document.getElementById("thumbSize").value=e.target.value; persistState(); });
+/* ---- View menu: the look of the map and gallery (was in Settings) ---- */
+function syncViewMenu(){
+  const base=map.hasLayer(google)?"google":map.hasLayer(esri)?"esri":"none";
+  document.querySelectorAll("#vmBase button").forEach(b=>b.classList.toggle("on",b.dataset.v===base));
+  document.getElementById("vmLoc").checked=!ignoreLoc;
+  document.getElementById("vmClus").value=clusterSens;
+  document.getElementById("vmThumb").value=parseInt(getComputedStyle(document.documentElement).getPropertyValue("--thumb"))||120; }
+document.querySelectorAll("#vmBase button").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation();
+  [google,esri,none].forEach(l=>{ if(map.hasLayer(l)) map.removeLayer(l); }); ({google,esri,none})[b.dataset.v].addTo(map); persistState(); syncViewMenu(); }));
+document.getElementById("vmLoc").addEventListener("change",e=>setIgnoreLoc(!e.target.checked));
+document.getElementById("vmClus").addEventListener("input",e=>{ clusterSens=Math.max(0,Math.min(100,+e.target.value||0)); filterRefreshSoon(); });
+document.getElementById("vmClus").addEventListener("change",()=>persistState());
+document.getElementById("vmThumb").addEventListener("input",e=>{ document.documentElement.style.setProperty("--thumb",e.target.value+"px"); document.getElementById("thumbSize").value=e.target.value; persistState(); });
 
 /* ---- Mobile export: push the field pack to the PRIVATE data repo via the GitHub API ----
    Token + repo live ONLY in this browser's localStorage — never in the .json, never in the public repo. */
@@ -2518,7 +2493,7 @@ async function repoBranch(){ if(_branch) return _branch;
   return "main"; }
 /* Read a JSON file. With a token: fresh from the API, with its sha (needed to write back safely).
    Without one: the public raw copy. A matching ETag answers "unchanged" for free. */
-const TOKEN_BAD="Your access token was rejected or has expired \u2014 paste a new one in Tools \u2192 Settings";
+const TOKEN_BAD="Your access token was rejected or has expired \u2014 paste a new one in File \u2192 Settings";
 async function repoReadJson(path,etag){
   const tok=ghRaw().token;
   if(tok&&!ON.denied){
@@ -2709,7 +2684,7 @@ function onLocalChanged(){
   try{ localStorage.setItem(uiSettingsKey(),JSON.stringify(uiSettings())); }catch(e){}
   if(!canEdit()){
     if(onDirty()){ applyOnline(ON.base); ON.cleanJ=canonJ(serializeOnline()); tagUndoStack=[]; tagRedoStack=[]; onRefreshUI();
-      if(Date.now()-_roToastT>4000){ _roToastT=Date.now(); loadNote("View only — add your access token in Tools → Settings to make changes"); setTimeout(()=>loadNote(""),4500); } }
+      if(Date.now()-_roToastT>4000){ _roToastT=Date.now(); loadNote("View only — add your access token in File → Settings to make changes"); setTimeout(()=>loadNote(""),4500); } }
     return; }
   onCacheLocal(); scheduleOnlineSave(400); pumpUploads(); scheduleAutoExport(); updateSaveBtn();   // sent almost at once: closing soon after an edit rarely finds it unsaved
 }
@@ -2987,7 +2962,7 @@ function showProjectPicker(msg){
     m.addEventListener("mousedown",e=>{ if(e.target===m&&ON.pid) m.classList.remove("show"); }); }
   const repo=onRepo(), edit=!!ghRaw().token;
   m.innerHTML='<div class="yn-win pj-win"><h3>Projects</h3>'+(msg?'<div class="pj-msg">'+esc(msg)+'</div>':'')
-    +(repo?'<div class="pj-list" id="pjList"><div class="pj-empty">Loading…</div></div>':'<div class="pj-empty">No data repository yet — open a shared ActionMap link, or set the repository in <b>Tools → Settings</b>.</div>')
+    +(repo?'<div class="pj-list" id="pjList"><div class="pj-empty">Loading…</div></div>':'<div class="pj-empty">No data repository yet — open a shared ActionMap link, or set the repository in <b>File → Settings</b>.</div>')
     +'<div class="yn-btns">'+(repo&&edit?'<button class="yn-no" id="pjNew" type="button" title="Start a new, empty project in '+esc(repo)+'">New project…</button>':'')
     +'<button class="yn-no" id="pjSet" type="button">Settings…</button>'+(ON.pid?'<button class="yn-yes" id="pjClose" type="button">Close</button>':'')+'</div></div>';
   m.classList.add("show");
@@ -3012,7 +2987,7 @@ async function renameProject(pid,name){
   await readProjects(); neatUrl();
 }
 async function newProjectFlow(){
-  if(!ghRaw().token||!onRepo()){ alert("Creating a project needs the data repository and your access token — Tools → Settings."); openSettings(); return; }
+  if(!ghRaw().token||!onRepo()){ alert("Creating a project needs the data repository and your access token — File → Settings."); openSettings(); return; }
   const name=prompt("Name for the new project:",""); if(name==null||!name.trim()) return;
   try{ loadNote("Creating “"+name.trim()+"”…"); const pid=await createProject(name.trim()); await openProject(pid); logChange("Created the project"); }
   catch(e){ loadNote(""); alert("Couldn't create the project: "+(e.message||e)); }
@@ -3032,9 +3007,23 @@ let _legacyAvail=false;
 
 /* ---- view-only: viewers can look around; anything that would change the project says why it can't ---- */
 function roBlock(){ if(!isOnline()||canEdit()) return false;
-  loadNote(ghRaw().token?"This access token can't change "+onRepo()+" — view only":"View only — add your access token in Tools → Settings to make changes"); setTimeout(()=>loadNote(""),4500); return true; }
+  loadNote(ghRaw().token?"This access token can't change "+onRepo()+" — view only":"View only — add your access token in File → Settings to make changes"); setTimeout(()=>loadNote(""),4500); return true; }
 
 /* ---- Help > About: save status, project + link, access, app version, where the data lives ---- */
+/* ---- Help → How to use: the short manual ---- */
+function showGuide(){
+  let m=document.getElementById("guideModal");
+  if(!m){ m=document.createElement("div"); m.id="guideModal"; m.className="ynmodal"; document.body.appendChild(m); m.addEventListener("mousedown",e=>{ if(e.target===m) m.classList.remove("show"); }); }
+  const sec=(h,items,ord)=>'<h4>'+h+'</h4><'+(ord?'ol':'ul')+'>'+items.map(t=>'<li>'+t+'</li>').join("")+'</'+(ord?'ol':'ul')+'>';
+  m.innerHTML='<div class="yn-win pj-win guide-win"><h3>How to use ActionMap</h3>'
+    +sec("Getting started",["<b>File \u2192 Settings</b>: paste your GitHub access token once (it stays in this browser only). Without it you can view but not change anything.","<b>File \u2192 Projects</b> opens a project; <b>New project</b> starts one. <b>Share link</b> copies a link anyone can open."],true)
+    +sec("Photos",["Paste (Ctrl+V), drag photos onto the map, or use <b>File \u2192 Add photos</b>. Photos with GPS land where they were taken; others go where you drop them.","Click a dot or bubble to open its photos. Draw on a photo with the pencil (arrows, boxes, text).","To move a dot: open its photo (or pick dots with <b>Select area</b>), then drag it. Drop it on another dot to group them; right-click a bubble to spread it out again. The photo\u2019s true GPS is always kept."],true)
+    +sec("Actions",["Type in <b>+ New action</b> and press Enter. Add <b>sub-actions</b> under it; tick them off as they\u2019re done.","<b>On hold</b> / <b>Done</b> on each card set its status; the pills at the top (Open / On hold / Done) and the date bar choose what shows on the list, map and gallery.","Link photos to an action: select the action, then right-click a photo dot. The first photo is the cover \u2014 drag in the gallery to reorder.","The <b>copy</b> icon on a card copies one picture of the action (title, map, photos, sub-actions) to paste into chat or email."],true)
+    +sec("Phone",["Open the same link on your phone: the map shows every action; swipe the cards, tap <b>View</b> to open one.","Tick sub-actions, add photos (camera or gallery) and new actions in the field \u2014 they reach the desktop by themselves."])
+    +sec("Reports",["The <b>XLSX</b> and <b>PDF</b> buttons beside \u201cActions\u201d export every action with its status, sub-actions and photos. The Excel file also has a <b>Sub-actions</b> tab with dates, a \u201cChanged in last 24 h\u201d filter and a Notes column \u2014 handy for end-of-shift reports.","<b>File \u2192 Download backup</b> saves a zip of the whole project."])
+    +sec("Good to know",["Everything saves by itself. The dot on the <b>save</b> button is green when it\u2019s all online, amber while a change is on its way.","<b>Ctrl+Z</b> undoes (File \u2192 Undo), <b>Ctrl+Y</b> redoes \u2014 deleting an action asks first and can be undone.","<b>Ctrl+K</b> jumps to the search box. <b>View</b> holds the map imagery, your location, clustering and thumbnail size.","Projects live in your GitHub data repository \u2014 nothing is stored only on this PC."])
+    +'<div class="yn-btns"><button class="yn-yes" id="guideClose" type="button">Close</button></div></div>';
+  m.classList.add("show"); m.querySelector("#guideClose").onclick=()=>m.classList.remove("show"); }
 function showAbout(){
   renderSaveStatus();
   let m=document.getElementById("aboutModal");
@@ -3045,7 +3034,7 @@ function showAbout(){
     +row("Saved",esc(st||(on?"Up to date":"Not saved \u2014 stored on this PC only")))
     +row("Project",esc(on?(ON.name||ON.pid):(loadedJsonName||"None open")))
     +(on?row("Link",'<span id="abLink">'+esc(shareLink())+'</span><button id="abCopy" type="button">Copy</button>'):"")
-    +(on?row("Access",canEdit()?"You can edit":"View only"+(ghRaw().token?" (this access token can\u2019t change it)":" \u2014 add your access token in Tools \u2192 Settings to edit")):"")
+    +(on?row("Access",canEdit()?"You can edit":"View only"+(ghRaw().token?" (this access token can\u2019t change it)":" \u2014 add your access token in File \u2192 Settings to edit")):"")
     +row("Data",onRepo()?'<a href="https://github.com/'+esc(onRepo())+'" target="_blank" rel="noopener">github.com/'+esc(onRepo())+'</a>':"Not set up")
     +row("Version",(isNaN(d)?"\u2014":"Published "+d.toLocaleString(undefined,{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}))+(window._updAvail?' \u2014 <b>a newer version is available</b><button id="abUpd" type="button">Refresh</button>':(/^https?:$/.test(location.protocol)?" \u2014 up to date":"")))
     +(((document.getElementById("saveStatus")||{}).dataset||{}).tip?row("Note",esc(document.getElementById("saveStatus").dataset.tip)):"")
@@ -3084,9 +3073,9 @@ async function migrateToOnline(){
   if(isOnline()){ if(!(await askYesNo("Move the project from this PC online?","This closes “"+ON.name+"” on screen and loads the project that’s stored on this PC so it can be moved online.","Yes, continue"))) return;
     Object.assign(ON,{pid:null,live:false}); try{ localStorage.removeItem("pmProject"); }catch(e){} clearAll(false); await bootLegacy(); }
   if(!photos.length&&!actions.length){ alert("There's no project stored on this PC to move."); return; }
-  if(!ghRaw().token&&!onRepo()){ alert("Set the data repository and your access token first (Tools → Settings)."); openSettings(); return; }
+  if(!ghRaw().token&&!onRepo()){ alert("Set the data repository and your access token first (File → Settings)."); openSettings(); return; }
   if(!onRepo()) await ghFindRepo();
-  if(!ghRaw().token||!onRepo()){ alert("Set the data repository and your access token first (Tools → Settings)."); openSettings(); return; }
+  if(!ghRaw().token||!onRepo()){ alert("Set the data repository and your access token first (File → Settings)."); openSettings(); return; }
   let mig=null; try{ mig=JSON.parse(localStorage.getItem("pmMig")||"null"); }catch(e){}
   if(!mig||mig.repo!==onRepo()){
     const def=String(loadedJsonName||folderName||"My project").replace(/\.json$/i,"");
@@ -3680,7 +3669,6 @@ function showNewPhotos(list){
     if(nameFilter){ nameFilter=""; document.getElementById("nameFilter").value=""; }
     if(tagFilters.size){ tagFilters.clear(); }
   }
-  if(list.some(p=>p.lat==null)&&!showNoGeo){ showNoGeo=true; const c=document.getElementById("showNoGeo"); if(c) c.checked=true; }
   selSet=new Set(list.map(p=>p.id)); setAreaBtn();
   buildCluster(); renderClusters(); renderActions(); renderMapTags(); updateGallery(); persistState();
   if(loc.length>1) map.fitBounds(L.latLngBounds(loc.map(p=>[p.lat,p.lng])),{padding:[60,60],maxZoom:18}); else if(loc.length===1) map.flyTo([loc[0].lat,loc[0].lng],17);
@@ -4049,7 +4037,6 @@ setAreaBtn();
 /* measure tool */
 const measureBtn=document.getElementById("measureBtn");
 measureBtn.addEventListener("click",toggleMeasure);
-document.getElementById("setIgnoreLoc").addEventListener("change",e=>setIgnoreLoc(e.target.checked));
 setIgnoreLoc(ignoreLoc);
 function setMeasureBtn(){ if(measuring){ measureBtn.textContent="Finish [M]"; measureBtn.classList.add("active"); } else { measureBtn.textContent=measureLayer?"Clear measure [M]":"Measure [M]"; measureBtn.classList.remove("active"); } }
 function toggleMeasure(){   // Measure → Finish (keeps the line) → Clear measure
@@ -4075,7 +4062,6 @@ function drawMeasure(preview){
 setMeasureBtn();
 
 /* gallery */
-document.getElementById("showNoGeo").addEventListener("change",e=>{ showNoGeo=e.target.checked; updateGallery(); persistState(); });
 document.getElementById("sortSel").addEventListener("change",e=>{ currentSort=e.target.value; updateGallery(); persistState(); });
 let _nfT=null;
 document.getElementById("nameFilter").addEventListener("input",e=>{ nameFilter=e.target.value.trim().toLowerCase(); clearTimeout(_nfT); _nfT=setTimeout(()=>{ buildCluster(); renderClusters(); updateGallery(); renderPhotoTags(curPhoto()); },140); });
@@ -5138,6 +5124,7 @@ document.getElementById("miAddPhotos").addEventListener("click",addPhotosFlow);
 document.getElementById("addPhotosInput").addEventListener("change",e=>{ const fs=Array.from(e.target.files||[]).filter(f=>/^image\//i.test(f.type||"")||IMG_RE.test(f.name||"")); e.target.value=""; if(fs.length) ingestAdhoc(fs.map(f=>({name:f.name,path:f.name,getFile:async()=>f}))); });
 document.getElementById("miBackup").addEventListener("click",downloadBackup);
 document.getElementById("miAbout").addEventListener("click",showAbout);
+document.getElementById("miGuide").addEventListener("click",showGuide);
 document.getElementById("miMigrate").addEventListener("click",migrateToOnline);
 document.getElementById("btnClear").addEventListener("click",async()=>{
   if(photos.length||actions.length){
@@ -5214,7 +5201,7 @@ function renderSaveStatus(){ updateSaveBtn(); const el=document.getElementById("
     const upN=photos.filter(p=>!p.h&&!p._upDead).length;
     if(ON.tokenBad){ t="Access token rejected"; tip=TOKEN_BAD; cls="bad"; }
     else if(!ON.live) t="Opening\u2026";
-    else if(!canEdit()){ t="View only"; tip=ghRaw().token?"This access token can't change "+onRepo()+".":"Add your access token in Tools \u2192 Settings to make changes."; cls="ro"; }
+    else if(!canEdit()){ t="View only"; tip=ghRaw().token?"This access token can't change "+onRepo()+".":"Add your access token in File \u2192 Settings to make changes."; cls="ro"; }
     else if(ON.wait){ t="GitHub is pacing uploads \u2014 resuming in "+Math.max(1,Math.ceil((ON.wait-Date.now())/60000))+" min"; }
     else if(upN) t="Uploading "+upN+" photo"+(upN===1?"":"s")+"\u2026";
     else if(ON.busy) t="Saving\u2026";
@@ -5448,7 +5435,7 @@ function applyUiSettings(s){ s=s||{};
   if(s.actW) document.documentElement.style.setProperty("--act-w",s.actW);
   if(s.covW) document.documentElement.style.setProperty("--cov-w",s.covW);
   if(s.baseLayer==="esri"){ map.removeLayer(google); esri.addTo(map); } else if(s.baseLayer==="none"){ map.removeLayer(google); map.removeLayer(esri); } else if(s.baseLayer==="google"&&!map.hasLayer(google)){ map.removeLayer(esri); google.addTo(map); }
-  showNoGeo=!!s.showNoGeo; document.getElementById("showNoGeo").checked=showNoGeo;
+  showNoGeo=true;   // photos without a location always list in the gallery (the toggle is gone)
   if(Array.isArray(s.recentTags)) recentTags=s.recentTags.slice(0,10);
   actShowOpen=s.actShowOpen!==false; actShowHold=!!s.actShowHold; actShowDone=!!s.actShowDone; actOnlyMap=false; setTab(s.rightTab==="gallery"?"gallery":"photo"); renderActions();
   currentSort=s.sortBy||"date_desc"; document.getElementById("sortSel").value=currentSort;
