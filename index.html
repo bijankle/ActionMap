@@ -1633,6 +1633,12 @@ function openDotMenu(p,ev){
   if(selSet.size) mkCtxItem("Deselect all",clearSel);
   showCtxAt(ev.clientX,ev.clientY);
 }
+async function confirmDeletePhotos(list){   // deleting is rare: always ask first
+  list=list.filter(Boolean); if(!list.length) return;
+  const one=list.length===1, nm=one?(list[0].name||"this photo"):list.length+" photos";
+  const acts=[...new Set(list.flatMap(p=>(p.acts||[]).filter(id=>actById(id))))].map(id=>actNo(id));
+  if(!(await askYesNo("Delete "+(one?"photo":nm)+"?",(one?"\u201c"+nm+"\u201d":nm)+" will be removed from the project"+(acts.length?" and from action"+(acts.length>1?"s ":" ")+acts.join(", "):"")+". Ctrl+Z brings it back.","Delete",true))) return;
+  removePhotos(list.filter(p=>photos.includes(p))); }
 function removePhotos(list){
   const items=[];
   for(const p of list){ const i=photos.indexOf(p); if(i>=0) items.push({photo:p,index:i}); }
@@ -4222,7 +4228,7 @@ function updateGallery(keepLimit){
       if(selSet.size){ selSet=new Set([p.id]); body.querySelectorAll(".card").forEach(c=>c.classList.toggle("sel",Number(c.dataset.id)===p.id)); setAreaBtn(); buildCluster(); renderClusters(); }   // plain click collapses the selection to just this photo
       openViewer(p); });
     const gx=el.querySelector(".gal-x");
-    if(gx) gx.addEventListener("click",e=>{ e.stopPropagation(); e.preventDefault(); unassignFromSelActs(p); });
+    if(gx) gx.addEventListener("click",e=>{ e.stopPropagation(); e.preventDefault(); confirmDeletePhotos([p]); });   // the X deletes the photo (right-click → Remove from action just unlinks it)
     el.addEventListener("contextmenu",e=>{ e.preventDefault(); e.stopPropagation(); openDotMenu(p,e); });   // same menu as the map dots
     el.addEventListener("mouseenter",()=>highlightDot(p)); el.addEventListener("mouseleave",highlightCurrent);
     if(orderAct){   // drag to rearrange this action's photo order (first = cover)
@@ -4281,7 +4287,7 @@ function cardHtml(p,isNoGeo){
   const img=src?'<img class="thumb" src="'+src+'" loading="lazy" decoding="async" alt="">':'<div class="ph">no image</div>';
   const paths=pathsOf(p); const title=esc(paths.length?paths.join("\n"):p.name);   // all folders this photo was found in
   const dupe=(paths.length>1&&!actionFilter)?'<div class="hq" style="left:auto;right:5px;background:#8f600b;color:#fff;border-color:#8f600b" title="In '+paths.length+' folders">\u00D7'+paths.length+'</div>':"";
-  const ax=actionFilter?'<button class="gal-x" type="button" title="Remove this photo from the selected action'+(selActs.size>1?'s':'')+'">&times;</button>':"";
+  const ax=actionFilter?'<button class="gal-x" type="button" title="Delete this photo (asks first; Ctrl+Z brings it back)">&times;</button>':"";
   return '<div class="card'+(selSet.has(p.id)?' sel':'')+'" data-id="'+p.id+'" title="'+title+'">'+flag+dupe+ax+img+'<div class="meta"><div class="fn">'+esc(p.name)+'</div><div class="sub">'+esc(sub)+'</div></div></div>';
 }
 function sortPhotos(arr,center){ const a=arr.slice();
@@ -4802,6 +4808,9 @@ lbStage.addEventListener("contextmenu",e=>{ if(markTool==="poly"&&draft&&draft.t
   ctxMenu.innerHTML="";   // the photo as it looks here: the whole picture with its markups baked in
   ctxMenu.appendChild(mkCtxItem("Copy image",()=>copyWholePhoto(p)));
   ctxMenu.appendChild(mkCtxItem("Save image as\u2026",()=>saveWholePhoto(p)));
+  const ro=!canEdit()&&isOnline();
+  for(const id of (p.acts||[]).filter(id=>actById(id))){ const a=actById(id); ctxMenu.appendChild(mkCtxItem("Remove from action "+actNo(a),()=>unassignAct(a,p),ro,"View only")); }   // unlinks it; the photo stays
+  ctxMenu.appendChild(mkCtxItem("Delete photo\u2026",()=>confirmDeletePhotos([p]),ro,"View only"));
   showCtxAt(e.clientX,e.clientY); });
 function copyWholePhoto(p){
   const blobP=renderViewCanvas(p,2048,null,true).then(c=>new Promise((ok,no)=>c.toBlob(b=>b?ok(b):no(new Error("render")),"image/png")));
