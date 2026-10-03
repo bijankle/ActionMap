@@ -347,6 +347,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .datebar.hidden{display:none;}
   .datebar .vals{display:flex;justify-content:space-between;font-family:var(--font);font-size:var(--fl);color:var(--accent2);margin-bottom:2px;}
   .slider-wrap{position:relative;height:16px;}
+  .pdot{width:18px;height:18px;box-sizing:border-box;border-radius:50%;opacity:.95;}   /* a single photo dot */
   .snap-ring{width:52px;height:52px;border-radius:50%;border:3px dashed var(--gold);background:#e8b44a33;box-sizing:border-box;pointer-events:none;}   /* drag onto a dot: the drop target */
   .snap-tip{position:absolute;left:60px;top:-10px;background:#1d2430;color:#fff;font:600 13px var(--font);padding:5px 10px;border-radius:8px;white-space:nowrap;pointer-events:none;}
   .act-dates{padding:0 12px 10px;} .act-dates[hidden]{display:none;}   /* date window: two handles over a bar chart of actions created per day */
@@ -1500,7 +1501,8 @@ function addSingleDot(p,lat,lng,isSel){
   const num=photoActNum(p);
   const dot=(num!=null)
     ?L.marker([lat,lng],{interactive:false,icon:L.divIcon({className:"",html:'<div class="num-dot">'+actNo(num)+'</div>',iconSize:[34,34],iconAnchor:[17,17]})})
-    :(()=>{ const st=photoStatus(p), cc=DOT_COL[st]; return L.circleMarker([lat,lng],{renderer:dotRenderer,radius:8,color:cc[1],weight:st==="hold"?3:2,fillColor:cc[0],fillOpacity:.95,interactive:false}); })();
+    :(()=>{ const st=photoStatus(p), cc=DOT_COL[st], w=st==="hold"?3:2;   // a marker (not the shared canvas): it keeps its size while the map zooms, like the bubbles
+      return L.marker([lat,lng],{interactive:false,keyboard:false,icon:L.divIcon({className:"",html:'<div class="pdot" style="background:'+cc[0]+';border:'+w+'px solid '+cc[1]+'"></div>',iconSize:[18,18],iconAnchor:[9,9]})}); })();
   if(isSel){ const mk=dotMarkers.get(p.id); mk.hit=hit; mk.dot=dot; }
   markerLayer.addLayer(hit); markerLayer.addLayer(dot);
 }
