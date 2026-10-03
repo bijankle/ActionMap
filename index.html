@@ -1443,7 +1443,8 @@ function renderClusters(){
         if(Date.now()-dotDropT<450) return;   // the click after dropping a dragged cluster must not zoom
         try{ const leaves=cluster.getLeaves(cid,Infinity);
           { const ids=leaves.map(f=>f.properties.pid), acts=new Set(); ids.forEach(id=>{ const q=photoById(id); (q&&q.acts||[]).forEach(a=>{ if(actById(a)) acts.add(a); }); });
-            if(acts.size<2){ showSpot(ids); return; } }   // one action (or none): show its photos; 2+ actions: zoom in to split them
+            if(acts.size===1){ const a=actById([...acts][0]), first=actPhotos(a).find(q=>ids.includes(q.id))||photoById(ids[0]); selectActionOf(first); setTab("photo"); openViewer(first); return; }   // one action: select it, open the photo with its action's photos below
+            if(!acts.size){ showSpot(ids); return; } }   // no action: these photos in the gallery; 2+ actions: zoom in to split them
           if(leaves.length){
             const bb=L.latLngBounds(leaves.map(f=>[f.geometry.coordinates[1],f.geometry.coordinates[0]]));
             const ez=Math.min(cluster.getClusterExpansionZoom(cid),22);   // zoom at which this cluster actually breaks apart
@@ -1487,7 +1488,7 @@ function addSingleDot(p,lat,lng,isSel){
       if(!selSet.size&&lb.classList.contains("open")&&curPhoto()&&curPhoto()!==p) selSet.add(curPhoto().id);   // the open photo counts as the first selected item
       if(selSet.has(p.id)) selSet.delete(p.id); else selSet.add(p.id); setAreaBtn(); buildCluster(); renderClusters(); return; }   // ctrl+click toggles the dot in the selection
     if(selSet.size){ selSet=new Set([p.id]); setAreaBtn(); buildCluster(); renderClusters(); }   // plain click collapses the selection to just this photo
-    openViewer(p); });
+    selectActionOf(p); openViewer(p); });
   hit.on("contextmenu",e=>{ L.DomEvent.stop(e.originalEvent); openDotMenu(p,e.originalEvent); });
   const num=photoActNum(p);
   const dot=(num!=null)
@@ -1964,6 +1965,12 @@ function clickAction(a,ev,deferNav){
   if(!selActs.has(a.id)||ctrl||shift) return;   // multi-select gestures only change the selection — no navigation
   if(!deferNav) actNavigate(a);
 }
+function selectActionOf(p){   // a photo opened from the map selects its action (no map move) — the photo view's strip then shows that action's photos
+  const ids=(p&&Array.isArray(p.acts)?p.acts:[]).filter(id=>actById(id)); if(!ids.length) return;
+  const aid=ids.find(id=>selActs.has(id))!=null?ids.find(id=>selActs.has(id)):ids[0];
+  if(selActs.size===1&&selActs.has(aid)) return;
+  selActs=new Set([aid]); lastActClick=aid; rebuildActionFilter(); refreshActSelClasses(); drawActionRings(); updateGallery();
+  const row=document.querySelector('#actList .act-row[data-aid="'+aid+'"]'); if(row) row.scrollIntoView({block:"nearest"}); }
 /* "Relevant area" previews: on a plain action click, each spatial group of the action's photos
    gets a hover-preview-sized mini-map floating above it, zoomed to just that group's photos.
    They stay until the map is touched (pan / zoom / any click) or the selection changes. */
