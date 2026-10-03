@@ -6658,24 +6658,50 @@ function mBuildHomeMap(acts){
       const loc=a._new?(mNewActs()[a._ni]||{}).loc:a.loc;
       if(loc&&isFinite(loc.lat)&&isFinite(loc.lng)) pts.push({lat:+loc.lat,lng:+loc.lng,k,a}); });
     const lay=L.layerGroup().addTo(m2);
-    const draw=()=>{ lay.clearLayers(); const z=m2.getZoom(), groups=[];
-      for(const p of pts){ const q=m2.project([p.lat,p.lng],z); const g=groups.find(g2=>Math.hypot(g2.x-q.x,g2.y-q.y)<46);
-        if(g) g.items.push(p); else groups.push({x:q.x,y:q.y,items:[p]}); }
-      const dot=(k,a,ll,dx,dy)=>{ const st=mStatus(a);   // one action's label; dx/dy shift it off its spot (a fanned-out stack)
+    /* No bubbles: one label per action at each spot; a crowded spot spreads its labels on a ferris wheel
+       round it (a spoke back to each one's own place), like the desktop. Wheels that would touch join. */
+    const draw=()=>{ lay.clearLayers(); const z=m2.getZoom(), V=window._mWheel||"wheel", groups=[];
+      for(const p of pts){ const q=m2.project([p.lat,p.lng],z), t=Object.assign({},p,{q}); const g=groups.find(g2=>Math.hypot(g2.x-q.x,g2.y-q.y)<46);
+        if(g) g.items.push(t); else groups.push({x:q.x,y:q.y,items:[t]}); }
+      const dot=(k,a,ll,dx,dy)=>{ const st=mStatus(a);   // one action's label; dx/dy shift it off its spot
         L.marker(ll,{zIndexOffset:k===mFocusK?800:st==="open"?300:st==="hold"?100:0,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(a._new?' new':st==="open"?'':' '+st)+(k===mFocusK?' focus':'')+(k===mFlashK?' flash':'')+'">'+(a._new?'•':actNo(a))+'</div>',iconSize:[0,0],iconAnchor:[-dx,-dy]})})
-          .on("click",()=>mFocusCard(k)).addTo(lay); };   // a dot brings its card up; View opens it
-      for(const g of groups){ const ks=[...new Set(g.items.map(p=>p.k))], ll=m2.unproject([g.x,g.y],z);
-        if(ks.length===1) dot(ks[0],g.items[0].a,ll,0,0);
-        else if(z>=M_FOCUS_Z){   // zoomed in to area level and still crowded: the labels fan out in rows above the spot, a line from each down to its own place
-          const as=ks.map(k=>({k,a:g.items.find(p=>p.k===k).a,q:m2.project(g.items.find(p=>p.k===k),z)})).sort((x,y)=>String(actNo(x.a)).localeCompare(String(actNo(y.a))));
-          const n=as.length, cols=Math.min(n,4);
-          as.forEach((o,i)=>{ const r=Math.floor(i/cols), rc=Math.min(cols,n-r*cols); o.dx=((i%cols)-(rc-1)/2)*50; o.dy=-34-r*34; o.ox=Math.round(o.q.x-g.x); o.oy=Math.round(o.q.y-g.y); });
-          const svg=as.map(o=>'<line x1="'+o.ox+'" y1="'+o.oy+'" x2="'+o.dx+'" y2="'+(o.dy+14)+'"/>').join("")+as.map(o=>'<circle cx="'+o.ox+'" cy="'+o.oy+'" r="4"/>').join("");
-          L.marker(ll,{interactive:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1">'+svg+'</svg>',iconSize:[0,0],iconAnchor:[0,0]})}).addTo(lay);
-          as.forEach(o=>dot(o.k,o.a,ll,o.dx,o.dy)); }
-        else { const sts=g.items.map(p=>mStatus(p.a)), cs=sts.includes("open")?"":sts.includes("hold")?" hold":" done";
-          L.marker(ll,{zIndexOffset:500,icon:L.divIcon({className:"",html:'<div class="ma-cl'+cs+(ks.includes(mFocusK)?' focus':'')+(ks.includes(mFlashK)?' flash':'')+'"><i>\u00d7</i>'+ks.length+'</div>',iconSize:[32,32],iconAnchor:[16,16]})})
-            .on("click",()=>mZoomBunch(g.items)).addTo(lay); } } };
+          .on("click",()=>mFocusCard(k)).addTo(lay); };   // a label brings its card up; View opens it
+      const settle=g=>{ const by=new Map(); for(const t of g.items) if(!by.has(t.k)) by.set(t.k,t); g.labs=[...by.values()];
+        g.cx=g.labs.reduce((s2,t)=>s2+t.q.x,0)/g.labs.length; g.cy=g.labs.reduce((s2,t)=>s2+t.q.y,0)/g.labs.length; };
+      groups.forEach(settle);
+      const safe=()=>{ const pb=m2.getPixelBounds(), mc=m2.getContainer().getBoundingClientRect(), flt=document.querySelector(".ma-mapwrap .ma-flt"), row=document.getElementById("mPeeks");
+        const top=flt?Math.max(0,flt.getBoundingClientRect().bottom-mc.top):0, rr=row&&!row.classList.contains("none")?row.getBoundingClientRect():null;
+        const bot=rr&&rr.height?Math.min(mc.height,rr.top-mc.top):mc.height;   // under the Open/On hold/Done pills, above the cards
+        return {x0:pb.min.x,x1:pb.max.x,y0:pb.min.y+top,y1:pb.min.y+bot}; };
+      const Rmin=n=>n<2?0:V==="arc"?Math.max(58,n*50/Math.PI):Math.max(n===2?38:n===3?42:48,n*62/(2*Math.PI));   // the least room that keeps labels apart
+      const R=n=>{ if(n<2) return 0; const base=Rmin(n);
+        return V==="roomy"?Math.max(base*1.3,56):V==="arc"?Math.max(base,n*60/Math.PI):base; };   // roomy: more room for a finger; arc: a half wheel above the spot
+      const occ=g=>R(g.labs.length)+24;
+      for(let again=true;again;){ again=false;
+        for(let i=0;i<groups.length&&!again;i++) for(let j=i+1;j<groups.length&&!again;j++){ const a=groups[i], b=groups[j];
+          if(Math.hypot(a.cx-b.cx,a.cy-b.cy)<occ(a)+occ(b)){ a.items=a.items.concat(b.items); settle(a); groups.splice(j,1); again=true; } } }
+      for(const g of groups){ const n=g.labs.length;
+        if(n===1){ const t=g.labs[0]; dot(t.k,t.a,m2.unproject([t.q.x,t.q.y],z),0,0); continue; }
+        const sb=safe(), Rr=Math.max(Rmin(n),Math.min(R(n),(sb.x1-sb.x0-64)/2,V==="arc"?sb.y1-sb.y0-44:(sb.y1-sb.y0-44)/2)); let ls;   // a big wheel shrinks to fit the screen (never so far that labels touch)
+        if(V==="arc"){   // left-to-right by spot, spread over the upper half circle
+          ls=g.labs.slice().sort((x,y)=>x.q.x-y.q.x||String(actNo(x.a)).localeCompare(String(actNo(y.a))));
+          ls.forEach((t,i)=>{ const ang=-Math.PI+(i+0.5)*Math.PI/n; t.lx=g.cx+Math.cos(ang)*Rr; t.ly=g.cy+Math.sin(ang)*Rr; }); }
+        else {
+          const ang=t=>{ const dx=t.q.x-g.cx, dy=t.q.y-g.cy; return Math.hypot(dx,dy)<3?null:Math.atan2(dy,dx); };
+          ls=g.labs.map(t=>Object.assign(t,{an:ang(t)})).sort((x,y)=>{ if(x.an==null||y.an==null||Math.abs(x.an-y.an)<1e-6) return (x.an==null?-9:x.an)-(y.an==null?-9:y.an)||String(actNo(x.a)).localeCompare(String(actNo(y.a))); return x.an-y.an; });
+          let best=null; for(let k=0;k<n*12;k++){ const off=-Math.PI/2+k*2*Math.PI/(n*12); let cost=0;   // turn the wheel so labels sit on their own spot's side
+            ls.forEach((t,i)=>{ if(t.an==null) return; let d=Math.abs(off+i*2*Math.PI/n-t.an)%(2*Math.PI); if(d>Math.PI) d=2*Math.PI-d; cost+=d; }); if(!best||cost<best.c-1e-9) best={c:cost,off}; }
+          ls.forEach((t,i)=>{ const a2=best.off+i*2*Math.PI/n; t.lx=g.cx+Math.cos(a2)*Rr; t.ly=g.cy+Math.sin(a2)*Rr; }); }
+        { const xs=ls.map(t=>t.lx), ys=ls.map(t=>t.ly);   // keep the whole wheel in the clear part of the screen: slide it in from an edge (spokes still reach each spot)
+          let dx=0, dy=0; const l=Math.min(...xs)-30, r=Math.max(...xs)+30, t0=Math.min(...ys)-20, b=Math.max(...ys)+20;
+          if(g.cx>=sb.x0&&g.cx<=sb.x1&&g.cy>=sb.y0&&g.cy<=sb.y1){   // only a wheel whose spot is in view; one off screen stays put
+            if(r-l>sb.x1-sb.x0) dx=(sb.x0+sb.x1-l-r)/2; else if(l<sb.x0) dx=sb.x0-l; else if(r>sb.x1) dx=sb.x1-r;   // still too wide: centred
+            if(b-t0>sb.y1-sb.y0) dy=(sb.y0+sb.y1-t0-b)/2; else if(t0<sb.y0) dy=sb.y0-t0; else if(b>sb.y1) dy=sb.y1-b; }
+          if(dx||dy) for(const t of ls){ t.lx+=dx; t.ly+=dy; } }
+        const spots=new Set(); const svg=ls.map(t=>{ spots.add(Math.round(t.q.x-g.cx)+","+Math.round(t.q.y-g.cy)); return '<line x1="'+(t.q.x-g.cx).toFixed(1)+'" y1="'+(t.q.y-g.cy).toFixed(1)+'" x2="'+(t.lx-g.cx).toFixed(1)+'" y2="'+(t.ly-g.cy).toFixed(1)+'"/>'; }).join("")
+          +[...spots].map(t=>{ const [x,y]=t.split(","); return '<circle cx="'+x+'" cy="'+y+'" r="4"/>'; }).join("");
+        L.marker(m2.unproject([g.cx,g.cy],z),{interactive:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1">'+svg+'</svg>',iconSize:[0,0],iconAnchor:[0,0]})}).addTo(lay);
+        for(const t of ls) dot(t.k,t.a,m2.unproject([t.lx,t.ly],z),0,0); } };
     const bb=pts.length?L.latLngBounds(pts.map(p=>[p.lat,p.lng])):null;
     const me=(mGeo&&!ignoreLoc)?mGeo:null;   // Ignore my location: no YOU ARE HERE, and the view fits the actions only
     if(me){ m2._geoPin=L.marker([me.lat,me.lng],{icon:youAreHereIcon(30),interactive:false,zIndexOffset:900}).addTo(m2); if(bb) bb.extend([me.lat,me.lng]); }
@@ -6688,8 +6714,8 @@ function mBuildHomeMap(acts){
       if(bb){ if(pts.length>1||me) m2.fitBounds(bb,{padding:[40,40],maxZoom:18}); else m2.setView(bb.getCenter(),17); }
       else if(me) m2.setView([me.lat,me.lng],16); else m2.setView([0,0],2); };
     fit(); draw();
-    m2.on("zoomend",draw);
     m2.on("moveend",()=>mSyncCards());
+    m2.on("moveend",draw);   // after a zoom or pan, wheels settle in the clear part of the screen again
     m2.on("moveend",()=>{ mHomeView={c:m2.getCenter(),z:m2.getZoom()}; });
     m2.on("dragstart",()=>{ mHomeTouched=true; mCardsHold=null; });
     { const fb=document.getElementById("mFitB"); if(fb) fb.addEventListener("click",mFitAll); }   // moving the map yourself: the cards follow the dots again
