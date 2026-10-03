@@ -103,7 +103,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .pj-row button:hover{color:var(--ink);border-color:var(--accent);}
   .pj-empty{font-size:var(--fb);color:var(--muted);padding:10px 2px;line-height:1.5;}
   .savestat.ro{color:var(--accent2);font-weight:600;cursor:pointer;}
-  body.view-only .act-new,body.view-only .st-new,body.view-only #lbEdit,body.view-only .act-del,body.view-only .st-x,body.view-only .gal-x{display:none!important;}
+  body.view-only .act-add,body.view-only .act-form,body.view-only .st-new,body.view-only #lbEdit,body.view-only .act-del,body.view-only .st-x,body.view-only .gal-x{display:none!important;}
   .yn-win{width:min(460px,92vw);background:var(--panel);border-radius:12px;border:1px solid var(--line2);box-shadow:0 24px 64px #1e1f2255;padding:20px 22px 16px;}
   .yn-win h3{margin:0 0 10px;font-size:var(--fh);color:var(--ink);}
   .yn-msg{font-size:var(--fb);line-height:1.55;color:var(--text);white-space:pre-line;}
@@ -555,7 +555,31 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   body.view-only .act-save{display:none!important;}
   .af-n{color:var(--dim);font-weight:500;margin-left:4px;font-variant-numeric:tabular-nums;}
   .act-tgl.on{background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);color:var(--ink);}   /* on: gold edge */
-  .act-new{padding:0 12px 10px;}
+  .act-new{padding:0 12px 10px;display:flex;gap:8px;align-items:center;}
+  .act-new input{padding-left:32px!important;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237a8591' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E") 10px center no-repeat!important;}
+  .act-add{flex-shrink:0;width:34px;height:34px;border-radius:50%;border:0;background:var(--gold);color:var(--ink);font:700 24px/1 var(--font);padding:0 0 2px;cursor:pointer;box-shadow:0 2px 6px #1d243044;}
+  .act-add:hover{filter:brightness(1.05);box-shadow:0 2px 8px #1d243066;} .act-add.on{box-shadow:0 0 0 3px #e8b44a55;}
+  /* + New action: the form takes the list's place in the panel; the whole map stays clear, the pin in its middle */
+  .act-form{margin:0 12px 12px;padding:12px 14px 14px;border-radius:12px;background:#fff;box-shadow:0 0 0 1.5px var(--gold);overflow-y:auto;min-height:0;}
+  .act-form[hidden],.act-list[hidden]{display:none!important;}
+  .af-h{display:flex;align-items:center;margin-bottom:8px;} .af-h b{flex:1;font-size:var(--fh);color:var(--ink);}
+  .af-x{border:0;background:none;font-size:24px;line-height:1;color:var(--muted);cursor:pointer;padding:0 2px;}
+  #afTitle{width:100%;box-sizing:border-box;font:inherit;font-size:var(--fb);color:var(--ink);border:1.5px solid var(--line);border-radius:9px;padding:8px 10px;resize:vertical;min-height:44px;outline:none;}
+  #afTitle:focus,#afStep:focus{border-color:var(--gold);box-shadow:var(--ctl-on);} #afTitle.need{border-color:#d0573f;box-shadow:0 0 0 3px #d0573f22;}
+  .af-l{font:700 11px var(--font);color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:12px 0 4px;}
+  .af-st{display:flex;align-items:center;gap:8px;padding:5px 2px;border-bottom:1px solid #eef0f2;font-size:var(--fb);color:var(--ink);} .af-st i{width:13px;height:13px;border:1.5px solid #9aa3ad;border-radius:3px;flex-shrink:0;} .af-st span{flex:1;min-width:0;}
+  .af-st button{border:0;background:none;color:#9aa3ad;font-size:17px;line-height:1;cursor:pointer;}
+  #afStep{width:100%;box-sizing:border-box;font:inherit;font-size:var(--fb);color:var(--ink);border:1.5px solid var(--line);border-radius:9px;padding:7px 10px;margin-top:6px;outline:none;}
+  .af-drop{display:flex;align-items:center;gap:10px;border:1.5px dashed #b9c0c8;border-radius:10px;padding:9px 10px;background:#fafbfc;font-size:12.5px;color:var(--muted);}
+  .af-drop.over{border-color:var(--gold);background:#fdf6e6;} .af-drop button{font:700 12.5px var(--font);padding:6px 10px;border-radius:8px;border:1.5px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;white-space:nowrap;}
+  .af-th{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;} .af-th:empty{display:none;}
+  .af-th span{position:relative;width:58px;height:58px;border-radius:8px;background:#dfe3e8 center/cover no-repeat;}
+  .af-th span button{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;border:0;background:var(--ink);color:#fff;font-size:13px;line-height:20px;padding:0;cursor:pointer;}
+  .af-foot{display:flex;align-items:center;gap:10px;margin-top:12px;} .af-foot span{flex:1;font-size:12px;color:var(--muted);line-height:1.3;}
+  #afGo{font:800 14px var(--font);padding:8px 16px;border-radius:18px;border:0;background:var(--gold);color:var(--ink);cursor:pointer;white-space:nowrap;} #afGo:focus-visible{box-shadow:0 0 0 3px #1d243055;outline:none;}
+  .af-pin{position:absolute;left:50%;top:50%;z-index:650;width:0;height:0;pointer-events:none;}
+  .af-pin i{position:absolute;left:-11px;top:-11px;width:22px;height:22px;border-radius:50%;background:#F28C28;border:3px solid #fff;box-sizing:border-box;box-shadow:0 0 0 2px #9A520B,0 2px 6px #0006;animation:mapin 1.4s ease-in-out infinite;}
+  .af-pin span{position:absolute;left:0;top:-42px;transform:translateX(-50%);white-space:nowrap;background:#1d2430;color:#fff;font:700 12px var(--font);padding:4px 9px;border-radius:7px;}
   .act-new input{width:100%;box-sizing:border-box;font:inherit;font-size:var(--fb);color:var(--ink);background:var(--panel2);border:1px solid var(--line2);border-radius:9px;padding:8px 10px;outline:none;}
   .act-new input:focus{border-color:var(--accent);}
   .act-new input.arm{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-tint);}
@@ -1247,7 +1271,18 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
       <button class="act-tgl" id="actShowDone" title="Done — also show finished actions, in this list and on the map (grey dots)"><i class="af-dot done"></i>Done<span class="af-n"></span></button>
 </div>
     <div class="act-dates" id="actDates" hidden><div class="ad-hist" id="adHist"></div><div class="slider-wrap"><div class="slider-track"></div><div class="slider-fill" id="adFill"></div><input type="range" id="adLo" min="0" max="1" step="1" aria-label="From date" /><input type="range" id="adHi" min="0" max="1" step="1" aria-label="To date" /></div><div class="ad-ends"><span id="adFrom"></span><span id="adTo"></span></div><div class="ad-pre" id="adPre"><button type="button" data-p="1w">1 week</button><button type="button" data-p="1m">1 month</button><button type="button" data-p="3m">3 months</button><button type="button" data-p="">All</button></div></div>
-    <div class="act-new"><input type="text" id="actNewInput" placeholder="+ New action" autocomplete="off" /></div>
+    <div class="act-new"><input type="search" id="actNewInput" placeholder="Filter actions" autocomplete="off" spellcheck="false" title="Narrow the list: number, title or a sub-action" /><button type="button" class="act-add" id="actAddB" title="New action (N)" aria-label="New action">+</button></div>
+    <div class="act-form" id="actForm" hidden>
+      <div class="af-h"><b>New action</b><button type="button" class="af-x" id="afX" title="Close (Esc) — what you typed is kept" aria-label="Close">&times;</button></div>
+      <textarea id="afTitle" rows="2" placeholder="What needs doing?" autocomplete="off"></textarea>
+      <div class="af-l">Sub-actions</div>
+      <div id="afSteps"></div>
+      <input type="text" id="afStep" placeholder="+ Add sub-action" autocomplete="off" />
+      <div class="af-l">Photos</div>
+      <div class="af-drop" id="afDrop"><button type="button" id="afPick">Add photos&hellip;</button><span>or paste (Ctrl+V) or drop them here</span><input type="file" id="afFiles" accept="image/*,.heic,.heif" multiple hidden /></div>
+      <div class="af-th" id="afTh"></div>
+      <div class="af-foot"><span>Goes at the pin in the middle of the map &mdash; move the map to line it up</span><button type="button" id="afGo" title="Create (Ctrl+Enter)">&#10003; Create</button></div>
+    </div>
     <div class="act-list" id="actList"></div>
   </aside>
   <div class="splitter" id="actSplit"></div>
@@ -1642,7 +1677,7 @@ function openDotMenu(p,ev){
     if(openActs.length>8) mkCtxItem("("+(openActs.length-8)+" more — use the Actions panel)",null,true);
   }
   mkCtxItem("New action for "+(many?targets.length+" photos":"this photo")+"…",
-    ()=>armNewAction(targets.map(x=>x.id)));   // arms the Actions panel input — type there and Enter assigns to these photos
+    ()=>openActForm({pids:targets.map(x=>x.id)}));   // the same form as the + button, these photos already in it
   const moved=targets.filter(t=>t.glat!=null);
   if(moved.length) mkCtxItem("Restore original GPS"+(many?" ("+moved.length+" photo"+(moved.length>1?"s":"")+")":""),()=>restoreGps(moved));
   else mkCtxItem(many?"Original GPS (none moved)":"Original GPS (not moved)",null,true);
@@ -1825,9 +1860,9 @@ function clearSpot(){ if(!spotIds) return; spotIds=null; updateGallery(); }
 function rebuildActionFilter(){ if(selActs.size) spotIds=null; actionFilter=selActs.size?new Set([...selActs].flatMap(id=>actPhotos(actById(id)).map(p=>p.id))):null; }
 function drawActionRings(){ buildCluster(); renderClusters(); }   // highlights are rendered with the clusters (bubbles flash when they contain selected photos)
 function clearActSel(){ if(!selActs.size) return; selActs.clear(); actionFilter=null; renderActions(); drawActionRings(); updateGallery(); }
-function createAction(text,pids,loc){
+function createAction(text,pids,loc,steps){
   text=(text||"").trim(); if(!text) return null;
-  const a={id:nextActId++,text,done:false,created:Date.now(),doneAt:null,steps:[]};
+  const a={id:nextActId++,text,done:false,created:Date.now(),doneAt:null,steps:(steps||[]).map(t=>String(t||"").trim()).filter(Boolean).map(t=>({t,d:false,id:newSid()}))};
   if(loc&&isFinite(loc.lat)&&isFinite(loc.lng)) a.loc={lat:+loc.lat,lng:+loc.lng};   // an action placed at a map spot (may have no photos)
   actions.unshift(a);
   const items=(pids&&pids.length)?buildAssign([a.id],pids.map(photoById).filter(Boolean)):[];
@@ -2126,7 +2161,8 @@ function renderActions(){
 
   const allOpen=actions.some(a=>!collActs.has(a.id)), allT=allOpen?"Collapse all \u2014 titles only":"Expand all \u2014 show sub-actions";   // stacked boxes (Navisworks style) on the first card: \u2212 collapses every card, + expands them
   const allBtn='<button type="button" class="act-all" id="actExpAll" title="'+allT+'" aria-label="'+allT+'"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3.5" width="12" height="12" rx="1.5"/><path d="M5 7.5v12h12"/>'+(allOpen?'<path d="M11 9.5h6"/>':'<path d="M11 9.5h6M14 6.5v6"/>')+'</svg></button>';
-  const shown=actsShown();   // on-hold then completed actions sink to the bottom (display only — stored order unchanged)
+  const shown=actsShown().filter(actMatchesQ);   // on-hold then completed actions sink to the bottom (display only — stored order unchanged); the filter box narrows it
+  if(!shown.length&&actQ){ list.innerHTML='<div class="act-empty">No actions match “'+esc(actQ)+'”.</div>'; return; }
   if(!shown.length){ const nh=actions.filter(a=>!a.done&&a.hold).length, nd=actions.filter(a=>a.done).length;   // say why the list is empty
     list.innerHTML=actions.length?'<div class="act-empty">'+[nh?nh+" on hold":"",nd?nd+" done":""].filter(Boolean).join(" and ")+' \u2014 turn on <b>'+(nh&&nd?"On hold / Done":nh?"On hold":"Done")+'</b> above to see '+((nh+nd)===1?"it":"them")+'.</div>':""; return; }
   const cp=lb.classList.contains("open")?curPhoto():null;   // the open photo's actions get a marker in this list
@@ -2257,30 +2293,71 @@ document.getElementById("actShowDone").addEventListener("click",()=>{ actShowDon
 document.getElementById("actMapOnly")?.addEventListener("click",()=>{ actOnlyMap=!actOnlyMap; buildCluster(); renderClusters(); updateGallery(); renderActions(); renderMapTags(); persistState(); });
 document.getElementById("actList").addEventListener("click",e=>{ if(!e.target.closest("#actExpAll")) return; e.stopPropagation();   // collapse-all lives on the first card, which is rebuilt each render
   if(actions.some(a=>!collActs.has(a.id))) actions.forEach(a=>collActs.add(a.id)); else collActs.clear(); renderActions(); },true);
-/* Right-click "New action" on photos doesn't pop a dialog: it ARMS this input — type the action
-   and Enter creates it already assigned to those photos. Escape disarms. */
-let pendingActPhotos=null, pendingActLoc=null;
-const ACT_PH="+ New action";
-function armNewAction(pids){
-  pendingActLoc=null;
-  pendingActPhotos=(pids&&pids.length)?pids.slice():null;
-  const inp=document.getElementById("actNewInput");
-  inp.placeholder=pendingActPhotos?("+ New action for "+pendingActPhotos.length+" photo"+(pendingActPhotos.length>1?"s":"")):ACT_PH;
-  inp.classList.toggle("arm",!!pendingActPhotos);
-  inp.focus();
+/* The box above the list FILTERS it (number, title or a sub-action). New actions come from the + beside
+   it (or N, or right-click → New action): a form takes the list's place — the action, its sub-actions
+   (Enter runs straight through them), photos (Add photos…, paste or drop, several at once) — and the
+   action goes where the pin in the middle of the map points: move the map to line it up. */
+let actQ="";
+function actMatchesQ(a){ if(!actQ) return true; const q=actQ.toLowerCase();
+  return (actNo(a)+" "+a.text+" "+(a.steps||[]).map(x=>x.t).join(" ")).toLowerCase().includes(q); }
+document.getElementById("actNewInput").addEventListener("input",e=>{ actQ=e.target.value.trim(); renderActions(); });
+document.getElementById("actNewInput").addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Escape"&&e.target.value){ e.target.value=""; actQ=""; renderActions(); } });
+const AF={open:false,pids:[],files:[],steps:[]};   // the draft: kept if the form is closed by mistake
+function actFormOpen(){ return AF.open; }
+function openActForm(opt){ opt=opt||{};
+  if(roBlock()) return;
+  if(ON.pid&&!ON.live){ loadNote(ON.tokenBad?TOKEN_BAD:"The project is still opening — try again in a moment"); setTimeout(()=>loadNote(""),4000); return; }
+  if(opt.pids&&opt.pids.length){ for(const id of opt.pids) if(!AF.pids.includes(id)) AF.pids.push(id);
+    const geo=opt.pids.map(photoById).filter(p=>p&&p.lat!=null); if(geo.length) map.panTo(L.latLngBounds(geo.map(p=>[p.lat,p.lng])).getCenter()); }   // the pin starts on those photos
+  if(opt.at) map.panTo(opt.at);   // right-click on the map: the pin starts where you clicked
+  AF.open=true;
+  document.getElementById("actForm").hidden=false; document.getElementById("actList").hidden=true; document.getElementById("actAddB").classList.add("on");
+  if(!document.getElementById("afPin")){ const pin=document.createElement("div"); pin.className="af-pin"; pin.id="afPin"; pin.innerHTML='<i></i><span>New action goes here</span>'; map.getContainer().appendChild(pin); }
+  afThumbs(); afSteps();
+  const t=document.getElementById("afTitle"); setTimeout(()=>{ t.focus(); t.setSelectionRange(t.value.length,t.value.length); },0); }
+function closeActForm(){ AF.open=false;
+  document.getElementById("actForm").hidden=true; document.getElementById("actList").hidden=false; document.getElementById("actAddB").classList.remove("on");
+  const pin=document.getElementById("afPin"); if(pin) pin.remove(); }
+function afClear(){ for(const f of AF.files) URL.revokeObjectURL(f.url); AF.pids=[]; AF.files=[]; AF.steps=[]; document.getElementById("afTitle").value=""; document.getElementById("afStep").value=""; document.getElementById("afTitle").classList.remove("need"); }
+function afThumbs(){ const el=document.getElementById("afTh");
+  el.innerHTML=AF.pids.map(photoById).filter(Boolean).map(p=>'<span style="background-image:url(\''+(p.thumb||"")+'\')" title="'+esc(p.name||"")+'"><button type="button" data-p="'+p.id+'" aria-label="Remove">×</button></span>').join("")
+    +AF.files.map((f,i)=>'<span style="background-image:url(\''+f.url+'\')" title="'+esc(f.name)+'"><button type="button" data-f="'+i+'" aria-label="Remove">×</button></span>').join(""); }
+function afSteps(){ document.getElementById("afSteps").innerHTML=AF.steps.map((t,i)=>'<div class="af-st"><i></i><span>'+esc(t)+'</span><button type="button" data-i="'+i+'" aria-label="Remove">×</button></div>').join(""); }
+function afAddFiles(fs){ fs=Array.from(fs||[]).filter(f=>/^image\//i.test(f.type||"")||IMG_RE.test(f.name||"")); if(!fs.length) return 0;
+  for(const f of fs) AF.files.push({file:f,name:f.name||"image.png",url:URL.createObjectURL(f)}); afThumbs(); return fs.length; }
+async function afAddItems(items){ const fs=[]; for(const it of items){ try{ fs.push(await it.getFile()); }catch(e){} } afAddFiles(fs); }
+function afAddStep(){ const inp=document.getElementById("afStep"), v=inp.value.trim(); if(!v) return false; AF.steps.push(v); inp.value=""; afSteps(); return true; }
+function afCreate(){
+  afAddStep(); const tEl=document.getElementById("afTitle"), v=tEl.value.replace(/\s*\n\s*/g," ").trim();
+  if(!v){ tEl.classList.add("need"); tEl.placeholder="Name the action first"; tEl.focus(); return; }
+  const c=map.getCenter(), at={lat:c.lat,lng:c.lng};   // where the pin points
+  const a=createAction(v,AF.pids.slice(),at,AF.steps.slice()); if(!a) return;
+  const files=AF.files.map(f=>({name:f.name,path:f.name,getFile:async()=>f.file}));
+  afClear(); closeActForm();
+  selActs=new Set([a.id]); lastActClick=a.id; rebuildActionFilter(); renderActions(); refreshActSelClasses(); drawActionRings(); updateGallery();
+  loadNote("✓ Added "+actNo(a)+(files.length?" — adding "+files.length+" photo"+(files.length>1?"s":"")+"…":"")); setTimeout(()=>loadNote(""),3000);
+  if(files.length) ingestAdhoc(files,{act:a,at});   // the new photos join it (one without GPS sits on its pin)
 }
-document.getElementById("actNewInput").addEventListener("keydown",e=>{
-  if(e.key==="Escape"&&(pendingActPhotos||pendingActLoc)){ e.stopPropagation(); armNewAction(null); return; }
-  if(e.key!=="Enter") return; const v=e.target.value.trim(); if(!v) return;
-  if(ON.pid&&!ON.live){ loadNote(ON.tokenBad?TOKEN_BAD:"The project is still opening \u2014 try again in a moment"); setTimeout(()=>loadNote(""),4000); return; }   // nothing to save it into yet
-  e.target.value="";
-  // Assign to whatever is current: armed photos > map selection > the photo open in the viewer > nothing.
-  const loc=pendingActLoc;
-  const pids=loc?null:(pendingActPhotos||(selSet.size?[...selSet]:((lb.classList.contains("open")&&curPhoto())?[curPhoto().id]:null)));
-  armNewAction(null);
-  createAction(v,pids,loc);
-  document.getElementById("actNewInput").focus();   // keep typing to add the next one
+document.getElementById("actAddB").addEventListener("click",()=>{ if(AF.open) closeActForm(); else openActForm(); });
+document.getElementById("afX").addEventListener("click",closeActForm);
+document.getElementById("afGo").addEventListener("click",afCreate);
+document.getElementById("afPick").addEventListener("click",()=>document.getElementById("afFiles").click());
+document.getElementById("afFiles").addEventListener("change",e=>{ afAddFiles(e.target.files); e.target.value=""; });
+document.getElementById("afTh").addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return;
+  if(b.dataset.p!=null) AF.pids=AF.pids.filter(id=>String(id)!==b.dataset.p); else { const f=AF.files.splice(+b.dataset.f,1)[0]; if(f) URL.revokeObjectURL(f.url); } afThumbs(); });
+document.getElementById("afSteps").addEventListener("click",e=>{ const b=e.target.closest("button[data-i]"); if(!b) return; AF.steps.splice(+b.dataset.i,1); afSteps(); });
+document.getElementById("actForm").addEventListener("keydown",e=>{ e.stopPropagation();   // typing here never reaches the map / viewer hotkeys
+  const id=e.target.id;
+  if(e.key==="Escape"){ e.preventDefault(); closeActForm(); return; }
+  if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){ e.preventDefault(); afCreate(); return; }
+  if(e.key!=="Enter"||e.shiftKey) return;
+  if(id==="afTitle"){ e.preventDefault(); if(e.target.value.trim()) document.getElementById("afStep").focus(); return; }   // straight on to the sub-actions
+  if(id==="afStep"){ e.preventDefault(); if(!afAddStep()) document.getElementById("afGo").focus(); }   // each Enter adds one and stays; Enter on an empty line → Create (Enter again creates)
 });
+document.getElementById("afTitle").addEventListener("input",e=>e.target.classList.remove("need"));
+{ const dz2=document.getElementById("afDrop");
+  dz2.addEventListener("dragover",e=>{ if(!dragHasFiles(e)) return; e.preventDefault(); dz2.classList.add("over"); });
+  dz2.addEventListener("dragleave",()=>dz2.classList.remove("over")); dz2.addEventListener("drop",()=>dz2.classList.remove("over")); }   // the drop itself lands via the window handler (into the form while it is open)
 ["mousedown","pointerdown","dblclick"].forEach(ev=>document.getElementById("ipActions").addEventListener(ev,e=>e.stopPropagation()));
 
 /* right sidebar tabs */
@@ -3135,7 +3212,7 @@ function showGuide(){
   m.innerHTML='<div class="yn-win pj-win guide-win"><h3>How to use ActionMap</h3>'
     +sec("Getting started",["<b>File \u2192 Settings</b>: paste your GitHub access token once (it stays in this browser only). Without it you can view but not change anything.","<b>File \u2192 Projects</b> opens a project; <b>New project</b> starts one. <b>Share link</b> copies a link anyone can open."],true)
     +sec("Photos",["Paste (Ctrl+V), drag photos onto the map, or use <b>File \u2192 Add photos</b>. Photos with GPS land where they were taken; others go where you drop them.","Each action shows on the map as its number; where several share a spot they spread round it like a ferris wheel. Photos on no action are grey dots. Hover a number to see the action\u2019s cover photo; click it to open its photos. Draw on a photo with the pencil (arrows, boxes, text).","To move photos: open one (or pick dots with <b>Select area</b>), then drag its number or dot. Drop it on another number to group them there \u2014 a photo dropped on an action\u2019s number joins that action. The photo\u2019s true GPS is always kept."],true)
-    +sec("Actions",["Type in <b>+ New action</b> and press Enter. Add <b>sub-actions</b> under it; tick them off as they\u2019re done.","<b>On hold</b> / <b>Done</b> on each card set its status; the pills at the top (Open / On hold / Done) and the date bar choose what shows on the list, map, gallery and exports.","The <b>date bar</b> shows actions created in a range: drag its two handles, or pick <b>1 week</b> / <b>1 month</b> / <b>3 months</b> (these keep rolling with the days) or <b>All</b>. The range belongs to the project, so every desktop and phone on it sees the same one; on the phone it\u2019s the calendar button beside the project name.","Link photos to an action: select the action, then right-click a photo dot. The first photo is the cover \u2014 drag in the gallery to reorder.","The <b>copy</b> icon on a card copies one picture of the action (title, map, photos, sub-actions) to paste into chat or email."],true)
+    +sec("Actions",["The round <b>+</b> beside the filter box (or <b>N</b>) opens a new action: type it, Enter, then its sub-actions (Enter after each), add photos (button, paste or drop) and move the map so the pin sits where it goes \u2014 then <b>Create</b>. The box itself filters the list.","<b>On hold</b> / <b>Done</b> on each card set its status; the pills at the top (Open / On hold / Done) and the date bar choose what shows on the list, map, gallery and exports.","The <b>date bar</b> shows actions created in a range: drag its two handles, or pick <b>1 week</b> / <b>1 month</b> / <b>3 months</b> (these keep rolling with the days) or <b>All</b>. The range belongs to the project, so every desktop and phone on it sees the same one; on the phone it\u2019s the calendar button beside the project name.","Link photos to an action: select the action, then right-click a photo dot. The first photo is the cover \u2014 drag in the gallery to reorder.","The <b>copy</b> icon on a card copies one picture of the action (title, map, photos, sub-actions) to paste into chat or email."],true)
     +sec("Phone",["Open the same link on your phone: the map shows every action; swipe the cards, tap <b>View</b> to open one.","Tick sub-actions, add photos (camera or gallery) and new actions in the field \u2014 they reach the desktop by themselves."])
     +sec("Reports",["The <b>XLSX</b> and <b>PDF</b> buttons beside \u201cActions\u201d export every action with its status, sub-actions and photos. The Excel file also has a <b>Sub-actions</b> tab with dates, a \u201cChanged in last 24 h\u201d filter and a Notes column \u2014 handy for end-of-shift reports.","<b>File \u2192 Download backup</b> saves a zip of the whole project."])
     +sec("Good to know",["Everything saves by itself. The dot on the <b>save</b> button is green when it\u2019s all online, amber while a change is on its way.","<b>Ctrl+Z</b> undoes (File \u2192 Undo), <b>Ctrl+Y</b> redoes \u2014 deleting an action asks first and can be undone.","<b>Ctrl+K</b> jumps to the search box. <b>View</b> holds the map imagery, your location, clustering and thumbnail size.","Projects live in your GitHub data repository \u2014 nothing is stored only on this PC."])
@@ -3893,7 +3970,7 @@ map.on("contextmenu",e=>{
   ctxMenu.innerHTML="";
   mkCtxItem("Select area [S]",toggleSelect);
   mkCtxItem("Measure [M]",toggleMeasure);
-  mkCtxItem("New action…",()=>armNewAction(null));   // focuses the Actions panel input
+  mkCtxItem("New action here…",()=>openActForm({at:e.latlng}));   // the same form as the + button, its pin on the spot you clicked
   if(selSet.size||selActs.size) mkCtxItem("Clear selections",()=>{ clearSel(); clearActSel(); });
   showCtxAt(e.originalEvent.clientX,e.originalEvent.clientY);
 });
@@ -4098,7 +4175,7 @@ async function ingest(items, append){
 /* Pasted images and loose-file drops go through the same pipeline as a folder load, plus:
    GPS-less images land at the current map centre (flagged noGps — a placed dot, not a real fix),
    the view flies to the new dot so it's easy to find, and the add is Ctrl+Z-able. */
-async function ingestAdhoc(items){
+async function ingestAdhoc(items,opt){   // opt.act / opt.at: photos for a new action (linked to it, GPS-less ones on its pin)
   if(!items||!items.length) return;
   if(roBlock()) return;
   if(!isOnline()&&!photos.length&&!actions.length){ showProjectPicker("Open or create a project first \u2014 photos are added to a project online."); return; }
@@ -4106,8 +4183,8 @@ async function ingestAdhoc(items){
   if(!added.length){ loadNote("Already in this project — nothing new added"); setTimeout(()=>loadNote(""),2500); return; }
   /* one action selected: the pasted photos join it, at the BACK of its photo list (the cover stays);
      one without GPS lands on the action's cover spot instead of the map centre */
-  const selA=selActs.size===1?actById([...selActs][0]):null, cov=selA?actPhotos(selA).find(q=>q.lat!=null):null;
-  if(selA&&!(Array.isArray(selA.porder)&&selA.porder.length)) selA.porder=actPhotos(selA).map(q=>q.id);
+  const selA=opt&&opt.act?opt.act:(selActs.size===1?actById([...selActs][0]):null), cov=opt&&opt.at?opt.at:(selA?actPhotos(selA).find(q=>q.lat!=null):null);
+  if(selA&&!(opt&&opt.act)&&!(Array.isArray(selA.porder)&&selA.porder.length)) selA.porder=actPhotos(selA).map(q=>q.id);
   const c=cov?L.latLng(cov.lat,cov.lng):map.getCenter();
   for(const p of added){ p.adhoc=true; p.added=Date.now(); if(p.lat==null){ p.noGps=true; p.lat=c.lat; p.lng=c.lng; } if(selA) p.acts=[selA.id]; }
   pushUndo({addPhotos:added.map(p=>p.id)});
@@ -4211,6 +4288,7 @@ window.addEventListener("drop",async e=>{
   const handlePs=useFSA?items.map(it=>it.getAsFileSystemHandle?it.getAsFileSystemHandle():Promise.resolve(null)):null;
   const entries=(!useFSA&&items[0]&&items[0].webkitGetAsEntry)?items.map(it=>it.webkitGetAsEntry()):null;
   const files=Array.from(dt.files||[]);
+  if(AF.open&&files.some(f=>/^image\//i.test(f.type||"")||IMG_RE.test(f.name||""))){ afAddFiles(files); return; }   // dropped onto the open New action form: they go into it
   if(handlePs){
     const handles=(await Promise.all(handlePs.map(p=>p.catch(()=>null)))).filter(Boolean);
     const dirs=handles.filter(h=>h.kind==="directory"), fileHandles=handles.filter(h=>h.kind==="file");
@@ -4219,18 +4297,20 @@ window.addEventListener("drop",async e=>{
     for(const h of fileHandles) out.push({name:h.name,path:h.name,getFile:()=>h.getFile()});
     for(const d of dirs){ for await (const f of walkDir(d,d.name)) if(IMG_RE.test(f.name)) out.push({name:f.name,path:f.path,getFile:()=>f.handle.getFile()}); }
     const flt=out.filter(o=>IMG_RE.test(o.name));
+    if(AF.open){ afAddItems(flt); return; }
     if(dirs.length&&!isOnline()) ingest(flt,true); else ingestAdhoc(flt);   // online: a dropped folder is just a pile of photos to add
     return;
   }
-  if(entries&&entries.some(Boolean)){ const its=await entriesToItems(entries); if(entries.some(en=>en&&en.isDirectory)&&!isOnline()) ingest(its,true); else ingestAdhoc(its); return; }
+  if(entries&&entries.some(Boolean)){ const its=await entriesToItems(entries); if(AF.open){ afAddItems(its); return; } if(entries.some(en=>en&&en.isDirectory)&&!isOnline()) ingest(its,true); else ingestAdhoc(its); return; }
   const fl=files.filter(f=>IMG_RE.test(f.name)).map(f=>({name:f.name,path:f.name,getFile:async()=>f})); ingestAdhoc(fl);
 });
 /* Paste an image (Ctrl+V) anywhere on the desktop app: it becomes a photo like any other. */
 document.addEventListener("paste",e=>{
   if(document.body.classList.contains("mobile")) return;
   const t=e.target;
-  if(t&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA"||t.isContentEditable)) return;
   const pf=Array.from((e.clipboardData&&e.clipboardData.files)||[]).filter(f=>/^image\//i.test(f.type||"")||IMG_RE.test(f.name||""));
+  if(AF.open&&pf.length){ e.preventDefault(); afAddFiles(pf.map((f,i)=>(!f.name||/^image\.(png|jpe?g|webp|gif|bmp)$/i.test(f.name))?new File([f],"Pasted "+(i+1)+((f.type||"").includes("png")?".png":".jpg"),{type:f.type||"image/png"}):f)); return; }   // into the New action form (even while typing in it)
+  if(t&&(t.tagName==="INPUT"||t.tagName==="TEXTAREA"||t.isContentEditable)) return;
   if(!pf.length) return;
   e.preventDefault();
   if(roBlock()) return;
@@ -5155,10 +5235,11 @@ document.addEventListener("keydown",e=>{
   const tag=((e.target&&e.target.tagName)||"").toLowerCase();
   if(tag==="input"||tag==="select"||tag==="textarea") return;
   if(document.activeElement===tbText) return;
-  if(e.key==="Escape"){ if(drawing) stopDraw(); else if(measuring||measureLayer) stopMeasure(); else if(pickMode) endPickMode(false); else if(selSet.size) clearSel(); else if(selActs.size) clearActSel(); return; }
+  if(e.key==="Escape"){ if(AF.open) closeActForm(); else if(drawing) stopDraw(); else if(measuring||measureLayer) stopMeasure(); else if(pickMode) endPickMode(false); else if(selSet.size) clearSel(); else if(selActs.size) clearActSel(); return; }
   if(e.ctrlKey||e.metaKey||e.altKey||e.repeat||(e.target&&e.target.isContentEditable)) return;   // Ctrl+F is browser find, not the area filter
   if(e.key==="m"||e.key==="M"){ toggleMeasure(); }
   else if(e.key==="s"||e.key==="S"){ toggleSelect(); }
+  else if((e.key==="n"||e.key==="N")&&!lb.classList.contains("edit-open")){ e.preventDefault(); openActForm(); }   // N: New action
 });
 
 /* ENHANCE: bake full quality original into this one photo */
