@@ -507,7 +507,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .act-tgl{font:600 var(--fl) var(--font);white-space:nowrap;color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:8px;padding:4px 6px;cursor:pointer;}
   .act-tgl:hover{border-color:var(--gold);}
   .af-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:-1px;box-sizing:border-box;}   /* the map's dot for each pill */
-  .af-dot.open{background:#F28C28;}.af-dot.hold{background:#fff;border:2px solid #F28C28;}.af-dot.done{background:#6b7580;}
+  .af-dot.open{background:#C2540A;}.af-dot.hold{background:#fff;border:2px solid #F28C28;}.af-dot.done{background:#6b7580;}
   .act-dl{width:30px;height:30px;padding:0!important;display:grid;place-items:center;}.act-dl svg{width:17px;height:17px;}   /* export to Excel + Save, beside the heading */
   .act-head .title{margin-right:3px;}
   .act-dl.act-xl{width:36px;height:32px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;} .act-dl.act-xl svg{width:14px;height:14px;} .act-dl.act-xl b{font:800 8.5px/1 Arial,sans-serif;color:#1d6f42;letter-spacing:.3px;margin-top:1px;} .act-dl.act-pdf b{color:#c0392b;}   /* says it's an Excel file */
@@ -749,7 +749,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   
   
   .ma-sym{width:18px;height:18px;box-sizing:border-box;border-radius:50%;flex-shrink:0;}
-  .ma-sym.open{background:#F28C28;border:2px solid #fff;box-shadow:0 0 0 1.5px #9A520B;}
+  .ma-sym.open{background:#C2540A;border:2px solid #fff;box-shadow:0 0 0 1.5px #6e3005;}
   .ma-sym.hold{background:#fff;box-shadow:0 0 0 2.5px #F28C28;}
   .ma-sym.done{background:#6b7580;border:2px solid #fff;box-shadow:0 0 0 1.5px #3f4750;}
   .ma-mapwrap{flex:1;min-height:0;position:relative;}
@@ -817,8 +817,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-dot.flash::before,.ma-dot.flash::after{animation:maarrow 1.5s ease-in-out forwards;}
   @keyframes maarrow{0%,30%,60%{transform:translateY(0);opacity:1;}15%,45%{transform:translateY(-8px);}80%{opacity:1;}100%{transform:translateY(0);opacity:0;}}
   .ma-peek .m{font-size:15px;color:var(--muted);margin-top:6px;}
-  .ma-dot{position:absolute;left:0;top:0;transform:translate(-50%,-50%);width:auto;padding:0 5px;white-space:nowrap;height:28px;box-sizing:border-box;border-radius:8px;background:#F28C28;border:3px solid #fff;box-shadow:0 0 0 1.5px #9A520B,0 3px 8px #0006;color:#fff;font:800 13px/22px var(--font);text-align:center;letter-spacing:-.2px;}
-  .ma-dot.hold{background:#fff;color:#9A520B;border:0;box-shadow:0 0 0 2.5px #F28C28,0 3px 8px #0006;line-height:28px;}
+  .ma-dot{position:absolute;left:0;top:0;transform:translate(-50%,-50%);width:auto;padding:0 5px;white-space:nowrap;height:28px;box-sizing:border-box;border-radius:8px;background:#C2540A;border:3px solid #fff;box-shadow:0 0 0 1.5px #6e3005,0 3px 8px #0006;color:#fff;font:800 13px/22px var(--font);text-align:center;letter-spacing:-.2px;}   /* open: white on burnt orange (4.6 : 1 — the old bright orange was 2.3 : 1) */
+  .ma-dot.hold{background:#fff;color:#1a1307;border:0;box-shadow:0 0 0 2.5px #F28C28,0 3px 8px #0006;line-height:28px;}
   .ma-dot.done{background:#6b7580;box-shadow:0 0 0 1.5px #3f4750,0 3px 8px #0006;}
   .ma-zf .ma-dot,.ma-zf .ma-fan{opacity:0;transition:opacity .12s;}   /* a double-tap zoom: labels and spokes hide for its quarter second */
   .ma-zin .ma-dot,.ma-zin .ma-fan{animation:mazin .25s ease-out;} @keyframes mazin{from{opacity:0;}to{opacity:1;}}
@@ -3439,7 +3439,7 @@ async function pdfMapCanvas(L,onTile){
   await Promise.all(jobs);
   for(const [tx,ty] of holes){ for(let up=1;up<=3;up++){ const k=Math.pow(2,up), pn=tn/k, px=Math.floor(tx/k), py=Math.floor(ty/k);   // a missing tile: borrow the one a zoom or two out
     const im=await loadMapTile(tz-up,((px%pn)+pn)%pn,py); if(!im) continue; const sz=256/k; g.drawImage(im,(((tx%k)+k)%k)*sz,(((ty%k)+k)%k)*sz,sz,sz,tx*T-L.x0,ty*T-L.y0,T,T); break; } }
-  const COL={open:"#F28C28",hold:"#ffffff",done:"#6b7580"}, TXT={open:"#ffffff",hold:"#9A520B",done:"#ffffff"}, RING={open:"#9A520B",hold:"#F28C28",done:"#3f4750"}, st=a=>a.done?"done":a.hold?"hold":"open";
+  const COL={open:"#C2540A",hold:"#ffffff",done:"#6b7580"}, TXT={open:"#ffffff",hold:"#1a1307",done:"#ffffff"}, RING={open:"#6e3005",hold:"#F28C28",done:"#3f4750"}, st=a=>a.done?"done":a.hold?"hold":"open";
   const rr=(x,y,w,h,r)=>{ g.beginPath(); if(g.roundRect) g.roundRect(x,y,w,h,r); else g.rect(x,y,w,h); };
   g.lineCap="round";
   for(const k of L.boxes){ g.strokeStyle="rgba(0,0,0,.45)"; g.lineWidth=3.2; g.beginPath(); g.moveTo(k.q.x,k.q.y); g.lineTo(k.bx+(k.left?PM_BW/2:-PM_BW/2),k.by); g.stroke();
