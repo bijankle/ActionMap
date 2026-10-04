@@ -1394,7 +1394,7 @@ function mkHlDot(lat,lng,r){   // the one selection visual, used everywhere: a r
 let _openInArrowed=false;   // the open photo sits inside a bubble that already wears the arrow: one arrow, not two
 function highlightDot(p){ clearHighlight(); if(!p||p.lat==null)return; hlMarker=mkHlDot(p.lat,p.lng).addTo(highlightLayer); hlMarker._pid=p.id; if(_openInArrowed&&lb.classList.contains("open")&&curPhoto()===p) hlMarker.setOpacity(0); }
 function clearHighlight(){ if(hlMarker){ highlightLayer.removeLayer(hlMarker); hlMarker=null; } }
-function highlightCurrent(){ if(lb.classList.contains("open")&&lightboxList[lightboxIndex]) highlightDot(lightboxList[lightboxIndex]); else clearHighlight(); }
+function highlightCurrent(){ if(sideShowsPhoto()&&lightboxList[lightboxIndex]) highlightDot(lightboxList[lightboxIndex]); else clearHighlight(); }
 // Dots re-cluster immediately when the map settles on a new view (responsive, as originally);
 // only the heavy gallery rebuild + state persistence wait for 1 full second of no map motion.
 map.on("moveend",()=>renderClusters());   // a zoom also fires moveend — listening to both rendered every dot twice
@@ -1428,7 +1428,7 @@ const LBL_W=54;
 function wheelR(n){ return n<2?0:Math.max(n===2?38:n===3?42:48,n*(LBL_W+8)/(2*Math.PI)); }
 function renderClusters(anim){   // anim: a zoom animation just starting — lay the wheels out for where it lands
   markerLayer.clearLayers(); dotMarkers.clear(); mapHits=[]; _openInArrowed=false;
-  const z=anim?anim.zoom:map.getZoom(), hlSet=hlPhotoSet(), op=lb.classList.contains("open")?curPhoto():null;
+  const z=anim?anim.zoom:map.getZoom(), hlSet=hlPhotoSet(), op=sideShowsPhoto()?curPhoto():null;   // the open photo wears the arrow only while it shows (behind the Gallery it would point at an old action)
   const bnd=anim?(()=>{ const c=map.project(anim.center,z), h=map.getSize().divideBy(2); return L.latLngBounds(map.unproject(c.subtract(h),z),map.unproject(c.add(h),z)).pad(0.3); })():map.getBounds().pad(0.3);
   const pts=[], loose=[];
   for(const p of photos){ if(p.lat==null||!passSearch(p)||!passActs(p)||(boxBounds&&!boxBounds.contains([p.lat,p.lng]))||!bnd.contains([p.lat,p.lng])) continue;
@@ -1474,7 +1474,8 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
     for(const h of sp.values()) mapHits.push(h); }
   for(const g of lg) if(!g.used) mkLoose(g,g.x,g.y);
   if(anim) markerLayer.eachLayer(l=>{ if(l._animateZoom) l._animateZoom(anim); });   // placed straight at the landing spot (no slide from the old layout)
-  if(hlMarker) hlMarker.setOpacity(_openInArrowed&&op&&hlMarker._pid===op.id?0:1);   // the open photo's label already wears the arrow
+  if(hlMarker){ const cp=lb.classList.contains("open")?curPhoto():null, mine=!!cp&&hlMarker._pid===cp.id;
+    hlMarker.setOpacity(mine&&(!op||_openInArrowed)?0:1); }   // the open photo's label already wears the arrow — and a photo hidden behind the Gallery points at nothing
   function mkLoose(g,x,y){ const ps=g.items.map(t=>t.p), pids=ps.map(p=>p.id), n=ps.length, ll=llOf(x,y);
     const hl=pids.some(id=>hlSet.has(id)), hasOpen=!!op&&pids.includes(op.id), grab=pids.some(id=>selSet.has(id))||hasOpen;
     const m=L.marker(ll,{keyboard:false,zIndexOffset:hasOpen?900:0,icon:L.divIcon({className:"",html:'<div class="ldot'+(n>1?' n':'')+'"'+(grab?' style="cursor:move"':'')+'>'+(n>1?n:'')+'</div>',iconSize:[0,0],iconAnchor:[0,0]})});
