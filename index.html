@@ -1487,7 +1487,7 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
    moves its photos — drop it on another label to group them there. */
 function wireMapHit(m,h){
   mapHits.push(h);
-  m.on("mouseover",e=>{ if(dotDrag) return; if(h.grab) map.getContainer().style.cursor="move"; if(h.hover) showHover(h.hover,e.originalEvent); });
+  m.on("mouseover",e=>{ if(dotDrag) return; if(h.grab) map.getContainer().style.cursor="move"; if(h.hover) showHover(h.hover,e.originalEvent,m.getElement()); });
   m.on("mousemove",e=>{ if(!dotDrag) positionHover(e.originalEvent); });
   m.on("mouseout",()=>{ if(!dotDrag) map.getContainer().style.cursor=""; hideHover(); });
   m.on("mousedown",e=>{ const oe=e.originalEvent; if(!oe||oe.button!==0||oe.ctrlKey||oe.metaKey||!h.grab) return; L.DomEvent.stop(oe); startMapDrag(m,h); });
@@ -1664,7 +1664,7 @@ map.on("click",e=>{
    An action is a task with a tick box (tick = completed). Actions link to photos (one action to
    many photos, or many actions to one photo). Stored in the .json like tags; photos untouched. */
 let actions=[], nextActId=1, selActs=new Set(), actionFilter=null;
-let actShowOpen=true, actShowHold=false, actShowDone=false, rightTab="photo", sideBase=null;   /* sideBase: the right panel's width without a photo (see applySideW) */   // Open / On hold / Done pills: which actions show (list + map); open on by default
+let actShowOpen=true, actShowHold=false, actShowDone=false, rightTab="photo", sideBase=null;   /* sideBase: the right panel's width (see applySideW) */   // Open / On hold / Done pills: which actions show (list + map); open on by default
 let _aIdx=null,_aArr=null;
 function actById(id){
   if(_aIdx&&_aArr===actions){ const i=_aIdx.get(id); if(i!=null){ const a=actions[i]; if(a&&a.id===id) return a; } }
@@ -2262,7 +2262,7 @@ function setTab(t){
   document.getElementById("tabGallery").classList.toggle("active",rightTab==="gallery");
   document.getElementById("tabHistory").classList.toggle("active",rightTab==="history");
   if(rightTab==="history") renderHistory();
-  applySideW();   // no photo on show: back to the base width
+  applySideW();
   if(changed) setTimeout(()=>{ map.invalidateSize(); renderClusters(); positionTools(); if(rightTab==="photo"&&lb.classList.contains("open")) refit(); },30);   // no relayout jolt when the tab is already active
 }
 document.getElementById("tabPhoto").addEventListener("click",()=>{ setTab("photo"); persistState(); });
@@ -4480,9 +4480,15 @@ function dist(p,c){ if(p.lat==null)return Infinity; const dx=p.lat-c.lat,dy=p.ln
 
 /* hover preview top left */
 const hoverview=document.getElementById("hoverview"),hvImg=document.getElementById("hvImg"),hvCap=document.getElementById("hvCap");
-function showHover(p,ev){ if(p) ensureAnnotThumb(p); const src=p&&thumbSrc(p); if(!src)return; hvImg.src=src; hvCap.textContent=p.time?fmtDate(p.time):p.name; hoverview.classList.add("show"); if(ev) positionHover(ev); }
+let hoverEl=null;   // the label / dot the preview belongs to
+function showHover(p,ev,el){ if(p) ensureAnnotThumb(p); const src=p&&thumbSrc(p); if(!src)return; hoverEl=el||null; hvImg.src=src; hvCap.textContent=p.time?fmtDate(p.time):p.name; hoverview.classList.add("show"); if(ev) positionHover(ev); }
 function positionHover(ev){ const w=hoverview.offsetWidth||220,h=hoverview.offsetHeight||200; let x=ev.clientX-w/2, y=ev.clientY-h-16; x=Math.max(6,Math.min(x,window.innerWidth-w-6)); if(y<6) y=ev.clientY+20; hoverview.style.left=x+"px"; hoverview.style.top=y+"px"; }
-function hideHover(){ hoverview.classList.remove("show"); }
+function hideHover(){ hoverview.classList.remove("show"); hoverEl=null; }
+/* the map redraws its labels while you zoom, pan or sync, and a label swapped out from under the pointer
+   never says "mouse out" — so any move off it (or a redraw, a zoom, leaving the window) clears the preview */
+document.addEventListener("mousemove",e=>{ if(hoverEl&&!(hoverEl.isConnected&&hoverEl.contains(e.target))) hideHover(); },{passive:true});
+document.addEventListener("mouseleave",hideHover); window.addEventListener("blur",hideHover);
+map.on("zoomstart movestart",()=>{ if(!dotDrag) hideHover(); });
 
 /* lightbox with scroll zoom + reference inset + enhance */
 const lb=document.getElementById("imgPanel"),lbStage=document.getElementById("lbStage"),lbImg=document.getElementById("lbImg");
@@ -4500,7 +4506,7 @@ function openViewer(p){
   lightboxIndex=i;
   const wasOpen=lb.classList.contains("open");
   lb.classList.add("open"); if(rightTab!=="photo") setTab("photo");
-  applySideW();   // a photo shows at twice the panel's base width (the Gallery is always half the photo view)
+  applySideW();
   loadViewer(); renderMapTags();
   if(!wasOpen){ setTimeout(()=>{ map.invalidateSize(); renderClusters(); positionTools(); },30); }
 }
@@ -4694,15 +4700,12 @@ function vStep(d){ if(!lightboxList.length)return;
       let k=lightboxList.indexOf(q); if(k<0){ lightboxList=list.slice(); k=lightboxList.indexOf(q); } lightboxIndex=k; loadViewer(); return; } }
   lightboxIndex=(lightboxIndex+d+lightboxList.length)%lightboxList.length; loadViewer(); }
 function closeViewer(){ if(!lb.classList.contains("open")) return; if(selMark) deselectText(); closeFileInfo(); if(typeof closeFolderPop==="function") closeFolderPop(); setMarkTool("none"); setEditOpen(false); draft=null; polyPrev=null; clearHighlight(); lb.classList.remove("open"); fullToken++; if(curUrl){URL.revokeObjectURL(curUrl);curUrl=null;} lbImg.src=""; renderMapTags(); refreshActCurClasses(); setTimeout(()=>{ map.invalidateSize(); renderClusters(); positionTools(); },30);  applySideW(); }
-/* The right panel has ONE base width — the Gallery / History / no-photo width. Showing a photo doubles it
-   (at most ¾ of the window); leave the photo any way (its ×, Escape, the Gallery or History tab) and it is
-   back to the base, so a big photo never stays covering the map. Dragging the panel's edge sets the base
-   (half of what you drag it to while a photo shows). The photo's × also switches to the Gallery. */
+/* The right panel keeps one width whatever it shows (photo, Gallery, History): only dragging its edge
+   changes it, so the map never shifts when you open or close a photo. */
 function sideWNow(){ return parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--side-w"))||380; }
 function sideShowsPhoto(){ return lb.classList.contains("open")&&rightTab==="photo"; }
 function applySideW(){ if(sideBase==null) sideBase=sideWNow();
-  const ap=document.getElementById("actPanel"), room=window.innerWidth-(ap?ap.offsetWidth:0)-Math.max(300,window.innerWidth*0.25);   // the map always keeps a fair share
-  const w=sideShowsPhoto()?Math.round(Math.max(sideBase,Math.min(window.innerWidth*0.75,sideBase*2,room))):sideBase;
+  const w=sideBase;
   if(Math.abs(w-sideWNow())<1) return;
   document.documentElement.style.setProperty("--side-w",w+"px");
   setTimeout(()=>{ map.invalidateSize(); positionTools(); if(sideShowsPhoto()) refit(); },40); }
@@ -5454,7 +5457,7 @@ window.addEventListener("mousemove",e=>{ if(!resizing)return; let w=Math.max(240
   document.documentElement.style.setProperty("--side-w",w+"px");   // ONE width for the whole right sidebar — both tabs share it
   if(rightTab==="photo"&&lb.classList.contains("open")) refit();
   mapRelayoutSoon(); });
-window.addEventListener("mouseup",()=>{ if(resizing){resizing=false;document.body.style.userSelect=""; const w=sideWNow(); sideBase=Math.max(240,Math.round(sideShowsPhoto()?w/2:w)); persistState();} });   // the edge sets the base width
+window.addEventListener("mouseup",()=>{ if(resizing){resizing=false;document.body.style.userSelect=""; sideBase=Math.max(240,Math.round(sideWNow())); persistState();} });   // the edge sets the width
 
 /* file ops */
 document.getElementById("miProjects").addEventListener("click",()=>showProjectPicker());
