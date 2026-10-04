@@ -364,6 +364,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   /* action "relevant area" previews: hover-preview-sized mini-maps floating above each photo group */
   .hoverview{position:fixed;z-index:1600;display:none;background:#fff;border:1px solid var(--accent);border-radius:10px;padding:5px;box-shadow:0 14px 40px #1e1f2233;pointer-events:none;}
   .hoverview.show{display:block;}
+  .ma-mem{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:#F28C28;border:2px solid #fff;box-sizing:border-box;box-shadow:0 1px 4px #0007;cursor:pointer;}   /* an action's photo away from its label */
+  .ma-mem.hold{background:#fff;border:0;box-shadow:0 0 0 2px #F28C28,0 1px 4px #0007;} .ma-mem.done{background:#6b7580;}
   /* placing pasted / dropped photos: the pointer is a photo dot with a callout (photo + what a click does) */
   body.placing-photo #map,body.placing-photo #map .leaflet-interactive,body.placing-photo #map .leaflet-marker-icon,body.placing-photo #map .ma-dot{cursor:none!important;}
   body.placing-photo #actList .act-row{cursor:copy;}
@@ -806,33 +808,27 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-ptr.ready{color:#7a5a12;}
   .ma-north{position:absolute;top:12px;right:14px;z-index:500;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:6px 10px 4px;line-height:0;box-shadow:0 2px 8px #1d243020;pointer-events:none;}
   
-  .ma-peek{position:absolute;left:12px;right:12px;bottom:16px;z-index:500;background:#fff;border:0;border-radius:16px;box-shadow:0 4px 18px #1d243033;padding:14px;display:flex;align-items:center;gap:14px;text-align:left;font:inherit;color:var(--ink);box-sizing:border-box;}
-  .ma-peek{cursor:pointer;padding:10px 12px;gap:12px;}
-  .ma-peek.done .t{text-decoration:line-through;color:var(--muted);}   /* completed / on hold actions shown by the filters */
-  .ma-peek.hold .m{color:#7A5C00;font-weight:600;}
-  .ma-peeks{position:absolute;left:0;right:0;bottom:12px;z-index:500;display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding:6px 16px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
-  .ma-peeks::-webkit-scrollbar{display:none;}
-  .ma-fit{position:absolute;right:14px;bottom:16px;z-index:500;width:46px;height:46px;padding:0;background:#fff;border:1.5px solid var(--line);border-radius:12px;box-shadow:0 2px 8px #1d243020;display:grid;place-items:center;color:var(--ink);}   /* zoom to extents: sits just above the cards (mSyncCards moves it) */
+  /* the action card under the map: one at a time, photo (with its map number) left, title right, ‹ › either side */
+  .ma-one{position:absolute;left:8px;right:8px;bottom:12px;z-index:500;display:flex;align-items:stretch;filter:drop-shadow(0 4px 12px #1d243038);}
+  .ma-one .ma-ar{width:36px;flex-shrink:0;background:#fff;border:2px solid var(--gold);color:#F28C28;display:grid;place-items:center;padding:0;}
+  .ma-one .ma-ar.l{border-radius:16px 0 0 16px;border-right:1px solid #eee;} .ma-one .ma-ar.r{border-radius:0 16px 16px 0;border-left:1px solid #eee;}
+  .ma-one .ma-ar svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;}
+  .ma-one .ma-ar:active{background:#fdf6e6;}
+  .ma-oc{flex:1;min-width:0;display:flex;gap:10px;background:#fff;border-top:2px solid var(--gold);border-bottom:2px solid var(--gold);padding:8px;min-height:118px;box-sizing:border-box;color:var(--ink);cursor:pointer;}
+  .ma-oc .ph{position:relative;width:38%;max-width:150px;flex-shrink:0;border-radius:10px;background:#d9dde3 center/cover no-repeat;}
+  .ma-oc .ph .ma-dot{left:5px;top:5px;transform:none;}   /* its number exactly as the map shows it */
+  .ma-oc .tx{display:flex;flex-direction:column;min-width:0;padding:1px 0;}
+  .ma-oc .t{font-size:15.5px;font-weight:700;line-height:1.25;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;}
+  .ma-oc .n{margin-top:auto;padding-top:4px;font-size:12.5px;font-weight:600;color:var(--muted);}
+  .ma-oc.done .t{text-decoration:line-through;color:var(--muted);} .ma-oc.done .ph{filter:grayscale(1);opacity:.8;}
+  .ma-fit{position:absolute;right:8px;bottom:16px;z-index:500;width:46px;height:46px;padding:0;background:#fff;border:1.5px solid var(--line);border-radius:12px;box-shadow:0 2px 8px #1d243020;display:grid;place-items:center;color:var(--ink);}   /* zoom to extents: sits just above the cards (mSyncCards moves it) */
   .ma-fit svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   .ma-fit:active{background:#fdf6e6;border-color:var(--gold);}
-  .ma-peeks .ma-peek.off,.ma-peeks.none{display:none;}   /* only the actions whose dots are on screen */
-  .ma-peeks .ma-peek{position:relative;left:auto;right:auto;bottom:auto;flex:0 0 calc(100% - 32px);scroll-snap-align:center;box-shadow:0 3px 12px #1d243030;padding:8px 10px;gap:10px;}
-  .ma-peeks .ma-peek .ma-th{width:48px;height:48px;}
-  .ma-peeks .ma-peek .t{font-size:15px;line-height:1.25;-webkit-line-clamp:3;}   /* room for the title: up to three short lines */
-  .ma-peeks .ma-peek .ma-view{height:40px;padding:0 13px;font-size:15px;}
-  .ma-peeks .ma-peek.on{box-shadow:0 0 0 2.5px var(--gold),0 3px 12px #1d243030;}
-  .ma-peek.done .ma-th{filter:grayscale(1);opacity:.75;}
-  .ma-peek.hold .m,.ma-peek.done .m{color:#9a5b00;}
-  .ma-peek .ma-th{width:56px;height:56px;border-radius:10px;}
-  .ma-peek .t{font-size:17px;font-weight:700;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;}   /* two lines still fit beside the small photo */
-  .ma-peek .ma-rt{min-width:0;}
-  .ma-view{flex-shrink:0;height:44px;padding:0 18px;border-radius:12px;border:0;background:var(--gold);color:#1a1307;box-shadow:inset 0 0 0 1.5px #c9952e;font:inherit;font-size:16px;font-weight:700;}
   /* the action you picked: a red arrow points down at its dot (or at the bubble it sits in), bobs twice and fades */
   .ma-dot.flash::before{content:"";position:absolute;left:50%;top:-30px;width:8px;height:15px;margin-left:-4px;background:#E8281E;border-radius:2px;}
   .ma-dot.flash::after{content:"";position:absolute;left:50%;top:-17px;margin-left:-12px;border-left:12px solid transparent;border-right:12px solid transparent;border-top:16px solid #E8281E;filter:drop-shadow(0 2px 2px #0005);}
   .ma-dot.flash::before,.ma-dot.flash::after{animation:maarrow 1.5s ease-in-out forwards;}
   @keyframes maarrow{0%,30%,60%{transform:translateY(0);opacity:1;}15%,45%{transform:translateY(-8px);}80%{opacity:1;}100%{transform:translateY(0);opacity:0;}}
-  .ma-peek .m{font-size:15px;color:var(--muted);margin-top:6px;}
   .ma-dot{position:absolute;left:0;top:0;transform:translate(-50%,-50%);width:auto;padding:0 7px 0 9px;white-space:nowrap;height:28px;box-sizing:border-box;border-radius:8px;background:#F28C28;border:3px solid #fff;box-shadow:0 3px 8px #0006;color:#fff;text-shadow:1.5px 0.0px 0 #000,1.39px 0.57px 0 #000,1.06px 1.06px 0 #000,0.57px 1.39px 0 #000,0.0px 1.5px 0 #000,-0.57px 1.39px 0 #000,-1.06px 1.06px 0 #000,-1.39px 0.57px 0 #000,-1.5px 0.0px 0 #000,-1.39px -0.57px 0 #000,-1.06px -1.06px 0 #000,-0.57px -1.39px 0 #000,-0.0px -1.5px 0 #000,0.57px -1.39px 0 #000,1.06px -1.06px 0 #000,1.39px -0.57px 0 #000,0.8px 0.0px 0 #000,0.74px 0.31px 0 #000,0.57px 0.57px 0 #000,0.31px 0.74px 0 #000,0.0px 0.8px 0 #000,-0.31px 0.74px 0 #000,-0.57px 0.57px 0 #000,-0.74px 0.31px 0 #000,-0.8px 0.0px 0 #000,-0.74px -0.31px 0 #000,-0.57px -0.57px 0 #000,-0.31px -0.74px 0 #000,-0.0px -0.8px 0 #000,0.31px -0.74px 0 #000,0.57px -0.57px 0 #000,0.74px -0.31px 0 #000;font:800 13px/22px var(--font);text-align:center;letter-spacing:2.4px;}   /* white numbers with a 1.5 px black outline, spaced 2.4 px apart (open: bright orange, no ring) */
   .ma-dot.hold{background:#fff;border:0;box-shadow:0 0 0 2.5px #F28C28,0 3px 8px #0006;line-height:28px;}
   .ma-dot.done{background:#6b7580;box-shadow:0 0 0 1.5px #3f4750,0 3px 8px #0006;text-shadow:none;}
@@ -846,7 +842,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   
   
   .ma-ov{position:absolute;inset:0;z-index:800;background:#1d243040;} .ma-ov.clear{background:none;pointer-events:none;}   /* a top card leaves the map live below it */
-  .m-adding .ma-peeks,.m-adding .ma-fit{display:none!important;}   /* adding: the cards row steps aside */
+  .m-adding .ma-one,.m-adding .ma-fit{display:none!important;}   /* adding: the cards row steps aside */
   .ma-nx{flex-shrink:0;width:28px;height:40px;border:0;background:none;font-size:30px;line-height:1;color:var(--muted);padding:0;box-shadow:none;}
   .ma-nplace{display:none;align-items:center;gap:8px;padding:0 16px 4px 20px;} .ma-nplace>span{flex:1;min-width:0;display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.25;} .ma-nplace>span svg{width:22px;height:22px;flex-shrink:0;color:#9A520B;}
   .ma-nme{flex-shrink:0;width:44px;height:44px;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--ink);display:grid;place-items:center;padding:0;box-shadow:none;} .ma-nme svg{width:24px;height:24px;}
@@ -1449,6 +1445,10 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
   for(const p of photos){ if(p.lat==null||!passSearch(p)||!passActs(p)||(boxBounds&&!boxBounds.contains([p.lat,p.lng]))||!bnd.contains([p.lat,p.lng])) continue;
     const q=map.project([p.lat,p.lng],z), as=(p.acts||[]).map(actById).filter(a=>a&&actVisible(a));
     if(!as.length) loose.push({p,q}); else for(const a of as) pts.push({a,p,q}); }
+  /* ONE label per action: at its first photo (gallery order); photos of it somewhere else are small dots in its colour */
+  const members=[]; { const by=new Map(); for(const t of pts){ if(!by.has(t.a.id)) by.set(t.a.id,[]); by.get(t.a.id).push(t); } pts.length=0;
+    for(const list of by.values()){ const ord=actPhotos(list[0].a); list.sort((x,y)=>ord.indexOf(x.p)-ord.indexOf(y.p)); const f=list[0].q;
+      for(const t of list){ if(Math.hypot(t.q.x-f.x,t.q.y-f.y)<6) pts.push(t); else members.push(t); } } }
   // photos on no action: grey dots (a number when several share a spot)
   const lg=[]; for(const t of loose){ const g=lg.find(g2=>Math.hypot(g2.x-t.q.x,g2.y-t.q.y)<14); if(g) g.items.push(t); else lg.push({x:t.q.x,y:t.q.y,items:[t]}); }
   // spots: label points within 46 px share a spot; one label per action per spot
@@ -1488,6 +1488,10 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
       if(!sp.has(k)) sp.set(k,{ll:llOf(o.q.x,o.q.y),pids:[],rep:null,act:null,spot:true}); const h=sp.get(k); for(const p of ps) h.pids.push(p.id); if(!h.rep||(o.l&&!(h.rep.acts||[]).length)) h.rep=ps[0]; }
     for(const h of sp.values()) mapHits.push(h); }
   for(const g of lg) if(!g.used) mkLoose(g,g.x,g.y);
+  for(const t of members){ const a=t.a, p=t.p, st=a.done?"done":a.hold?"hold":"open", ll=llOf(t.q.x,t.q.y);   // another place this action has a photo
+    const m=L.marker(ll,{keyboard:false,zIndexOffset:-50,icon:L.divIcon({className:"",html:'<div class="ma-mem'+(st==="open"?"":" "+st)+'" title="'+esc(actNo(a))+' (another of its photos)"></div>',iconSize:[0,0],iconAnchor:[0,0]})});
+    wireMapHit(m,{ll,pids:[p.id],rep:p,act:a.id,grab:false,member:true,hover:p,open:()=>{ selectActionOf(p); openViewer(p); }});
+    markerLayer.addLayer(m); }
   if(anim) markerLayer.eachLayer(l=>{ if(l._animateZoom) l._animateZoom(anim); });   // placed straight at the landing spot (no slide from the old layout)
   if(hlMarker){ const cp=lb.classList.contains("open")?curPhoto():null, mine=!!cp&&hlMarker._pid===cp.id;
     hlMarker.setOpacity(mine&&(!op||_openInArrowed)?0:1); }   // the open photo's label already wears the arrow — and a photo hidden behind the Gallery points at nothing
@@ -1519,8 +1523,10 @@ function wireMapHit(m,h){
 function startMapDrag(m,h){
   hideHover(); try{ map.dragging.disable(); }catch(e){}
   map.getContainer().style.cursor="grabbing";
-  const base=h.pids.some(id=>selSet.has(id))?[...new Set([...selSet,...h.pids])]:h.pids;   // a selection moves together; anything joined to it comes too
-  dotDrag={p:null,hit:m,dot:m,ring:h.arrow||null,start:m.getLatLng(),group:linkedTo(base),origs:new Map(),viewerPhoto:false,moved:false};
+  const sel=h.pids.some(id=>selSet.has(id)), a=h.act!=null&&!sel?actById(h.act):null;
+  const group=a?actPhotos(a).filter(p=>p.lat!=null).map(p=>p.id)   // an action's label: the whole action moves — its photos only, never another action's on the same spot
+    :linkedTo(sel?[...new Set([...selSet,...h.pids])]:h.pids);   // a selection moves together; loose photos joined to it come too
+  dotDrag={p:null,hit:m,dot:m,ring:h.arrow||null,start:m.getLatLng(),group,act:a?a.id:null,origs:new Map(),viewerPhoto:false,moved:false};
 }
 /* Reposition dots: open a photo (its dot gets the white ring) OR select dots with Select area —
    then hold and drag a selected dot. A multi-selection moves together, keeping relative positions.
@@ -1529,7 +1535,7 @@ function startMapDrag(m,h){
 let dotDrag=null, dotDropT=0, selSet=new Set(), dotMarkers=new Map(), uiClickT=0;   // uiClickT: last click that landed on a dot/cluster/menu — never treated as an empty-map click
 /* Photos on the very same spot (joined by dragging one onto another) are LINKED: they move together. */
 function linkedTo(ids){ const out=new Set(ids), keys=new Set(); for(const id of ids){ const p=photoById(id); if(p&&p.lat!=null) keys.add(p.lat+","+p.lng); }
-  for(const q of photos) if(q.lat!=null&&keys.has(q.lat+","+q.lng)) out.add(q.id); return [...out]; }
+  for(const q of photos) if(q.lat!=null&&keys.has(q.lat+","+q.lng)&&!(q.acts||[]).some(id=>actById(id))) out.add(q.id); return [...out]; }   // (loose photos only: another action's photo on the same spot is never dragged along)
 map.on("mousemove",e=>{
   if(!dotDrag) return; dotDrag.moved=true;
   const dLat=e.latlng.lat-dotDrag.start.lat, dLng=e.latlng.lng-dotDrag.start.lng;
@@ -1540,8 +1546,8 @@ map.on("mousemove",e=>{
   if(hlMarker&&dotDrag.viewerPhoto) hlMarker.setLatLng(e.latlng);
   /* dropping onto another dot groups them: the nearest other dot within reach gets a gold ring */
   const moving=new Set(dotDrag.group?dotDrag.group:(dotDrag.p?[dotDrag.p.id]:[])), cp=map.latLngToContainerPoint(e.latlng);
-  let best=null, bd=26;   // the nearest other label / grey dot within reach; an action's label wins over a loose dot
-  for(const h of mapHits){ if(h.pids.every(id=>moving.has(id))) continue; const d=map.latLngToContainerPoint(h.ll).distanceTo(cp); if(d<bd-0.5||(d<=bd+0.5&&best&&h.act!=null&&best.act==null)){ bd=d; best=h; } }
+  let best=null, bd=26;   // the nearest other label / grey dot within reach; an action's label wins over a loose dot (an action being moved just goes where it's dropped)
+  if(dotDrag.act==null) for(const h of mapHits){ if(h.pids.every(id=>moving.has(id))) continue; const d=map.latLngToContainerPoint(h.ll).distanceTo(cp); if(d<bd-0.5||(d<=bd+0.5&&best&&h.act!=null&&best.act==null)){ bd=d; best=h; } }
   dotDrag.snap=best?best.rep:null; dotDrag.snapAct=best?best.act:null;
   if(best){ if(!snapMk) snapMk=L.marker(best.ll,{interactive:false,zIndexOffset:2000,icon:L.divIcon({className:"",html:'<div class="snap-ring"></div><div class="snap-tip">Drop to group with this '+(best.act!=null?'action':'photo')+'</div>',iconSize:[52,52],iconAnchor:[26,26]})}).addTo(map); else snapMk.setLatLng(best.ll); }
   else if(snapMk){ map.removeLayer(snapMk); snapMk=null; }
@@ -6407,8 +6413,8 @@ function mShowList(){
     mScr(mTopStrip()+'<div class="ma-mapwrap" id="mList"><div class="ma-map" id="mHomeMap"></div>'+mFltHtml()
       +'<div class="ma-north" title="North is up">'+NORTH_SVG(30,36)+'</div>'
       +'<button type="button" class="ma-fit" id="mFitB" title="Zoom out to every action" aria-label="Zoom out to every action"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M4 4l5.5 5.5M20 9V4h-5M20 4l-5.5 5.5M4 15v5h5M4 20l5.5-5.5M20 15v5h-5M20 20l-5.5-5.5"/></svg></button>'
-      +(pks.length?'<div class="ma-peeks" id="mPeeks">'+pks.map(a=>{ const st=mStatus(a);   // one card per action on the map, in Actions-list order: swipe through them
-          return '<div class="ma-peek'+(st==="open"?"":" "+st)+'" role="button" tabindex="0" data-k="'+mCardKey(a)+'">'+mThumbOf(a)+'<div class="ma-rt"><div class="t">'+mActLine(a)+'</div>'+mMetaDiv(a)+'</div><button class="ma-view" type="button">View</button></div>'; }).join("")+'</div>':'')+'</div>'+mNavHtml("map"));
+      +(pks.length?'<div class="ma-one" id="mPeeks"><button type="button" class="ma-ar l" id="mPrevA" aria-label="Previous action"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>'
+        +'<div class="ma-oc" id="mOneC" role="button" tabindex="0"></div><button type="button" class="ma-ar r" id="mNextA" aria-label="Next action"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>':'')+'</div>'+mNavHtml("map"));
   } else {
     const shown=acts.filter(a=>{ const st=mStatus(a); return (st==="open"&&mShowOpen)||(st==="hold"&&mShowHold)||(st==="done"&&mShowDone); });
     mScr(mTopStrip()+'<div class="ma-lwrap"><div class="ma-ptr" id="mPtr">'+MI.sync+'<span>Pull to refresh</span></div>'+mFltHtml()+'<div class="ma-lhead"><label class="ma-search">'+MI.search+'<input id="mQ" type="search" placeholder="Search actions" autocomplete="off" value="'+esc(mLQ)+'" /></label></div>'
@@ -6423,16 +6429,14 @@ function mShowList(){
   document.getElementById("mShowH").addEventListener("click",()=>{ mShowHold=!mShowHold; try{ localStorage.setItem("pmMHold",mShowHold?"1":"0"); }catch(e){} mShowList(); });   // one setting for the map and the list
   document.getElementById("mShowD").addEventListener("click",()=>{ mShowDone=!mShowDone; try{ localStorage.setItem("pmMDone",mShowDone?"1":"0"); }catch(e){} mShowList(); });
   if(mTab==="map"){
-    const row=document.getElementById("mPeeks");   // tap a card (or swipe to it): its dot is found on the map; View opens it under Actions
-    if(row){
-      row.querySelectorAll(".ma-peek").forEach(c=>{ c.addEventListener("click",()=>{ if(c.dataset.k===mFocusK) mOpenAct(c.dataset.k); else mFocusCard(c.dataset.k); });   // tapping the selected card again opens it (like its label)
-        c.querySelector(".ma-view").addEventListener("click",e=>{ e.stopPropagation(); mOpenAct(c.dataset.k); }); });   // opened from the map: Back (button or swipe) returns to the map, same view and card
-      const cur=mFocusK!=null&&row.querySelector('.ma-peek[data-k="'+mFocusK+'"]');
-      if(cur){ row.scrollLeft=cur.offsetLeft-(row.clientWidth-cur.offsetWidth)/2; cur.classList.add("on"); }   // back on the map: the same card, map view unchanged
-      let st=null; row.addEventListener("scroll",()=>{ if(mCardScrolling) return; clearTimeout(st); st=setTimeout(()=>{   // the map follows the card you swipe to
-        const mid=row.scrollLeft+row.clientWidth/2; let best=null,bd=1e9;
-        row.querySelectorAll(".ma-peek:not(.off)").forEach(c=>{ const d=Math.abs(c.offsetLeft+c.offsetWidth/2-mid); if(d<bd){ bd=d; best=c; } });
-        if(best&&best.dataset.k!==mFocusK) mFocusCard(best.dataset.k,true); },140); },{passive:true}); }
+    mOneKeys=mMapCards(acts).map(a=>mCardKey(a));   // ‹ › (or a swipe on the card) step through every action on the map, in Actions-list order
+    const card=document.getElementById("mOneC");
+    if(card){ mPaintCard();
+      const step=d=>{ const n=mOneKeys.length; if(!n) return; const i=Math.max(0,mOneKeys.indexOf(card.dataset.k)); mFocusCard(mOneKeys[(i+d+n)%n]); };   // from the card on show
+      document.getElementById("mPrevA").addEventListener("click",()=>step(-1)); document.getElementById("mNextA").addEventListener("click",()=>step(1));
+      card.addEventListener("click",()=>{ if(Date.now()-mCardSwipeT<400) return; const k=card.dataset.k; if(k===mFocusK) mOpenAct(k); else mFocusCard(k); });   // tap: picks it; tap again: opens it (like its label)
+      let sx=null,sy=0; card.addEventListener("touchstart",e=>{ sx=e.touches[0].clientX; sy=e.touches[0].clientY; },{passive:true});
+      card.addEventListener("touchend",e=>{ if(sx==null) return; const t=e.changedTouches[0], dx=t.clientX-sx, dy=t.clientY-sy; sx=null; if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)){ mCardSwipeT=Date.now(); step(dx<0?1:-1); } },{passive:true}); }
     mBuildHomeMap(acts); requestAnimationFrame(()=>mSyncCards());
     mWarmCards(mMapCards(acts).slice(0,2));
   } else {
@@ -6453,17 +6457,8 @@ function mShowList(){
 /* the map card was tapped: zoom to that action's dot (ringed in gold), in the clear space above the card */
 let mFocusK=null, mTapK=null, mTapT=0;
 /* the cards list only the actions whose dots are on screen right now (re-checked whenever the map stops moving) */
-function mSyncCards(){
-  const m2=mHomeMap, row=document.getElementById("mPeeks"); if(!m2||!m2._pts||!row) return;
-  const mc=m2.getContainer().getBoundingClientRect(), flt=document.querySelector(".ma-mapwrap .ma-flt");
-  const rr=row.getBoundingClientRect(), top=flt?flt.getBoundingClientRect().top-mc.top:0, bot=rr.height?rr.top-mc.top+20:mc.height-90, W=mc.width;   // (a hidden row has no size: assume a card's height)
-  const seen=new Set(); for(const p of m2._pts){ const c=m2.latLngToContainerPoint([p.lat,p.lng]); if(c.x>=-10&&c.x<=W+10&&c.y>=top&&c.y<=bot) seen.add(p.k); }
-  if(mCardsHold) for(const k of mCardsHold) seen.add(k);   // browsing by swipe: the row keeps what it had
-  let any=false; row.querySelectorAll(".ma-peek").forEach(c=>{ const on=seen.has(c.dataset.k); c.classList.toggle("off",!on); if(on) any=true; });
-  row.classList.toggle("none",!any);
-  const fb=document.getElementById("mFitB"); if(fb) fb.style.bottom=(any?row.offsetHeight+18:16)+"px";   // the extents button rides just above the cards
-  const cur=row.querySelector(".ma-peek.on:not(.off)")||row.querySelector(".ma-peek:not(.off)");
-  if(cur){ mCardScrolling=true; row.scrollLeft=cur.offsetLeft-(row.clientWidth-cur.offsetWidth)/2; setTimeout(()=>{ mCardScrolling=false; },250); } }
+function mSyncCards(){   // the zoom-to-all button sits snug in the corner, just above the card
+  const row=document.getElementById("mPeeks"), fb=document.getElementById("mFitB"); if(fb) fb.style.bottom=(row?row.offsetHeight+20:12)+"px"; }
 function mFlyTo(pts,z,landed,dur){   // glide to these points at zoom z, landing them in the clear space between the filters and the cards
   const m2=mHomeMap; const fb=L.latLngBounds(pts.map(p=>[p.lat,p.lng]));
   if(pts.length>1) z=Math.min(z,m2.getBoundsZoom(fb.pad(0.25),false));
@@ -6485,27 +6480,35 @@ function mFitAll(){   // zoom to extents: every action dot the filters show, and
   m2.flyToBounds(L.latLngBounds(ll),{paddingTopLeft:[36,top],paddingBottomRight:[36,bot],maxZoom:18,duration:1.2});
   m2.once("moveend",()=>{ m2._flying=false; m2._draw(); mSyncCards(); }); }
 const M_FOCUS_Z=18;   // how far a tap / swipe / bubble zooms in: area level (closer actions fan out there)
-function mFocusDot(k){
+function mFocusDot(k){   // the picked action's arrow shows at once; the map only zooms OUT, and only if the dot (and its arrow) would be off screen
   const m2=mHomeMap; if(!m2||!m2._pts) return;
-  const fp=m2._pts.filter(p=>p.k===String(k)); if(!fp.length) return;
-  mFocusK=String(k); mHomeTouched=true; m2._draw();
-  const row=document.getElementById("mPeeks");   // zooming in hides the other dots: keep their cards so you can swipe on to them
-  mCardsHold=new Set([String(k),...(row?[...row.querySelectorAll(".ma-peek:not(.off)")].map(c=>c.dataset.k):[])]);
-  mFlyTo(fp,Math.max(M_FOCUS_Z,Math.min(m2.getZoom(),m2.getMaxZoom())),()=>mFlash(k)); }   // area level, or stay closer if you already pinched in
+  const fp=m2._pts.filter(p=>p.k===String(k)); mFocusK=String(k); mHomeTouched=true; if(!fp.length){ m2._draw(); return; }
+  const mc=m2.getContainer().getBoundingClientRect(), flt=document.querySelector(".ma-mapwrap .ma-flt"), card=document.getElementById("mPeeks");
+  const top=(flt?flt.getBoundingClientRect().bottom-mc.top:0)+60, bot=(card?card.getBoundingClientRect().top-mc.top:mc.height)-24, W=mc.width;   // 60: room for the arrow above the label
+  const inView=fp.every(p=>{ const c=m2.latLngToContainerPoint([p.lat,p.lng]); return c.x>=40&&c.x<=W-40&&c.y>=top&&c.y<=bot; });
+  if(inView||top>=bot){ m2._draw(); mFlash(k); return; }
+  const vb=L.latLngBounds(m2.containerPointToLatLng([40,top]),m2.containerPointToLatLng([W-40,bot]));
+  fp.forEach(p=>vb.extend([p.lat,p.lng]));
+  m2._flying=true; m2.fitBounds(vb,{paddingTopLeft:[40,top],paddingBottomRight:[40,mc.height-bot],maxZoom:m2.getZoom(),animate:true,duration:.25});
+  const end=()=>{ m2._flying=false; mHomeView={c:m2.getCenter(),z:m2.getZoom()}; m2._draw(); mFlash(k); }; let done=false; m2.once("moveend",()=>{ if(!done){ done=true; end(); } }); setTimeout(()=>{ if(!done){ done=true; end(); } },900); }
 function mFlash(k){   // the red arrow: bobs twice over the dot, then fades (CSS); the class goes once it has played
   mFlashK=String(k); if(mHomeMap&&mHomeMap._draw) mHomeMap._draw();
   clearTimeout(mFlashT); mFlashT=setTimeout(()=>{ mFlashK=null; if(mHomeMap&&mHomeMap._draw&&!mHomeMap._flying) mHomeMap._draw(); },1700); }
 function mMapCards(acts){   // the actions with a dot on the map, as the filters show them, in Actions-list order
   return acts.filter(a=>{ const st=mStatus(a); if((st==="open"&&!mShowOpen)||(st==="hold"&&!mShowHold)||(st==="done"&&!mShowDone)) return false;
     const loc=a._new?(mNewActs()[a._ni]||{}).loc:a.loc; return !!loc||mPhotos(a).some(p=>p.lat!=null); }); }
-let mCardScrolling=false, mFlashK=null, mFlashT=null, mCardsHold=null;
-function mFocusCard(k,fromSwipe){   // bring the card up (unless the swipe already did) and find its dot
-  k=String(k); const row=document.getElementById("mPeeks"), c=row&&row.querySelector('.ma-peek[data-k="'+k+'"]');
-  if(row) row.querySelectorAll(".ma-peek.on").forEach(x=>x.classList.remove("on"));
-  if(c){ c.classList.add("on");
-    if(!fromSwipe){ mCardScrolling=true; row.scrollTo({left:c.offsetLeft-(row.clientWidth-c.offsetWidth)/2,behavior:"smooth"}); setTimeout(()=>{ mCardScrolling=false; },600); } }
-  mFocusDot(k);   // swipe or tap: glide in to its dot, then the arrow
+let mFlashK=null, mFlashT=null, mCardsHold=null, mOneKeys=[], mCardSwipeT=0;
+function mPaintCard(){   // the card shows the picked action (else the first on the map); its number exactly as its map label
+  const el=document.getElementById("mOneC"); if(!el) return;
+  const k=(mFocusK!=null&&mOneKeys.includes(mFocusK))?mFocusK:mOneKeys[0], a=k!=null&&mHomeActs().find(x=>mCardKey(x)===k); if(!a){ el.innerHTML=""; return; }
+  const st=mStatus(a), p=mPhotos(a).find(x=>x.img), i=mOneKeys.indexOf(k);
+  el.dataset.k=k; el.className="ma-oc"+(st==="open"?"":" "+st);
+  el.innerHTML='<div class="ph"'+(p?' style="background-image:url(\''+p.img+'\')"':'')+'>'+(a._new?'':'<span class="ma-dot'+(st==="open"?"":" "+st)+'">'+actNo(a)+'</span>')+'</div>'
+    +'<div class="tx"><div class="t">'+esc(mTitle(a))+'</div><div class="n">'+(i+1)+' of '+mOneKeys.length+'</div></div>'; }
+function mFocusCard(k){   // ‹ ›, a swipe on the card, or a label: that action on the card and its arrow on the map
+  k=String(k); mFocusK=k; mPaintCard(); mFocusDot(k);
   const a=mHomeActs().find(x=>mCardKey(x)===k); if(a) mWarmCards([a]); }
+
 /* + New action: a card that drops from the top — the title, its sub-actions, then Place / Photo / Gallery
    and the photos (several at once from the gallery) — with Create in its corner. Enter on the title goes straight on to a sub-action,
    Enter on a sub-action adds it and stays there for the next; Enter on an empty line puts the keyboard
@@ -6852,8 +6855,10 @@ function mBuildHomeMap(acts){
     const lay=L.layerGroup().addTo(m2);
     /* No bubbles: one label per action at each spot; a crowded spot spreads its labels on a ferris wheel
        round it (a spoke back to each one's own place), like the desktop. Wheels that would touch join. */
-    const layout=z=>{ const groups=[], wheels=[];
-      for(const p of pts){ const q=m2.project([p.lat,p.lng],z), t=Object.assign({},p,{q}); const g=groups.find(g2=>Math.hypot(g2.x-q.x,g2.y-q.y)<46);
+    const layout=z=>{ const groups=[], wheels=[], first=new Map(); wheels.members=[];
+      for(const p of pts){ const q=m2.project([p.lat,p.lng],z), t=Object.assign({},p,{q});
+        const f=first.get(p.k); if(!f) first.set(p.k,q); else if(Math.hypot(f.x-q.x,f.y-q.y)>=6){ wheels.members.push(t); continue; }   // ONE label per action (at its first photo); its photos elsewhere are small dots
+        const g=groups.find(g2=>Math.hypot(g2.x-q.x,g2.y-q.y)<46);
         if(g) g.items.push(t); else groups.push({x:q.x,y:q.y,items:[t]}); }
       const settle=g=>{ const by=new Map(); for(const t of g.items) if(!by.has(t.k)) by.set(t.k,t); g.labs=[...by.values()];
         g.cx=g.labs.reduce((s2,t)=>s2+t.q.x,0)/g.labs.length; g.cy=g.labs.reduce((s2,t)=>s2+t.q.y,0)/g.labs.length; };
@@ -6888,6 +6893,8 @@ function mBuildHomeMap(acts){
       L.marker(ll,{zIndexOffset:k===mFocusK?800:st==="open"?300:st==="hold"?100:0,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(a._new?' new':st==="open"?'':' '+st)+(k===mFocusK?' focus':'')+(k===mFlashK?' flash':'')+'">'+(a._new?'•':actNo(a))+'</div>',iconSize:[0,0],iconAnchor:[0,0]})})
         .on("click",()=>{ if(mAdding) return; if(k===mFocusK){ mTapK=null; mOpenAct(k); } else { mTapK=k; mTapT=Date.now(); mFocusCard(k); } }).addTo(lay); };   // a label brings its card up; tapping it again (or View) opens it
     const render=(wheels,z)=>{ lay.clearLayers();
+      for(const t of wheels.members||[]){ const st=mStatus(t.a); L.marker([t.lat,t.lng],{zIndexOffset:-50,icon:L.divIcon({className:"",html:'<div class="ma-mem'+(st==="open"?"":" "+st)+'"></div>',iconSize:[0,0],iconAnchor:[0,0]})})
+        .on("click",()=>{ if(!mAdding) mFocusCard(t.k); }).addTo(lay); }
       for(const w of wheels){
         if(w.one){ dot(w.one.k,w.one.a,[w.one.lat,w.one.lng]); continue; }
         const spots=new Set(); const svg=w.ls.map(t=>{ spots.add(Math.round(t.q.x-w.cx)+","+Math.round(t.q.y-w.cy)); return '<line x1="'+(t.q.x-w.cx).toFixed(1)+'" y1="'+(t.q.y-w.cy).toFixed(1)+'" x2="'+(t.lx-w.cx).toFixed(1)+'" y2="'+(t.ly-w.cy).toFixed(1)+'"/>'; }).join("")
