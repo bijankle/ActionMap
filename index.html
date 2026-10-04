@@ -364,6 +364,22 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   /* action "relevant area" previews: hover-preview-sized mini-maps floating above each photo group */
   .hoverview{position:fixed;z-index:1600;display:none;background:#fff;border:1px solid var(--accent);border-radius:10px;padding:5px;box-shadow:0 14px 40px #1e1f2233;pointer-events:none;}
   .hoverview.show{display:block;}
+  /* placing pasted / dropped photos: the pointer is a photo dot with a callout (photo + what a click does) */
+  body.placing-photo #map,body.placing-photo #map .leaflet-interactive,body.placing-photo #map .leaflet-marker-icon,body.placing-photo #map .ma-dot{cursor:none!important;}
+  body.placing-photo #actList .act-row{cursor:copy;}
+  .place-cur{position:fixed;left:0;top:0;z-index:2500;pointer-events:none;}
+  .place-cur .pd{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:#9aa3ad;border:2.5px solid #fff;box-sizing:border-box;box-shadow:0 0 0 1px #0005,0 2px 5px #0006;}
+  .place-cur.off-map .pd{display:none;}
+  .place-cur .co{position:absolute;left:18px;bottom:-22px;background:#fff;border-radius:12px;padding:8px 12px 8px 8px;display:flex;gap:10px;align-items:center;box-shadow:0 4px 14px #0005;white-space:nowrap;font:600 12.5px/1.3 var(--font);color:var(--ink);}
+  .place-cur .co:after{content:"";position:absolute;left:-8px;bottom:14px;border:9px solid transparent;border-right-color:#fff;border-left:0;}
+  .place-cur.flip .co{left:auto;right:18px;} .place-cur.flip .co:after{left:auto;right:-8px;border-right:0;border-left:9px solid #fff;border-top-color:transparent;border-bottom-color:transparent;}
+  .place-cur .co b{display:block;font-size:14px;} .place-cur .co i{font-style:normal;color:var(--muted);font-size:12px;}
+  .place-cur .co.hot{box-shadow:0 0 0 2.5px #F28C28,0 4px 14px #0005;} .place-cur .co.hot b{color:#c26510;}
+  .place-cur .th{width:84px;height:63px;border-radius:7px;object-fit:cover;display:block;background:#ddd;}
+  .place-cur .stack{position:relative;width:96px;height:72px;} .place-cur .stack img{position:absolute;width:80px;height:60px;border-radius:7px;object-fit:cover;border:2px solid #fff;box-shadow:0 2px 6px #0004;background:#ddd;}
+  .place-cur .stack img:nth-child(1){left:14px;top:0;transform:rotate(7deg);} .place-cur .stack img:nth-child(2){left:7px;top:5px;transform:rotate(-5deg);} .place-cur .stack img:nth-child(3){left:0;top:10px;}
+  .place-cur .cnt{position:absolute;right:-2px;bottom:-4px;background:#1d2430;color:#fff;font:800 11.5px/1 var(--font);padding:4px 7px;border-radius:10px;border:2px solid #fff;}
+  .ma-dot.place-hot{outline:3px solid #F28C28;outline-offset:2px;} #actList .act-row.place-hot{box-shadow:0 0 0 2.5px #F28C28;}
   .hoverview img{display:block;width:min(270px,40vh);height:min(270px,40vh);object-fit:cover;border-radius:6px;background:#ECEEF1;}
   .hoverview .cap{font-family:var(--font);font-size:var(--fl);color:var(--muted);margin-top:5px;text-align:center;max-width:min(270px,40vh);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
   @keyframes hlpulse{0%,100%{stroke-opacity:1;}50%{stroke-opacity:.25;}}
@@ -1486,8 +1502,8 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
    photos; picking mode picks them); right-click = the dot menu; press-and-drag (once selected or open)
    moves its photos — drop it on another label to group them there. */
 function wireMapHit(m,h){
-  mapHits.push(h);
-  m.on("mouseover",e=>{ if(dotDrag) return; if(h.grab) map.getContainer().style.cursor="move"; if(h.hover) showHover(h.hover,e.originalEvent,m.getElement()); });
+  mapHits.push(h); h.m=m;
+  m.on("mouseover",e=>{ if(dotDrag||PLACE) return; if(h.grab) map.getContainer().style.cursor="move"; if(h.hover) showHover(h.hover,e.originalEvent,m.getElement()); });
   m.on("mousemove",e=>{ if(!dotDrag) positionHover(e.originalEvent); });
   m.on("mouseout",()=>{ if(!dotDrag) map.getContainer().style.cursor=""; hideHover(); });
   m.on("mousedown",e=>{ const oe=e.originalEvent; if(!oe||oe.button!==0||oe.ctrlKey||oe.metaKey||!h.grab) return; L.DomEvent.stop(oe); startMapDrag(m,h); });
@@ -4099,6 +4115,50 @@ async function ingest(items, append){
 /* Pasted images and loose-file drops go through the same pipeline as a folder load, plus:
    GPS-less images land at the current map centre (flagged noGps — a placed dot, not a real fix),
    the view flies to the new dot so it's easy to find, and the add is Ctrl+Z-able. */
+function actSpot(a){ const p=actPhotos(a).find(q=>q.lat!=null); return p?{lat:p.lat,lng:p.lng}:(a.loc?{lat:a.loc.lat,lng:a.loc.lng}:null); }   // where an action sits on the map: its cover photo, else its placed pin
+/* Pasted / dropped photos aren't added straight away: the pointer becomes a photo dot with a callout
+   (their thumbnails + what a click does) until you click an action (they join it — on its spot if they
+   have no GPS of their own) or a spot on the map (they go there, on no action). Esc cancels. */
+let PLACE=null, _plMouse={x:-999,y:-999};
+document.addEventListener("mousemove",e=>{ _plMouse={x:e.clientX,y:e.clientY}; if(PLACE) placeUpd(e); },{passive:true});
+async function startPlace(items){
+  if(!items||!items.length||roBlock()) return; endPlace();
+  const P={items,urls:[]}; PLACE=P;
+  for(const it of items.slice(0,3)){ try{ const f=await it.getFile(); if(PLACE!==P) return; P.urls.push(URL.createObjectURL(f)); }catch(e){} }
+  if(PLACE!==P) return;
+  const n=items.length, el=document.createElement("div"); el.className="place-cur"; P.el=el;
+  const pic=n>1?'<div class="stack">'+P.urls.slice().reverse().map(u=>'<img src="'+u+'" alt="">').join("")+'<span class="cnt">'+n+'</span></div>':'<img class="th" src="'+(P.urls[0]||"")+'" alt="">';
+  el.innerHTML='<div class="pd"></div><div class="co">'+pic+'<span><b></b><i class="l1"></i><br><i>Esc cancels</i></span></div>';
+  document.body.appendChild(el); document.body.classList.add("placing-photo"); hideHover();
+  placeUpd({clientX:_plMouse.x,clientY:_plMouse.y,target:document.elementFromPoint(_plMouse.x,_plMouse.y)}); }
+function endPlace(){ const P=PLACE; if(!P) return; PLACE=null; if(P.el) P.el.remove(); document.body.classList.remove("placing-photo");
+  document.querySelectorAll(".place-hot").forEach(x=>x.classList.remove("place-hot")); setTimeout(()=>P.urls.forEach(u=>URL.revokeObjectURL(u)),1000); }
+function placeTarget(e){ const t=e.target; if(!t||!t.closest) return null;
+  const row=t.closest("#actList .act-row"); if(row){ const a=actById(Number(row.dataset.aid)); return a?{act:a,el:row}:null; }
+  const mc=map.getContainer(); if(!mc.contains(t)||t.closest(".leaflet-control,#leftstack,#toolstack,.place-cur")) return null;
+  for(const el of (e.clientX!=null&&document.elementsFromPoint?document.elementsFromPoint(e.clientX,e.clientY):[t])){   // a label under a wheel's spokes still counts
+    const mk=el.closest&&el.closest(".leaflet-marker-icon"); if(!mk) continue; const h=mapHits.find(x=>x.m&&x.m.getElement()===mk); if(!h) continue;
+    if(h.act!=null){ const a=actById(h.act); if(a) return {act:a,el:mk.querySelector(".ma-dot")||mk}; }
+    return {ll:h.ll}; }
+  return {ll:map.mouseEventToLatLng(e)}; }
+function placeUpd(e){ const P=PLACE; if(!P||!P.el) return; const el=P.el, n=P.items.length;
+  el.style.left=e.clientX+"px"; el.style.top=e.clientY+"px"; el.classList.toggle("flip",e.clientX>window.innerWidth-330);
+  const tg=placeTarget(e), co=el.querySelector(".co"), b=el.querySelector("b"), l1=el.querySelector(".l1");
+  document.querySelectorAll(".place-hot").forEach(x=>{ if(!tg||x!==tg.el) x.classList.remove("place-hot"); }); if(tg&&tg.el) tg.el.classList.add("place-hot");
+  el.classList.toggle("off-map",!tg||!!(tg.act&&tg.el.closest("#actList")));
+  co.classList.toggle("hot",!!(tg&&tg.act));
+  if(tg&&tg.act){ b.textContent="Add "+(n>1?n+" photos":"photo")+" to "+actNo(tg.act); l1.textContent="click to add"; }
+  else if(tg){ b.textContent="Place "+(n>1?n+" photos":"photo")+" here"; l1.textContent="or click an action to add "+(n>1?"them":"it"); }
+  else { b.textContent="Click the map or an action"; l1.textContent="to place "+(n>1?"these photos":"this photo"); } }
+let _plDown=null, _plEat=0;
+document.addEventListener("mousedown",e=>{ if(!PLACE) return; if(e.button===2){ e.preventDefault(); e.stopPropagation(); endPlace(); _plEat=Date.now(); return; }
+  if(e.button!==0) return; const tg=placeTarget(e); _plDown=tg?{x:e.clientX,y:e.clientY}:null;
+  if(tg&&(tg.act||e.target.closest(".leaflet-marker-icon"))){ e.preventDefault(); e.stopPropagation(); } },true);   // a label / row press must not start its own drag; empty map still pans
+document.addEventListener("mouseup",e=>{ if(!PLACE||!_plDown||e.button!==0) return; const d=Math.hypot(e.clientX-_plDown.x,e.clientY-_plDown.y); _plDown=null; if(d>5) return;   // a pan, not a click
+  const tg=placeTarget(e); if(!tg) return; const P=PLACE; _plEat=Date.now(); endPlace();   // (the mouseup itself carries on: the map must see it end its press)
+  if(tg.act) ingestAdhoc(P.items,{act:tg.act,join:true,at:actSpot(tg.act)}); else ingestAdhoc(P.items,{none:true,at:{lat:tg.ll.lat,lng:tg.ll.lng}}); },true);
+["click","dblclick","contextmenu"].forEach(t=>document.addEventListener(t,e=>{ if(PLACE||Date.now()-_plEat<400){ e.preventDefault(); e.stopPropagation(); } },true));
+window.addEventListener("keydown",e=>{ if(PLACE&&e.key==="Escape"){ e.preventDefault(); e.stopPropagation(); endPlace(); } },true);
 async function ingestAdhoc(items,opt){   // opt.act / opt.at: photos for a new action (linked to it, GPS-less ones on its pin)
   if(!items||!items.length) return;
   if(roBlock()) return;
@@ -4107,14 +4167,15 @@ async function ingestAdhoc(items,opt){   // opt.act / opt.at: photos for a new a
   if(!added.length){ loadNote("Already in this project — nothing new added"); setTimeout(()=>loadNote(""),2500); return; }
   /* one action selected: the pasted photos join it, at the BACK of its photo list (the cover stays);
      one without GPS lands on the action's cover spot instead of the map centre */
-  const selA=opt&&opt.act?opt.act:(selActs.size===1?actById([...selActs][0]):null), cov=opt&&opt.at?opt.at:(selA?actPhotos(selA).find(q=>q.lat!=null):null);
-  if(selA&&!(opt&&opt.act)&&!(Array.isArray(selA.porder)&&selA.porder.length)) selA.porder=actPhotos(selA).map(q=>q.id);
+  const selA=opt&&opt.none?null:opt&&opt.act?opt.act:(selActs.size===1?actById([...selActs][0]):null), cov=opt&&opt.at?opt.at:(selA?actSpot(selA):null);   // opt.none: placed on the map, on no action; opt.join: added to an existing action
+  if(selA&&(!(opt&&opt.act)||opt.join)&&!(Array.isArray(selA.porder)&&selA.porder.length)) selA.porder=actPhotos(selA).map(q=>q.id);
   const c=cov?L.latLng(cov.lat,cov.lng):map.getCenter();
   for(const p of added){ p.adhoc=true; p.added=Date.now(); if(p.lat==null){ p.noGps=true; p.lat=c.lat; p.lng=c.lng; } if(selA) p.acts=[selA.id]; }
   pushUndo({addPhotos:added.map(p=>p.id)});
   if(selA&&typeof rebuildActionFilter==="function") rebuildActionFilter();
   renderClusters(); updateStats(); updateGallery(); persistState(); cacheFullSession();
   if(selA){ renderActions(); loadNote("\u2713 Added "+added.length+" photo"+(added.length===1?"":"s")+" to "+actNo(selA)); setTimeout(()=>loadNote(""),2500); }
+  else if(opt&&opt.none){ loadNote("\u2713 Placed "+added.length+" photo"+(added.length===1?"":"s")+" on the map"); setTimeout(()=>loadNote(""),2500); }
   /* only move the map if a new dot is out of sight — no fly to where you already are (that was the shake) */
   const geo=added.filter(p=>p.lat!=null), vb=map.getBounds();
   if(geo.some(p=>!vb.contains([p.lat,p.lng]))){
@@ -4204,6 +4265,7 @@ window.addEventListener("dragover",e=>e.preventDefault());
 window.addEventListener("dragleave",e=>{e.preventDefault();if(--dragDepth<=0)dz.classList.remove("show");});
 window.addEventListener("drop",async e=>{
   e.preventDefault();dragDepth=0;dz.classList.remove("show");
+  _plMouse={x:e.clientX,y:e.clientY};   // the photo dot starts where they were let go
   if(!dragHasFiles(e))return;   // an internal drag that missed its target — not an upload
   if(roBlock()) return;
   const dt=e.dataTransfer;
@@ -4222,11 +4284,11 @@ window.addEventListener("drop",async e=>{
     for(const d of dirs){ for await (const f of walkDir(d,d.name)) if(IMG_RE.test(f.name)) out.push({name:f.name,path:f.path,getFile:()=>f.handle.getFile()}); }
     const flt=out.filter(o=>IMG_RE.test(o.name));
     if(AF.open){ afAddItems(flt); return; }
-    if(dirs.length&&!isOnline()) ingest(flt,true); else ingestAdhoc(flt);   // online: a dropped folder is just a pile of photos to add
+    if(dirs.length&&!isOnline()) ingest(flt,true); else if(dirs.length) ingestAdhoc(flt); else startPlace(flt);   // online: a dropped folder is just a pile of photos to add; loose files ride the pointer until placed
     return;
   }
-  if(entries&&entries.some(Boolean)){ const its=await entriesToItems(entries); if(AF.open){ afAddItems(its); return; } if(entries.some(en=>en&&en.isDirectory)&&!isOnline()) ingest(its,true); else ingestAdhoc(its); return; }
-  const fl=files.filter(f=>IMG_RE.test(f.name)).map(f=>({name:f.name,path:f.name,getFile:async()=>f})); ingestAdhoc(fl);
+  if(entries&&entries.some(Boolean)){ const its=await entriesToItems(entries); if(AF.open){ afAddItems(its); return; } if(entries.some(en=>en&&en.isDirectory)){ if(!isOnline()) ingest(its,true); else ingestAdhoc(its); } else startPlace(its); return; }
+  const fl=files.filter(f=>IMG_RE.test(f.name)).map(f=>({name:f.name,path:f.name,getFile:async()=>f})); startPlace(fl);
 });
 /* Paste an image (Ctrl+V) anywhere on the desktop app: it becomes a photo like any other. */
 document.addEventListener("paste",e=>{
@@ -4246,7 +4308,7 @@ document.addEventListener("paste",e=>{
     const name=generic?base+(pf.length>1?" ("+(i+1)+")":"")+ext:f.name;
     return {name,path:name,getFile:async()=>(name===f.name?f:new File([f],name,{type:f.type||"image/png"}))};
   });
-  ingestAdhoc(items);
+  startPlace(items);
 });
 function entriesToItems(roots){
   roots=(roots||[]).filter(Boolean);
