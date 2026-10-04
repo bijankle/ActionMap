@@ -817,16 +817,16 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-dot.flash::before,.ma-dot.flash::after{animation:maarrow 1.5s ease-in-out forwards;}
   @keyframes maarrow{0%,30%,60%{transform:translateY(0);opacity:1;}15%,45%{transform:translateY(-8px);}80%{opacity:1;}100%{transform:translateY(0);opacity:0;}}
   .ma-peek .m{font-size:15px;color:var(--muted);margin-top:6px;}
-  .ma-dot{position:absolute;left:0;top:0;transform:translate(-50%,-50%);width:auto;padding:0 5px;white-space:nowrap;height:28px;box-sizing:border-box;border-radius:8px;background:#F28C28;border:3px solid #fff;box-shadow:0 0 0 1.5px #9A520B,0 3px 8px #0006;color:#1a1307;font:800 13px/22px var(--font);text-align:center;letter-spacing:-.2px;}   /* open: black on the bright orange (white was hard to read) */
-  .ma-dot.hold{background:#fff;color:#1a1307;border:0;box-shadow:0 0 0 2.5px #F28C28,0 3px 8px #0006;line-height:28px;}
-  .ma-dot.done{background:#6b7580;box-shadow:0 0 0 1.5px #3f4750,0 3px 8px #0006;color:#fff;}
+  .ma-dot{position:absolute;left:0;top:0;transform:translate(-50%,-50%);width:auto;padding:0 6px 0 7px;white-space:nowrap;height:28px;box-sizing:border-box;border-radius:8px;background:#F28C28;border:3px solid #fff;box-shadow:0 3px 8px #0006;color:#fff;text-shadow:1.0px 0.0px 0 #000,0.92px 0.38px 0 #000,0.71px 0.71px 0 #000,0.38px 0.92px 0 #000,0.0px 1.0px 0 #000,-0.38px 0.92px 0 #000,-0.71px 0.71px 0 #000,-0.92px 0.38px 0 #000,-1.0px 0.0px 0 #000,-0.92px -0.38px 0 #000,-0.71px -0.71px 0 #000,-0.38px -0.92px 0 #000,-0.0px -1.0px 0 #000,0.38px -0.92px 0 #000,0.71px -0.71px 0 #000,0.92px -0.38px 0 #000;font:800 13px/22px var(--font);text-align:center;letter-spacing:1.2px;}   /* white numbers with a thin black outline, spaced apart (open: bright orange, no ring) */
+  .ma-dot.hold{background:#fff;border:0;box-shadow:0 0 0 2.5px #F28C28,0 3px 8px #0006;line-height:28px;}
+  .ma-dot.done{background:#6b7580;box-shadow:0 0 0 1.5px #3f4750,0 3px 8px #0006;text-shadow:none;}
   .ma-zf .ma-dot,.ma-zf .ma-fan{opacity:0;transition:opacity .12s;}   /* a double-tap zoom: labels and spokes hide for its quarter second */
   .ma-zin .ma-dot,.ma-zin .ma-fan{animation:mazin .25s ease-out;} @keyframes mazin{from{opacity:0;}to{opacity:1;}}
   .ma-fan{overflow:visible;pointer-events:none;} .ma-fan line{stroke:#fff;stroke-width:2.5;filter:drop-shadow(0 1px 1.5px #000a);} .ma-fan circle{fill:#9A520B;stroke:#fff;stroke-width:2;}   /* stacked actions, fanned out at full zoom */
   .ldot{position:absolute;left:0;top:0;transform:translate(-50%,-50%);width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:#9aa3ad;border:2px solid #fff;box-shadow:0 0 0 1px #6b7580,0 2px 4px #0005;cursor:pointer;}
   .ldot.n{width:auto;min-width:22px;height:22px;border-radius:11px;padding:0 5px;color:#fff;font:700 11px/18px var(--font);text-align:center;}   /* photos on no action, several on one spot */
   .leaflet-container .ma-dot{cursor:pointer;}
-  .ma-dot.new{background:#fff;color:#9A520B;font-size:20px;}
+  .ma-dot.new{background:#fff;color:#9A520B;font-size:20px;text-shadow:none;letter-spacing:0;}
   
   
   .ma-ov{position:absolute;inset:0;z-index:800;background:#1d243040;} .ma-ov.clear{background:none;pointer-events:none;}   /* a top card leaves the map live below it */
@@ -1423,7 +1423,7 @@ function hlPhotoSet(){ const s=new Set(selSet); for(const id of selActs) for(con
    its own place — and wheels that would touch join into one bigger wheel. Photos on no action are small
    grey dots. mapHits remembers what's drawn (for clicks, drop targets and right-clicks on the map). */
 let mapHits=[];
-const LBL_W=54;
+const LBL_W=62;   // a label's width (3 spaced digits)
 function wheelR(n){ return n<2?0:Math.max(n===2?38:n===3?42:48,n*(LBL_W+8)/(2*Math.PI)); }
 function renderClusters(anim){   // anim: a zoom animation just starting — lay the wheels out for where it lands
   markerLayer.clearLayers(); dotMarkers.clear(); mapHits=[]; _openInArrowed=false;
