@@ -1955,9 +1955,11 @@ function refreshActCurClasses(){
   });
 }
 function refreshActSelClasses(){ document.querySelectorAll("#actList .act-row").forEach(el=>el.classList.toggle("sel",selActs.has(Number(el.dataset.aid)))); }
+let _actReclick=null;   // the action clicked again while it was the only one selected: its map move zooms in instead
 function clickAction(a,ev,deferNav){
   if(pickMode) return;   // while picking photos, the panel stays put
   const ctrl=!!(ev&&(ev.ctrlKey||ev.metaKey)), shift=!!(ev&&ev.shiftKey);
+  _actReclick=(!ctrl&&!shift&&selActs.size===1&&selActs.has(a.id))?a.id:null;
   if(shift&&lastActClick!=null){
     const shown=actsShown().map(x=>x.id);   // same order as the rendered list
     const i1=shown.indexOf(lastActClick), i2=shown.indexOf(a.id);
@@ -1985,6 +1987,9 @@ function actNavigate(a){
   const ps=actPhotos(a);
   const geo=ps.filter(p=>p.lat!=null);
   if(a.loc) geo.push({lat:a.loc.lat,lng:a.loc.lng});
+  if(_actReclick===a.id){ _actReclick=null;   // clicked again: 4x closer on it (two zoom levels), every further click too
+    if(geo.length){ const c=L.latLngBounds(geo.map(p=>[p.lat,p.lng])).getCenter(); map.flyTo(c,Math.min(map.getMaxZoom(),map.getZoom()+2),{duration:DESK_FLY}); }
+    if(ps.length) setTab("gallery"); return; }
   if(geo.length){
     /* Fit ALL open actions' dots (plus the selected action's own), so the flashing selection
        reads in the context of the remaining work rather than filling the screen alone. */
@@ -3634,10 +3639,10 @@ async function drawMiniMap(ctx,x,y,w,h,pts,r,me,hd){
 const CARD_LAYOUT={head:.20,main:.50,thumbs:.30,mapW:.50};   // chosen: header 20% (title | satellite map, half each) · main photo 50% · small photos 30%
 const CARD_V="k3";   // bump when the card's drawing changes (cached cards are keyed by it)
 /* The card is drawn as large as it takes for every photo to keep the detail it's stored at (2048 px
-   long side), so text in a drawing can be zoomed into and read — at least 2x (2160x3840), at most
+   long side), small ones included, so text in a drawing can be zoomed into and read — at least 2x (2160x3840), at most
    cardPxMax() pixels in all (a clipboard / chat-sized PNG). Markup is drawn fresh at that size: crisp. */
 const CARD_NAT=2048;
-function cardPxMax(){ return document.body.classList.contains("mobile")?16e6:26e6; }   // phones refuse canvases over ~16.7M pixels
+function cardPxMax(){ return document.body.classList.contains("mobile")?16e6:140e6; }   // desktop: room for every small photo at 100% (the PNG stays a few MB); phones refuse canvases over ~16.7M pixels
 function cardScale(boxes,ars){ let need=2;
   boxes.forEach((b,i)=>{ const ar=ars[i]||4/3, dw=Math.min(b.w,b.h*ar), nw=ar>=1?CARD_NAT:CARD_NAT*ar; need=Math.max(need,nw/dw); });
   return Math.max(2,Math.min(Math.ceil(need*4)/4,Math.floor(Math.sqrt(cardPxMax()/(1080*1920))*4)/4)); }
@@ -3705,7 +3710,7 @@ function _drawStepsBand(ctx,steps,b){
   ctx.restore(); }
 /* Share images are made AHEAD of time and kept on this device (memory + IndexedDB), keyed by what
    they show — so Copy / Share is instant, and an unchanged action is never drawn twice. */
-const _cardMem=new Map(), CARD_KEEP=12;   // (full-detail cards are big)
+const _cardMem=new Map(), CARD_KEEP=8;   // (full-detail cards are big)
 function cardCached(sig,make){
   if(_cardMem.has(sig)){ const p=_cardMem.get(sig); _cardMem.delete(sig); _cardMem.set(sig,p); return p; }
   const p=(async()=>{ const k="card:"+sig; try{ const b=await idbGet(k); if(b&&b.size) return b; }catch(e){}
