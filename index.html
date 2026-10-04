@@ -3258,6 +3258,11 @@ async function annotatedPreview(p){
 /* Repo growth control: previews are small (800px) and stored ONCE each as img/<hash>.jpg; the
    pack itself is text only. Unchanged photos are never re-uploaded, and the phone caches every
    image on the device, so a sync moves kilobytes instead of megabytes. */
+function cardFullInfo(p){   // what a phone needs to draw this photo at full detail in a share card: the project's full-size copy + its markup
+  if(!p||!p.h) return {};
+  const o={f:p.h}; if(p.rot) o.rot=p.rot;
+  if(p.marks&&p.marks.length){ o.marks=p.marks; if(p.mkw!=null) o.mkw=p.mkw; if(p.mth!=null) o.mth=p.mth; }
+  return o; }
 async function packPreview(p){
   const src=await annotatedPreview(p); if(!src) return null;
   try{ const im=await loadImg(src); const sc=Math.min(1,800/Math.max(im.width,im.height));
@@ -3297,7 +3302,7 @@ async function buildMobilePack(){
   for(const a of open){
     const ps=[];
     for(const p of actPhotos(a)){ const vs=lookSig(p), ph0=prevLook.get(vs);
-      ps.push(Object.assign({ id:p.id, k:metaKey(p), name:p.name, note:(p.note||""), lat:(p.lat!=null?p.lat:null), lng:(p.lng!=null?p.lng:null), vs },ph0?{h:ph0}:{img:await packPreview(p)})); }   // exportMobile swaps img for a content hash
+      ps.push(Object.assign({ id:p.id, k:metaKey(p), name:p.name, note:(p.note||""), lat:(p.lat!=null?p.lat:null), lng:(p.lng!=null?p.lng:null), vs },cardFullInfo(p),ph0?{h:ph0}:{img:await packPreview(p)})); }   // exportMobile swaps img for a content hash
     for(const st of (a.steps||[])) if(!st.id) st.id=newSid();   // every exported step gets its permanent id
     pk.actions.push({ id:a.id, text:a.text, hold:!!a.hold, done:!!a.done, created:actCreated(a)||null, doneAt:a.doneAt||null, fu:a.fu||null, loc:a.loc||null, steps:(a.steps||[]).map(stepCopy), photos:ps });
   }
@@ -3627,11 +3632,19 @@ async function drawMiniMap(ctx,x,y,w,h,pts,r,me,hd){
   ctx.restore(); ctx.save(); _rr(ctx,x,y,w,h,r); ctx.lineWidth=3; ctx.strokeStyle="rgba(255,255,255,.9)"; ctx.stroke(); ctx.restore();
 }
 const CARD_LAYOUT={head:.20,main:.50,thumbs:.30,mapW:.50};   // chosen: header 20% (title | satellite map, half each) · main photo 50% · small photos 30%
-const CARD_K=2;   // drawn at 2x (2160x3840): photos stay sharp when zoomed in chat apps (inside their HD size limits)
+const CARD_V="k3";   // bump when the card's drawing changes (cached cards are keyed by it)
+/* The card is drawn as large as it takes for every photo to keep the detail it's stored at (2048 px
+   long side), so text in a drawing can be zoomed into and read — at least 2x (2160x3840), at most
+   cardPxMax() pixels in all (a clipboard / chat-sized PNG). Markup is drawn fresh at that size: crisp. */
+const CARD_NAT=2048;
+function cardPxMax(){ return document.body.classList.contains("mobile")?16e6:26e6; }   // phones refuse canvases over ~16.7M pixels
+function cardScale(boxes,ars){ let need=2;
+  boxes.forEach((b,i)=>{ const ar=ars[i]||4/3, dw=Math.min(b.w,b.h*ar), nw=ar>=1?CARD_NAT:CARD_NAT*ar; need=Math.max(need,nw/dw); });
+  return Math.max(2,Math.min(Math.ceil(need*4)/4,Math.floor(Math.sqrt(cardPxMax()/(1080*1920))*4)/4)); }
 const _within=(pr,ms)=>Promise.race([pr,new Promise(r=>setTimeout(()=>r(null),ms))]);
-async function cardImage(p){   // sharpest image reachable WITHOUT any prompt: the original (photo folder / phone upload), else the preview
-  let file=null; if(!p._phone){ try{ file=await _within(getOriginalFileSilent(p),8000); }catch(e){} }
-  if(file){ try{ const r=await displayURL(p,file); try{ return {im:await loadImg(r.url),url:r.url}; }catch(e){ URL.revokeObjectURL(r.url); } }catch(e){} }
+async function cardImage(p){   // sharpest image reachable WITHOUT any prompt: the original (photo folder / phone upload / the project's full-size copy), else the preview
+  let file=null; try{ file=await _within(p._phone?mFullFile(p):getOriginalFileSilent(p),30000); }catch(e){}
+  if(file){ try{ const r=await displayURL(p,file); try{ return {im:await loadImg(r.url),url:r.url,full:true}; }catch(e){ URL.revokeObjectURL(r.url); } }catch(e){} }
   const src=p.preview||p.thumb; if(!src) return null;
   try{ return {im:await loadImg(src)}; }catch(e){ return null; }
 }
@@ -3642,30 +3655,30 @@ function _drawPhoto(ctx,p,im,x,y,w,h,r){   // the WHOLE photo (never cropped) on
     if(p&&p.marks&&p.marks.length) paintMarks(ctx,dx,dy,dw,dh,Math.min(dw,dh)*0.0012,p.marks,(p.mkw!=null?p.mkw:null),(p.mth!=null?p.mth:null),true); }
   ctx.restore(); }
 async function composeActionCard(a,psIn){   // psIn: the phone passes its own photo list   // portrait card: title | satellite mini-map · main photo · the rest tiled
-  const S=CARD_STYLE, Lo=CARD_LAYOUT, W=1080, H=1920, gap=S.gap, K=CARD_K;   // laid out in 1080x1920 units, rendered at K x
+  const S=CARD_STYLE, Lo=CARD_LAYOUT, W=1080, H=1920, gap=S.gap;   // laid out in 1080x1920 units, rendered at K x (see cardScale)
   const ps=psIn||actPhotos(a), ars=[];
   for(const ph of ps){ let ar=4/3; try{ const src=ph.preview||ph.thumb; if(src){ const im=await loadImg(src); if(im.width&&im.height) ar=im.width/im.height; } }catch(e){} ars.push(ar); }   // shapes only, for the layout
   const pts=ps.filter(p=>isFinite(p.lat)&&isFinite(p.lng)&&p.lat!=null).map(p=>({lat:+p.lat,lng:+p.lng}));   // every dot on the map, incl. placed (noGps) ones
   if(a.loc&&isFinite(a.loc.lat)&&isFinite(a.loc.lng)) pts.push({lat:+a.loc.lat,lng:+a.loc.lng});
-  const c=document.createElement("canvas"); c.width=W*K; c.height=H*K; const ctx=c.getContext("2d"); ctx.scale(K,K);
-  ctx.fillStyle=S.bg; ctx.fillRect(0,0,W,H);
   const X=S.pad, IW=W-2*S.pad, mapRight=pts.length>0, headH=Math.round(H*(mapRight?Lo.head:0.10)), mapW=mapRight?Math.round(IW*Lo.mapW):0;   // no located photos: a slim title-only header, photos get the room
   const tW=IW-(mapRight?mapW+gap*2:0)-8;
-  const num=a.num!==undefined?a.num:(a.id!=null?actNo(a):null), cardTitle=(num?num+" | ":"")+String(a.text||"");   // e.g. "016 | guard design too low…"
-  const font=px=>"700 "+px+"px 'Segoe UI',Aptos,system-ui,-apple-system,Roboto,sans-serif";
-  let px=headH>250?76:64, lines; for(;px>=30;px-=2){ ctx.font=font(px); lines=_wrap(ctx,cardTitle,tW,headH>250?6:4); if(!lines.trunc&&lines.length*px*1.18<=headH-gap-8) break; }   // largest size that shows the WHOLE title
-  ctx.fillStyle=S.titleColor; ctx.textBaseline="middle"; const lh=px*1.18, top=S.pad+(headH-gap-lines.length*lh)/2+lh/2;
-  lines.forEach((l,i)=>ctx.fillText(l,X+4,top+i*lh));
-  if(mapRight) await drawMiniMap(ctx,X+IW-mapW,S.pad,mapW,headH-gap,pts,S.radius,await currentPos(),K>1);   // zoomed to show the spots AND where you are
   const mainY=S.pad+headH, nRest=Math.max(0,ps.length-1);
   const mainH=(nRest?Math.round(H*(Lo.main+Lo.head)-headH):H-S.pad-mainY)-gap;   // small photos always keep their 30%; a lone photo takes all the space below the header
   const boxes=[{x:X,y:mainY,w:IW,h:mainH,r:S.radius}];
   if(nRest){ const Y=mainY+mainH+gap, TH=H-S.pad-Y, gr=_gridFor(ars.slice(1),IW,TH,gap);
     for(let i=0;i<nRest;i++){ const col=i%gr.c, row=Math.floor(i/gr.c), inRow=Math.min(gr.c,nRest-row*gr.c), off=(gr.c-inRow)*(gr.tw+gap)/2;   // a short last row is centred
       boxes.push({x:X+off+col*(gr.tw+gap),y:Y+row*(gr.th+gap),w:gr.tw,h:gr.th,r:12}); } }
+  const K=cardScale(boxes,ars), c=document.createElement("canvas"); c.width=Math.round(W*K); c.height=Math.round(H*K); const ctx=c.getContext("2d"); ctx.scale(K,K);
+  ctx.fillStyle=S.bg; ctx.fillRect(0,0,W,H);
+  const num=a.num!==undefined?a.num:(a.id!=null?actNo(a):null), cardTitle=(num?num+" | ":"")+String(a.text||"");   // e.g. "016 | guard design too low…"
+  const font=px=>"700 "+px+"px 'Segoe UI',Aptos,system-ui,-apple-system,Roboto,sans-serif";
+  let px=headH>250?76:64, lines; for(;px>=30;px-=2){ ctx.font=font(px); lines=_wrap(ctx,cardTitle,tW,headH>250?6:4); if(!lines.trunc&&lines.length*px*1.18<=headH-gap-8) break; }   // largest size that shows the WHOLE title
+  ctx.fillStyle=S.titleColor; ctx.textBaseline="middle"; const lh=px*1.18, top=S.pad+(headH-gap-lines.length*lh)/2+lh/2;
+  lines.forEach((l,i)=>ctx.fillText(l,X+4,top+i*lh));
+  if(mapRight) await drawMiniMap(ctx,X+IW-mapW,S.pad,mapW,headH-gap,pts,S.radius,await currentPos(),K>1);   // zoomed to show the spots AND where you are
   if(!ps.length){ const b=boxes[0]; _drawPhoto(ctx,null,null,b.x,b.y,b.w,b.h,b.r); }
   for(let i=0;i<ps.length;i++){ const b=boxes[i], src=await cardImage(ps[i]);   // one at a time: originals are big
-    _drawPhoto(ctx,ps[i],src&&src.im,b.x,b.y,b.w,b.h,b.r);
+    _drawPhoto(ctx,(ps[i]._phone&&!(src&&src.full))?null:ps[i],src&&src.im,b.x,b.y,b.w,b.h,b.r);   // the phone's preview already has its markup drawn in
     if(src&&src.url) URL.revokeObjectURL(src.url); }
   _drawStepsBand(ctx,a.steps||[],boxes[0]);
   return c;
@@ -3692,7 +3705,7 @@ function _drawStepsBand(ctx,steps,b){
   ctx.restore(); }
 /* Share images are made AHEAD of time and kept on this device (memory + IndexedDB), keyed by what
    they show — so Copy / Share is instant, and an unchanged action is never drawn twice. */
-const _cardMem=new Map(), CARD_KEEP=24;
+const _cardMem=new Map(), CARD_KEEP=12;   // (full-detail cards are big)
 function cardCached(sig,make){
   if(_cardMem.has(sig)){ const p=_cardMem.get(sig); _cardMem.delete(sig); _cardMem.set(sig,p); return p; }
   const p=(async()=>{ const k="card:"+sig; try{ const b=await idbGet(k); if(b&&b.size) return b; }catch(e){}
@@ -3704,7 +3717,7 @@ function cardCached(sig,make){
   return p; }
 function cardMeSig(){ if(ignoreLoc) return "x"; try{ const l=geoMarker&&geoMarker.getLatLng(); if(l) return l.lat.toFixed(3)+","+l.lng.toFixed(3); }catch(e){} return "?"; }
 function deskCardBlob(a){
-  const sig=[CARD_LAYOUT.head,CARD_K,actNo(a),a.text||"",a.loc?a.loc.lat+","+a.loc.lng:"",cardMeSig(),JSON.stringify((a.steps||[]).map(x=>[x.t,!!x.d]))].concat(actPhotos(a).map(p=>lookSig(p)+"@"+(p.lat!=null?(+p.lat).toFixed(5)+","+(+p.lng).toFixed(5):""))).join("|");
+  const sig=[CARD_LAYOUT.head,CARD_V,actNo(a),a.text||"",a.loc?a.loc.lat+","+a.loc.lng:"",cardMeSig(),JSON.stringify((a.steps||[]).map(x=>[x.t,!!x.d]))].concat(actPhotos(a).map(p=>lookSig(p)+"@"+(p.lat!=null?(+p.lat).toFixed(5)+","+(+p.lng).toFixed(5):""))).join("|");
   let x=0; for(let i=0;i<sig.length;i++) x=(x*31+sig.charCodeAt(i))|0;
   return cardCached("d2"+(ON.pid||"")+"."+a.id+"."+(x>>>0).toString(36)+"."+sig.length,()=>composeActionCard(a)); }
 var _warmT=null, _warmBusy=false;   // var: renderActions runs before this line during start-up
@@ -6948,7 +6961,7 @@ function mPackFromEngine(){
     for(const p of actPhotos(a)){ const k=metaKey(p), o=byKey.get(k);
       const img=(o&&o.img)||p.preview||p.thumb||null;
       if(!img&&p.h) need.push(p);
-      ps.push({id:o?o.id:("h"+String(p.h||p.id)),k,name:p.name,note:p.note||"",lat:(p.lat!=null?p.lat:null),lng:(p.lng!=null?p.lng:null),img,h:o?o.h:null}); }
+      ps.push(Object.assign({id:o?o.id:("h"+String(p.h||p.id)),k,name:p.name,note:p.note||"",lat:(p.lat!=null?p.lat:null),lng:(p.lng!=null?p.lng:null),img,h:o?o.h:null},cardFullInfo(p))); }
     pk.actions.push({id:a.id,text:a.text,hold:!!a.hold,done:!!a.done,created:actCreated(a)||null,doneAt:a.doneAt||null,fu:a.fu||null,loc:a.loc||null,steps:(a.steps||[]).map(stepCopy),photos:ps});
   }
   if(need.length) mEngineThumbs(need);
@@ -7122,14 +7135,18 @@ function mShowDetail(ai,keepScroll){
    YOU ARE HERE, main photo, the rest below), handed to the phone's share sheet so it goes straight
    into any chat, email or the gallery. Phones only open the share sheet right after a tap, so the
    card is built in the background when the action opens and is ready when Share is pressed. */
+async function mFullFile(p){   // a share card's photo at full detail: the project's full-size copy (fetched once, then kept on the phone)
+  if(!p||!p.f) return null; const key="fu:"+p.f; let b=null; try{ b=await idbGet(key); }catch(e){}
+  if(!b){ const g=ghRaw(); try{ const x=await ghGetBin({token:g.token,repo:g.repo},"photos/"+p.f+".jpg"); if(x){ b=new Blob([x],{type:"image/jpeg"}); idbSet(key,b).catch(()=>{}); fullCacheNote(key); } }catch(e){} }
+  return b?new File([b],"photo.jpg",{type:"image/jpeg"}):null; }
 function mCardName(a){ return (a._new?"":actNo(a)+" ")+String(mTitle(a)||"action").replace(/[\\/:*?"<>|]+/g,"").slice(0,60)+".png"; }
 function mCardBlob(a){   // kept on the phone (see cardCached): Share is instant, even after the app was closed
   const photos=mPhotos(a).filter(p=>p.img);
   const act={text:mTitle(a),num:a._new?null:actNo(a),loc:a._new?(mNewActs()[a._ni]||{}).loc:a.loc,steps:mSteps(a).map(x=>({t:x.t,d:!!x.d}))};
   const me=(ignoreLoc||!mGeo)?"x":mGeo.lat.toFixed(3)+","+mGeo.lng.toFixed(3);
-  const sig=[CARD_LAYOUT.head,CARD_K,mCardKey(a),act.num,act.text,act.loc?act.loc.lat+","+act.loc.lng:"",me,JSON.stringify(act.steps.map(x=>[x.t,x.d]))].concat(photos.map(p=>(p.h||p.id)+"@"+p.lat+","+p.lng)).join("|");
+  const sig=[CARD_LAYOUT.head,CARD_V,mCardKey(a),act.num,act.text,act.loc?act.loc.lat+","+act.loc.lng:"",me,JSON.stringify(act.steps.map(x=>[x.t,x.d]))].concat(photos.map(p=>(p.h||p.id)+"/"+(p.f||"")+"/"+JSON.stringify(p.marks||"").length+"@"+p.lat+","+p.lng)).join("|");
   let x=0; for(let i=0;i<sig.length;i++) x=(x*31+sig.charCodeAt(i))|0;
-  const ps=photos.map(p=>({preview:p.img,lat:p.lat,lng:p.lng,_phone:true}));
+  const ps=photos.map(p=>({preview:p.img,lat:p.lat,lng:p.lng,_phone:true,f:p.f,rot:p.rot,marks:p.marks,mkw:p.mkw,mth:p.mth}));   // f: the full-size copy in the project (see mFullFile)
   return cardCached("m2"+(mPid||"")+"."+(x>>>0).toString(36)+"."+sig.length,()=>composeActionCard(act,ps)); }
 var _mWarmT=null;
 function mWarmCards(list){   // the map card's action (and the top of the list) get their images made while you look
