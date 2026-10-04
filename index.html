@@ -364,6 +364,10 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   /* action "relevant area" previews: hover-preview-sized mini-maps floating above each photo group */
   .hoverview{position:fixed;z-index:1600;display:none;background:#fff;border:1px solid var(--accent);border-radius:10px;padding:5px;box-shadow:0 14px 40px #1e1f2233;pointer-events:none;}
   .hoverview.show{display:block;}
+  .ma-exit{position:fixed;left:50%;transform:translateX(-50%);z-index:2000;background:#fff;color:var(--ink);font:700 14.5px/1 var(--font);padding:10px 16px 12px 12px;border-radius:14px;border:2px solid var(--gold);box-shadow:0 6px 18px #1d243040;display:flex;gap:10px;align-items:center;white-space:nowrap;pointer-events:none;}
+  .ma-exit .ic{width:30px;height:30px;border-radius:50%;background:#fdf6e6;display:grid;place-items:center;color:#c26510;} .ma-exit svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;}
+  .ma-exit .bar{position:absolute;left:10px;right:10px;bottom:4px;height:3px;border-radius:2px;background:#f3e3bd;overflow:hidden;} .ma-exit .bar i{display:block;height:100%;background:var(--gold);animation:maexit 1.1s linear forwards;}
+  @keyframes maexit{from{width:100%;}to{width:0;}}
   .ma-mem{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:#F28C28;border:2px solid #fff;box-sizing:border-box;box-shadow:0 1px 4px #0007;cursor:pointer;}   /* an action's photo away from its label */
   .ma-mem.hold{background:#fff;border:0;box-shadow:0 0 0 2px #F28C28,0 1px 4px #0007;} .ma-mem.done{background:#6b7580;}
   /* placing pasted / dropped photos: the pointer is a photo dot with a callout (photo + what a click does) */
@@ -6261,7 +6265,23 @@ window.addEventListener("popstate",()=>{ if(!document.body.classList.contains("m
   if(document.getElementById("mVw")){ mVwHist=false; mCloseViewer(true); return; }   // Back closes the photo viewer first
   if(document.getElementById("mSheet")){ mSheetHist=false; mDropSheet(); return; }
   if(mScrHist){ mScrHist=null; mShowList(); return; }
-  if(mNavDepth){ mNavDepth=false; mShowList(); } });
+  if(mNavDepth){ mNavDepth=false; mShowList(); return; }
+  if(mHomeGuard){ mHomeGuard=false;   // Back on the home screen itself
+    const dp=document.getElementById("mDPan"); if(dp){ mDatesOpen=false; dp.remove(); mGuardHome(); return; }   // a pop-up open: Back just closes it
+    mExitArm(); } });
+/* Leaving the app takes two Backs in a row: the home screen keeps one guard entry in the history; the
+   first Back uses it up and says "Swipe back again to exit" (a gold bar runs out); a second Back within
+   that second leaves, otherwise the guard comes back. */
+let mHomeGuard=false, mExitT=0, mExitArmed=false;
+function mGuardHome(){ if(mHomeGuard||mExitArmed||mNavDepth||mSheetHist||mScrHist) return; mHomeGuard=true; mPush({m:"home"}); }
+function mExitArm(){ mExitArmed=true; clearTimeout(mExitT);
+  const root=document.getElementById("mroot")||document.body; let t=document.getElementById("mExitT"); if(t) t.remove();
+  t=document.createElement("div"); t.id="mExitT"; t.className="ma-exit";
+  t.innerHTML='<span class="ic"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></span>Swipe back again to exit<span class="bar"><i></i></span>';
+  const card=document.getElementById("mPeeks"), nav=document.querySelector(".ma-nav"); const ref=card||nav;
+  t.style.bottom=(ref?Math.max(16,window.innerHeight-ref.getBoundingClientRect().top+14):96)+"px";
+  root.appendChild(t);
+  mExitT=setTimeout(()=>{ mExitArmed=false; const x=document.getElementById("mExitT"); if(x) x.remove(); mGuardHome(); },1100); }
 /* Phone home (layout "A"): the MAP fills the screen by default; the top-right toggle swaps to the
    LIST. Tapping an action (a dot, a list card, a row in a group) opens it on its own full screen.
    Everything that adds something lives behind the one "+ Add" button; the project name opens the
@@ -6452,6 +6472,7 @@ function mShowList(){
     mWireCardDrag();   // hold-press + drag sets priority
   }
   if(mDatesOpen) mDatesPanel();   // a refresh keeps the date panel open
+  mGuardHome();
 }
 /* the card under the map: the open action nearest to you (else the first open one on the map) */
 /* the map card was tapped: zoom to that action's dot (ringed in gold), in the clear space above the card */
