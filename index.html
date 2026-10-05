@@ -3097,11 +3097,20 @@ async function openProject(pid){
 function afterOpenUI(){
   let ui=null; try{ ui=JSON.parse(localStorage.getItem(uiSettingsKey())||"null"); }catch(e){}
   applyUiSettings(ui||{});
-  if(!(ui&&ui.view)) fitToPhotos();
   renderActions(); renderProjHead(); ensureThumbs(); renderSaveStatus(); syncMenus(); neatUrl();
-  if(_topShownFor!==ON.pid){ _topShownFor=ON.pid;   // opening a project starts on the top action of the list, as if clicked
-    setTimeout(()=>{ const top=actsShown()[0]; if(top&&!selActs.size&&!lb.classList.contains("open")&&!pickMode) clickAction(top); },350); }
+  if(_topShownFor!==ON.pid){ _topShownFor=ON.pid;   // opening a project: nothing selected (the Gallery shows everything) and the map zoomed to every action on show
+    if(selActs.size) clearActSel(); zoomAll(false); setTimeout(()=>zoomAll(false),600); }   // (again once the panels have settled)
+  else if(!(ui&&ui.view)) zoomAll(false);
 }
+/* Zoom to extent: every action the filters show (its photos and placed pin), plus you if Show my location is on.
+   The map sits between the side panels, so the fit always clears them. */
+function zoomAll(anim){ const ll=[];
+  for(const a of actsShown()){ for(const p of actPhotos(a)) if(p.lat!=null&&isFinite(p.lat)) ll.push([p.lat,p.lng]); if(a.loc&&isFinite(a.loc.lat)) ll.push([a.loc.lat,a.loc.lng]); }
+  if(!ll.length){ fitToPhotos(); return; }
+  const me=myLoc(); if(me) ll.push([me.lat,me.lng]);
+  try{ map.invalidateSize(); }catch(e){}
+  const b=L.latLngBounds(ll), o={padding:[60,60],maxZoom:19};
+  if(anim) map.flyToBounds(b,Object.assign({duration:DESK_FLY},o)); else map.fitBounds(b,o); }
 let _topShownFor=null;
 
 /* ---- the project picker ---- */
