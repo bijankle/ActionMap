@@ -66,8 +66,6 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
     background:var(--panel);border-bottom:1px solid var(--line);position:relative;z-index:1200;}
   .brand{display:flex;align-items:center;gap:9px;flex:0 0 auto;}
   .brand .pm-mark{flex-shrink:0;display:block;}   /* the app mark: gold squircle with a framed A */
-  .brand h1{font-family:var(--font);font-weight:700;font-size:var(--fh);margin:0;color:var(--ink);}
-  .brand h1 span{color:var(--accent);}
   .menubar{display:flex;align-items:center;gap:2px;margin-left:10px;height:100%;}
   .mb{position:relative;}
   .mb-btn{font:500 var(--fb) var(--font);color:var(--ink);background:none;border:none;border-radius:6px;padding:6px 11px;cursor:pointer;}
@@ -277,17 +275,18 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .markpalette .sw.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent),0 0 8px var(--accent-tint);}
   .tbed{position:absolute;z-index:8;line-height:0;}
   .tbed .tbtext{display:inline-block;min-width:8px;background:#ffffff;border:2px solid #ff3b30;color:#ff3b30;font:600 13px var(--font);line-height:1.15;padding:2px 5px;border-radius:0;white-space:pre;outline:none;cursor:text;box-shadow:none;box-sizing:content-box;vertical-align:top;}
-  .projhead{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:1300;display:none;flex-direction:column;align-items:stretch;background:#ffffffee;border:1px solid var(--line2);border-radius:10px;padding:9px 16px;box-shadow:0 6px 24px #1e1f2233;max-width:72%;pointer-events:auto;cursor:pointer;}   /* the whole label opens the project list */
+  .projhead{position:relative;z-index:5;display:none;align-items:center;background:#fff;border:var(--ctl-bd);border-radius:9px;padding:4px 10px 4px 11px;box-shadow:0 1px 3px #1d243014;cursor:pointer;max-width:420px;}   /* the project: an outlined button beside the app icon (▾ = switch project) */
   .projhead.show{display:flex;}
-  .ph-track{display:none;height:4px;border-radius:3px;background:var(--line);overflow:hidden;margin:0 0 7px;}
+  .brand .pm-mark{cursor:pointer;} .brand .pm-mark:hover{filter:brightness(1.06);}
+  .ph-track{display:none;position:absolute;left:8px;right:8px;bottom:-1px;height:3px;border-radius:3px;background:var(--line);overflow:hidden;}
   .projhead.loading .ph-track{display:block;}
   .projhead .progress{position:static;display:block;height:100%;width:0;background:var(--gold);border-radius:3px;transition:width .15s;box-shadow:none;}
-  .ph-line{font:600 var(--fb) var(--font);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ph-line{font:700 calc(var(--fb) + 2px) var(--font);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .ph-name,.ph-caret{font-size:var(--fb);}
   .ph-caret{color:var(--faint);margin-left:5px;font-size:12px;}
   .projhead:hover .ph-name,.projhead:hover .ph-caret{color:var(--accent);}
   .projhead:hover{border-color:var(--gold)!important;}
-  .proj-drop{position:absolute;z-index:1400;transform:translateX(-50%);min-width:220px;max-width:340px;max-height:60vh;overflow-y:auto;background:#fff;border:var(--ctl-bd);border-radius:var(--ctl-r);box-shadow:0 8px 24px #1d243026;padding:4px;display:flex;flex-direction:column;}
+  .proj-drop{position:fixed;z-index:3000;min-width:220px;max-width:340px;max-height:60vh;overflow-y:auto;background:#fff;border:var(--ctl-bd);border-radius:var(--ctl-r);box-shadow:0 8px 24px #1d243026;padding:4px;display:flex;flex-direction:column;}
   .pd-row{display:flex;align-items:center;gap:6px;text-align:left;font:600 var(--fb) var(--font);color:var(--ink);background:none;border:0;border-radius:6px;padding:7px 10px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .pd-row:hover{background:#fdf6e6;}
   .pd-row.on{color:var(--accent);}
@@ -365,6 +364,10 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   /* action "relevant area" previews: hover-preview-sized mini-maps floating above each photo group */
   .hoverview{position:fixed;z-index:1600;display:none;background:#fff;border:1px solid var(--accent);border-radius:10px;padding:5px;box-shadow:0 14px 40px #1e1f2233;pointer-events:none;}
   .hoverview.show{display:block;}
+  .zoom-all{position:relative;width:44px;height:44px;margin:0 16px 18px 0!important;padding:0;display:grid;place-items:center;background:#fff;border:var(--ctl-bd);border-radius:10px;box-shadow:0 2px 8px #1d243026;color:var(--ink);cursor:pointer;}
+  .zoom-all svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+  .zoom-all kbd{position:absolute;right:-6px;bottom:-6px;font:700 10px/1.3 var(--font);border:1px solid #b9c0c8;border-bottom-width:2px;border-radius:4px;padding:0 4px;background:#fff;color:var(--muted);}
+  .zoom-all:hover{border-color:var(--gold);}
   .ma-exit{position:fixed;left:50%;transform:translateX(-50%);z-index:2000;background:#fff;color:var(--ink);font:700 calc(14.5px*var(--mt,1))/1 var(--font);padding:10px 16px 12px 12px;border-radius:14px;border:2px solid var(--gold);box-shadow:0 6px 18px #1d243040;display:flex;gap:10px;align-items:center;white-space:nowrap;pointer-events:none;}
   .ma-exit .ic{width:30px;height:30px;border-radius:50%;background:#fdf6e6;display:grid;place-items:center;color:#c26510;} .ma-exit svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;}
   .ma-exit .bar{position:absolute;left:10px;right:10px;bottom:4px;height:3px;border-radius:2px;background:#f3e3bd;overflow:hidden;} .ma-exit .bar i{display:block;height:100%;background:var(--gold);animation:maexit 1.1s linear forwards;}
@@ -400,14 +403,6 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .leaflet-bar a:hover{background:var(--panel2)!important;color:var(--accent)!important;}
   .leaflet-control-attribution{background:#ffffffcc!important;color:var(--dim)!important;font-size:10px;}
   .leaflet-control-attribution a{color:var(--muted)!important;}
-  .scalebar{background:#ffffffee;border:1px solid var(--line2);border-radius:8px;padding:6px 14px 6px;box-shadow:0 2px 10px #1e1f221f;pointer-events:none;}
-  .scalebar .sb-title{font:600 10px var(--font);color:var(--ink);margin-bottom:3px;}
-  .scalebar .sb-bar{display:flex;height:7px;border:1px solid var(--ink);box-sizing:border-box;background:#fff;}
-  .scalebar .sb-bar i{display:block;height:100%;}
-  .scalebar .sb-bar i.dark{background:var(--ink);}
-  .scalebar .sb-bar i.lite{background:#fff;}
-  .scalebar .sb-labels{position:relative;height:11px;margin-top:2px;font:600 9px var(--font);color:var(--ink);}
-  .scalebar .sb-labels span{position:absolute;top:0;transform:translateX(-50%);line-height:1;white-space:nowrap;}
 
   .lightbox{position:fixed;inset:0;z-index:3000;display:none;align-items:center;justify-content:center;background:rgba(28,30,38,.55);backdrop-filter:blur(3px);}
   .lightbox.open{display:flex;animation:fade .15s ease;}
@@ -1097,13 +1092,13 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .slider-wrap input[type=range]::-moz-range-thumb{background:#fff!important;border:2px solid var(--gold)!important;}
   input[type=range]{accent-color:var(--gold);}
   /* map cards: white, slate outline, 8px corners */
-  .projhead,.leaflet-control-layers,.leaflet-bar,.scalebar,.reconnect,#updpill,.hoverview,.measure-lbl{background:#fff!important;border:var(--ctl-bd)!important;border-radius:var(--ctl-r)!important;backdrop-filter:none!important;}
+  .leaflet-control-layers,.leaflet-bar,.reconnect,#updpill,.hoverview,.measure-lbl{background:#fff!important;border:var(--ctl-bd)!important;border-radius:var(--ctl-r)!important;backdrop-filter:none!important;}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="brand"><svg class="pm-mark" viewBox="0 0 64 64" width="30" height="30" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#e8b44a"/><rect x="6" y="6" width="52" height="52" rx="13" fill="none" stroke="#111418" stroke-width="2.5"/><text x="32" y="46" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="38" fill="#111418">A</text></svg><div class="brand-t"><h1>Action<span>Map</span></h1><span class="savestat" id="saveStatus"></span></div><span class="build" id="buildStamp" style="display:none" title="When this copy of the app was published — if it's older than the latest change, you're running a stale copy"></span></div>
+  <div class="brand"><svg class="pm-mark" id="homeMark" viewBox="0 0 64 64" width="30" height="30" role="button" aria-label="Home: zoom to all actions"><rect width="64" height="64" rx="18" fill="#e8b44a"/><rect x="6" y="6" width="52" height="52" rx="13" fill="none" stroke="#111418" stroke-width="2.5"/><text x="32" y="46" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="38" fill="#111418">A</text></svg><div class="brand-t" id="brandSlot"><span class="savestat" id="saveStatus"></span></div><span class="build" id="buildStamp" style="display:none" title="When this copy of the app was published — if it's older than the latest change, you're running a stale copy"></span></div>
   <nav class="menubar" id="menubar">
     <div class="mb"><button class="mb-btn" type="button">File</button><div class="mb-drop">
       <button class="mi" id="miProjects" type="button" title="Open another project, rename one, or copy a project's share link.">Projects…</button>
@@ -1355,28 +1350,10 @@ const NORTH_SVG=(w,h)=>'<svg viewBox="0 0 40 48" width="'+w+'" height="'+h+'"><p
 { const nc=L.control({position:"topright"}); nc.onAdd=()=>{ const d=L.DomUtil.create("div","north-arrow"); d.title="North is up";
     d.innerHTML=NORTH_SVG(34,41);
     L.DomEvent.disableClickPropagation(d); return d; }; nc.addTo(map); }
-/* USGS-style scale bar on a white pad: alternating black/white segments with 0 / ¼ / ½ / full
-   labels. Meters, switching to kilometers once the bar total reaches 1000 m. */
-(function(){
-  const ctl=L.control({position:"bottomright"}); let el=null;
-  ctl.onAdd=function(){ el=L.DomUtil.create("div","scalebar"); el.innerHTML='<div class="sb-title"></div><div class="sb-bar"><i class="dark" style="width:25%"></i><i class="lite" style="width:25%"></i><i class="dark" style="width:50%"></i></div><div class="sb-labels"></div>'; return el; };
-  ctl.addTo(map);
-  function niceTotal(maxMeters){ const p=Math.pow(10,Math.floor(Math.log10(maxMeters))); for(const m of [4,2,1]){ if(m*p<=maxMeters) return m*p; } return p; }
-  function fmt(v,km){ const n=km?v/1000:v; return (Math.round(n*100)/100).toLocaleString(); }
-  function updateScale(){
-    if(!el) return;
-    const y=Math.round(map.getSize().y/2), maxPx=170;
-    const maxMeters=map.distance(map.containerPointToLatLng([10,y]),map.containerPointToLatLng([10+maxPx,y]));
-    if(!(maxMeters>0)) return;
-    const total=niceTotal(maxMeters), km=total>=1000;
-    const px=Math.max(60,Math.round(maxPx*total/maxMeters));
-    el.querySelector(".sb-title").textContent=km?"Kilometers":"Meters";
-    el.querySelector(".sb-bar").style.width=px+"px";
-    const lab=el.querySelector(".sb-labels"); lab.style.width=px+"px";
-    lab.innerHTML='<span style="left:0">0</span><span style="left:25%">'+fmt(total/4,km)+'</span><span style="left:50%">'+fmt(total/2,km)+'</span><span style="left:100%">'+fmt(total,km)+'</span>';
-  }
-  map.on("zoomend moveend resize",updateScale); setTimeout(updateScale,0);   // end-events only — updating per animation frame caused zoom jitter
-})();
+/* Zoom to all (bottom right, where the scale was; key Z): every action on show, and you if your location is on. */
+{ const zc=L.control({position:"bottomright"}); zc.onAdd=()=>{ const d=L.DomUtil.create("button","zoom-all"); d.type="button"; d.title="Zoom to all actions (Z)";
+    d.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M4 4l5.5 5.5M20 9V4h-5M20 4l-5.5 5.5M4 15v5h5M4 20l5.5-5.5M20 15v5h-5M20 20l-5.5-5.5"/></svg><kbd>Z</kbd>';
+    L.DomEvent.disableClickPropagation(d); d.addEventListener("click",()=>zoomAll(true)); return d; }; zc.addTo(map); }
 /* Filter bars pin to the map's TOP-LEFT; the area/measure buttons stack vertically at the
    BOTTOM-RIGHT just above the scale bar. Mounted straight into the map container so they hug
    the map's real edges and adapt as the side panels resize. */
@@ -3436,160 +3413,144 @@ function exportFilterNote(){ const parts=[];
   if(!sts.every(x=>x[1])) parts.push(sts.filter(x=>x[1]).map(x=>x[0]).join(" + ")||"none");
   const dl=dwLabel(); if(dl) parts.push("Created "+dl.sum+" ("+dl.dates+")");
   return parts.length?"Filters: "+parts.join(" \u00b7 "):""; }
-/* ---- PDF map pages: every action on satellite imagery with a callout box (number + title) joined to
-   its spot, plus a status legend. If the boxes can't all fit without overlapping, the rest go onto
-   another map page (each page zooms to its own actions). Actions with no located photo are left out. */
-function pdfMapPoint(a){ const p=actPhotos(a).find(q=>q.lat!=null&&isFinite(q.lat)&&isFinite(q.lng)); return p?{lat:+p.lat,lng:+p.lng}:null; }
-const PM_W=1108, PM_H=700;   // map area in canvas units (4 per mm = 277 x 175 mm)
-/* callout box per cover-photo style: none / photo inside on the left / photo on top (a card) / photo beside the box */
-const PM_BOX={none:{BW:210,BH:34},left:{BW:244,BH:58},top:{BW:160,BH:156},side:{BW:286,BH:54}};
-let PM_BW=210, PM_BH=34;
-function pdfMapLayout(list,opt){
-  const bx0=PM_BOX[opt||"none"]||PM_BOX.none; PM_BW=bx0.BW; PM_BH=bx0.BH;
-  const mw=PM_W, mh=PM_H, pad=170, BW=PM_BW, BH=PM_BH, GAPB=8;
-  const P=list.map(a=>({a,ll:pdfMapPoint(a)})).filter(q=>q.ll);
-  let z=19; const fits=z=>{ const xs=P.map(q=>_lx(q.ll.lng,z)), ys=P.map(q=>_ly(q.ll.lat,z)); return Math.max(...xs)-Math.min(...xs)<=mw-2*pad&&Math.max(...ys)-Math.min(...ys)<=mh-2*pad; };
-  while(z>3&&!fits(z)) z--;
-  if(P.length===1) z=Math.min(z,18);
+/* ---- PDF report: landscape pages, three columns. Each page's first column starts with a small satellite
+   map of just the actions on that page (only their numbers); every action is a block: a dark header bar
+   (number | status | updated), its title, its sub-actions as one paragraph ("a. …, b. ✓ …"), then all its
+   photos with their markup, in their natural shape (never cropped or stretched). An action whose photos
+   don't fit carries on at the top of the next column, marked "continued". */
+function pdfMapPoint(a){ const p=actPhotos(a).find(q=>q.lat!=null&&isFinite(q.lat)&&isFinite(q.lng)); return p?{lat:+p.lat,lng:+p.lng}:(a.loc&&isFinite(a.loc.lat)?{lat:+a.loc.lat,lng:+a.loc.lng}:null); }
+function actUpdated(a){ let t=Math.max(+a.created||0,+a.doneAt||0); for(const e of projLog) if(e&&e.a===a.id&&e.t>t) t=e.t; return t||actCreated(a)||null; }
+function pdfShortDate(t){ const d=new Date(t); return d.getDate()+"-"+MON3[d.getMonth()].toLowerCase(); }
+/* the page's map: just the action numbers, each sitting on its spot; one that has to move aside for a
+   neighbour gets a line back to a whole red dot on its spot (never half a dot under a label) */
+async function pdfMiniMap(list,wmm,hmm,onTile){
+  const U=4, mw=wmm*U, mh=hmm*U, K=3, LW=52, LH=24, pad=34;
+  const P=list.map(a=>({a,ll:pdfMapPoint(a)})).filter(q=>q.ll); if(!P.length) return null;
+  let z=19; const fits=z=>{ const xs=P.map(q=>_lx(q.ll.lng,z)), ys=P.map(q=>_ly(q.ll.lat,z)); return Math.max(...xs)-Math.min(...xs)<=mw-2*pad-LW&&Math.max(...ys)-Math.min(...ys)<=mh-2*pad-LH; };
+  while(z>3&&!fits(z)) z--; if(P.length===1) z=Math.min(z,18);
   const xs=P.map(q=>_lx(q.ll.lng,z)), ys=P.map(q=>_ly(q.ll.lat,z)), x0=(Math.min(...xs)+Math.max(...xs))/2-mw/2, y0=(Math.min(...ys)+Math.max(...ys))/2-mh/2;
-  P.forEach((q,i)=>{ q.x=xs[i]-x0; q.y=ys[i]-y0; });
-  let groups=P.map(q=>[q]); const Rof=G=>G.length===1?30:Math.max(56,G.length*15), cen=G=>[G.reduce((t,q)=>t+q.x,0)/G.length,G.reduce((t,q)=>t+q.y,0)/G.length];
-  for(let merged=true;merged;){ merged=false; for(let i=0;i<groups.length&&!merged;i++) for(let j=i+1;j<groups.length;j++){ const a=cen(groups[i]), b=cen(groups[j]); const close=groups[i].some(p=>groups[j].some(q=>Math.hypot(p.x-q.x,p.y-q.y)<34));
-    if(close||Math.hypot(a[0]-b[0],a[1]-b[1])<Rof(groups[i])+Rof(groups[j])+24){ groups[i]=groups[i].concat(groups[j]); groups.splice(j,1); merged=true; break; } } }
-  const clampX=(x,w)=>Math.max(w/2+6,Math.min(mw-w/2-6,x)), clampY=(y,h)=>Math.max(h/2+6,Math.min(mh-h/2-6,y));
-  const boxes=[];
-  for(const G of groups){ const [mxx,myy]=cen(G);   // the crowd's boxes in two columns either side of it (one side if the other has no room)
-    const L=G.slice().sort((a,b)=>a.y-b.y), roomL=mxx>BW+90, roomR=mw-mxx>BW+90, half=(roomL&&roomR)?Math.ceil(L.length/2):(roomR?0:L.length);
-    L.forEach((q,i)=>{ const left=i<half, k=left?i:i-half, nn=left?half:L.length-half;
-      boxes.push({q,bx:clampX(mxx+(left?-1:1)*(BW/2+70),BW),by:clampY(myy-(nn-1)*(BH+GAPB)/2+k*(BH+GAPB),BH),left}); }); }
-  const over=(A,B)=>{ const ox=Math.min(A.bx,B.bx)+BW/2-Math.max(A.bx,B.bx)+BW/2, oy=Math.min(A.by+BH/2,B.by+BH/2)-Math.max(A.by-BH/2,B.by-BH/2); return [ox,oy]; };
-  const keepOut=[{l:0,t:0,r:140,b:150},{l:mw-210,t:0,r:mw,b:44}];   // north arrow + legend (top left), scale bar (top right)
-  const hitsRect=(k,R)=>k.bx-BW/2<R.r&&k.bx+BW/2>R.l&&k.by-BH/2<R.b&&k.by+BH/2>R.t;
-  const pinIn=k=>P.find(q=>q.x>k.bx-BW/2-6&&q.x<k.bx+BW/2+6&&q.y>k.by-BH/2-6&&q.y<k.by+BH/2+6);   // a box must never cover a spot
-  for(let it=0;it<120;it++){ let moved=false;
-    for(let i=0;i<boxes.length;i++) for(let j=i+1;j<boxes.length;j++){ const A=boxes[i], B=boxes[j], [ox,oy]=over(A,B);
-      if(ox>0&&oy>-6){ const lo=A.by<=B.by?B:A, hi=lo===A?B:A, d=oy+6; lo.by=clampY(lo.by+d/2,BH); hi.by=clampY(hi.by-d/2,BH); moved=true; } }
-    for(const k of boxes){ for(const R of keepOut) if(hitsRect(k,R)){ k.by=clampY(R.b+BH/2+6,BH); moved=true; }
-      const q=pinIn(k); if(q){ k.by=clampY(q.y>k.by?q.y-BH/2-8:q.y+BH/2+8,BH); moved=true; } }
-    if(!moved) break; }
-  let ok=!boxes.some(k=>keepOut.some(R=>hitsRect(k,R))||pinIn(k));
-  for(let i=0;i<boxes.length&&ok;i++) for(let j=i+1;j<boxes.length;j++){ const [ox,oy]=over(boxes[i],boxes[j]); if(ox>0&&oy>0){ ok=false; break; } }
-  return {P,boxes,z,x0,y0,ok,opt:opt||"none",BW,BH};
-}
-async function pdfMapCanvas(L,onTile){
-  PM_BW=L.BW; PM_BH=L.BH; const opt=L.opt||"none";
-  const mw=PM_W, mh=PM_H, K=opt==="none"?2:3, c=document.createElement("canvas"); c.width=mw*K; c.height=mh*K; const g=c.getContext("2d"); g.scale(K,K);
-  g.fillStyle="#2a2d31"; g.fillRect(0,0,mw,mh);
-  const tz=Math.min(L.z+1,20), f=Math.pow(2,tz-L.z), T=256/f, tn=Math.pow(2,tz), jobs=[], holes=[];   // one zoom deeper, drawn at half size: sharp at 2x
-  for(let tx=Math.floor(L.x0/T);tx<=Math.floor((L.x0+mw)/T);tx++) for(let ty=Math.floor(L.y0/T);ty<=Math.floor((L.y0+mh)/T);ty++){ if(ty<0||ty>=tn) continue;
-    jobs.push(loadMapTile(tz,((tx%tn)+tn)%tn,ty).then(im=>{ if(im) g.drawImage(im,tx*T-L.x0,ty*T-L.y0,T,T); else holes.push([tx,ty]); if(onTile) onTile(); })); }
+  P.forEach((q,i)=>{ q.x=xs[i]-x0; q.y=ys[i]-y0; q.lx=q.x; q.ly=q.y; });
+  /* each label goes on its spot if it can; otherwise the nearest free place round it (never over another label or another spot, never half on its own) */
+  const placed=[], hitsLab=(x,y)=>placed.some(o=>Math.abs(o.lx-x)<LW+5&&Math.abs(o.ly-y)<LH+5), hitsSpot=(q,x,y)=>P.some(o=>o!==q&&Math.abs(o.x-x)<LW/2+7&&Math.abs(o.y-y)<LH/2+7);
+  const inside=(x,y)=>x>=LW/2+4&&x<=mw-LW/2-4&&y>=LH/2+4&&y<=mh-LH/2-4;
+  const ordered=P.slice().sort((p,q)=>P.filter(o=>Math.hypot(o.x-q.x,o.y-q.y)<70).length-P.filter(o=>Math.hypot(o.x-p.x,o.y-p.y)<70).length);   // the loneliest first: they keep their spots
+  for(const q of ordered){ let best=null;
+    const cands=[[q.x,q.y,0]]; for(const r of [32,44,58,74,92,112]) for(let k=0;k<16;k++){ const t=-Math.PI/2+k*Math.PI/8; cands.push([q.x+Math.cos(t)*r*1.35,q.y+Math.sin(t)*r,r]); }
+    for(const [x,y] of cands){ const cx=Math.max(LW/2+4,Math.min(mw-LW/2-4,x)), cy=Math.max(LH/2+4,Math.min(mh-LH/2-4,y));
+      if(!inside(cx,cy)||hitsLab(cx,cy)||hitsSpot(q,cx,cy)) continue; const d=Math.hypot(cx-q.x,cy-q.y); if(d>1&&d<28) continue; best=[cx,cy]; break; }
+    if(!best) best=[Math.max(LW/2+4,Math.min(mw-LW/2-4,q.x)),Math.max(LH/2+4,Math.min(mh-LH/2-4,q.y-34))];
+    q.lx=best[0]; q.ly=best[1]; q.off=Math.hypot(q.lx-q.x,q.ly-q.y)>1; placed.push(q); }
+  const c=document.createElement("canvas"); c.width=mw*K; c.height=mh*K; const g=c.getContext("2d"); g.scale(K,K); g.fillStyle="#8a8270"; g.fillRect(0,0,mw,mh);
+  const tz=Math.min(z+1,20), f=Math.pow(2,tz-z), T=256/f, tn=Math.pow(2,tz), jobs=[], holes=[];
+  for(let tx=Math.floor(x0/T);tx<=Math.floor((x0+mw)/T);tx++) for(let ty=Math.floor(y0/T);ty<=Math.floor((y0+mh)/T);ty++){ if(ty<0||ty>=tn) continue;
+    jobs.push(loadMapTile(tz,((tx%tn)+tn)%tn,ty).then(im=>{ if(im) g.drawImage(im,tx*T-x0,ty*T-y0,T,T); else holes.push([tx,ty]); if(onTile) onTile(); })); }
   await Promise.all(jobs);
-  for(const [tx,ty] of holes){ for(let up=1;up<=3;up++){ const k=Math.pow(2,up), pn=tn/k, px=Math.floor(tx/k), py=Math.floor(ty/k);   // a missing tile: borrow the one a zoom or two out
-    const im=await loadMapTile(tz-up,((px%pn)+pn)%pn,py); if(!im) continue; const sz=256/k; g.drawImage(im,(((tx%k)+k)%k)*sz,(((ty%k)+k)%k)*sz,sz,sz,tx*T-L.x0,ty*T-L.y0,T,T); break; } }
-  const COL={open:"#F28C28",hold:"#ffffff",done:"#6b7580"}, TXT={open:"#1a1307",hold:"#1a1307",done:"#ffffff"}, RING={open:"#9A520B",hold:"#F28C28",done:"#3f4750"}, st=a=>a.done?"done":a.hold?"hold":"open";
-  const rr=(x,y,w,h,r)=>{ g.beginPath(); if(g.roundRect) g.roundRect(x,y,w,h,r); else g.rect(x,y,w,h); };
+  for(const [tx,ty] of holes){ for(let up=1;up<=3;up++){ const k=Math.pow(2,up), pn=tn/k, px=Math.floor(tx/k), py=Math.floor(ty/k);
+    const im=await loadMapTile(tz-up,((px%pn)+pn)%pn,py); if(!im) continue; const sz=256/k; g.drawImage(im,(((tx%k)+k)%k)*sz,(((ty%k)+k)%k)*sz,sz,sz,tx*T-x0,ty*T-y0,T,T); break; } }
   g.lineCap="round";
-  for(const k of L.boxes){ g.strokeStyle="rgba(0,0,0,.45)"; g.lineWidth=3.2; g.beginPath(); g.moveTo(k.q.x,k.q.y); g.lineTo(k.bx+(k.left?PM_BW/2:-PM_BW/2),k.by); g.stroke();
-    g.strokeStyle="#fff"; g.lineWidth=1.6; g.stroke(); }
-  const covers=new Map();   // each action's cover photo (its first), from the original where reachable: sharp when zoomed in
-  if(opt!=="none") for(const k of L.boxes){ const p=actPhotos(k.q.a)[0]; if(!p) continue; try{ const c=await cardImage(p); if(c&&c.im){ covers.set(k.q.a.id,{p,im:c.im}); if(c.url) setTimeout(()=>URL.revokeObjectURL(c.url),60000); } }catch(e){} }
-  const photo=(a,x,y,w,h)=>{ g.save(); rr(x,y,w,h,4); g.clip(); g.fillStyle="#111"; g.fillRect(x,y,w,h); const c=covers.get(a.id);
-    if(c){ const s3=Math.min(w/c.im.width,h/c.im.height), dw=c.im.width*s3, dh=c.im.height*s3, dx=x+(w-dw)/2, dy=y+(h-dh)/2; g.imageSmoothingQuality="high"; g.drawImage(c.im,dx,dy,dw,dh);
-      if(c.p.marks&&c.p.marks.length) paintMarks(g,dx,dy,dw,dh,Math.min(dw,dh)*0.0012,c.p.marks,(c.p.mkw!=null?c.p.mkw:null),(c.p.mth!=null?c.p.mth:null),true); }
-    g.restore(); };
-  const title=(a,x,y,w,lines2,fs)=>{ g.font=(fs||11)+"px Helvetica,Arial,sans-serif"; const words=String(a.text||"").split(/\s+/), lines=[]; let line="";
-    for(const wd of words){ const t=line?line+" "+wd:wd; if(g.measureText(t).width>w&&line){ lines.push(line); line=wd; } else line=t; } if(line) lines.push(line);
-    lines.slice(0,lines2).forEach((l,i)=>{ let t=l; if(i===lines2-1&&lines.length>lines2){ while(g.measureText(t+"…").width>w&&t.length>1) t=t.slice(0,-1); t+="…"; } g.fillText(t,x,y+i*13); }); };
-  for(const k of L.boxes){ const a=k.q.a, s2=st(a), x=k.bx-PM_BW/2, y=k.by-PM_BH/2;
-    if(opt==="side"){   // photo on the far side of a normal callout box
-      const PW=72, TW=PM_BW-PW-4, tx=k.left?x+PW+4:x, px=k.left?x:x+TW+4, ty=y+(PM_BH-40)/2;
-      photo(a,px,y,PW,PM_BH); g.strokeStyle="#fff"; g.lineWidth=1.4; rr(px,y,PW,PM_BH,4); g.stroke();
-      g.fillStyle=COL[s2]; g.strokeStyle=RING[s2]; g.lineWidth=1.6; rr(tx,ty,TW,40,6); g.fill(); g.stroke();
-      g.fillStyle=TXT[s2]; g.font="bold 12px Helvetica,Arial,sans-serif"; g.fillText(actNo(a),tx+7,ty+17); title(a,tx+36,ty+16,TW-44,2); continue; }
-    g.fillStyle=COL[s2]; g.strokeStyle=RING[s2]; g.lineWidth=1.6; rr(x,y,PM_BW,PM_BH,6); g.fill(); g.stroke();
-    g.fillStyle=TXT[s2]; g.textBaseline="alphabetic";
-    if(opt==="left"){ photo(a,x+4,y+4,66,PM_BH-8); g.fillStyle=TXT[s2]; g.font="bold 12px Helvetica,Arial,sans-serif"; g.fillText(actNo(a),x+78,y+17); title(a,x+78,y+32,PM_BW-86,2); continue; }
-    if(opt==="top"){ photo(a,x+4,y+4,PM_BW-8,PM_BH-44); g.fillStyle=TXT[s2]; g.font="bold 12px Helvetica,Arial,sans-serif"; g.fillText(actNo(a),x+7,y+PM_BH-24); title(a,x+36,y+PM_BH-24,PM_BW-44,2,10.5); continue; }
-    g.font="bold 12px Helvetica,Arial,sans-serif"; g.fillText(actNo(a),x+7,y+15); title(a,x+36,y+14,PM_BW-44,2); }
-  for(const q of L.P){ g.fillStyle="#E8281E"; g.strokeStyle="#fff"; g.lineWidth=2; g.beginPath(); g.arc(q.x,q.y,4.5,0,7); g.fill(); g.stroke(); }
-  // north arrow, legend, scale bar
-  g.fillStyle="rgba(255,255,255,.92)"; rr(10,10,30,38,5); g.fill(); g.fillStyle="#1e1f22"; g.beginPath(); g.moveTo(25,14); g.lineTo(32,36); g.lineTo(25,31); g.lineTo(18,36); g.closePath(); g.fill(); g.font="bold 10px Helvetica,Arial"; g.fillText("N",21.5,46);
-  { const lx=10, ly=56, LW=118, LH=86; g.fillStyle="rgba(255,255,255,.94)"; rr(lx,ly,LW,LH,6); g.fill(); g.strokeStyle="#cfd5dd"; g.lineWidth=1; g.stroke();
-    g.fillStyle="#1e1f22"; g.font="bold 11px Helvetica,Arial"; g.fillText("Status",lx+10,ly+16);
-    [["open","Open"],["hold","On hold"],["done","Done"]].forEach(([k2,l],i)=>{ const y=ly+28+i*19; g.fillStyle=COL[k2]; g.strokeStyle=RING[k2]; g.lineWidth=1.6; rr(lx+10,y,30,14,4); g.fill(); g.stroke(); g.fillStyle="#333"; g.font="11px Helvetica,Arial"; g.fillText(l,lx+48,y+11); }); }
-  { const lat=(L.P[0]||{ll:{lat:0}}).ll.lat, mpp=40075016*Math.cos(lat*Math.PI/180)/(256*Math.pow(2,L.z));   // metres per canvas unit
-    const nice=[5,10,20,25,50,100,200,250,500,1000,2000,5000,10000]; let m=nice[0]; for(const v of nice) if(v/mpp<=160) m=v; const bw=m/mpp;
-    g.fillStyle="rgba(255,255,255,.92)"; rr(mw-bw-42,10,bw+32,26,5); g.fill(); g.fillStyle="#1e1f22"; g.fillRect(mw-bw-26,26,bw,4); g.font="bold 11px Helvetica,Arial"; g.fillText(m>=1000?(m/1000)+" km":m+" m",mw-bw-26,22); }
-  return c;
-}
+  for(const q of P) if(q.off){ g.strokeStyle="rgba(0,0,0,.55)"; g.lineWidth=3.4; g.beginPath(); g.moveTo(q.x,q.y); g.lineTo(q.lx,q.ly); g.stroke(); g.strokeStyle="#fff"; g.lineWidth=1.6; g.stroke(); }
+  for(const q of P) if(q.off){ g.beginPath(); g.arc(q.x,q.y,4.5,0,7); g.fillStyle="#E8281E"; g.fill(); g.lineWidth=2; g.strokeStyle="#fff"; g.stroke(); }
+  const COL={open:"#F28C28",hold:"#ffffff",done:"#6b7580"}, RING={open:"#9A520B",hold:"#F28C28",done:"#3f4750"};
+  const rr=(x,y,w,h,r)=>{ g.beginPath(); if(g.roundRect) g.roundRect(x,y,w,h,r); else g.rect(x,y,w,h); };
+  g.font="800 14px Helvetica,Arial,sans-serif"; g.textAlign="center"; g.textBaseline="middle";
+  for(const q of P){ const a=q.a, st=a.done?"done":a.hold?"hold":"open", t=actNo(a), w=Math.max(40,g.measureText(t).width+18), x=q.lx-w/2, y=q.ly-LH/2;
+    g.shadowColor="rgba(0,0,0,.45)"; g.shadowBlur=5; g.shadowOffsetY=1.5; rr(x,y,w,LH,7); g.fillStyle="#fff"; g.fill(); g.shadowColor="transparent";
+    rr(x+2.5,y+2.5,w-5,LH-5,5); g.fillStyle=COL[st]; g.fill(); if(st!=="open"){ g.lineWidth=2; g.strokeStyle=RING[st]; g.stroke(); }
+    g.lineJoin="round"; g.lineWidth=3; g.strokeStyle="#000"; g.strokeText(t,q.lx,q.ly+1); g.fillStyle="#fff"; g.fillText(t,q.lx,q.ly+1); }
+  g.textAlign="left"; g.textBaseline="alphabetic";
+  rr(8,8,22,28,4); g.fillStyle="rgba(255,255,255,.92)"; g.fill(); g.fillStyle="#1e1f22"; g.beginPath(); g.moveTo(19,12); g.lineTo(24,26); g.lineTo(19,23); g.lineTo(14,26); g.closePath(); g.fill(); g.font="bold 9px Helvetica,Arial"; g.fillText("N",16,34);
+  return c; }
+/* a photo for the report: the sharpest copy reachable (the project's full-size one, else the preview) with its markup drawn fresh at that size */
+async function pdfPhoto(p){
+  let src=null; try{ src=await cardImage(p); }catch(e){} if(!src||!src.im) return null;
+  const im=src.im, s=Math.min(1,1800/Math.max(im.width,im.height)), w=Math.max(1,Math.round(im.width*s)), h=Math.max(1,Math.round(im.height*s));
+  const c=document.createElement("canvas"); c.width=w; c.height=h; const g=c.getContext("2d"); g.imageSmoothingQuality="high"; g.drawImage(im,0,0,w,h);
+  if(p.marks&&p.marks.length) paintMarks(g,0,0,w,h,Math.min(w,h)*0.0012,p.marks,(p.mkw!=null?p.mkw:null),(p.mth!=null?p.mth:null),true);
+  if(src.url) URL.revokeObjectURL(src.url);
+  return {u:c.toDataURL("image/jpeg",0.86),ar:w/h}; }
+/* photos in their natural shape, in order, cut into rows that each fill the width; the cut that keeps rows nearest the target height */
+function pdfPhotoRows(ims,w,target,gap){ const n=ims.length; if(!n) return []; const ar=ims.map(x=>x.ar), cuts=[];
+  if(n<=12){ for(let m=0;m<(1<<(n-1));m++){ const rows=[]; let cur=[0]; for(let i=1;i<n;i++){ if(m&(1<<(i-1))){ rows.push(cur); cur=[]; } cur.push(i); } rows.push(cur); cuts.push(rows); } }
+  else for(let r=1;r<=n;r++){ const per=Math.ceil(n/r), rows=[]; for(let i=0;i<n;i+=per) rows.push([...Array(Math.min(per,n-i)).keys()].map(k=>i+k)); cuts.push(rows); }
+  let best=null;
+  for(const rows of cuts){ const rh=rows.map(rw=>(w-gap*(rw.length-1))/rw.reduce((t,i)=>t+ar[i],0)); const cost=rh.reduce((t,h)=>t+Math.abs(Math.log(h/target)),0)/rh.length+(Math.max(...rh)/Math.min(...rh)-1)*0.4;
+    if(!best||cost<best.cost) best={rows,rh,cost}; }
+  return best.rows.map((rw,ri)=>({items:rw.map(i=>ims[i]),h:best.rh[ri]})); }
+function pdfReportTitle(){ const dl=dwLabel(); if(!dl) return {t:"All actions",d:""};
+  const e=dwEff(), hi=e.hi==null?dayStart(Date.now()):e.hi, yr=" "+new Date(hi).getFullYear();
+  if(e.lo==null) return {t:"Actions created up to "+dl.l2.replace(/^→ /,""),d:dl.dates+yr};
+  if(dl.l2==="→ Today") return {t:"Actions created in the last "+dl.l1.replace(/ ago$/,""),d:dl.dates+yr};
+  return {t:"Actions created "+dl.dates+yr,d:""}; }
 async function exportActionsPdf(){
   const say=t=>loadNote(t?"PDF export — "+t:"");
   if(!exportActs().length){ say(actions.length?"no actions match the current filters":"nothing to export"); setTimeout(()=>say(""),2600); return; }
   if(exportActionsPdf._busy) return; exportActionsPdf._busy=true;
   try{
     say("loading…"); await loadJsPDF();
-    const doc=new window.jspdf.jsPDF({orientation:"landscape",unit:"mm",format:"a4"});
-    const W=297, H=210, M=10, now=new Date(), proj=String(ON.name||loadedJsonName||"ActionMap").replace(/\.[^.]+$/,"");
-    const order=exportActs(), fnote=exportFilterNote();
-    const INK=[30,31,34], MUT=[110,110,110], HEAD=[29,111,66], COL={Done:[30,107,58],Open:[29,36,48],"On hold":[138,90,0]}, BG={Done:[227,244,232],"On hold":[253,241,220]};
-
-    const fmt=t=>{ if(!t) return ""; const d=new Date(t), p=n=>String(n).padStart(2,"0"); return p(d.getDate())+"/"+p(d.getMonth()+1)+"/"+d.getFullYear()+" "+p(d.getHours())+":"+p(d.getMinutes()); };
-    const stamp=fmt(now.getTime());
-    const title=t=>{ doc.setFont("helvetica","bold"); doc.setFontSize(15); doc.setTextColor(...INK); doc.text(proj+" — "+t,M,M+5);
-      doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(...MUT); doc.text("Exported "+stamp,M,M+10); doc.setDrawColor(...INK); doc.setLineWidth(.5); doc.line(M,M+12.5,W-M,M+12.5); return M+15; };
-    const header=(y,cols)=>{ doc.setFillColor(...HEAD); doc.rect(M,y,W-2*M,7,"F"); doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.setTextColor(255,255,255);
-      cols.forEach(c=>doc.text(c.h,c.x+1.5,y+4.8)); return y+7; };
-
-    /* ---- Map pages */
-    const located=order.filter(a=>pdfMapPoint(a)), mapPages=[];
-    const copt=window._pdfCoverOpt||"left";   // each callout box carries the action's cover photo on its left (option 1)
-    { let rest=located; while(rest.length){ let n=rest.length, L=pdfMapLayout(rest,copt); while(!L.ok&&n>1){ n=Math.max(1,Math.floor(n*0.75)); L=pdfMapLayout(rest.slice(0,n),copt); } mapPages.push(L); rest=rest.slice(n); } }
-    for(let i=0;i<mapPages.length;i++){ const L=mapPages[i]; if(i) doc.addPage();
-      let y=title(mapPages.length>1?"Map "+(i+1)+" of "+mapPages.length:"Map");
-      const cnt=s=>L.P.filter(q=>(q.a.done?"d":q.a.hold?"h":"o")===s).length;
-      doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(...MUT);
-      doc.text(L.P.length+" action"+(L.P.length===1?"":"s")+" \u2014 Open "+cnt("o")+" \u00b7 On hold "+cnt("h")+" \u00b7 Done "+cnt("d")+(fnote?"   "+fnote:""),M+70,M+10);
-      let nt=0; const c=await pdfMapCanvas(L,()=>{ nt++; if(nt%8===0) say("map "+(i+1)+" / "+mapPages.length+": imagery "+nt+"\u2026"); });
-      doc.addImage(c.toDataURL("image/jpeg",0.88),"JPEG",M,y,W-2*M,H-M-y,undefined,"FAST"); }
-    /* ---- Problems */
-    if(mapPages.length) doc.addPage();
-    const C1=[{h:"#",x:M,w:12},{h:"Problem",x:M+12,w:52},{h:"Status",x:M+64,w:24},{h:"Sub-actions",x:M+88,w:78},{h:"Photos",x:M+166,w:W-M-(M+166)}];
-    const PW=C1[4].w, GAP=1.5;   // photos: one line, as tall as the row (its text sets the height); too many for the width → they all shrink to fit
-    let y=header(title("Problems"),C1);
-    for(let k=0;k<order.length;k++){ const a=order[k]; say("page layout "+(k+1)+" / "+order.length+"…");
-      const stat=a.done?"Done":a.hold?"On hold":"Open";
-      doc.setFont("helvetica","bold"); doc.setFontSize(9); const tl=doc.splitTextToSize(a.text||"",C1[1].w-3);
-      doc.setFont("helvetica","normal"); doc.setFontSize(8.5);
-      const sl=pdfStepLines(doc,(a.steps||[]).filter(x=>x&&String(x.t||"").trim()),C1[3].w-3);   // "a. …, b. ✓ …" in one paragraph, as on the copied image
-      const ps=actPhotos(a), ims=[]; for(const ph of ps){ let u=null; try{ u=await annotatedPreview(ph); }catch(e){} if(!u) continue; try{ const im=await loadImg(u); ims.push({u,ar:(im.width/im.height)||1.33}); }catch(e){} }
-      const rowH=Math.max(12,tl.length*4.2+4,sl.length*3.9+4);
-      let ph=rowH-2*GAP; const totW=ims.reduce((t,x)=>t+ph*x.ar+GAP,0)-GAP; if(totW>PW-2*GAP) ph*= (PW-2*GAP)/totW;
-      if(y+rowH>H-M){ doc.addPage(); y=header(title("Problems (continued)"),C1); }
-      if(BG[stat]){ doc.setFillColor(...BG[stat]); doc.rect(C1[2].x,y,C1[2].w,rowH,"F"); }
-      doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.setTextColor(143,96,11); doc.text(actNo(a),C1[0].x+1.5,y+5);
-      doc.setTextColor(...INK); doc.text(tl,C1[1].x+1.5,y+5,{lineHeightFactor:1.35});
-      doc.setTextColor(...COL[stat]); doc.text(stat,C1[2].x+1.5,y+5); if(a.done&&a.doneAt){ doc.setFont("helvetica","normal"); doc.setFontSize(7.5); doc.text(fmt(a.doneAt),C1[2].x+1.5,y+9); }
-      doc.setFont("helvetica","normal"); doc.setFontSize(8.5);
-      pdfDrawStepLines(doc,sl,C1[3].x+1.5,y+5,3.9,INK);
-      { let cx=C1[4].x+GAP; for(const x of ims){ const w=ph*x.ar; try{ doc.addImage(x.u,"JPEG",cx,y+GAP,w,ph,undefined,"FAST"); }catch(e){} cx+=w+GAP; } }
-      doc.setDrawColor(221,221,221); doc.setLineWidth(.2); doc.line(M,y+rowH,W-M,y+rowH); y+=rowH; }
-    /* ---- Sub-actions */
-    doc.addPage();
-    const C2=[{h:"Date & time",x:M,w:30},{h:"Status",x:M+30,w:20},{h:"#",x:M+50,w:11},{h:"Action / sub-action",x:M+61,w:136},{h:"Last 24 h",x:M+197,w:17},{h:"Notes",x:M+214,w:W-M-(M+214)}];
-    y=header(title("Sub-actions"),C2);
-    const line=(r,bold,shade)=>{ doc.setFont("helvetica",bold?"bold":"normal"); doc.setFontSize(8.5); const tl=doc.splitTextToSize(r.x,C2[3].w-3-(bold?0:5)), h=Math.max(6,tl.length*3.9+2.4);
-      if(y+h>H-M){ doc.addPage(); y=header(title("Sub-actions (continued)"),C2); }
-      if(shade){ doc.setFillColor(246,241,230); doc.rect(M,y,W-2*M,h,"F"); }
-      if(BG[r.st]){ doc.setFillColor(...BG[r.st]); doc.rect(C2[1].x,y,C2[1].w,h,"F"); }
-      doc.setTextColor(...INK); doc.text(fmt(r.t),C2[0].x+1.5,y+4.2); doc.setTextColor(...COL[r.st]); doc.text(r.st,C2[1].x+1.5,y+4.2);
-      doc.setTextColor(...INK); doc.text(r.no,C2[2].x+1.5,y+4.2); doc.text(tl,C2[3].x+1.5+(bold?0:5),y+4.2,{lineHeightFactor:1.35}); if(r.c) doc.text("Yes",C2[4].x+4,y+4.2);
-      doc.setDrawColor(225,228,232); doc.setLineWidth(.15); doc.line(M,y+h,W-M,y+h); y+=h; };
-    for(const g of subActionRows(order,now.getTime())){ line({t:g.t,st:g.st,no:g.no,x:g.a.text,c:g.recent},true,true);
-      for(const x of g.subs) line({t:x.t,st:x.st,no:g.no,x:x.text,c:g.recent},false,false); }
-    const n=doc.getNumberOfPages(); for(let i=1;i<=n;i++){ doc.setPage(i); doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setTextColor(...MUT); doc.text("Page "+i+" of "+n,W-M,M+10,{align:"right"}); }
+    const doc=new window.jspdf.jsPDF({orientation:"landscape",unit:"mm",format:"a4",compress:true});
+    const W=297, H=210, M=10, GAPC=5, CW=(W-2*M-2*GAPC)/3, MAPH=68, now=new Date(), proj=String(ON.name||loadedJsonName||"ActionMap").replace(/\.[^.]+$/,"");
+    const order=exportActs(), INK=[30,31,34], MUT=[110,110,110], BAR=[43,51,64];
+    const p2=n=>String(n).padStart(2,"0"), stamp=p2(now.getDate())+"/"+p2(now.getMonth()+1)+"/"+now.getFullYear()+" "+p2(now.getHours())+":"+p2(now.getMinutes());
+    const RT=pdfReportTitle(), sts=[["Open",actShowOpen],["On hold",actShowHold],["Done",actShowDone]].filter(x=>x[1]).map(x=>x[0]).join(" + ");
+    const sub="Showing "+(sts||"nothing")+" · "+order.length+" action"+(order.length===1?"":"s")+" · exported "+stamp;
+    const TOP=M+17;
+    const pageHead=()=>{ doc.setFont("helvetica","bold"); doc.setFontSize(15); doc.setTextColor(...INK); const t1=proj+" — "+RT.t; doc.text(t1,M,M+5);
+      if(RT.d){ const w1=doc.getTextWidth(t1); doc.setFont("helvetica","normal"); doc.setFontSize(12); doc.setTextColor(85,85,85); doc.text("("+RT.d+")",M+w1+2,M+5); }
+      doc.setDrawColor(...INK); doc.setLineWidth(.5); doc.line(M,M+8,W-M,M+8);
+      doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(...MUT); doc.text(sub,M,M+12.5); };
+    /* ---- lay out: pages of three columns; column 1 of each page keeps room for its map */
+    const pages=[]; let pg=null, col=0, y=0;
+    const newPage=()=>{ pg={items:[],acts:new Set()}; pages.push(pg); col=0; y=TOP+MAPH+4; };
+    const colX=c=>M+c*(CW+GAPC), colTop=c=>c===0?TOP+MAPH+4:TOP, BOT=H-M;
+    const nextCol=()=>{ col++; if(col>2) newPage(); else y=colTop(col); };
+    newPage();
+    const TPAD=1.6, BARH=5.6, LH=3.9;
+    for(let k=0;k<order.length;k++){ const a=order[k]; say("laying out "+(k+1)+" / "+order.length+"…");
+      const st=a.done?"Done":a.hold?"On hold":"Open", upd=actUpdated(a);
+      doc.setFont("helvetica","bold"); doc.setFontSize(9.5); const tl=doc.splitTextToSize(a.text||"",CW-2*TPAD);
+      const steps=(a.steps||[]).filter(x=>x&&String(x.t||"").trim()), sl=pdfStepLines(doc,steps,CW-2*TPAD);
+      const headH=BARH+1.8+tl.length*4.2, textH=headH+(sl.length?sl.length*LH+1.2:LH+1.2)+1;
+      const ims=[]; for(const ph of actPhotos(a)){ const x=await pdfPhoto(ph); if(x) ims.push(x); }
+      let rows=pdfPhotoRows(ims,CW,34,1), first=true;
+      while(true){ const hh=first?textH:headH, room=BOT-y;
+        if(hh>room&&y>colTop(col)+0.1){ nextCol(); continue; }
+        const need=rows.reduce((t,r)=>t+r.h+1,0)+(rows.length?1:0), avail=room-hh-3;
+        let take=rows, k2=1;
+        if(need>avail){ if(avail>=need*0.65) k2=(avail-1-rows.length)/(need-1-rows.length);
+          else { let n=0, acc=1; while(n<rows.length&&acc+rows[n].h+1<=avail){ acc+=rows[n].h+1; n++; } take=rows.slice(0,n); } }
+        if(!first&&!take.length&&y>colTop(col)+0.1){ nextCol(); continue; }
+        if(first&&!take.length&&rows.length&&y>colTop(col)+0.1&&avail<20){ nextCol(); continue; }
+        const it={a,st,upd,tl,sl:first?sl:null,none:first&&!sl.length,cont:!first,x:colX(col),y,rows:take,k:k2,col}; pg.items.push(it); pg.acts.add(a);
+        y+=hh+(take.length?take.reduce((t,r)=>t+r.h*k2+1,0)+1:0)+3;
+        rows=rows.slice(take.length); first=false;
+        if(!rows.length) break; nextCol(); } }
+    /* ---- draw */
+    for(let pi=0;pi<pages.length;pi++){ const P=pages[pi]; if(pi) doc.addPage(); pageHead();
+      say("map "+(pi+1)+" / "+pages.length+"…");
+      const mc=await pdfMiniMap([...P.acts],CW,MAPH);
+      if(mc) doc.addImage(mc.toDataURL("image/jpeg",0.88),"JPEG",M,TOP,CW,MAPH,undefined,"FAST");
+      else { doc.setDrawColor(210,210,210); doc.rect(M,TOP,CW,MAPH); doc.setFontSize(9); doc.setTextColor(...MUT); doc.text("No located actions on this page",M+CW/2,TOP+MAPH/2,{align:"center"}); }
+      doc.setDrawColor(207,213,221); doc.setLineWidth(.2); doc.rect(M,TOP,CW,MAPH);
+      for(const it of P.items){ let yy=it.y; const x=it.x;
+        doc.setFillColor(...BAR); doc.roundedRect(x,yy,CW,BARH,.8,.8,"F");
+        doc.setFont("helvetica","bold"); doc.setFontSize(9.5); doc.setTextColor(255,255,255); let cx=x+2.2; const by=yy+BARH/2+1.25;
+        const no=actNo(it.a); doc.text(no,cx,by); cx+=doc.getTextWidth(no)+2.4;
+        const sep=()=>{ doc.setDrawColor(255,255,255); doc.setLineWidth(.15); doc.line(cx,yy+1.4,cx,yy+BARH-1.4); cx+=2.4; };
+        sep(); doc.setFontSize(8.5); doc.setTextColor(...(it.st==="On hold"?[255,196,107]:it.st==="Done"?[140,214,160]:[255,255,255])); doc.text(it.st,cx,by); cx+=doc.getTextWidth(it.st)+2.4;
+        if(it.upd){ sep(); doc.setFont("helvetica","normal"); doc.setTextColor(201,206,214); const u="Updated "+pdfShortDate(it.upd); doc.text(u,cx,by); }
+        if(it.cont){ doc.setFont("helvetica","italic"); doc.setTextColor(201,206,214); doc.text("continued",x+CW-2,by,{align:"right"}); }
+        yy+=BARH+1.8;
+        doc.setFont("helvetica","bold"); doc.setFontSize(9.5); doc.setTextColor(...INK); doc.text(it.tl,x+TPAD,yy+3.1,{lineHeightFactor:1.25}); yy+=it.tl.length*4.2;
+        if(it.sl){ if(it.sl.length){ pdfDrawStepLines(doc,it.sl,x+TPAD,yy+3.2,LH,INK); yy+=it.sl.length*LH+1.2; } else { doc.setFont("helvetica","italic"); doc.setFontSize(8.5); doc.setTextColor(150,150,150); doc.text("No sub-actions",x+TPAD,yy+3.2); yy+=LH+1.2; } }
+        yy+=1;
+        for(const r of it.rows){ const rh=r.h*it.k, rw=r.items.reduce((t,m)=>t+rh*m.ar,0)+(r.items.length-1); let px=x+(CW-rw)/2;
+          for(const m of r.items){ const w=rh*m.ar; try{ doc.addImage(m.u,"JPEG",px,yy,w,rh,undefined,"FAST"); }catch(e){} px+=w+1; } yy+=rh+1; }
+        doc.setDrawColor(201,206,214); doc.setLineWidth(.3); doc.line(x,yy+1,x+CW,yy+1); } }
+    const n=doc.getNumberOfPages(); for(let i=1;i<=n;i++){ doc.setPage(i); doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setTextColor(...MUT); doc.text("Page "+i+" of "+n,W-M,M+12.5,{align:"right"}); }
     say("saving…");
-    doc.save(proj+"-problems-"+now.toISOString().slice(0,10)+".pdf");
-    say("✓ saved "+order.length+" problem"+(order.length===1?"":"s")+(fnote?" ("+fnote.toLowerCase()+")":"")); setTimeout(()=>say(""),3200);
+    const fn=(proj+" - "+RT.t+(RT.d?" "+RT.d:"")).replace(/[\\/:*?"<>|]+/g,"").replace(/–/g,"-").replace(/\s+/g," ").trim();
+    doc.save(fn+".pdf");
+    say("✓ saved "+order.length+" action"+(order.length===1?"":"s")); setTimeout(()=>say(""),3200);
   }catch(err){ say("failed: "+(err&&err.message||err)); setTimeout(()=>say(""),6000); }
   finally{ exportActionsPdf._busy=false; } }
 /* ---- Copy an action for a phone: ONE portrait image (2160x3840) — title + satellite map, the main
@@ -4062,8 +4023,8 @@ function renderProjHead(){
   if(!projHeadEl){
     projHeadEl=document.createElement("div"); projHeadEl.className="projhead";
     projHeadEl.innerHTML='<div class="ph-track"></div><div class="ph-line"><span class="ph-name" title="Switch project"></span><span class="ph-caret" title="Switch project">\u25be</span><span class="ph-saved"></span><span class="ph-load"></span></div>';
-    map.getContainer().appendChild(projHeadEl);
-    ["mousedown","pointerdown","dblclick","wheel","contextmenu","click"].forEach(ev=>projHeadEl.addEventListener(ev,e=>e.stopPropagation()));
+    document.getElementById("brandSlot").prepend(projHeadEl);   // beside the app icon, in the top bar
+    ["mousedown","pointerdown","dblclick","contextmenu","click"].forEach(ev=>projHeadEl.addEventListener(ev,e=>e.stopPropagation()));
     projHeadEl.addEventListener("click",toggleProjDrop);   // anywhere on the label
     const pr=document.getElementById("progress"); if(pr) projHeadEl.querySelector(".ph-track").appendChild(pr);   // the load bar lives just above the header text, sized to the callout
   }
@@ -4075,14 +4036,18 @@ function renderProjHead(){
   projHeadEl.classList.toggle("loading",!!projLoadMsg);
 }
 /* Project dropdown under the map header: every project in the data repo, the open one ticked. */
+document.getElementById("homeMark").addEventListener("click",goHome);
+function goHome(){   // the app icon: back to the start — nothing selected, no photo open, zoomed to every action (filters stay as they are)
+  closeProjDrop(); if(AF.open) closeActForm(); if(pickMode) endPickMode(false); if(selSet.size) clearSel();
+  if(lb.classList.contains("open")){ closeViewer(); setTab("gallery"); }
+  if(selActs.size) clearActSel(); updateGallery(); zoomAll(true); }
 function closeProjDrop(){ const d=document.getElementById("projDrop"); if(d) d.remove(); }
 async function toggleProjDrop(){
   if(document.getElementById("projDrop")){ closeProjDrop(); return; }
   const d=document.createElement("div"); d.id="projDrop"; d.className="proj-drop"; d.innerHTML='<div class="pd-note">Loading projects\u2026</div>';
   ["mousedown","pointerdown","dblclick","wheel","contextmenu","click"].forEach(ev=>d.addEventListener(ev,e=>e.stopPropagation()));
-  map.getContainer().appendChild(d);
-  const r=projHeadEl.getBoundingClientRect(), mr=map.getContainer().getBoundingClientRect();
-  d.style.top=(r.bottom-mr.top+6)+"px"; d.style.left=(r.left-mr.left+r.width/2)+"px";
+  document.body.appendChild(d);
+  const r=projHeadEl.getBoundingClientRect(); d.style.top=(r.bottom+6)+"px"; d.style.left=r.left+"px";
   let list=[]; try{ list=onRepo()?await readProjects():[]; }catch(e){}
   if(!document.getElementById("projDrop")) return;
   const cur=ON.pid;
@@ -5243,6 +5208,7 @@ document.addEventListener("keydown",e=>{
   if(e.key==="Escape"){ if(AF.open) closeActForm(); else if(drawing) stopDraw(); else if(measuring||measureLayer) stopMeasure(); else if(pickMode) endPickMode(false); else if(selSet.size) clearSel(); else if(selActs.size) clearActSel(); return; }
   if(e.ctrlKey||e.metaKey||e.altKey||e.repeat||(e.target&&e.target.isContentEditable)) return;   // Ctrl+F is browser find, not the area filter
   if(e.key==="m"||e.key==="M"){ toggleMeasure(); }
+  else if(e.key==="z"||e.key==="Z"){ zoomAll(true); }
   else if(e.key==="s"||e.key==="S"){ toggleSelect(); }
   else if((e.key==="n"||e.key==="N")&&!lb.classList.contains("edit-open")){ e.preventDefault(); openActForm(); }   // N: New action
 });
