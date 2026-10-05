@@ -297,8 +297,10 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ph-load{color:var(--accent);}
   .progress{display:none;}
 
-  .splitter{width:6px;flex:0 0 6px;cursor:col-resize;background:var(--line);position:relative;z-index:3;}   /* the slate line IS the grip */
-  .gallery{width:var(--side-w);flex:0 0 var(--side-w);height:100%;background:var(--panel);display:flex;flex-direction:column;z-index:2;min-width:220px;border-left:1px solid var(--line);}
+  .splitter{width:3px;flex:0 0 3px;cursor:col-resize;background:var(--gold);position:relative;z-index:900;}   /* the panel edges: a thin gold line with a white grip in the middle */
+  .splitter::before{content:"";position:absolute;left:-5px;right:-5px;top:0;bottom:0;}   /* a wider strip to grab */
+  .splitter::after{content:"";position:absolute;left:50%;top:50%;width:14px;height:38px;transform:translate(-50%,-50%);box-sizing:border-box;border:2px solid var(--gold);border-radius:7px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='20'%3E%3Cg fill='%23e8b44a'%3E%3Ccircle cx='2' cy='2' r='2'/%3E%3Ccircle cx='2' cy='10' r='2'/%3E%3Ccircle cx='2' cy='18' r='2'/%3E%3C/g%3E%3C/svg%3E") center/4px 20px no-repeat;}
+  .gallery{width:var(--side-w);flex:0 0 var(--side-w);height:100%;background:var(--panel);display:flex;flex-direction:column;z-index:2;min-width:220px;}
   
   .controls{padding:8px 14px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:9px;}
   .ctl-row{display:flex;gap:8px;align-items:center;}
@@ -455,7 +457,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .actpanel{order:1;} #actSplit{order:1;} #map{order:2;} #splitter{order:3;} .imgpanel{order:4;} .gallery{order:5;} .histpanel{order:6;}
 
   /* left actions panel */
-  .actpanel{width:var(--act-w,390px);flex:0 0 var(--act-w,390px);min-width:170px;height:100%;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;z-index:2;}
+  .actpanel{width:var(--act-w,390px);flex:0 0 var(--act-w,390px);min-width:170px;height:100%;background:var(--panel);display:flex;flex-direction:column;z-index:2;}
   .act-edit{width:100%;box-sizing:border-box;font:inherit;font-size:var(--fb);color:var(--ink);background:var(--panel);border:1px solid var(--accent);border-radius:7px;padding:4px 7px;outline:none;}
   textarea.act-edit{resize:vertical;min-height:48px;font-size:var(--fb);line-height:1.45;}
   .act-copy{border:none;background:none;color:var(--dim);cursor:pointer;padding:3px 4px;line-height:0;align-self:flex-start;}
@@ -620,7 +622,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .rtabs .count{margin-left:auto;font-family:var(--font);font-size:var(--fl);color:var(--accent);}
 
   /* tab visibility: photo tab shows the viewer panel (or its placeholder), gallery tab shows the gallery */
-  .histpanel{display:none;width:var(--side-w);flex:0 0 var(--side-w);height:100%;background:var(--panel);flex-direction:column;z-index:2;min-width:220px;border-left:1px solid var(--line);}
+  .histpanel{display:none;width:var(--side-w);flex:0 0 var(--side-w);height:100%;background:var(--panel);flex-direction:column;z-index:2;min-width:220px;}
   #main.tab-history .histpanel{display:flex;}
   #main.tab-history .imgpanel,#main.tab-history .gallery{display:none!important;}
   .hist-body{flex:1;overflow-y:auto;padding:4px 0 12px;}
@@ -1093,6 +1095,24 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   input[type=range]{accent-color:var(--gold);}
   /* map cards: white, slate outline, 8px corners */
   .leaflet-control-layers,.leaflet-bar,.reconnect,#updpill,.hoverview,.measure-lbl{background:#fff!important;border:var(--ctl-bd)!important;border-radius:var(--ctl-r)!important;backdrop-filter:none!important;}
+  /* ---- action tiles: a grey header bar (status pills · Copy · ×, one height) with a line under it; the cover
+     photo square-cornered top right under the bar, level with the end of the title; sub-actions full width */
+  .act-list{--bh:38px;--ph:26px;}
+  .act-row{overflow:hidden;flex-shrink:0;padding-top:calc(var(--bh) + 9px)!important;}
+  .act-row .act-top{position:absolute;left:0;right:0;top:0;margin:0;padding:0 112px 0 9px;box-sizing:border-box;height:var(--bh);background:#d5d9df;border-bottom:2px solid #b9c0c8;display:flex;align-items:center;}
+  .act-row .act-top .act-st{align-self:center;align-items:center;margin:0;}
+  .act-row .act-top .act-st button,.act-row .act-cnr{height:var(--ph)!important;box-sizing:border-box;padding-top:0!important;padding-bottom:0!important;display:inline-flex;align-items:center;justify-content:center;border-radius:6px!important;}
+  .act-row .act-top .act-st .act-all{width:var(--ph)!important;}
+  .act-row .act-top .act-st button:not(.on),.act-row .act-cnr{background:#fff;}
+  .act-row .act-cnr{top:calc((var(--bh) - var(--ph)) / 2)!important;}
+  .act-row .act-del.act-cnr{width:var(--ph)!important;}
+  .act-row .act-copy.act-cnr{width:auto!important;padding:0 8px!important;gap:4px;font:600 var(--fl) var(--font);right:calc(6px + var(--ph) + var(--btn-gap));}
+  .act-row .act-copy.act-cnr::after{content:"Copy";}
+  .act-row .act-copy.act-cnr.ok{background:#e9f7ee!important;border-color:#2e9e5b!important;color:#1f7a43!important;} .act-row .act-copy.act-cnr.ok::after{content:"Copied \2713";} .act-row .act-copy.act-cnr.ok svg,.act-row .act-copy.act-cnr.bad svg{display:none;}
+  .act-row .act-copy.act-cnr.bad{background:#fdecea!important;border-color:#d64545!important;color:#a32020!important;} .act-row .act-copy.act-cnr.bad::after{content:"Saved instead";}
+  .act-row .act-cover{position:absolute!important;top:calc(var(--bh) + 2px);right:0;margin:0!important;border-radius:0!important;min-height:0!important;align-self:auto;z-index:1;}
+  .act-row .act-cover img{object-fit:cover;}
+  .act-row .bh{padding-right:calc(var(--cov-w,84px) - 4px);}
 </style>
 </head>
 <body>
@@ -2058,6 +2078,11 @@ async function maybeStartGeo(){
   startGeoWatch();
 }
 /* Zoom to a set of photos, at MINIMUM deep enough that none of them is hidden inside a cluster. */
+/* Action tiles: the cover photo sits top right under the header bar, its bottom level with the end of the
+   title; the sub-actions below use the tile's full width. */
+function sizeCovers(){ document.querySelectorAll("#actList .act-row").forEach(r=>{ const c=r.querySelector(".act-cover"), t=r.querySelector(".bh"), top=r.querySelector(".act-top"); if(!c||!t||!top) return;
+  const h=Math.max(34,Math.round(t.getBoundingClientRect().bottom-top.getBoundingClientRect().bottom+4)); if(c.style.height!==h+"px") c.style.height=h+"px"; }); }
+try{ new ResizeObserver(()=>sizeCovers()).observe(document.getElementById("actList")); }catch(e){}
 function renderActions(){
   const list=document.getElementById("actList"); if(!list) return;
   warmCards();
@@ -2094,6 +2119,7 @@ function renderActions(){
       +(exp?('<div class="asec act-tree">'+stepsHtml(a)+'</div>')
         :((a.steps||[]).length?'<div class="act-fcnt">'+a.steps.length+' sub-action'+(a.steps.length===1?'':'s')+(a.steps.some(x=>x.d)?' \u00b7 '+a.steps.filter(x=>x.d).length+' done':'')+'</div>':''))
       +'</div>'+cov+'</div>'; }).join("");
+  requestAnimationFrame(sizeCovers);
   list.querySelectorAll(".act-row").forEach(el=>{
     const a=actById(Number(el.dataset.aid)); if(!a) return;
     el.querySelector(".act-st .st-d").addEventListener("click",e=>{ e.stopPropagation(); setActionDone(a,!a.done); });
@@ -3739,6 +3765,7 @@ function warmCards(soon){   // the selected action(s) first, then the top of the
       for(const a of [...new Set(want)]){ if(document.visibilityState!=="visible") break; await mapIdle(); try{ await deskCardBlob(a); }catch(e){} await sleep(300); } }
     finally{ _warmBusy=false; } },soon?400:3000); }
 setInterval(()=>warmCards(true),20000);   // catches changes that don't redraw the list (a photo finishing its upload, markup, a moved dot); free when nothing changed
+function copyFlash(btn,k){ if(!btn) return; btn.classList.remove("ok","bad"); void btn.offsetWidth; btn.classList.add(k); clearTimeout(btn._ft); btn._ft=setTimeout(()=>btn.classList.remove(k),2200); }   // the Copy pill says how it went: "Copied ✓" (green) or "Saved instead" (red)
 async function copyActionForPhone(a,btn){
   if(btn) btn.classList.add("busy");
   const blobP=deskCardBlob(a);
@@ -3746,9 +3773,10 @@ async function copyActionForPhone(a,btn){
     try{ await navigator.clipboard.write([new ClipboardItem({"image/png":blobP})]); }   // promise form keeps the click's permission while the image renders
     catch(e1){ const b=await blobP; await navigator.clipboard.write([new ClipboardItem({"image/png":b})]); }
     loadNote("\u2713 Copied "+actNo(a)+" as an image \u2014 paste it anywhere (Ctrl+V)");   // not a change to the project: nothing to save, no History entry
+    copyFlash(btn,"ok");
   }catch(err){   // clipboard blocked: fall back to saving the image
     try{ const b=await blobP; const u=URL.createObjectURL(b); const d=document.createElement("a"); d.href=u; d.download=actNo(a)+" "+String(a.text||"action").replace(/[\\/:*?"<>|]+/g,"").slice(0,60)+".png"; document.body.appendChild(d); d.click(); d.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000);
-      loadNote("Clipboard unavailable \u2014 saved the image instead"); }catch(e2){ loadNote("Couldn't make the image: "+(err&&err.message||err)); }
+      loadNote("Clipboard unavailable \u2014 saved the image instead"); copyFlash(btn,"bad"); }catch(e2){ loadNote("Couldn't make the image: "+(err&&err.message||err)); copyFlash(btn,"bad"); }
   }
   if(btn) btn.classList.remove("busy");
   setTimeout(()=>loadNote(""),4000);
