@@ -1119,6 +1119,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .act-row .act-copy.act-cnr.bad{background:#fdecea!important;border-color:#d64545!important;color:#a32020!important;} .act-row .act-copy.act-cnr.bad::after{content:"Saved instead";}
   .act-row .act-cover{float:right;position:relative!important;display:block!important;width:var(--cov-w,84px);height:auto!important;min-height:0!important;margin:-9px -9px 6px 8px!important;border-radius:0!important;flex:none;}   /* the cover photo: top right under the bar, its own shape (never cropped); the title and sub-actions wrap beside it */
   .act-row .act-cover img{width:100%;height:auto!important;object-fit:contain;display:block;}
+  .act-row .act-cover.fill{margin-bottom:-8px!important;}   /* reaches the tile's bottom edge, so the rounded corner is filled */
   .act-row .act-cover .cov-ph{display:block;width:100%;max-width:none;margin:8px 0;}
   .act-row .act-body{display:flow-root;}
   .act-row .asec,.act-row .act-steps{display:block;} .act-row .act-steps>*{margin-bottom:4px;} .act-row .st-neww{overflow:hidden;} .act-row .st-new{display:block;width:100%;}
@@ -2112,6 +2113,12 @@ async function maybeStartGeo(){
   startGeoWatch();
 }
 /* Zoom to a set of photos, at MINIMUM deep enough that none of them is hidden inside a cluster. */
+/* A cover photo taller than everything beside it runs on into the tile's rounded bottom-right corner (the corner trims it) */
+function fillCovers(){ document.querySelectorAll("#actList .act-row").forEach(r=>{ const c=r.querySelector(".act-cover"); if(!c) return; c.classList.remove("fill");
+  const kids=[...r.querySelector(".act-body").children].filter(e=>e!==c&&!e.classList.contains("act-top")&&!e.classList.contains("act-cnr")&&getComputedStyle(e).position!=="absolute");
+  const textBot=kids.reduce((m,e)=>Math.max(m,e.getBoundingClientRect().bottom),0), cb=c.getBoundingClientRect().bottom;
+  if(cb>=textBot-1) c.classList.add("fill"); }); }
+try{ new ResizeObserver(()=>fillCovers()).observe(document.getElementById("actList")); }catch(e){}
 function renderActions(){
   const list=document.getElementById("actList"); if(!list) return;
   warmCards();
@@ -2148,6 +2155,7 @@ function renderActions(){
       +(exp?('<div class="asec act-tree">'+stepsHtml(a)+'</div>')
         :((a.steps||[]).length?'<div class="act-fcnt">'+a.steps.length+' sub-action'+(a.steps.length===1?'':'s')+(a.steps.some(x=>x.d)?' \u00b7 '+a.steps.filter(x=>x.d).length+' done':'')+'</div>':''))
       +'</div></div>'; }).join("");
+  requestAnimationFrame(fillCovers);
   list.querySelectorAll(".act-row").forEach(el=>{
     const a=actById(Number(el.dataset.aid)); if(!a) return;
     el.querySelector(".act-st .st-d").addEventListener("click",e=>{ e.stopPropagation(); setActionDone(a,!a.done); });
