@@ -1258,7 +1258,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
       <button class="act-tgl" id="actShowHold" title="On hold — also show the actions that are on hold, in this list and on the map (white dots with an orange ring)"><i class="af-dot hold"></i>On hold<span class="af-n"></span></button>
       <button class="act-tgl" id="actShowDone" title="Done — also show finished actions, in this list and on the map (grey dots)"><i class="af-dot done"></i>Done<span class="af-n"></span></button>
 </div>
-    <div class="act-dates" id="actDates" hidden><div class="ad-hist" id="adHist"></div><div class="slider-wrap"><div class="slider-track"></div><div class="slider-fill" id="adFill"></div><input type="range" id="adLo" min="0" max="1" step="1" aria-label="From date" /><input type="range" id="adHi" min="0" max="1" step="1" aria-label="To date" /></div><div class="ad-ends"><span id="adFrom"></span><span id="adTo"></span></div><div class="ad-pre" id="adPre"><button type="button" data-p="1w">1 week</button><button type="button" data-p="1m">1 month</button><button type="button" data-p="3m">3 months</button><button type="button" data-p="">All</button></div></div>
+    <div class="act-dates" id="actDates" hidden><div class="ad-hist" id="adHist"></div><div class="slider-wrap"><div class="slider-track"></div><div class="slider-fill" id="adFill"></div><input type="range" id="adLo" min="0" max="1" step="1" aria-label="From date" /><input type="range" id="adHi" min="0" max="1" step="1" aria-label="To date" /></div><div class="ad-ends"><span id="adFrom"></span><span id="adTo"></span></div><div class="ad-pre" id="adPre"><button type="button" data-p="1d">1 day</button><button type="button" data-p="1w">1 week</button><button type="button" data-p="1m">1 month</button><button type="button" data-p="3m">3 months</button><button type="button" data-p="">All</button></div></div>
     <div class="act-new"><input type="search" id="actNewInput" placeholder="Filter actions" autocomplete="off" spellcheck="false" title="Narrow the list: number, title or a sub-action" /><button type="button" class="act-add" id="actAddB" title="New action (N)" aria-label="New action">+ Action</button></div>
     <div class="act-form" id="actForm" hidden>
       <div class="af-h"><b>New action</b><button type="button" class="af-x" id="afX" title="Close (Esc) — what you typed is kept" aria-label="Close">&times;</button></div>
@@ -1763,13 +1763,13 @@ function stepsDoneLast(a){ if(!Array.isArray(a.steps)) return; a.steps=a.steps.f
 function actVisible(a){ return selActs.has(a.id)||((a.done?actShowDone:a.hold?actShowHold:actShowOpen)&&actInDates(a)); }
 /* Date window: actions CREATED in it show. It belongs to the PROJECT — every desktop and phone on it
    shares one range. {lo,hi} are day starts (null = open-ended; hi null = up to today); p is a rolling
-   preset ("1w" / "1m" / "3m") that always counts back from today; at = when it was set (the newest
+   preset ("1d" / "1w" / "1m" / "3m") that always counts back from today; at = when it was set (the newest
    setting wins when devices merge). {at} alone = no filter (All). */
 let dateWin=null;
 const DAY_MS=86400000, dayStart=t=>{ const d=new Date(t); d.setHours(0,0,0,0); return d.getTime(); };
 function monthsBack(t,m){ const d=new Date(t), day=d.getDate(); d.setDate(1); d.setMonth(d.getMonth()-m);
   d.setDate(Math.min(day,new Date(d.getFullYear(),d.getMonth()+1,0).getDate())); return dayStart(d.getTime()); }   // 31 Mar - 1 month = 28/29 Feb
-const DATE_PRE={"1w":{n:"1 week",lo:t=>dayStart(t-7*DAY_MS+DAY_MS/2)},"1m":{n:"1 month",lo:t=>monthsBack(t,1)},"3m":{n:"3 months",lo:t=>monthsBack(t,3)}};
+const DATE_PRE={"1d":{n:"1 day",lo:t=>dayStart(t-DAY_MS+DAY_MS/2)},"1w":{n:"1 week",lo:t=>dayStart(t-7*DAY_MS+DAY_MS/2)},"1m":{n:"1 month",lo:t=>monthsBack(t,1)},"3m":{n:"3 months",lo:t=>monthsBack(t,3)}};
 function dwEff(w){ if(w===undefined) w=dateWin; const today=dayStart(Date.now());   // the range in force today: {lo,hi} day starts, null = open
   if(!w) return {lo:null,hi:null};
   if(w.p&&DATE_PRE[w.p]) return {lo:DATE_PRE[w.p].lo(today),hi:null,p:w.p};
@@ -2417,6 +2417,7 @@ document.getElementById("btnSettings").addEventListener("click",openSettings);
     {g:"Actions",t:"Show / hide on-hold actions",w:"pill filter hold",run:pill("actShowHold")},
     {g:"Actions",t:"Show / hide completed actions",w:"pill filter done finished",run:pill("actShowDone")},
     {g:"Actions",t:"Collapse / expand all action cards",w:"sub-actions fold",run:()=>{ const b=document.getElementById("actExpAll"); if(b) b.click(); }},
+    {g:"Dates",t:"Created today",w:"date range filter 1 day today",run:()=>setDateWin(dwPreset("1d"))},
     {g:"Dates",t:"Created in the last week",w:"date range filter 1 week 7 days",run:()=>setDateWin(dwPreset("1w"))},
     {g:"Dates",t:"Created in the last month",w:"date range filter 1 month 30 days",run:()=>setDateWin(dwPreset("1m"))},
     {g:"Dates",t:"Created in the last 3 months",w:"date range filter quarter",run:()=>setDateWin(dwPreset("3m"))},
@@ -6400,7 +6401,7 @@ function mDatesPanel(){   // drops down under the header: chart, two handles, 1 
     const b=document.getElementById("mDatesB"); if(b){ b.innerHTML=mDatesBtnHtml(w); b.classList.toggle("on",dwOn(w)); } };
   pan.innerHTML='<div class="ma-dh"><b>Created</b><button type="button" class="clr" id="mDClr">Clear</button></div><div class="sum"></div><div class="dts"></div>'
     +'<div class="ma-dhist"></div><div class="ma-dsl"><div class="ma-dtr"></div><div class="ma-dfi"></div><input type="range" id="mDLo" min="0" step="1" aria-label="From date" /><input type="range" id="mDHi" min="0" step="1" aria-label="To date" /></div>'
-    +'<div class="ma-dends"></div><div class="ma-dpre"><button type="button" data-p="1w">1 week</button><button type="button" data-p="1m">1 month</button><button type="button" data-p="3m">3 months</button><button type="button" data-p="">All</button></div>'
+    +'<div class="ma-dends"></div><div class="ma-dpre"><button type="button" data-p="1d">1 day</button><button type="button" data-p="1w">1 week</button><button type="button" data-p="1m">1 month</button><button type="button" data-p="3m">3 months</button><button type="button" data-p="">All</button></div>'
     +'<div class="ma-dfoot"><span class="cnt"></span><button type="button" id="mDDone">Done</button></div>';
   const live=()=>{ const m2=mHomeMap; if(mTab==="map"&&m2&&m2._setActs){ m2._setActs(mHomeActs(false,w)); mSyncCards(); }   // the map follows as you drag
     else { const keep=new Set(mHomeActs(false,w).map(mCardKey)); document.querySelectorAll("#mList .m-card").forEach(el=>{ el.classList.toggle("dt-off",!keep.has(el.dataset.k)); }); } };
