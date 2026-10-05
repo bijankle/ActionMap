@@ -25,7 +25,7 @@ window.amSizes=function(){ var d={t:2,b:2,i:2,l:2,p:2,s:2}; try{ var j=JSON.pars
       if(v>0) d.b=near(AM_SZ.bm,v); if(t>0) d.t=near(AM_SZ.t,t); } }catch(e){} return d; };
 window.amSize=function(){ return AM_SZ.bm[amSizes().b]; };   // the phone's whole-app zoom
 window.amApplySizes=function(){ try{ var d=amSizes(), r=document.documentElement.style, ph=matchMedia("(pointer: coarse)").matches;
-  r.setProperty("--mt",String(AM_SZ.t[d.t])); r.setProperty("--bz",ph?"1":String(AM_SZ.b[d.b])); r.setProperty("--iz",String(AM_SZ.i[d.i])); r.setProperty("--lz",String(AM_SZ.l[d.l])); r.setProperty("--pz",String(AM_SZ.p[d.p])); r.setProperty("--sp",String(AM_SZ.s[d.s])); }catch(e){} };
+  r.setProperty("--mt",String(AM_SZ.t[d.t])); r.setProperty("--bz",ph?"1":String(AM_SZ.b[d.b])); r.setProperty("--iz",String(AM_SZ.i[d.i])); r.setProperty("--lz",String(AM_SZ.l[d.l])); r.setProperty("--pz","1"); r.setProperty("--sp","1"); }catch(e){} };
 amViewport(amSize()); amApplySizes();
 try{ (screen.orientation||window).addEventListener("change",function(){ amViewport(amSize()); }); }catch(e){}
 window._bip=null;
@@ -1117,17 +1117,19 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .act-row .act-copy.act-cnr::after{content:"Copy";}
   .act-row .act-copy.act-cnr.ok{background:#e9f7ee!important;border-color:#2e9e5b!important;color:#1f7a43!important;} .act-row .act-copy.act-cnr.ok::after{content:"Copied \2713";} .act-row .act-copy.act-cnr.ok svg,.act-row .act-copy.act-cnr.bad svg{display:none;}
   .act-row .act-copy.act-cnr.bad{background:#fdecea!important;border-color:#d64545!important;color:#a32020!important;} .act-row .act-copy.act-cnr.bad::after{content:"Saved instead";}
-  .act-row .act-cover{position:absolute!important;top:calc(var(--bh) + 2px);right:0;margin:0!important;border-radius:0!important;min-height:0!important;align-self:auto;z-index:1;}
-  .act-row .act-cover img{object-fit:cover;}
-  .act-row .bh{padding-right:calc(var(--cov-w,84px) - 4px);}
+  .act-row .act-cover{float:right;position:relative!important;display:block!important;width:var(--cov-w,84px);height:auto!important;min-height:0!important;margin:-9px -9px 6px 8px!important;border-radius:0!important;flex:none;}   /* the cover photo: top right under the bar, its own shape (never cropped); the title and sub-actions wrap beside it */
+  .act-row .act-cover img{width:100%;height:auto!important;object-fit:contain;display:block;}
+  .act-row .act-cover .cov-ph{display:block;width:100%;max-width:none;margin:8px 0;}
+  .act-row .act-body{display:flow-root;}
+  .act-row .asec,.act-row .act-steps{display:block;} .act-row .act-steps>*{margin-bottom:4px;} .act-row .st-neww{overflow:hidden;} .act-row .st-new{display:block;width:100%;}
+  .act-row .st-row,.act-row .st-new,.act-row .act-fcnt,.act-row .bh{overflow:hidden;}   /* each sub-action row and the + sub-action box stop short of the photo */
   /* ---- Sizes (View ▸ Sizes / phone Settings): text (--mt), buttons (--bz), icons (--iz), map labels (--lz), photos (--pz), spacing (--sp) */
   body:not(.mobile) button:not(.leaflet-control-zoom-in):not(.leaflet-control-zoom-out):not(.mi):not(.pd-row):not(.sz-reset),body:not(.mobile) .mb-btn{zoom:var(--bz,1);}
   .ad-pre{flex-wrap:wrap;} .ad-pre button{min-width:max-content;padding-left:6px;padding-right:6px;}
   button svg,.mb-btn svg,.ma-nav svg,.ma-ar svg,.ma-fit svg,.zoom-all svg,.ma-dtb svg,.act-st svg{zoom:var(--iz,1);}
   .ma-dot,.ma-mem{zoom:var(--lz,1);}
   .grid{grid-template-columns:repeat(auto-fill,minmax(calc(var(--thumb) * var(--pz,1)),1fr));gap:calc(8px*var(--sp,1));}
-  .act-row .act-cover{width:calc(var(--cov-w,84px) * var(--pz,1));flex-basis:calc(var(--cov-w,84px) * var(--pz,1));}
-  .act-row .bh{padding-right:calc(var(--cov-w,84px) * var(--pz,1) - 4px);}
+
   .act-list{gap:calc(6px*var(--sp,1));} .act-row{margin-bottom:calc(2px*(var(--sp,1) - 1));} .act-steps{gap:calc(4px*var(--sp,1));}
   .ma-th{width:calc(60px*var(--pz,1));height:calc(60px*var(--pz,1));} .ma-list .m-card .ma-th{width:calc(76px*var(--pz,1));height:calc(76px*var(--pz,1));}
   .ma-oc .ph{width:min(calc(38%*var(--pz,1)),46%);max-width:calc(150px*var(--pz,1));}
@@ -1140,6 +1142,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .szs .tk{position:absolute;top:9px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:#fff;border:2px solid #cfd4da;box-sizing:border-box;} .szs .tk.on{border-color:var(--gold);background:var(--gold);}
   .szs .th{position:absolute;top:2px;width:24px;height:24px;margin-left:-12px;border-radius:50%;background:var(--gold);border:3px solid #fff;box-shadow:0 0 0 1px var(--gold2),0 2px 6px #1d243040;box-sizing:border-box;}
   .sz-reset{margin-top:8px;font:600 calc(12.5px*var(--mt,1)) var(--font);border:1.5px solid var(--line);background:#fff;border-radius:8px;padding:5px 10px;color:var(--ink);cursor:pointer;}
+  .vm-sizes{padding:0 10px 4px;font-size:var(--fl);} .vm-sizes .szs .tw{height:24px;} .vm-sizes .szs .th{width:20px;height:20px;margin-left:-10px;top:2px;} .vm-sizes .szs .tr,.vm-sizes .szs .fi{top:10px;} .vm-sizes .szs .tk{top:7px;}
   .sz-pop{position:fixed;z-index:3000;width:310px;background:#fff;border:var(--ctl-bd);border-radius:10px;box-shadow:0 10px 30px #1d243033;padding:10px 14px 12px;font-size:var(--fl);}
   .sz-pop .sz-h{display:flex;align-items:center;justify-content:space-between;font:700 var(--fl) var(--font);color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
   .sz-pop .sz-h button{border:0;background:none;font-size:18px;color:var(--muted);cursor:pointer;}
@@ -1174,8 +1177,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
       <div class="mi-seg" id="vmBase"><button type="button" data-v="google">Google</button><button type="button" data-v="esri">Esri</button><button type="button" data-v="none">None</button></div>
       <label class="mi mi-chk" title="Show YOU ARE HERE, and include where you are when the map zooms to fit. Off: the map fits the actions only. The phone app has the same switch."><input type="checkbox" id="vmLoc" /><span>Show my location on the map</span></label>
       <div class="msep"></div>
-      <div class="mi-sub">Gallery</div>
-      <button class="mi" id="miSizes" type="button" title="Text, buttons, icons, map labels, photos and spacing — five sizes each.">Sizes…</button>
+      <div class="mi-sub">Sizes</div>
+      <div class="vm-sizes" id="vmSizes"></div>
     </div></div>
     <div class="mb"><button class="mb-btn" type="button">Help</button><div class="mb-drop">
       <button class="mi" id="miGuide" type="button" title="Step by step: projects, photos, actions, the map, the phone app and exports.">How to use ActionMap…</button>
@@ -1926,7 +1929,7 @@ function stepsHtml(a){
     +'<button class="st-chk'+(s.d?' on':'')+'" type="button" title="'+(s.d?'Reopen sub-action':'Mark sub-action done')+'">'+(s.d?'✓':'')+'</button>'
     +'<span class="st-t'+(s.d?' done':'')+'" title="Double-click to edit">'+esc(s.t)+'</span>'
     +'<button class="st-x" type="button" title="Remove sub-action">&times;</button></div>').join("");
-  return '<div class="act-steps">'+rows+'<input class="st-new" type="text" placeholder="+ sub-action" autocomplete="off" /></div>';
+  return '<div class="act-steps">'+rows+'<div class="st-neww"><input class="st-new" type="text" placeholder="+ sub-action" autocomplete="off" /></div></div>';
 }
 function wireSteps(el,a){
   const box=el.querySelector(".act-steps"); if(!box) return;
@@ -2109,11 +2112,6 @@ async function maybeStartGeo(){
   startGeoWatch();
 }
 /* Zoom to a set of photos, at MINIMUM deep enough that none of them is hidden inside a cluster. */
-/* Action tiles: the cover photo sits top right under the header bar, its bottom level with the end of the
-   title; the sub-actions below use the tile's full width. */
-function sizeCovers(){ document.querySelectorAll("#actList .act-row").forEach(r=>{ const c=r.querySelector(".act-cover"), t=r.querySelector(".bh"), top=r.querySelector(".act-top"); if(!c||!t||!top) return;
-  const h=Math.max(34,Math.round(t.getBoundingClientRect().bottom-top.getBoundingClientRect().bottom+4)); if(c.style.height!==h+"px") c.style.height=h+"px"; }); }
-try{ new ResizeObserver(()=>sizeCovers()).observe(document.getElementById("actList")); }catch(e){}
 function renderActions(){
   const list=document.getElementById("actList"); if(!list) return;
   warmCards();
@@ -2145,12 +2143,11 @@ function renderActions(){
       +'<div class="act-body"><div class="act-top"><div class="act-st">'+(a===shown[0]?allBtn:'')+'<button type="button" class="st-h'+(a.hold?' on':'')+'" title="'+(a.hold?'Take this action off hold':'Put this action on hold')+'">On hold</button>'
         +'<button type="button" class="st-d'+(a.done?' on':'')+'" title="'+(a.done?'Reopen this action':'Mark this action done')+'">Done</button></div><span style="flex:1"></span>'
         +'</div>'+'<button class="act-copy act-cnr" type="button" title="Copy image: one portrait picture of this action (title, map, photos with markup) to paste into any chat or email"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg></button><button class="ipa-x act-del act-cnr" type="button" title="'+(isCur?'Remove this action from the open photo':'Delete this action')+'">&times;</button>'   // status along the top, so the left side is free for the tree
-      +'<div class="bh"><div class="t"><button type="button" class="act-exp act-tri" aria-expanded="'+exp+'" title="'+(exp?'Hide':'Show')+' sub-actions">'+(exp?'\u2212':'+')+'</button>'
+      +cov+'<div class="bh"><div class="t"><button type="button" class="act-exp act-tri" aria-expanded="'+exp+'" title="'+(exp?'Hide':'Show')+' sub-actions">'+(exp?'\u2212':'+')+'</button>'
         +'<span class="ttx"><span class="a-num">'+actNo(a)+'</span> <span class="a-bar">|</span> '+esc(a.text)+'</span></div></div>'
       +(exp?('<div class="asec act-tree">'+stepsHtml(a)+'</div>')
         :((a.steps||[]).length?'<div class="act-fcnt">'+a.steps.length+' sub-action'+(a.steps.length===1?'':'s')+(a.steps.some(x=>x.d)?' \u00b7 '+a.steps.filter(x=>x.d).length+' done':'')+'</div>':''))
-      +'</div>'+cov+'</div>'; }).join("");
-  requestAnimationFrame(sizeCovers);
+      +'</div></div>'; }).join("");
   list.querySelectorAll(".act-row").forEach(el=>{
     const a=actById(Number(el.dataset.aid)); if(!a) return;
     el.querySelector(".act-st .st-d").addEventListener("click",e=>{ e.stopPropagation(); setActionDone(a,!a.done); });
@@ -2517,12 +2514,7 @@ function syncViewMenu(){
 document.querySelectorAll("#vmBase button").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation();
   [google,esri,none].forEach(l=>{ if(map.hasLayer(l)) map.removeLayer(l); }); ({google,esri,none})[b.dataset.v].addTo(map); persistState(); syncViewMenu(); }));
 document.getElementById("vmLoc").addEventListener("change",e=>setIgnoreLoc(!e.target.checked));
-document.getElementById("miSizes").addEventListener("click",e=>{ const mb=e.target.closest(".mb"); if(mb) mb.classList.remove("open"); openSizes(); });
-function openSizes(){ let p=document.getElementById("szPop"); if(p){ p.remove(); return; }   // desktop View ▸ Sizes: the six sliders in a small panel under the menu bar
-  p=document.createElement("div"); p.id="szPop"; p.className="sz-pop"; p.innerHTML='<div class="sz-h">Sizes<button type="button" aria-label="Close">\u00d7</button></div>'+sizeSlidersHtml();
-  document.body.appendChild(p); const r=document.getElementById("menubar").getBoundingClientRect(); p.style.left=Math.max(8,r.left)+"px"; p.style.top=(r.bottom+6)+"px";
-  p.querySelector(".sz-h button").addEventListener("click",()=>p.remove()); wireSizeSliders(p);
-  setTimeout(()=>{ const off=ev=>{ if(!p.isConnected){ document.removeEventListener("mousedown",off,true); return; } if(!p.contains(ev.target)){ p.remove(); document.removeEventListener("mousedown",off,true); } }; document.addEventListener("mousedown",off,true); },0); }
+setTimeout(()=>{ const vs=document.getElementById("vmSizes"); vs.innerHTML=sizeSlidersHtml(); ["mousedown","click"].forEach(ev=>vs.addEventListener(ev,e=>e.stopPropagation())); wireSizeSliders(vs); },0);   // the size sliders sit right in the View menu
 
 /* ---- Mobile export: push the field pack to the PRIVATE data repo via the GitHub API ----
    Token + repo live ONLY in this browser's localStorage — never in the .json, never in the public repo. */
@@ -6651,7 +6643,7 @@ function mInstallRow(){ if(mInstalled()) return "";
   return '<button class="ma-row" id="mInstB" type="button"><div class="ma-rt"><div class="t">Install app</div><div class="m">'
     +(window._bip?"Adds ActionMap to your apps and home screen":"Chrome menu \u22ee \u2192 Install app")+'</div></div><span class="ma-chev">\u203a</span></button>'; }
 /* The size sliders (phone Settings, desktop View ▸ Sizes): five steps each, Normal in the middle; they apply live. */
-const SZ_ROWS=[["t","Text size","A","A"],["b","Buttons","sq","sq"],["i","Icons","ic","ic"],["l","Map labels","lab","lab"],["p","Photo thumbnails","ph","ph"],["s","Spacing","sp","sp"]], SZ_NAMES=["Smallest","Smaller","Normal","Larger","Largest"];
+const SZ_ROWS=[["t","Text size","A","A"],["b","Buttons","sq","sq"],["i","Icons","ic","ic"],["l","Map labels","lab","lab"]], SZ_NAMES=["Smallest","Smaller","Normal","Larger","Largest"];
 function szIcon(k,big){ const s=big?22:13;
   if(k==="A") return '<span style="font:800 '+s+'px var(--font)">A</span>';
   if(k==="sq") return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
@@ -6671,13 +6663,13 @@ function setSize(k,v){ const d=amSizes(); if(d[k]===v) return; d[k]=v; try{ loca
   amApplySizes();
   if(k==="b"&&document.body.classList.contains("mobile")){ amViewport(amSize()); setTimeout(()=>{ if(mRerender) mRerender(); mShowMenu("settings"); },250); return; }   // the phone relays out at the new zoom (menu reopened to compare)
   if(k==="l"||k==="t"){ try{ if(typeof renderClusters==="function"&&!document.body.classList.contains("mobile")) renderClusters(); if(mHomeMap&&mHomeMap._draw) mHomeMap._draw(); }catch(e){} }
-  try{ if(typeof sizeCovers==="function") requestAnimationFrame(sizeCovers); }catch(e){} }
+}
 function wireSizeSliders(root){ if(!root) return; paintSizeSliders(root);
   root.querySelectorAll(".szs .tw").forEach(tw=>{ const k=tw.closest(".szs").dataset.k;
     const at=e=>{ const r=tw.getBoundingClientRect(), x=(e.touches?e.touches[0].clientX:e.clientX)-r.left-12; return Math.max(0,Math.min(4,Math.round(x/((r.width-24)/4)))); };
     const go=e=>{ setSize(k,at(e)); paintSizeSliders(root); };
     tw.addEventListener("pointerdown",e=>{ e.preventDefault(); e.stopPropagation(); go(e); tw.setPointerCapture&&tw.setPointerCapture(e.pointerId); const mv=ev=>go(ev), up=()=>{ tw.removeEventListener("pointermove",mv); tw.removeEventListener("pointerup",up); }; tw.addEventListener("pointermove",mv); tw.addEventListener("pointerup",up); }); });
-  const rs=root.querySelector(".sz-reset"); if(rs) rs.addEventListener("click",e=>{ e.stopPropagation(); const mob=document.body.classList.contains("mobile"), d0=amSizes(), was=d0.b; for(const k of "tbilps") setSize(k,2); paintSizeSliders(root); }); }
+  const rs=root.querySelector(".sz-reset"); if(rs) rs.addEventListener("click",e=>{ e.stopPropagation(); const mob=document.body.classList.contains("mobile"), d0=amSizes(), was=d0.b; for(const k of "tbil") setSize(k,2); paintSizeSliders(root); }); }
 
 function mShowMenu(which){   // the bottom bar's Project and Settings tabs
   const when=t=>t?new Date(t).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):"";
