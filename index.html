@@ -506,9 +506,9 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .act-top{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
   .act-top .act-st{flex-direction:row;gap:var(--btn-gap);}
   .act-top .act-st button{width:auto;padding:1px 9px;}
-  .act-top .act-st .act-all{width:22px;padding:0;display:flex;align-items:center;justify-content:center;color:#4a525c;border-color:#cfd4da;background:#fff;}   /* same height and outline as On hold beside it */
-  .act-top .act-st .act-all:hover{border-color:var(--gold);color:var(--ink);}
-  .act-all svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+  .act-new .act-all{flex-shrink:0;width:34px;height:34px;padding:0;border-radius:9px;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;color:#4a525c;background:#fff;cursor:pointer;}   /* square, same height as the filter box */
+  .act-new .act-all:hover{border-color:var(--gold);color:var(--ink);}
+  .act-all svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
   .act-body .bh .t{display:flex;align-items:flex-start;gap:7px;}
   .act-row .act-exp.act-tri{width:14px;height:14px;flex:none;margin:3px 0 0;padding:0;border:1.3px solid #7d8794;border-radius:2px;background:#fff;color:var(--ink);font:700 calc(12px*var(--mt,1))/0.917 ui-monospace,Consolas,monospace;display:inline-flex;align-items:center;justify-content:center;transform:none;box-shadow:none;}
   .act-row .act-exp.act-tri:hover{border-color:var(--gold);background:#fdf6e6;}
@@ -1109,7 +1109,6 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .act-row .act-top{position:absolute;left:0;right:0;top:0;margin:0;padding:0 112px 0 9px;box-sizing:border-box;height:var(--bh);background:#d5d9df;border-bottom:2px solid #b9c0c8;display:flex;align-items:center;}
   .act-row .act-top .act-st{align-self:center;align-items:center;margin:0;}
   .act-row .act-top .act-st button,.act-row .act-cnr{height:var(--ph)!important;box-sizing:border-box;padding-top:0!important;padding-bottom:0!important;display:inline-flex;align-items:center;justify-content:center;border-radius:6px!important;}
-  .act-row .act-top .act-st .act-all{width:var(--ph)!important;}
   .act-row .act-top .act-st button:not(.on),.act-row .act-cnr{background:#fff;}
   .act-row .act-cnr{top:calc((var(--bh) - var(--ph)) / 2)!important;}
   .act-row .act-del.act-cnr{width:var(--ph)!important;}
@@ -1259,7 +1258,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
       <button class="act-tgl" id="actShowDone" title="Done — also show finished actions, in this list and on the map (grey dots)"><i class="af-dot done"></i>Done<span class="af-n"></span></button>
 </div>
     <div class="act-dates" id="actDates" hidden><div class="ad-hist" id="adHist"></div><div class="slider-wrap"><div class="slider-track"></div><div class="slider-fill" id="adFill"></div><input type="range" id="adLo" min="0" max="1" step="1" aria-label="From date" /><input type="range" id="adHi" min="0" max="1" step="1" aria-label="To date" /></div><div class="ad-ends"><span id="adFrom"></span><span id="adTo"></span></div><div class="ad-pre" id="adPre"><button type="button" data-p="1d">1 day</button><button type="button" data-p="1w">1 week</button><button type="button" data-p="1m">1 month</button><button type="button" data-p="3m">3 months</button><button type="button" data-p="">All</button></div></div>
-    <div class="act-new"><input type="search" id="actNewInput" placeholder="Filter actions" autocomplete="off" spellcheck="false" title="Narrow the list: number, title or a sub-action" /><button type="button" class="act-add" id="actAddB" title="New action (N)" aria-label="New action">+ Action</button></div>
+    <div class="act-new"><button type="button" class="act-all" id="actExpAll" title="Collapse all" aria-label="Collapse all"></button><input type="search" id="actNewInput" placeholder="Filter actions" autocomplete="off" spellcheck="false" title="Narrow the list: number, title or a sub-action" /><button type="button" class="act-add" id="actAddB" title="New action (N)" aria-label="New action">+ Action</button></div>
     <div class="act-form" id="actForm" hidden>
       <div class="af-h"><b>New action</b><button type="button" class="af-x" id="afX" title="Close (Esc) — what you typed is kept" aria-label="Close">&times;</button></div>
       <textarea id="afTitle" rows="2" placeholder="What needs doing?" autocomplete="off"></textarea>
@@ -2130,7 +2129,8 @@ function renderActions(){
   document.getElementById("actShowDone").classList.toggle("on",actShowDone);
 
   const allOpen=actions.some(a=>!collActs.has(a.id)), allT=allOpen?"Collapse all \u2014 titles only":"Expand all \u2014 show sub-actions";   // stacked boxes (Navisworks style) on the first card: \u2212 collapses every card, + expands them
-  const allBtn='<button type="button" class="act-all" id="actExpAll" title="'+allT+'" aria-label="'+allT+'"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3.5" width="12" height="12" rx="1.5"/><path d="M5 7.5v12h12"/>'+(allOpen?'<path d="M11 9.5h6"/>':'<path d="M11 9.5h6M14 6.5v6"/>')+'</svg></button>';
+  { const b=document.getElementById("actExpAll"); if(b){ b.title=allT; b.setAttribute("aria-label",allT);   // left of the filter box: − while any card is open, + once all are folded
+    b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3.5" width="12" height="12" rx="1.5"/><path d="M5 7.5v12h12"/>'+(allOpen?'<path d="M11 9.5h6"/>':'<path d="M11 9.5h6M14 6.5v6"/>')+'</svg>'; } }
   const shown=actsShown().filter(actMatchesQ);   // on-hold then completed actions sink to the bottom (display only — stored order unchanged); the filter box narrows it
   if(!shown.length&&actQ){ list.innerHTML='<div class="act-empty">No actions match “'+esc(actQ)+'”.</div>'; return; }
   if(!shown.length){ const nh=actions.filter(a=>!a.done&&a.hold).length, nd=actions.filter(a=>a.done).length;   // say why the list is empty
@@ -2147,7 +2147,7 @@ function renderActions(){
     const isCur=!!(cp&&Array.isArray(cp.acts)&&cp.acts.includes(a.id));
     const exp=!collActs.has(a.id);
     return '<div class="act-row'+(a.done?' done':'')+(a.hold?' hold':'')+(selActs.has(a.id)?' sel':'')+(isCur?' cur':'')+'" data-aid="'+a.id+'" draggable="true">'
-      +'<div class="act-body"><div class="act-top"><div class="act-st">'+(a===shown[0]?allBtn:'')+'<button type="button" class="st-h'+(a.hold?' on':'')+'" title="'+(a.hold?'Take this action off hold':'Put this action on hold')+'">On hold</button>'
+      +'<div class="act-body"><div class="act-top"><div class="act-st"><button type="button" class="st-h'+(a.hold?' on':'')+'" title="'+(a.hold?'Take this action off hold':'Put this action on hold')+'">On hold</button>'
         +'<button type="button" class="st-d'+(a.done?' on':'')+'" title="'+(a.done?'Reopen this action':'Mark this action done')+'">Done</button></div><span style="flex:1"></span>'
         +'</div>'+'<button class="act-copy act-cnr" type="button" title="Copy image: one portrait picture of this action (title, map, photos with markup) to paste into any chat or email"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg></button><button class="ipa-x act-del act-cnr" type="button" title="'+(isCur?'Remove this action from the open photo':'Delete this action')+'">&times;</button>'   // status along the top, so the left side is free for the tree
       +cov+'<div class="bh"><div class="t"><button type="button" class="act-exp act-tri" aria-expanded="'+exp+'" title="'+(exp?'Hide':'Show')+' sub-actions">'+(exp?'\u2212':'+')+'</button>'
@@ -2261,8 +2261,8 @@ function actFilterChanged(){ renderActions(); renderClusters(); updateGallery();
 document.getElementById("actShowOpen").addEventListener("click",()=>{ actShowOpen=!actShowOpen; actFilterChanged(); });
 document.getElementById("actShowHold").addEventListener("click",()=>{ actShowHold=!actShowHold; actFilterChanged(); });
 document.getElementById("actShowDone").addEventListener("click",()=>{ actShowDone=!actShowDone; actFilterChanged(); });
-document.getElementById("actList").addEventListener("click",e=>{ if(!e.target.closest("#actExpAll")) return; e.stopPropagation();   // collapse-all lives on the first card, which is rebuilt each render
-  if(actions.some(a=>!collActs.has(a.id))) actions.forEach(a=>collActs.add(a.id)); else collActs.clear(); renderActions(); },true);
+document.getElementById("actExpAll").addEventListener("click",()=>{   // collapse-all, left of the filter box
+  if(actions.some(a=>!collActs.has(a.id))) actions.forEach(a=>collActs.add(a.id)); else collActs.clear(); renderActions(); });
 /* The box above the list FILTERS it (number, title or a sub-action). New actions come from the + beside
    it (or N, or right-click → New action): a form takes the list's place — the action, its sub-actions
    (Enter runs straight through them), photos (Add photos…, paste or drop, several at once) — and the
