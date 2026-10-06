@@ -2097,7 +2097,7 @@ function dropIfHidden(a,what){   // its card just left the list (that filter is 
 /* Inline editing (titles and descriptions, in both the Actions panel and the under-photo strip):
    double-click the text to edit in place. Enter (Shift+Enter = new line in a description) or
    clicking away commits; Escape cancels. */
-let collActs=new Set();   // COLLAPSED action tiles in the left panel — default is fully expanded; session-only
+let expActs=new Set();   // EXPANDED action tiles in the left panel — every tile starts collapsed (titles only); session-only
 function inlineEdit(el,value,multiline,onCommit){
   if(!el||el.parentElement.querySelector(".act-edit")) return;
   el.style.display="none";
@@ -2217,7 +2217,7 @@ function wireSteps(el,a){
 }
 function wireActRowCommon(el,a){
   const ex=el.querySelector(".act-exp");
-  if(ex) ex.addEventListener("click",e=>{ e.stopPropagation(); if(collActs.has(a.id)) collActs.delete(a.id); else collActs.add(a.id); refreshActUI(); });
+  if(ex) ex.addEventListener("click",e=>{ e.stopPropagation(); if(expActs.has(a.id)) expActs.delete(a.id); else expActs.add(a.id); refreshActUI(); });
 }
 async function confirmDeleteAction(a){   // deleting is rare: always ask first
   const n=(a.steps||[]).length;
@@ -2389,7 +2389,7 @@ function renderActions(){
     [["actShowOpen",no],["actShowHold",nh],["actShowDone",nd]].forEach(([id,n])=>{ const e=document.querySelector("#"+id+" .af-n"); if(e) e.textContent=n; }); }
   document.getElementById("actShowDone").classList.toggle("on",actShowDone);
 
-  const allOpen=actions.some(a=>!collActs.has(a.id)), allT=allOpen?"Collapse all \u2014 titles only":"Expand all \u2014 show sub-actions";   // stacked boxes (Navisworks style) on the first card: \u2212 collapses every card, + expands them
+  const allOpen=actions.some(a=>expActs.has(a.id)), allT=allOpen?"Collapse all \u2014 titles only":"Expand all \u2014 show sub-actions";   // stacked boxes (Navisworks style) on the first card: \u2212 collapses every card, + expands them
   { const b=document.getElementById("actExpAll"); if(b){ b.title=allT; b.setAttribute("aria-label",allT);   // left of the filter box: − while any card is open, + once all are folded
     b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3.5" width="12" height="12" rx="1.5"/><path d="M5 7.5v12h12"/>'+(allOpen?'<path d="M11 9.5h6"/>':'<path d="M11 9.5h6M14 6.5v6"/>')+'</svg>'; } }
   const shown=actsShown().filter(actMatchesQ);   // on-hold then completed actions sink to the bottom (display only — stored order unchanged); the filter box narrows it
@@ -2406,7 +2406,7 @@ function renderActions(){
         :'<svg class="cov-ph"'+(n?' data-covph="'+ap[0].id+'"':'')+' viewBox="0 0 48 36"><rect x="1.5" y="1.5" width="45" height="33" rx="4" fill="#E9EBEE" stroke="#B8BCC2" stroke-width="2.5"/><circle cx="31.5" cy="12" r="4.2" fill="#9AA0A8"/><path d="M6.5 30.5 18 17.5l8.5 8.5 6-6 9 10.5z" fill="#9AA0A8"/></svg>')
       +'</div>';   // Copy sits on the cover photo, as a labelled pill
     const isCur=!!(cp&&Array.isArray(cp.acts)&&cp.acts.includes(a.id));
-    const exp=!collActs.has(a.id);
+    const exp=expActs.has(a.id);
     return '<div class="act-row'+(a.done?' done':'')+(a.hold?' hold':'')+(selActs.has(a.id)?' sel':'')+(isCur?' cur':'')+'" data-aid="'+a.id+'" draggable="true">'
       +'<div class="act-body"><div class="act-top"><div class="act-st"><button type="button" class="st-h'+(a.hold?' on':'')+'" title="'+(a.hold?'Take this action off hold':'Put this action on hold')+'">On hold</button>'
         +'<button type="button" class="st-d'+(a.done?' on':'')+'" title="'+(a.done?'Reopen this action':'Mark this action done')+'">Done</button></div><span style="flex:1"></span>'
@@ -2523,7 +2523,7 @@ document.getElementById("actShowOpen").addEventListener("click",()=>{ actShowOpe
 document.getElementById("actShowHold").addEventListener("click",()=>{ actShowHold=!actShowHold; actFilterChanged(); });
 document.getElementById("actShowDone").addEventListener("click",()=>{ actShowDone=!actShowDone; actFilterChanged(); });
 document.getElementById("actExpAll").addEventListener("click",()=>{   // collapse-all, left of the filter box
-  if(actions.some(a=>!collActs.has(a.id))) actions.forEach(a=>collActs.add(a.id)); else collActs.clear(); renderActions(); });
+  if(actions.some(a=>expActs.has(a.id))) expActs.clear(); else actions.forEach(a=>expActs.add(a.id)); renderActions(); });
 /* The box above the list FILTERS it (number, title or a sub-action). New actions come from the + beside
    it (or N, or right-click → New action): a form takes the list's place — the action, its sub-actions
    (Enter runs straight through them), photos (Add photos…, paste or drop, several at once) — and the
