@@ -1142,6 +1142,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .szs .tk{position:absolute;top:9px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:#fff;border:2px solid #cfd4da;box-sizing:border-box;} .szs .tk.on{border-color:var(--gold);background:var(--gold);}
   .szs .th{position:absolute;top:2px;width:24px;height:24px;margin-left:-12px;border-radius:50%;background:var(--gold);border:3px solid #fff;box-shadow:0 0 0 1px var(--gold2),0 2px 6px #1d243040;box-sizing:border-box;}
   .sz-reset{margin-top:8px;font:600 calc(12.5px*var(--mt,1)) var(--font);border:1.5px solid var(--line);background:#fff;border-radius:8px;padding:5px 10px;color:var(--ink);cursor:pointer;}
+  .szs .ic.km{font:700 calc(11px*var(--mt,1)) var(--font);}
   .vm-sizes{padding:0 10px 4px;font-size:var(--fl);} .vm-sizes .szs .tw{height:24px;} .vm-sizes .szs .th{width:20px;height:20px;margin-left:-10px;top:2px;} .vm-sizes .szs .tr,.vm-sizes .szs .fi{top:10px;} .vm-sizes .szs .tk{top:7px;}
   .sz-pop{position:fixed;z-index:3000;width:310px;background:#fff;border:var(--ctl-bd);border-radius:10px;box-shadow:0 10px 30px #1d243033;padding:10px 14px 12px;font-size:var(--fl);}
   .sz-pop .sz-h{display:flex;align-items:center;justify-content:space-between;font:700 var(--fl) var(--font);color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
@@ -1176,6 +1177,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
       <div class="mi-sub">Map</div>
       <div class="mi-seg" id="vmBase"><button type="button" data-v="google">Google</button><button type="button" data-v="esri">Esri</button><button type="button" data-v="none">None</button></div>
       <label class="mi mi-chk" title="Show YOU ARE HERE, and include where you are when the map zooms to fit. Off: the map fits the actions only. The phone app has the same switch."><input type="checkbox" id="vmLoc" /><span>Show my location on the map</span></label>
+      <div class="vm-sizes" id="vmLocKm"></div>
       <div class="msep"></div>
       <div class="mi-sub">Sizes</div>
       <div class="vm-sizes" id="vmSizes"></div>
@@ -2078,10 +2080,21 @@ function actNavigate(a){
    The browser remembers the Allow per site (the app is served over https), so after the first
    grant we start silently on every load; an explicit Block is respected and never re-nagged. */
 let geoMarker=null, geoWatchId=null;
-let ignoreLoc=(()=>{ try{ return localStorage.getItem("pmIgnoreLoc")!=="0"; }catch(e){ return true; } })();   // on unless switched off   // Ignore my location: no YOU ARE HERE, fits ignore where you are
+let ignoreLoc=(()=>{ try{ return localStorage.getItem("amShowLoc")==="0"; }catch(e){ return false; } })();   // Show my location is ON unless switched off (the old pmIgnoreLoc key defaulted to off by mistake)
 function myLoc(){ return (geoMarker&&!ignoreLoc)?geoMarker.getLatLng():null; }
-function setIgnoreLoc(on){ ignoreLoc=!!on; try{ localStorage.setItem("pmIgnoreLoc",ignoreLoc?"1":"0"); }catch(e){}
+/* Include me within N km: the zoom-to-all fits take you in only when you're that close to an action
+   (on site), so from the office the map still frames just the work. */
+const LOC_KM=[1,2,5,10,20];
+let locKmI=(()=>{ try{ const v=parseInt(localStorage.getItem("amLocKm"),10); return v>=0&&v<LOC_KM.length?v:2; }catch(e){ return 2; } })();
+function setLocKm(i){ locKmI=Math.max(0,Math.min(LOC_KM.length-1,i|0)); try{ localStorage.setItem("amLocKm",String(locKmI)); }catch(e){} }
+function meNear(me,ll){ if(!me) return false; const m=L.latLng(me.lat,me.lng), lim=LOC_KM[locKmI]*1000;
+  for(const q of ll){ if(m.distanceTo(Array.isArray(q)?q:[q.lat,q.lng])<=lim) return true; } return false; }
+function locKmHtml(){   // the same 5-step slider as the sizes: 1 · 2 · 5 · 10 · 20 km
+  return '<div class="szs" data-k="km" title="Zoom to all takes you in only when you\u2019re this close to an action"><div class="hd"><b>Include me within</b><span></span></div><div class="sl"><span class="ic km">1</span><div class="tw"><div class="tr"></div><div class="fi"></div>'
+    +[0,1,2,3,4].map(i=>'<i class="tk" data-i="'+i+'"></i>').join("")+'<i class="th"></i></div><span class="ic km">20</span></div></div>'; }
+function setIgnoreLoc(on){ ignoreLoc=!!on; try{ localStorage.setItem("amShowLoc",ignoreLoc?"0":"1"); }catch(e){}
   if(geoMarker){ if(ignoreLoc) map.removeLayer(geoMarker); else geoMarker.addTo(map); }
+  else if(!ignoreLoc&&!document.body.classList.contains("mobile")) startGeoWatch();   // switched on: find you now
   const b=document.getElementById("vmLoc"); if(b) b.checked=!ignoreLoc; }
 function youAreHereIcon(w){   // the red YOU ARE HERE pin, tip anchored on the position (desktop map + phone)
   const h=Math.round(w*80/64);
@@ -2523,7 +2536,8 @@ function syncViewMenu(){
 document.querySelectorAll("#vmBase button").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation();
   [google,esri,none].forEach(l=>{ if(map.hasLayer(l)) map.removeLayer(l); }); ({google,esri,none})[b.dataset.v].addTo(map); persistState(); syncViewMenu(); }));
 document.getElementById("vmLoc").addEventListener("change",e=>setIgnoreLoc(!e.target.checked));
-setTimeout(()=>{ const vs=document.getElementById("vmSizes"); vs.innerHTML=sizeSlidersHtml(); ["mousedown","click"].forEach(ev=>vs.addEventListener(ev,e=>e.stopPropagation())); wireSizeSliders(vs); },0);   // the size sliders sit right in the View menu
+setTimeout(()=>{ const vs=document.getElementById("vmSizes"); vs.innerHTML=sizeSlidersHtml(); ["mousedown","click"].forEach(ev=>vs.addEventListener(ev,e=>e.stopPropagation())); wireSizeSliders(vs); },0);
+setTimeout(()=>{ const vk=document.getElementById("vmLocKm"); vk.innerHTML=locKmHtml(); ["mousedown","click"].forEach(ev=>vk.addEventListener(ev,e=>e.stopPropagation())); wireSizeSliders(vk); },0);   // Include me within N km, under Show my location   // the size sliders sit right in the View menu
 
 /* ---- Mobile export: push the field pack to the PRIVATE data repo via the GitHub API ----
    Token + repo live ONLY in this browser's localStorage — never in the .json, never in the public repo. */
@@ -3147,7 +3161,7 @@ function afterOpenUI(){
 function zoomAll(anim){ const ll=[];
   for(const a of actsShown()){ for(const p of actPhotos(a)) if(p.lat!=null&&isFinite(p.lat)) ll.push([p.lat,p.lng]); if(a.loc&&isFinite(a.loc.lat)) ll.push([a.loc.lat,a.loc.lng]); }
   if(!ll.length){ fitToPhotos(); return; }
-  const me=myLoc(); if(me) ll.push([me.lat,me.lng]);
+  const me=myLoc(); if(me&&meNear(me,ll)) ll.push([me.lat,me.lng]);   // you, when you're within N km of the work
   try{ map.invalidateSize(); }catch(e){}
   const b=L.latLngBounds(ll), o={padding:[60,60],maxZoom:19};
   if(anim) map.flyToBounds(b,Object.assign({duration:DESK_FLY},o)); else map.fitBounds(b,o); }
@@ -6542,7 +6556,7 @@ function mFlyTo(pts,z,landed,dur){   // glide to these points at zoom z, landing
   m2.on("moveend",end); setTimeout(end,2600); }   // (a flight to where it already is may not report back)
 function mFitAll(){   // zoom to extents: every action dot the filters show, and you (unless Ignore my location is on)
   const m2=mHomeMap; if(!m2||!m2._pts) return;
-  const ll=m2._pts.map(p=>[p.lat,p.lng]); if(mGeo&&!ignoreLoc) ll.push([mGeo.lat,mGeo.lng]); if(!ll.length) return;
+  const ll=m2._pts.map(p=>[p.lat,p.lng]); if(mGeo&&!ignoreLoc&&meNear(mGeo,ll)) ll.push([mGeo.lat,mGeo.lng]); if(!ll.length) return;
   const mc=m2.getContainer().getBoundingClientRect(), flt=document.querySelector(".ma-mapwrap .ma-flt"), row=document.getElementById("mPeeks");
   const top=(flt?flt.getBoundingClientRect().bottom-mc.top:0)+30, bot=((row&&!row.classList.contains("none"))?mc.bottom-row.getBoundingClientRect().top:0)+30;
   mHomeTouched=true; mCardsHold=null; m2._flying=true;
@@ -6665,8 +6679,8 @@ function sizeSlidersHtml(){ const d=amSizes();
     +[0,1,2,3,4].map(i=>'<i class="tk" data-i="'+i+'"></i>').join("")+'<i class="th"></i></div><span class="ic">'+szIcon(b,true)+'</span></div></div>').join("")
     +'<button type="button" class="sz-reset">Reset all to Normal</button>'; }
 function paintSizeSliders(root){ const d=amSizes();
-  root.querySelectorAll(".szs").forEach(r=>{ const v=d[r.dataset.k], pos=i=>"calc(12px + (100% - 24px) * "+(i/4)+")";
-    r.querySelector(".hd span").textContent=SZ_NAMES[v]; r.querySelector(".fi").style.width="calc((100% - 24px) * "+(v/4)+")"; r.querySelector(".th").style.left=pos(v);
+  root.querySelectorAll(".szs").forEach(r=>{ const km=r.dataset.k==="km", v=km?locKmI:d[r.dataset.k], pos=i=>"calc(12px + (100% - 24px) * "+(i/4)+")";
+    r.querySelector(".hd span").textContent=km?LOC_KM[v]+" km":SZ_NAMES[v]; r.querySelector(".fi").style.width="calc((100% - 24px) * "+(v/4)+")"; r.querySelector(".th").style.left=pos(v);
     r.querySelectorAll(".tk").forEach(t=>{ const i=+t.dataset.i; t.style.left=pos(i); t.classList.toggle("on",i<=v); }); }); }
 function setSize(k,v){ const d=amSizes(); if(d[k]===v) return; d[k]=v; try{ localStorage.setItem("amSizes",JSON.stringify(d)); }catch(e){}
   amApplySizes();
@@ -6676,7 +6690,7 @@ function setSize(k,v){ const d=amSizes(); if(d[k]===v) return; d[k]=v; try{ loca
 function wireSizeSliders(root){ if(!root) return; paintSizeSliders(root);
   root.querySelectorAll(".szs .tw").forEach(tw=>{ const k=tw.closest(".szs").dataset.k;
     const at=e=>{ const r=tw.getBoundingClientRect(), x=(e.touches?e.touches[0].clientX:e.clientX)-r.left-12; return Math.max(0,Math.min(4,Math.round(x/((r.width-24)/4)))); };
-    const go=e=>{ setSize(k,at(e)); paintSizeSliders(root); };
+    const go=e=>{ if(k==="km") setLocKm(at(e)); else setSize(k,at(e)); paintSizeSliders(root); };
     tw.addEventListener("pointerdown",e=>{ e.preventDefault(); e.stopPropagation(); go(e); tw.setPointerCapture&&tw.setPointerCapture(e.pointerId); const mv=ev=>go(ev), up=()=>{ tw.removeEventListener("pointermove",mv); tw.removeEventListener("pointerup",up); }; tw.addEventListener("pointermove",mv); tw.addEventListener("pointerup",up); }); });
   const rs=root.querySelector(".sz-reset"); if(rs) rs.addEventListener("click",e=>{ e.stopPropagation(); const mob=document.body.classList.contains("mobile"), d0=amSizes(), was=d0.b; for(const k of "tbil") setSize(k,2); paintSizeSliders(root); }); }
 
@@ -7006,14 +7020,14 @@ function mBuildHomeMap(acts){
     m2.on("zoomanim",e=>{ if(!m2.touchZoom._zooming&&Math.abs(e.zoom-m2.getZoom())>0.3) m2.getContainer().classList.add("ma-zf"); });   // a double-tap zoom: hide them for its ¼ s
     const bb=pts.length?L.latLngBounds(pts.map(p=>[p.lat,p.lng])):null;
     const me=(mGeo&&!ignoreLoc)?mGeo:null;   // Ignore my location: no YOU ARE HERE, and the view fits the actions only
-    if(me){ m2._geoPin=L.marker([me.lat,me.lng],{icon:youAreHereIcon(30),interactive:false,zIndexOffset:900}).addTo(m2); if(bb) bb.extend([me.lat,me.lng]); }
+    if(me){ m2._geoPin=L.marker([me.lat,me.lng],{icon:youAreHereIcon(30),interactive:false,zIndexOffset:900}).addTo(m2); if(bb&&meNear(me,pts)) bb.extend([me.lat,me.lng]); }
     mHomeMap=m2; mHomeBB=bb; m2._pts=pts; m2._draw=draw; m2._setActs=a=>{ setPts(a); draw(); };   // the date panel swaps the set live
     const fit=()=>{ m2.invalidateSize();
       if(mHomeFocus!=null){ const fp=pts.filter(p=>p.k===String(mHomeFocus)); mHomeFocus=null;
         if(fp.length){ mHomeTouched=true; const fb=L.latLngBounds(fp.map(p=>[p.lat,p.lng])), z=M_FOCUS_Z;   // area level (a crowd there fans out, so its label still shows)
           if(fp.length>1) m2.fitBounds(fb,{padding:[60,60],maxZoom:z}); else m2.setView(fb.getCenter(),z); return; } }
       if(mHomeTouched&&mHomeView){ m2.setView(mHomeView.c,mHomeView.z,{animate:false}); return; }
-      if(bb){ if(pts.length>1||me) m2.fitBounds(bb,{padding:[40,40],maxZoom:18}); else m2.setView(bb.getCenter(),17); }
+      if(bb){ if(pts.length>1||(me&&meNear(me,pts))) m2.fitBounds(bb,{padding:[40,40],maxZoom:18}); else m2.setView(bb.getCenter(),17); }
       else if(me) m2.setView([me.lat,me.lng],16); else m2.setView([0,0],2); };
     fit(); draw();
     m2.on("click",()=>{ if(mTapK!=null&&Date.now()-mTapT<700){ const k=mTapK; mTapK=null; mOpenAct(k); } });   // a quick second tap that lands where the label was before the map glided off: still opens it
