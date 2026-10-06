@@ -346,6 +346,13 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
     position:absolute !important;top:10px !important;left:10px !important;right:auto !important;bottom:auto !important;z-index:1200;}
   .toolstack.onmap{display:flex;flex-direction:column;gap:var(--btn-gap);align-items:stretch;
     position:absolute !important;left:10px !important;bottom:14px !important;right:auto !important;top:auto !important;z-index:1200;}
+  #bootCover{position:fixed;inset:0;z-index:100000;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--font);color:var(--ink);transition:opacity .35s;}
+  #bootCover.gone{opacity:0;pointer-events:none;}
+  #bootCover .bc-nm{font-weight:800;font-size:24px;margin-top:18px;min-height:30px;text-align:center;padding:0 20px;}
+  #bootCover .bc-bar{position:relative;width:220px;height:4px;border-radius:2px;background:#eef0f3;margin-top:18px;overflow:hidden;}
+  #bootCover .bc-bar i{position:absolute;top:0;bottom:0;width:40%;border-radius:2px;background:var(--gold);animation:bcRun 1.2s ease-in-out infinite;}
+  @keyframes bcRun{0%{left:-40%;}100%{left:100%;}}
+  #bootCover .bc-sub{color:var(--dim);font-size:15px;margin-top:14px;}
   .north-arrow{background:#fff;border:var(--ctl-bd);border-radius:var(--ctl-r);padding:5px 8px 3px;box-shadow:0 6px 18px #1e1f2222;line-height:0;}
   #map.leaflet-container{background:#9a9384;} #map.leaflet-container.nobase{background:#eef0f2;}   /* earth-toned, never a white flash */
   .mini{width:200px;background:#fff;border:var(--ctl-bd);border-radius:var(--ctl-r);box-shadow:0 6px 18px #1e1f2222;overflow:hidden;}
@@ -1156,6 +1163,9 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
 </style>
 </head>
 <body>
+<!-- Loading page: covers the app from the first paint until the project is open and the map has zoomed to it -->
+<div id="bootCover" role="status" aria-live="polite"><svg viewBox="0 0 64 64" width="84" height="84" aria-hidden="true"><rect width="64" height="64" rx="18" fill="#e8b44a"/><rect x="6" y="6" width="52" height="52" rx="13" fill="none" stroke="#111418" stroke-width="2.5"/><text x="32" y="46" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="38" fill="#111418">A</text></svg><div class="bc-nm" id="bcName"></div><div class="bc-bar"><i></i></div><div class="bc-sub" id="bcSub">Loading actions</div></div>
+<script>try{ const b=JSON.parse(localStorage.getItem("amBoot")||"null"); if(b){ if(b.nm) document.getElementById("bcName").textContent=b.nm; if(b.n>0) document.getElementById("bcSub").textContent="Loading "+b.n+" action"+(b.n===1?"":"s"); } }catch(e){}</script>
 
 <header>
   <div class="brand"><svg class="pm-mark" id="homeMark" viewBox="0 0 64 64" width="30" height="30" role="button" aria-label="Home: zoom to all actions"><rect width="64" height="64" rx="18" fill="#e8b44a"/><rect x="6" y="6" width="52" height="52" rx="13" fill="none" stroke="#111418" stroke-width="2.5"/><text x="32" y="46" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="38" fill="#111418">A</text></svg><div class="brand-t" id="brandSlot"><span class="savestat" id="saveStatus"></span></div><span class="build" id="buildStamp" style="display:none" title="When this copy of the app was published — if it's older than the latest change, you're running a stale copy"></span></div>
@@ -3181,6 +3191,13 @@ async function openProject(pid){
   loadNote(""); onCacheLocal(); renderSaveStatus(); syncMenus();
   if(canEdit()){ restoreUploadQueue(); pumpUploads(); setTimeout(syncTick,1500); scheduleAutoExport(4000); }   // (lining up each action's photos waits for a preview + your OK)
 }
+/* The loading page goes once the project is open and zoomed (or there's nothing to open); it never stays past 15 s. */
+function bootNote(nm,n){ try{ localStorage.setItem("amBoot",JSON.stringify({nm:nm||"",n:n|0})); }catch(e){}
+  const c=document.getElementById("bootCover"); if(!c||c.classList.contains("gone")) return;
+  if(nm) document.getElementById("bcName").textContent=nm; if(n>0) document.getElementById("bcSub").textContent="Loading "+n+" action"+(n===1?"":"s"); }
+function bootDone(ms){ const c=document.getElementById("bootCover"); if(!c||c._t) return;
+  c._t=setTimeout(()=>{ c.classList.add("gone"); setTimeout(()=>c.remove(),400); },ms||0); }
+setTimeout(()=>bootDone(),15000);
 function afterOpenUI(){
   let ui=null; try{ ui=JSON.parse(localStorage.getItem(uiSettingsKey())||"null"); }catch(e){}
   applyUiSettings(ui||{});
@@ -3188,6 +3205,7 @@ function afterOpenUI(){
   if(_topShownFor!==ON.pid){ _topShownFor=ON.pid;   // opening a project: nothing selected (the Gallery shows everything) and the map zoomed to every action on show
     if(selActs.size) clearActSel(); zoomAll(false); setTimeout(()=>zoomAll(false),600); }   // (again once the panels have settled)
   else if(!(ui&&ui.view)) zoomAll(false);
+  bootNote(ON.name||ON.pid,actions.length); bootDone(800);   // the loading page fades once the second zoom has landed
 }
 /* Zoom to extent: every action the filters show (its photos and placed pin), plus you if Show my location is on.
    The map sits between the side panels, so the fit always clears them. */
@@ -3201,7 +3219,7 @@ function zoomAll(anim){ const ll=[];
 let _topShownFor=null;
 
 /* ---- the project picker ---- */
-function showProjectPicker(msg){
+function showProjectPicker(msg){ bootDone();
   let m=document.getElementById("projModal");
   if(!m){ m=document.createElement("div"); m.id="projModal"; m.className="ynmodal"; document.body.appendChild(m);
     m.addEventListener("mousedown",e=>{ if(e.target===m&&ON.pid) m.classList.remove("show"); }); }
@@ -6188,7 +6206,8 @@ function mDone(a){ if(a._new){ const x=mNewActs()[a._ni]; return !!(x&&x.done); 
 function mHold(a){ if(a._new){ const x=mNewActs()[a._ni]; return !!(x&&x.hold); } const c=mCh(a.id); return typeof c.hold==="boolean"?c.hold:!!a.hold; }
 function mStepDone(a,i){ if(a._new){ const x=mNewActs()[a._ni]; return !!(x&&x.steps&&x.steps[i]&&x.steps[i].d); } const c=mCh(a.id); return (c.steps&&(String(i) in c.steps))?!!c.steps[String(i)]:!!(a.steps[i]&&a.steps[i].d); }
 let mStepFlush=null;
-function mScr(html){ if(mStepFlush){ const f=mStepFlush; mStepFlush=null; try{ f(); }catch(e){} } if(mHomeMap){ try{ mHomeMap.remove(); }catch(e){} } mHomeMap=null; mHomeBB=null; mSoftRefresh=null; document.getElementById("mroot").innerHTML='<div class="m-scr">'+html+'</div>'; if(mToastEl) document.getElementById("mroot").appendChild(mToastEl); }
+function mScr(html){ if(mStepFlush){ const f=mStepFlush; mStepFlush=null; try{ f(); }catch(e){} } if(mHomeMap){ try{ mHomeMap.remove(); }catch(e){} } mHomeMap=null; mHomeBB=null; mSoftRefresh=null; document.getElementById("mroot").innerHTML='<div class="m-scr">'+html+'</div>'; if(mToastEl) document.getElementById("mroot").appendChild(mToastEl);
+  if(html.indexOf("Loading the latest pack")<0) bootDone(700); }   // the first real screen (map fitted by then) ends the loading page
 function mShowSetup(msg){
   const g=ghRaw(); mScrPush();
   mScr('<div class="m-head">'+mScrBackHtml()+'<div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div></div>'
@@ -6276,7 +6295,7 @@ async function mHydrateImages(cfg,pk,silent){
 function mSafeToSwap(){ const onList=!!document.getElementById("mList"); const i=document.getElementById("mNewAct");
   return onList&&!(i&&(i===document.activeElement||i.value))&&!mUpBusy&&!document.querySelector(".m-card.mdrag")&&!document.getElementById("mSheet")&&!(mHomeMap&&mHomeMap._flying); }   // nor while the map is flying to an action   // never under an open sheet (it would close it)
 function mApplyPack(np){
-  const old=mPack; mPack=np; mPackStale=false; mPackNext=null;
+  const old=mPack; mPack=np; mPackStale=false; mPackNext=null; bootNote(np&&np.project,((np&&np.actions)||[]).length);
   let p=mPend();
   /* ack: the desktop stamps each pack with the last phone batch it MERGED. Only then do sent edits
      become part of the pack and get released here (a pack from an unrelated desktop edit doesn't count). */
@@ -7761,7 +7780,7 @@ async function checkFieldChanges(){
   // Ask the browser to protect this site's stored data (remembered .json/folder, image cache)
   // from automatic low-disk cleanup. Best-effort; ignored where unsupported (e.g. file://).
   try{ if(navigator.storage&&navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }catch(e){}
-  try{ if(typeof LZString!=="undefined" && parseShareHash()) return; }catch(e){}
+  try{ if(typeof LZString!=="undefined" && parseShareHash()){ bootDone(); return; } }catch(e){}
   /* A link carries the data repo (?r=owner/repo) and the project (?p=id): opening it is all anyone needs. */
   adoptLinkRepo();
   let pid=null; const lk=linkParams().key;
@@ -7775,7 +7794,7 @@ async function checkFieldChanges(){
     if(!pid&&onRepo()){ const list=await readProjects(); if(list.length===1) pid=list[0].id; }
     if(pid) await openProject(pid); else showProjectPicker();
   }
-  syncMenus();
+  syncMenus(); bootDone(900);   // whatever happened (a stored project, nothing to open), the app is ready
   setInterval(()=>{ if(isOnline()&&document.visibilityState==="visible") onlinePoll(); },5000);   // everyone's edits within ~5 s while the window is on screen
   let hidTick=0;
   setInterval(()=>{ if(document.visibilityState!=="visible"){ if(Date.now()-hidTick<120000) return; hidTick=Date.now(); }   // a tab in the background checks every 2 min, not every 15 s (all devices share one token's hourly limit)
