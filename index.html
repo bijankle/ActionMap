@@ -804,14 +804,18 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-top2{flex-shrink:0;display:flex;align-items:center;gap:8px;background:#fff;border-bottom:1px solid var(--line);padding:var(--m-topgap) 14px 8px;position:relative;z-index:700;}
   .ma-pname{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px;background:none;border:0;padding:0;font:inherit;text-align:left;color:var(--ink);}
   .ma-pname .nm{font-size:calc(22px*var(--mt,1));font-weight:800;line-height:1.15;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;}
+  .ma-home{flex-shrink:0;width:40px;height:40px;padding:0;border:0;background:none;box-shadow:none;line-height:0;border-radius:12px;} .ma-home svg{width:40px;height:40px;}
+  .ma-top2:has(+.ma-srow){border-bottom:0;}
+  .ma-srow{flex-shrink:0;display:flex;align-items:center;gap:10px;padding:8px 14px;background:#fff;border-bottom:1px solid var(--line);position:relative;z-index:690;}
+  .ma-srow .ma-search{border-radius:999px;height:46px;} .ma-srow .ma-dround{width:46px;height:46px;padding:0;justify-content:center;border-radius:50%;} .ma-dround span{display:none;}
   .ma-pname .nm i{font-style:normal;color:var(--faint);font-size:calc(14px*var(--mt,1));font-weight:400;margin-left:5px;}
   .ma-cs{font-size:calc(13px*var(--mt,1));color:var(--muted);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .ma-cs.warn{color:#9a5b00;}
   .ma-flt{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
   .ma-mapwrap .ma-flt{position:absolute;z-index:600;top:12px;left:12px;right:12px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;}   /* one row across the top, in words */
   .ma-mapwrap .ma-flt::-webkit-scrollbar{display:none;}
-  .ma-mapwrap .ma-flt{gap:6px;container-type:inline-size;} .ma-mapwrap .ma-flt button{flex:1 1 0;min-width:0;justify-content:center;padding:0 5px;gap:4px;font-size:min(calc(15px*var(--mt,1)),3.9cqw);} .ma-mapwrap .ma-flt button span{padding-left:0;}   /* three equal pills in one row: the words shrink a touch on a narrow screen rather than wrap */
-  .ma-lwrap .ma-flt{padding:12px 16px 0;}
+  .ma-flt{flex-wrap:nowrap;} .ma-mapwrap .ma-flt,.ma-lwrap .ma-flt{gap:6px;container-type:inline-size;} .ma-mapwrap .ma-flt button,.ma-lwrap .ma-flt button{flex:1 1 0;min-width:0;justify-content:center;padding:0 5px;gap:4px;font-size:min(calc(15px*var(--mt,1)),3.9cqw);} .ma-mapwrap .ma-flt button span,.ma-lwrap .ma-flt button span{padding-left:0;}   /* three equal pills in one row: the words shrink a touch on a narrow screen rather than wrap */
+  .ma-lwrap .ma-flt{padding:12px 16px 12px;}
   .ma-flt button{height:40px;box-sizing:border-box;display:flex;align-items:center;gap:7px;padding:0 12px;border-radius:20px;background:#fff;border:1.5px solid var(--line);font:inherit;font-size:calc(15px*var(--mt,1));font-weight:600;color:var(--ink);white-space:nowrap;}
   .ma-mapwrap .ma-flt button{box-shadow:0 2px 8px #1d243020;}
   .ma-flt button span{padding-left:2px;color:var(--muted);font-weight:500;}
@@ -930,7 +934,6 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-dpre button.on{background:#fdf6e6;border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold);}
   .ma-dfoot{display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:calc(13px*var(--mt,1));color:var(--muted);}
   .ma-dfoot button{font:inherit;font-size:calc(15px*var(--mt,1));font-weight:800;padding:9px 22px;border-radius:20px;border:0;background:var(--gold);color:var(--ink);box-shadow:none;}
-  .ma-lhead{display:flex;gap:10px;align-items:center;padding:14px 16px 10px;}
   .ma-search{flex:1;min-width:0;display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:0 14px;color:var(--faint);height:52px;box-sizing:border-box;}
   .ma-search input{flex:1;min-width:0;border:0;outline:none;font:inherit;font-size:calc(17px*var(--mt,1));background:none;color:var(--ink);padding:0;}
   .ma-chip{font:inherit;font-size:calc(16px*var(--mt,1));font-weight:600;background:#fff;border:1.5px solid var(--line);border-radius:10px;height:44px;padding:0 17px;color:var(--ink);}
@@ -6501,12 +6504,15 @@ function mActLine(a){ return (a._new?'':'<span class="m-anum">'+actNo(a)+'</span
 function mStatus(a){ return mDone(a)?"done":mHold(a)?"hold":"open"; }
 /* Home screens (map / list): a slim top strip (project name → project menu, On hold / Done stacked
    beside it) and the bar along the bottom: Map · Actions · + · Refresh · Settings. */
-function mTopStrip(){   // just the project name (→ project menu), with the sync line under it when needed
+function mTopStrip(){   // the app tile (home) and the project name (→ project menu, sync line under it when needed); then the search row with Dates at its end
   const st=mHeadSub();
-  return '<div class="ma-top2"><button type="button" class="ma-pname" id="mProjB"><span class="nm">'+esc(mPack.project||"Project")+'<i>▾</i></span>'
-    +'<span class="ma-ps ma-cs" id="mSendNote"'+(st?'':' style="display:none"')+'>'+esc(st)+'</span></button>'
-    +'<button type="button" class="ma-dtb'+(dwOn(mDateWin())?' on':'')+'" id="mDatesB" aria-label="Date range">'+mDatesBtnHtml()+'</button></div>';
+  return '<div class="ma-top2"><button type="button" class="ma-home" id="mHomeB" aria-label="Home: the map, zoomed to every action">'+PM_MARK(40)+'</button><button type="button" class="ma-pname" id="mProjB"><span class="nm">'+esc(mPack.project||"Project")+'<i>▾</i></span>'
+    +'<span class="ma-ps ma-cs" id="mSendNote"'+(st?'':' style="display:none"')+'>'+esc(st)+'</span></button></div>'
+    +'<div class="ma-srow"><label class="ma-search">'+MI.search+'<input id="mQ" type="search" placeholder="Search actions" autocomplete="off" value="'+esc(mLQ)+'" /></label>'
+    +'<button type="button" class="ma-dtb ma-dround'+(dwOn(mDateWin())?' on':'')+'" id="mDatesB" aria-label="Date range">'+mDatesBtnHtml()+'</button></div>';
 }
+function mQText(a){ return ((a._new?'':actNo(a)+' ')+mTitle(a)+' '+(a.steps||[]).map(x=>x&&(x.t||x.text)||'').join(' ')).toLowerCase(); }
+function mQMatch(a){ const v=mLQ.trim().toLowerCase(); return !v||mQText(a).includes(v); }   // number, title or a sub-action
 function mFltHtml(){   // On hold / Done side by side: top left of the map, top of the list
   let no=0,nh=0,nd=0; for(const a of mHomeActs()){ if(mDone(a)) nd++; else if(mHold(a)) nh++; else no++; }
   return '<div class="ma-flt"><button type="button" id="mShowO" class="'+(mShowOpen?"on":"")+'" aria-pressed="'+mShowOpen+'"><i class="ma-sym open"></i><em class="lb">Open</em><span>'+no+'</span></button>'
@@ -6541,7 +6547,7 @@ function mShowList(){
   if(!mPack){ mLoadPack(); return; }
   if(mPackStale){ mPackStale=false; if(mPackNext){ const np=mPackNext; setTimeout(()=>{ if(mSafeToSwap()){ mApplyPack(np); mShowList(); mToast("↻ Updated from the desktop"); } else { mPackNext=np; mPackStale=true; } },0); } else setTimeout(()=>mLoadPack(true),0); }
   mRerender=mShowList;
-  const acts=mHomeActs();
+  const acts=mHomeActs().filter(mQMatch);   // the search row narrows the map and the list alike
   if(mTab==="map"){
     const pks=mMapCards(acts);
     mScr(mTopStrip()+'<div class="ma-mapwrap" id="mList"><div class="ma-map" id="mHomeMap"></div>'+mFltHtml()
@@ -6551,13 +6557,20 @@ function mShowList(){
         +'<div class="ma-oc" id="mOneC" role="button" tabindex="0"></div><button type="button" class="ma-ar r" id="mNextA" aria-label="Next action"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button></div>':'')+'</div>'+mNavHtml("map"));
   } else {
     const shown=acts.filter(a=>{ const st=mStatus(a); return (st==="open"&&mShowOpen)||(st==="hold"&&mShowHold)||(st==="done"&&mShowDone); });
-    mScr(mTopStrip()+'<div class="ma-lwrap"><div class="ma-ptr" id="mPtr">'+MI.sync+'<span>Pull to refresh</span></div>'+mFltHtml()+'<div class="ma-lhead"><label class="ma-search">'+MI.search+'<input id="mQ" type="search" placeholder="Search actions" autocomplete="off" value="'+esc(mLQ)+'" /></label></div>'
+    mScr(mTopStrip()+'<div class="ma-lwrap"><div class="ma-ptr" id="mPtr">'+MI.sync+'<span>Pull to refresh</span></div>'+mFltHtml()
       +'<div class="ma-list" id="mList">'+(shown.length?shown.map(a=>{ const done=mDone(a), hold=!done&&mHold(a);
-          return '<div class="m-card'+(done?' done':'')+(hold?' hold':'')+'" data-k="'+mCardKey(a)+'" data-s="'+esc(((a._new?'':actNo(a)+' ')+mTitle(a)).toLowerCase())+'"><div class="ma-rt"><div class="t">'+mActLine(a)+'</div>'+mMetaDiv(a)+'</div>'+mThumbOf(a)+'</div>'; }).join("")
+          return '<div class="m-card'+(done?' done':'')+(hold?' hold':'')+'" data-k="'+mCardKey(a)+'" data-s="'+esc(mQText(a))+'"><div class="ma-rt"><div class="t">'+mActLine(a)+'</div>'+mMetaDiv(a)+'</div>'+mThumbOf(a)+'</div>'; }).join("")
         :'<div class="ma-empty">No open actions.</div>')+'</div></div>'+mNavHtml("list"));
   }
   mWireNav(false);
   document.getElementById("mProjB").addEventListener("click",()=>mShowMenu("project"));
+  document.getElementById("mHomeB").addEventListener("click",()=>{ if(mTab!=="map"){ mSetTab("map"); mHomeTouched=false; mShowList(); } else mFitAll(); });   // the logo is home: the map, zoomed to every action
+  { const q=document.getElementById("mQ"); let qt=null;
+    q.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter") q.blur(); });
+    q.addEventListener("input",()=>{ mLQ=q.value;
+      if(mTab!=="map"){ const v=mLQ.trim().toLowerCase(); document.querySelectorAll("#mList .m-card").forEach(el=>{ el.style.display=(!v||el.dataset.s.includes(v))?"":"none"; }); return; }
+      clearTimeout(qt); qt=setTimeout(()=>{ const m2=mHomeMap, f=mHomeActs().filter(mQMatch); if(m2&&m2._setActs) m2._setActs(f);   // the map's labels and its card follow as you type
+        mOneKeys=mMapCards(f).map(a=>mCardKey(a)); if(mFocusK!=null&&!mOneKeys.includes(String(mFocusK))) mFocusK=null; if(document.getElementById("mOneC")) mPaintCard(); mSyncCards(); },200); }); }
   document.getElementById("mDatesB").addEventListener("click",()=>{ mDatesOpen=!mDatesOpen; if(mDatesOpen) mDatesPanel(); else { const x=document.getElementById("mDPan"); if(x) x.remove(); } });
   document.getElementById("mShowO").addEventListener("click",()=>{ mShowOpen=!mShowOpen; try{ localStorage.setItem("pmMOpen",mShowOpen?"1":"0"); }catch(e){} mShowList(); });
   document.getElementById("mShowH").addEventListener("click",()=>{ mShowHold=!mShowHold; try{ localStorage.setItem("pmMHold",mShowHold?"1":"0"); }catch(e){} mShowList(); });   // one setting for the map and the list
@@ -6574,14 +6587,9 @@ function mShowList(){
     mBuildHomeMap(acts); requestAnimationFrame(()=>mSyncCards());
     mWarmCards(mMapCards(acts).slice(0,2));
   } else {
-    const q=document.getElementById("mQ");
-    const applyQ=()=>{ const v=mLQ.trim().toLowerCase(); document.querySelectorAll("#mList .m-card").forEach(el=>{ el.style.display=(!v||el.dataset.s.includes(v))?"":"none"; }); };
-    q.addEventListener("input",()=>{ mLQ=q.value; applyQ(); });
     mWirePull(document.getElementById("mList"),document.getElementById("mPtr"));
     mWarmCards(acts.filter(a=>mStatus(a)==="open").slice(0,2));
     { const l=document.getElementById("mList"); if(mListScroll) l.scrollTop=mListScroll; l.addEventListener("scroll",()=>{ mListScroll=l.scrollTop; },{passive:true}); }   // a refresh or a trip into an action keeps your place
-    q.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter") q.blur(); });
-    applyQ();
     document.querySelectorAll("#mList .m-card").forEach(el=>el.addEventListener("click",()=>{ if(Date.now()-mCardDropT<500) return; mOpenAct(el.dataset.k); }));
     mWireCardDrag();   // hold-press + drag sets priority
   }
@@ -6592,13 +6600,16 @@ function mShowList(){
 /* the map card was tapped: zoom to that action's dot (ringed in gold), in the clear space above the card */
 let mFocusK=null, mTapK=null, mTapT=0;
 /* the cards list only the actions whose dots are on screen right now (re-checked whenever the map stops moving) */
+function mTopBar(){   // what the map must keep clear at its top: the filter row, or the north arrow just under it
+  const f=document.querySelector(".ma-mapwrap .ma-flt"), n=document.querySelector(".ma-mapwrap .ma-north");
+  return (f&&n&&n.getBoundingClientRect().bottom>f.getBoundingClientRect().bottom)?n:f; }
 function mSyncCards(){   // the zoom-to-all button sits snug in the corner, just above the card; north sits just under the filter row
   const row=document.getElementById("mPeeks"), fb=document.getElementById("mFitB"); if(fb) fb.style.bottom=(row?row.offsetHeight+20:12)+"px";
   const n=document.querySelector(".ma-mapwrap .ma-north"), f=document.querySelector(".ma-mapwrap .ma-flt"); if(n&&f) n.style.top=(f.offsetTop+f.offsetHeight+10)+"px"; }
 function mFlyTo(pts,z,landed,dur){   // glide to these points at zoom z, landing them in the clear space between the filters and the cards
   const m2=mHomeMap; const fb=L.latLngBounds(pts.map(p=>[p.lat,p.lng]));
   if(pts.length>1) z=Math.min(z,m2.getBoundsZoom(fb.pad(0.25),false));
-  const mc=m2.getContainer().getBoundingClientRect(), card=document.getElementById("mPeeks"), flt=document.querySelector(".ma-mapwrap .ma-flt");
+  const mc=m2.getContainer().getBoundingClientRect(), card=document.getElementById("mPeeks"), flt=mTopBar();
   const top=flt?flt.getBoundingClientRect().bottom-mc.top:0, bot=card?card.getBoundingClientRect().top-mc.top:mc.height;
   const c=m2.project(fb.getCenter(),z).add([0,mc.height/2-(top+bot)/2]);
   const to=m2.unproject(c,z);
@@ -6610,7 +6621,7 @@ function mFlyTo(pts,z,landed,dur){   // glide to these points at zoom z, landing
 function mFitAll(){   // zoom to extents: every action dot the filters show, and you (unless Ignore my location is on)
   const m2=mHomeMap; if(!m2||!m2._pts) return;
   const ll=m2._pts.map(p=>[p.lat,p.lng]); if(mGeo&&!ignoreLoc&&meNear(mGeo,ll)) ll.push([mGeo.lat,mGeo.lng]); if(!ll.length) return;
-  const mc=m2.getContainer().getBoundingClientRect(), flt=document.querySelector(".ma-mapwrap .ma-flt"), row=document.getElementById("mPeeks");
+  const mc=m2.getContainer().getBoundingClientRect(), flt=mTopBar(), row=document.getElementById("mPeeks");
   const top=(flt?flt.getBoundingClientRect().bottom-mc.top:0)+30, bot=((row&&!row.classList.contains("none"))?mc.bottom-row.getBoundingClientRect().top:0)+30;
   mHomeTouched=true; mCardsHold=null; m2._flying=true;
   m2.flyToBounds(L.latLngBounds(ll),{paddingTopLeft:[36,top],paddingBottomRight:[36,bot],maxZoom:18,duration:1.2});
@@ -6619,7 +6630,7 @@ const M_FOCUS_Z=18;   // how far a tap / swipe / bubble zooms in: area level (cl
 function mFocusDot(k){   // the picked action's arrow shows at once; the map only zooms OUT, and only if the dot (and its arrow) would be off screen
   const m2=mHomeMap; if(!m2||!m2._pts) return;
   const fp=m2._pts.filter(p=>p.k===String(k)); mFocusK=String(k); mHomeTouched=true; if(!fp.length){ m2._draw(); return; }
-  const mc=m2.getContainer().getBoundingClientRect(), flt=document.querySelector(".ma-mapwrap .ma-flt"), card=document.getElementById("mPeeks");
+  const mc=m2.getContainer().getBoundingClientRect(), flt=mTopBar(), card=document.getElementById("mPeeks");
   const top=(flt?flt.getBoundingClientRect().bottom-mc.top:0)+60, bot=(card?card.getBoundingClientRect().top-mc.top:mc.height)-24, W=mc.width;   // 60: room for the arrow above the label
   const inView=fp.every(p=>{ const c=m2.latLngToContainerPoint([p.lat,p.lng]); return c.x>=40&&c.x<=W-40&&c.y>=top&&c.y<=bot; });
   if(inView||top>=bot){ m2._draw(); mFlash(k); return; }
@@ -7028,7 +7039,7 @@ function mBuildHomeMap(acts){
       const settle=g=>{ const by=new Map(); for(const t of g.items) if(!by.has(t.k)) by.set(t.k,t); g.labs=[...by.values()];
         g.cx=g.labs.reduce((s2,t)=>s2+t.q.x,0)/g.labs.length; g.cy=g.labs.reduce((s2,t)=>s2+t.q.y,0)/g.labs.length; };
       groups.forEach(settle);
-      const safe=()=>{ const pb=m2.getPixelBounds(), mc=m2.getContainer().getBoundingClientRect(), flt=document.querySelector(".ma-mapwrap .ma-flt"), row=document.getElementById("mPeeks");
+      const safe=()=>{ const pb=m2.getPixelBounds(), mc=m2.getContainer().getBoundingClientRect(), flt=mTopBar(), row=document.getElementById("mPeeks");
         const top=flt?Math.max(0,flt.getBoundingClientRect().bottom-mc.top):0, rr=row&&!row.classList.contains("none")?row.getBoundingClientRect():null;
         const bot=rr&&rr.height?Math.min(mc.height,rr.top-mc.top):mc.height;   // under the Open/On hold/Done pills, above the cards
         return {x0:pb.min.x,x1:pb.max.x,y0:pb.min.y+top,y1:pb.min.y+bot}; };
