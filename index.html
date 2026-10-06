@@ -1769,15 +1769,37 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
       open:()=>{ if(!(selActs.size===1&&selActs.has(a.id))){ selActs=new Set([a.id]); lastActClick=a.id; rebuildActionFilter(); refreshActSelClasses(); drawActionRings(); updateGallery(); const row=document.querySelector('#actList .act-row[data-aid="'+a.id+'"]'); if(row) row.scrollIntoView({block:"nearest"}); }
         openViewer(lab.rep); }});
     markerLayer.addLayer(m); };
+  /* 1) where each label goes: a lone action sits on its spot; several share a wheel round their spots */
   for(const g of groups){ const n=g.mem.length;
-    if(n===1){ const lab=g.labs[0]; mkLabel(lab,lab.q.x,lab.q.y); continue; }
+    if(n===1){ const lab=g.labs[0]; g.ls=[{l:lab,q:lab.q,x:lab.q.x,y:lab.q.y,single:true}]; continue; }
     const R=wheelR(n), ang=m=>{ const dx=m.q.x-g.cx, dy=m.q.y-g.cy; return Math.hypot(dx,dy)<3?null:Math.atan2(dy,dx); }, key=m=>m.l?String(actNo(m.l.a)):"~";
     const ls=g.mem.map(m=>({m,l:m.l,d:m.d,q:m.q,t:ang(m)})).sort((x,y)=>{ if(x.t==null||y.t==null||Math.abs(x.t-y.t)<1e-6) return (x.t==null?-9:x.t)-(y.t==null?-9:y.t)||key(x.m).localeCompare(key(y.m)); return x.t-y.t; });
     let best=null; for(let k=0;k<n*12;k++){ const off=-Math.PI/2+k*2*Math.PI/(n*12); let cost=0;   // turn the wheel so each label sits on its own spot's side (spokes don't cross)
       ls.forEach((o,i)=>{ if(o.t==null) return; let d=Math.abs(off+i*2*Math.PI/n-o.t)%(2*Math.PI); if(d>Math.PI) d=2*Math.PI-d; cost+=d; }); if(!best||cost<best.c-1e-9) best={c:cost,off}; }
+    ls.forEach((o,i)=>{ const t=best.off+i*2*Math.PI/n; o.x=g.cx+Math.cos(t)*R; o.y=g.cy+Math.sin(t)*R; });
+    g.ls=ls; }
+  /* 2) a label never covers a dot (another photo of an action, a grey photo, another spot) or another label:
+     one that would is moved to the nearest clear place round its own spot, a spoke back to it */
+  { const LZ=lblZ(), LW=LBL_W0*LZ, LH=28*LZ, dots=[];
+    for(const t of members) dots.push(t.q); for(const d of lg) if(!d.used) dots.push({x:d.x,y:d.y});
+    for(const g of groups) for(const o of g.ls) dots.push(o.q);
+    const labs=[]; for(const g of groups) for(const o of g.ls) if(o.l) labs.push(o);
+    const covers=(o,x,y)=>dots.some(q=>!(o.single&&q===o.q)&&Math.abs(q.x-x)<LW/2+7&&Math.abs(q.y-y)<LH/2+7);
+    const clash=(o,x,y,list)=>list.some(r=>r!==o&&Math.abs(r.x-x)<LW+4&&Math.abs(r.y-y)<LH+4);
+    const done=labs.filter(o=>!covers(o,o.x,o.y));
+    for(const o of labs){ if(done.includes(o)&&!clash(o,o.x,o.y,done.filter(r=>labs.indexOf(r)<labs.indexOf(o)))) continue;
+      let pick=null;
+      for(const r of [LH/2+16,LH/2+28,LH/2+42,LH/2+60,LH/2+82,LH/2+108]){ for(let k=0;k<16&&!pick;k++){ const t=-Math.PI/2+k*Math.PI/8, x=o.q.x+Math.cos(t)*r*(LW/LH>1.8?1.6:1.2), y=o.q.y+Math.sin(t)*r;
+          if(!covers(o,x,y)&&!clash(o,x,y,done)) pick=[x,y]; } if(pick) break; }
+      if(pick){ o.x=pick[0]; o.y=pick[1]; o.moved=true; }
+      if(!done.includes(o)) done.push(o); } }
+  /* 3) draw: spokes and spot dots, then the labels */
+  for(const g of groups){ const n=g.mem.length, ls=g.ls;
+    if(n===1){ const o=ls[0];
+      if(o.moved) markerLayer.addLayer(L.marker(llOf(o.q.x,o.q.y),{interactive:false,keyboard:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1"><line x1="0" y1="0" x2="'+(o.x-o.q.x).toFixed(1)+'" y2="'+(o.y-o.q.y).toFixed(1)+'"/><circle cx="0" cy="0" r="4"/></svg>',iconSize:[0,0],iconAnchor:[0,0]})}));
+      mkLabel(o.l,o.x,o.y); continue; }
     const spokes=[], spots=new Set();
-    ls.forEach((o,i)=>{ const t=best.off+i*2*Math.PI/n; o.x=g.cx+Math.cos(t)*R; o.y=g.cy+Math.sin(t)*R;
-      spokes.push('<line x1="'+(o.q.x-g.cx).toFixed(1)+'" y1="'+(o.q.y-g.cy).toFixed(1)+'" x2="'+(o.x-g.cx).toFixed(1)+'" y2="'+(o.y-g.cy).toFixed(1)+'"/>'); spots.add(Math.round(o.q.x-g.cx)+","+Math.round(o.q.y-g.cy)); });
+    ls.forEach(o=>{ spokes.push('<line x1="'+(o.q.x-g.cx).toFixed(1)+'" y1="'+(o.q.y-g.cy).toFixed(1)+'" x2="'+(o.x-g.cx).toFixed(1)+'" y2="'+(o.y-g.cy).toFixed(1)+'"/>'); spots.add(Math.round(o.q.x-g.cx)+","+Math.round(o.q.y-g.cy)); });
     markerLayer.addLayer(L.marker(llOf(g.cx,g.cy),{interactive:false,keyboard:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1">'+spokes.join("")+[...spots].map(t=>{ const [x,y]=t.split(","); return '<circle cx="'+x+'" cy="'+y+'" r="4"/>'; }).join("")+'</svg>',iconSize:[0,0],iconAnchor:[0,0]})}));
     for(const o of ls){ if(o.l) mkLabel(o.l,o.x,o.y); else mkLoose(o.d,o.x,o.y); }
     const sp=new Map(); for(const o of ls){ const k=Math.round(o.q.x)+","+Math.round(o.q.y), ps=o.l?o.l.ps.map(t=>t.p):o.d.items.map(t=>t.p);   // each spot on a wheel is a drop target too
