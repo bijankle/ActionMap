@@ -805,6 +805,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-top2{flex-shrink:0;display:flex;align-items:center;gap:8px;background:#fff;border-bottom:1px solid var(--line);padding:var(--m-topgap) 14px 8px;position:relative;z-index:700;}
   .ma-pname{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px;background:none;border:0;padding:0;font:inherit;text-align:left;color:var(--ink);}
   .ma-pname .nm{font-size:calc(22px*var(--mt,1));font-weight:800;line-height:1.15;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;}
+  .ma-top2:has(.ma-pdf) .ma-pname{flex:0 1 auto;} .ma-top2 .ma-pdf{flex-shrink:0;margin-right:auto;}   /* PDF sits right after the project name */
   .ma-home{flex-shrink:0;width:40px;height:40px;padding:0;border:0;background:none;box-shadow:none;line-height:0;border-radius:12px;} .ma-home svg{width:40px;height:40px;}
   .ma-top2:has(+.ma-srow){border-bottom:0;}
   .sg-upd{flex-shrink:0;height:46px;border-radius:999px;border:2px solid var(--gold);background:#fff;color:#a8730e;font:700 min(calc(13px*var(--mt,1)),3.6cqw) var(--font);padding:0 10px;white-space:nowrap;box-shadow:none;}
@@ -3752,7 +3753,7 @@ function exportFilterNote(){ const parts=[];
    (number | status | updated), its title, its sub-actions as one paragraph ("a. …, b. ✓ …"), then all its
    photos with their markup, in their natural shape (never cropped or stretched). An action whose photos
    don't fit carries on at the top of the next column, marked "continued". */
-function pdfMapPoint(a){ const p=actPhotos(a).find(q=>q.lat!=null&&isFinite(q.lat)&&isFinite(q.lng)); return p?{lat:+p.lat,lng:+p.lng}:(a.loc&&isFinite(a.loc.lat)?{lat:+a.loc.lat,lng:+a.loc.lng}:null); }
+function pdfMapPoint(a){ const p=(a._ps||actPhotos(a)).find(q=>q.lat!=null&&isFinite(q.lat)&&isFinite(q.lng)); return p?{lat:+p.lat,lng:+p.lng}:(a.loc&&isFinite(a.loc.lat)?{lat:+a.loc.lat,lng:+a.loc.lng}:null); }
 function actUpdated(a){ let t=Math.max(+a.created||0,+a.doneAt||0); for(const e of projLog) if(e&&e.a===a.id&&e.t>t) t=e.t; return t||actCreated(a)||null; }
 function pdfShortDate(t){ const d=new Date(t); return d.getDate()+"-"+MON3[d.getMonth()].toLowerCase(); }
 /* the page's map: just the action numbers, each sitting on its spot; one that has to move aside for a
@@ -3810,22 +3811,22 @@ function pdfPhotoRows(ims,w,target,gap){ const n=ims.length; if(!n) return []; c
   for(const rows of cuts){ const rh=rows.map(rw=>(w-gap*(rw.length-1))/rw.reduce((t,i)=>t+ar[i],0)); const cost=rh.reduce((t,h)=>t+Math.abs(Math.log(h/target)),0)/rh.length+(Math.max(...rh)/Math.min(...rh)-1)*0.4;
     if(!best||cost<best.cost) best={rows,rh,cost}; }
   return best.rows.map((rw,ri)=>({items:rw.map(i=>ims[i]),h:best.rh[ri]})); }
-function pdfReportTitle(){ const dl=dwLabel(); if(!dl) return {t:"All actions",d:""};
-  const e=dwEff(), hi=e.hi==null?dayStart(Date.now()):e.hi, yr=" "+new Date(hi).getFullYear();
+function pdfReportTitle(w){ const dl=dwLabel(w); if(!dl) return {t:"All actions",d:""};   // w: a date range (the phone's); none = the desktop's
+  const e=dwEff(w), hi=e.hi==null?dayStart(Date.now()):e.hi, yr=" "+new Date(hi).getFullYear();
   if(e.lo==null) return {t:"Actions created up to "+dl.l2.replace(/^→ /,""),d:dl.dates+yr};
   if(dl.l2==="→ Today") return {t:"Actions created in the last "+dl.l1.replace(/ ago$/,""),d:dl.dates+yr};
   return {t:"Actions created "+dl.dates+yr,d:""}; }
-async function exportActionsPdf(){
-  const say=t=>loadNote(t?"PDF export — "+t:"");
-  if(!exportActs().length){ say(actions.length?"no actions match the current filters":"nothing to export"); setTimeout(()=>say(""),2600); return; }
+async function exportActionsPdf(cx){   // cx: the phone hands in its own actions, title, filters, messages and saving (see mExportPdf)
+  const say=cx?cx.say:(t=>loadNote(t?"PDF export — "+t:""));
+  if(!(cx?cx.acts:exportActs()).length){ say((cx?cx.any:actions.length)?"no actions match the current filters":"nothing to export"); setTimeout(()=>say(""),2600); return; }
   if(exportActionsPdf._busy) return; exportActionsPdf._busy=true;
   try{
     say("loading…"); await loadJsPDF();
     const doc=new window.jspdf.jsPDF({orientation:"landscape",unit:"mm",format:"a4",compress:true});
-    const W=297, H=210, M=10, GAPC=5, CW=(W-2*M-2*GAPC)/3, MAPH=68, now=new Date(), proj=String(ON.name||loadedJsonName||"ActionMap").replace(/\.[^.]+$/,"");
-    const order=exportActs(), INK=[30,31,34], MUT=[110,110,110], BAR=[43,51,64];
+    const W=297, H=210, M=10, GAPC=5, CW=(W-2*M-2*GAPC)/3, MAPH=68, now=new Date(), proj=String(cx?cx.proj:(ON.name||loadedJsonName||"ActionMap")).replace(/\.[^.]+$/,"");
+    const order=cx?cx.acts:exportActs(), INK=[30,31,34], MUT=[110,110,110], BAR=[43,51,64];
     const p2=n=>String(n).padStart(2,"0"), stamp=p2(now.getDate())+"/"+p2(now.getMonth()+1)+"/"+now.getFullYear()+" "+p2(now.getHours())+":"+p2(now.getMinutes());
-    const RT=pdfReportTitle(), sts=[["Open",actShowOpen],["On hold",actShowHold],["Done",actShowDone]].filter(x=>x[1]).map(x=>x[0]).join(" + ");
+    const RT=cx?cx.RT:pdfReportTitle(), sts=(cx?cx.show:[["Open",actShowOpen],["On hold",actShowHold],["Done",actShowDone]]).filter(x=>x[1]).map(x=>x[0]).join(" + ");
     const sub="Showing "+(sts||"nothing")+" · "+order.length+" action"+(order.length===1?"":"s")+" · exported "+stamp;
     const TOP=M+17;
     const pageHead=()=>{ doc.setFont("helvetica","bold"); doc.setFontSize(15); doc.setTextColor(...INK); const t1=proj+" — "+RT.t; doc.text(t1,M,M+5);
@@ -3840,11 +3841,11 @@ async function exportActionsPdf(){
     newPage();
     const TPAD=1.6, BARH=5.6, LH=3.9;
     for(let k=0;k<order.length;k++){ const a=order[k]; say("laying out "+(k+1)+" / "+order.length+"…");
-      const st=a.done?"Done":a.hold?"On hold":"Open", upd=actUpdated(a);
+      const st=a.done?"Done":a.hold?"On hold":"Open", upd=a._upd!==undefined?a._upd:actUpdated(a);
       doc.setFont("helvetica","bold"); doc.setFontSize(9.5); const tl=doc.splitTextToSize(a.text||"",CW-2*TPAD);
       const steps=(a.steps||[]).filter(x=>x&&String(x.t||"").trim()), sl=pdfStepLines(doc,steps,CW-2*TPAD);
       const headH=BARH+1.8+tl.length*4.2, textH=headH+(sl.length?sl.length*LH+1.2:LH+1.2)+1;
-      const ims=[]; for(const ph of actPhotos(a)){ const x=await pdfPhoto(ph); if(x) ims.push(x); }
+      const ims=[]; for(const ph of (a._ps||actPhotos(a))){ const x=await pdfPhoto(ph); if(x) ims.push(x); }
       let rows=pdfPhotoRows(ims,CW,34,1), first=true;
       while(true){ const hh=first?textH:headH, room=BOT-y;
         if(hh>room&&y>colTop(col)+0.1){ nextCol(); continue; }
@@ -3883,6 +3884,7 @@ async function exportActionsPdf(){
     const n=doc.getNumberOfPages(); for(let i=1;i<=n;i++){ doc.setPage(i); doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setTextColor(...MUT); doc.text("Page "+i+" of "+n,W-M,M+12.5,{align:"right"}); }
     say("saving…");
     const fn=(proj+" - "+RT.t+(RT.d?" "+RT.d:"")).replace(/[\\/:*?"<>|]+/g,"").replace(/–/g,"-").replace(/\s+/g," ").trim();
+    if(cx){ say(""); await cx.save(doc,fn+".pdf",order.length); return; }
     doc.save(fn+".pdf");
     say("✓ saved "+order.length+" action"+(order.length===1?"":"s")); setTimeout(()=>say(""),3200);
   }catch(err){ say("failed: "+(err&&err.message||err)); setTimeout(()=>say(""),6000); }
@@ -6712,9 +6714,32 @@ function mTopRow(){ return mTopStrip().split('<div class="ma-srow">')[0]; }   //
 function mTopStrip(){   // the app tile (home) and the project name (→ project menu, sync line under it when needed); then the search row with Dates at its end
   const st=mHeadSub();
   return '<div class="ma-top2"><button type="button" class="ma-home" id="mHomeB" aria-label="Home: the map, zoomed to every action">'+PM_MARK(40)+'</button><button type="button" class="ma-pname" id="mProjB"><span class="nm">'+esc(mPack.project||"Project")+'<i>▾</i></span>'
-    +'<span class="ma-ps ma-cs" id="mSendNote"'+(st?'':' style="display:none"')+'>'+esc(st)+'</span></button></div>'
+    +'<span class="ma-ps ma-cs" id="mSendNote"'+(st?'':' style="display:none"')+'>'+esc(st)+'</span></button>'+M_PDF_BTN+'</div>'
     +'<div class="ma-srow"><label class="ma-search">'+MI.search+'<input id="mQ" type="search" placeholder="Search actions" autocomplete="off" value="'+esc(mLQ)+'" /></label>'
     +'<button type="button" class="ma-dtb ma-dround'+(dwOn(mDateWin())?' on':'')+'" id="mDatesB" aria-label="Date range">'+mDatesBtnHtml()+'</button></div>';
+}
+const M_PDF_BTN='<button class="act-tgl act-dl act-xl act-pdf ma-pdf" id="mPdfB" type="button" aria-label="Export to PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10.5l5 5 5-5"/><path d="M5 20h14"/></svg><b>PDF</b></button>';   // the desktop's PDF button, beside the project name
+/* PDF on the phone: the desktop's report exactly (same layout, maps, photos with markup), of what the phone
+   shows - its Open / On hold / Done pills, date range and search, including changes not yet synced.
+   Then the share sheet (or, when the phone needs a fresh tap for that, a Share / Save choice). */
+async function mExportPdf(){
+  if(exportActionsPdf._busy) return;
+  const all=mHomeActs(true), acts=mHomeActs().filter(mQMatch).filter(a=>{ const st=mStatus(a); return (st==="open"&&mShowOpen)||(st==="hold"&&mShowHold)||(st==="done"&&mShowDone); });
+  const ad=acts.map(a=>{ const done=mDone(a);
+    return {id:a._new?"New":a.id, text:mTitle(a), done, hold:!done&&mHold(a), loc:a._new?(mNewActs()[a._ni]||{}).loc||null:a.loc||null,
+      steps:mSteps(a).map(x=>({t:x.t,d:!!x.d})), _upd:Math.max(+a.created||0,+a.doneAt||0)||null,
+      _ps:mPhotos(a).filter(p=>p.img).map(p=>({preview:p.img,lat:p.lat,lng:p.lng,_phone:true,f:p.f,rot:p.rot,marks:p.marks,mkw:p.mkw,mth:p.mth})) }; });
+  const save=async(doc,name,n)=>{ const file=new File([doc.output("blob")],name,{type:"application/pdf"});
+    const dl=()=>{ const u=URL.createObjectURL(file), a=document.createElement("a"); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),60000); mToast("\u2713 PDF saved \u2014 "+n+" action"+(n===1?"":"s")); };
+    const share=async()=>{ try{ await navigator.share({files:[file],title:name.replace(/\.pdf$/,"")}); return true; }catch(e){ if(e&&e.name==="AbortError") return true; return false; } };
+    const canShare=!!(navigator.canShare&&navigator.canShare({files:[file]}));
+    if(canShare&&navigator.userActivation&&navigator.userActivation.isActive&&await share()) return;
+    if(!canShare){ dl(); return; }
+    const sh=mSheet('<div class="ma-shh"><b>PDF ready</b><span>'+n+' action'+(n===1?'':'s')+'</span></div><div class="ma-row" style="gap:8px"><button class="ma-btn pri" id="mPdfShare" type="button">Share</button><button class="ma-btn" id="mPdfSave" type="button">Save</button></div>');
+    sh.querySelector("#mPdfShare").addEventListener("click",async()=>{ mCloseSheet(); if(!await share()) dl(); });
+    sh.querySelector("#mPdfSave").addEventListener("click",()=>{ mCloseSheet(); dl(); }); };
+  await exportActionsPdf({acts:ad, any:all.length, proj:(mPack&&mPack.project)||"ActionMap", RT:pdfReportTitle(mDateWin()),
+    show:[["Open",mShowOpen],["On hold",mShowHold],["Done",mShowDone]], say:t=>mToast(t?"PDF \u2014 "+t:"",!!t), save});
 }
 function mQText(a){ return ((a._new?'':actNo(a)+' ')+mTitle(a)+' '+(a.steps||[]).map(x=>x&&(x.t||x.text)||'').join(' ')).toLowerCase(); }
 function mQMatch(a){ const v=mLQ.trim().toLowerCase(); return !v||mQText(a).includes(v); }   // number, title or a sub-action
@@ -6769,6 +6794,7 @@ function mShowList(){
   }
   mWireNav(false);
   document.getElementById("mProjB").addEventListener("click",()=>mShowMenu("project"));
+  document.getElementById("mPdfB").addEventListener("click",mExportPdf);
   document.getElementById("mHomeB").addEventListener("click",()=>{ if(mTab!=="map"){ mSetTab("map"); mHomeTouched=false; mShowList(); } else mFitAll(); });   // the logo is home: the map, zoomed to every action
   { const q=document.getElementById("mQ"); let qt=null;
     q.addEventListener("keydown",e=>{ e.stopPropagation(); if(e.key==="Enter") q.blur(); });
@@ -6970,6 +6996,7 @@ function mShowSettings(){
   wireSizeSliders(pg.querySelector(".sg-szs")); wireSizeSliders(pg.querySelector(".sg-km"));
   mWireNav(false);
   document.getElementById("mHomeB").addEventListener("click",()=>{ mSetTab("map"); mHomeTouched=false; mShowList(); });
+  document.getElementById("mPdfB").addEventListener("click",mExportPdf);
   document.getElementById("mProjB").addEventListener("click",()=>mShowMenu("project"));
   pg.querySelector(".sg-main").addEventListener("click",e=>{ const b=e.target.closest("button[data-s]"); if(!b) return; pg.dataset.sec=b.dataset.s; try{ localStorage.setItem("amSetTab",b.dataset.s); }catch(_){}
     pg.querySelectorAll(".sg-main button").forEach(x=>x.classList.toggle("on",x===b)); });
