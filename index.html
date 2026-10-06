@@ -617,12 +617,12 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   /* per-action status: labelled tags, On hold above Done; filled in its colour when on */
   .act-st{display:flex;flex-direction:column;gap:4px;flex:none;align-self:flex-start;}
   .act-st button{font:600 var(--fl) var(--font);width:66px;padding:2px 0;border-radius:6px;border:1.5px solid;cursor:pointer;text-align:center;white-space:nowrap;}
-  .act-st .st-h{color:#7a828c;border-color:#cfd4da;background:#fff;}   /* not ticked: grey; ticked: solid colour */
-  .act-st .st-h:hover{border-color:#E8A33D;}
-  .act-st .st-h.on{background:#E8A33D;border-color:#E8A33D;color:#fff;}
-  .act-st .st-d{color:#7a828c;border-color:#cfd4da;background:#fff;}
-  .act-st .st-d:hover{border-color:#3BA55C;}
-  .act-st .st-d.on{background:#3BA55C;border-color:#3BA55C;color:#fff;}
+  .act-st .st-h{color:#7a828c;border-color:#E8A33D;background:#fff;}   /* always its colour as an outline; ticked: solid colour */
+  .act-st .st-h.on,.act-st .st-h:not(.on):hover{background:#E8A33D;border-color:#E8A33D;color:#fff;}   /* hover shows what a click will do: fill… */
+  .act-st .st-h.on:hover{background:#fff;color:#7a828c;}   /* …or, when ticked, back to the outline */
+  .act-st .st-d{color:#7a828c;border-color:#3BA55C;background:#fff;}
+  .act-st .st-d.on,.act-st .st-d:not(.on):hover{background:#3BA55C;border-color:#3BA55C;color:#fff;}
+  .act-st .st-d.on:hover{background:#fff;color:#7a828c;}
   .act-hold input{background:#E8A33D33;}   /* faint amber: this is the ON-HOLD box */
   .act-chk input:checked{background:var(--good);border-color:var(--good);}
   .act-hold input:checked{background:#E8A33D;border-color:#E8A33D;}
@@ -1147,7 +1147,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .act-row .act-top{position:absolute;left:0;right:0;top:0;margin:0;padding:0 112px 0 9px;box-sizing:border-box;height:var(--bh);background:#d5d9df;border-bottom:2px solid #b9c0c8;display:flex;align-items:center;}
   .act-row .act-top .act-st{align-self:center;align-items:center;margin:0;}
   .act-row .act-top .act-st button,.act-row .act-cnr{height:var(--ph)!important;box-sizing:border-box;padding-top:0!important;padding-bottom:0!important;display:inline-flex;align-items:center;justify-content:center;border-radius:6px!important;}
-  .act-row .act-top .act-st button:not(.on),.act-row .act-cnr{background:#fff;}
+  .act-row .act-top .act-st button:not(.on):not(:hover),.act-row .act-cnr{background:#fff;}   /* (hover shows the click's fill) */
   .act-row .act-cnr{top:calc((var(--bh) - var(--ph)) / 2)!important;}
   .act-row .act-del.act-cnr{width:var(--ph)!important;}
   .act-row .act-copy.act-cnr{width:auto!important;padding:0 8px!important;gap:4px;font:600 var(--fl) var(--font);right:calc(6px + var(--ph) + var(--btn-gap));}
@@ -1262,8 +1262,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   html.dark .af-th span{background-color:#262626!important}
   html.dark .af-pin i{border-color:#333333!important}
   html.dark .act-row .act-cnr{border-color:#333333!important;background-color:#141414!important;color:#a3a3a3!important}
-  html.dark .act-st .st-h{color:#a3a3a3!important;border-color:#333333!important;background-color:#141414!important}
-  html.dark .act-st .st-d{color:#a3a3a3!important;border-color:#333333!important;background-color:#141414!important}
+  html.dark .act-st .st-h{color:#a3a3a3!important;background-color:#141414!important}
+  html.dark .act-st .st-d{color:#a3a3a3!important;background-color:#141414!important}
   html.dark .act-chk input:checked::after,html.dark .act-hold input:checked::after{border-color:#333333!important}
   html.dark .ipn-it .th{background-color:#262626!important}
   html.dark .gal-x{background-color:#141414!important}
@@ -1353,7 +1353,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   html.dark .slider-wrap input[type=range]::-moz-range-thumb{background-color:#141414!important}
   html.dark .leaflet-control-layers,html.dark .leaflet-bar,html.dark .reconnect,html.dark #updpill,html.dark .hoverview{background-color:#141414!important}
   html.dark .act-row .act-top{background-color:#262626!important;border-bottom-color:#333333!important}
-  html.dark .act-row .act-top .act-st button:not(.on),html.dark .act-row .act-cnr{background-color:#141414!important}
+  html.dark .act-row .act-top .act-st button:not(.on):not(:hover),html.dark .act-row .act-cnr{background-color:#141414!important}
   html.dark .act-row .act-copy.act-cnr.ok{background-color:#0a0a0a!important}
   html.dark .act-row .act-copy.act-cnr.bad{background-color:#3a3020!important}
   html.dark .szs{border-bottom-color:#333333!important}
@@ -1362,7 +1362,10 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   html.dark .szs .th{border-color:#333333!important}
   html.dark .sz-reset{background-color:#141414!important}
   html.dark .sz-pop{background-color:#141414!important}
-  html.dark .yn-yes,html.dark .btn.primary,html.dark .btn.primary:hover,html.dark .toggle input:checked + .switch,html.dark .folder-pop .fp-create,html.dark .folder-pop .fp-create:hover,html.dark .ip-arrow:hover,html.dark .ip-marktools .mk.on,html.dark .ip-editbtn.on,html.dark .projhead .progress,html.dark .splitter,html.dark .areabtn.active,html.dark .snap-ring,html.dark .slider-fill,html.dark .ma-exit .bar i,html.dark .lb-ref .box,html.dark .lb-fullchk,html.dark .lb-textbtn.on,html.dark .act-add,html.dark #afGo,html.dark #pickbar .pb-ok,html.dark .act-note button,html.dark .set-tab.on,html.dark .ma-tgl.on,html.dark .ma-npill,html.dark #mNewGo,html.dark .ma-dfi,html.dark .ma-dfoot button,html.dark .ma-cl2 .k2.on,html.dark .ma-fl button.g,html.dark #updpill .updgo,html.dark #updpill .updgo:hover,html.dark .set-ctl input[type=checkbox]:checked,html.dark .mi-chk input:checked,html.dark .yn-yes:hover,html.dark #pickbar .pb-ok:hover,html.dark .act-note button:hover,html.dark .szs .fi,html.dark .szs .tk.on,html.dark .szs .th{color:#1a1307!important;background-color:#e8b44a!important}
+  html.dark .yn-yes,html.dark .btn.primary,html.dark .btn.primary:hover,html.dark .toggle input:checked + .switch,html.dark .folder-pop .fp-create,html.dark .folder-pop .fp-create:hover,html.dark .ip-arrow:hover,html.dark .ip-marktools .mk.on,html.dark .ip-editbtn.on,html.dark .projhead .progress,html.dark .splitter,html.dark .areabtn.active,html.dark .snap-ring,html.dark .slider-fill,html.dark .ma-exit .bar i,html.dark .lb-ref .box,html.dark .lb-fullchk,html.dark .lb-textbtn.on,html.dark .act-add,html.dark #afGo,html.dark #pickbar .pb-ok,html.dark .act-note button,html.dark .set-tab.on,html.dark .ma-tgl.on,html.dark .ma-npill,html.dark #mNewGo,html.dark .ma-dfi,html.dark .ma-dfoot button,html.dark .ma-cl2 .k2.on,html.dark .ma-fl button.g,html.dark #updpill .updgo,html.dark #updpill .updgo:hover,html.dark .set-ctl input[type=checkbox]:checked,html.dark .mi-chk input:checked,html.dark .yn-yes:hover,html.dark #pickbar .pb-ok:hover,html.dark .act-note button:hover,html.dark .szs .fi,html.dark .szs .tk.on,html.dark .szs .th,html.dark html.dark .yn-yes,html.dark html.dark .btn.primary,html.dark html.dark .btn.primary:hover,html.dark html.dark .toggle input:checked + .switch,html.dark html.dark .folder-pop .fp-create,html.dark html.dark .folder-pop .fp-create:hover,html.dark html.dark .ip-arrow:hover,html.dark html.dark .ip-marktools .mk.on,html.dark html.dark .ip-editbtn.on,html.dark html.dark .projhead .progress,html.dark html.dark .splitter,html.dark html.dark .areabtn.active,html.dark html.dark .snap-ring,html.dark html.dark .slider-fill,html.dark html.dark .ma-exit .bar i,html.dark html.dark .lb-ref .box,html.dark html.dark .lb-fullchk,html.dark html.dark .lb-textbtn.on,html.dark html.dark .act-add,html.dark html.dark #afGo,html.dark html.dark #pickbar .pb-ok,html.dark html.dark .act-note button,html.dark html.dark .set-tab.on,html.dark html.dark .ma-tgl.on,html.dark html.dark .ma-npill,html.dark html.dark #mNewGo,html.dark html.dark .ma-dfi,html.dark html.dark .ma-dfoot button,html.dark html.dark .ma-cl2 .k2.on,html.dark html.dark .ma-fl button.g,html.dark html.dark #updpill .updgo,html.dark html.dark #updpill .updgo:hover,html.dark html.dark .set-ctl input[type=checkbox]:checked,html.dark html.dark .mi-chk input:checked,html.dark html.dark .yn-yes:hover,html.dark html.dark #pickbar .pb-ok:hover,html.dark html.dark .act-note button:hover,html.dark html.dark .szs .fi,html.dark html.dark .szs .tk.on,html.dark html.dark .szs .th,html.dark html.dark html.dark .yn-yes,html.dark html.dark html.dark .btn.primary,html.dark html.dark html.dark .btn.primary:hover,html.dark html.dark html.dark .toggle input:checked + .switch,html.dark html.dark html.dark .folder-pop .fp-create,html.dark html.dark html.dark .folder-pop .fp-create:hover,html.dark html.dark html.dark .ip-arrow:hover,html.dark html.dark html.dark .ip-marktools .mk.on,html.dark html.dark html.dark .ip-editbtn.on,html.dark html.dark html.dark .projhead .progress,html.dark html.dark html.dark .splitter,html.dark html.dark html.dark .areabtn.active,html.dark html.dark html.dark .snap-ring,html.dark html.dark html.dark .slider-fill,html.dark html.dark html.dark .ma-exit .bar i,html.dark html.dark html.dark .lb-ref .box,html.dark html.dark html.dark .lb-fullchk,html.dark html.dark html.dark .lb-textbtn.on,html.dark html.dark html.dark .act-add,html.dark html.dark html.dark #afGo,html.dark html.dark html.dark #pickbar .pb-ok,html.dark html.dark html.dark .act-note button,html.dark html.dark html.dark .set-tab.on,html.dark html.dark html.dark .ma-tgl.on,html.dark html.dark html.dark .ma-npill,html.dark html.dark html.dark #mNewGo,html.dark html.dark html.dark .ma-dfi,html.dark html.dark html.dark .ma-dfoot button,html.dark html.dark html.dark .ma-cl2 .k2.on,html.dark html.dark html.dark .ma-fl button.g,html.dark html.dark html.dark #updpill .updgo,html.dark html.dark html.dark #updpill .updgo:hover,html.dark html.dark html.dark .set-ctl input[type=checkbox]:checked,html.dark html.dark html.dark .mi-chk input:checked,html.dark html.dark html.dark .yn-yes:hover,html.dark html.dark html.dark #pickbar .pb-ok:hover,html.dark html.dark html.dark .act-note button:hover,html.dark html.dark html.dark .szs .fi,html.dark html.dark html.dark .szs .tk.on,html.dark html.dark html.dark .szs .th{color:#1a1307!important;background-color:#e8b44a!important}
+  html.dark .act-st .st-h.on,html.dark .act-st .st-h:not(.on):hover{background-color:#E8A33D!important;border-color:#E8A33D!important;color:#fff!important}
+  html.dark .act-st .st-d.on,html.dark .act-st .st-d:not(.on):hover{background-color:#3BA55C!important;border-color:#3BA55C!important;color:#fff!important}
+  html.dark .act-st .st-h.on:hover,html.dark .act-st .st-d.on:hover{background-color:#141414!important;color:#a3a3a3!important}
 </style>
 </head>
 <body>
