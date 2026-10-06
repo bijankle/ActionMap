@@ -347,6 +347,11 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .toolstack.onmap{display:flex;flex-direction:column;gap:var(--btn-gap);align-items:stretch;
     position:absolute !important;left:10px !important;bottom:14px !important;right:auto !important;top:auto !important;z-index:1200;}
   .north-arrow{background:#fff;border:var(--ctl-bd);border-radius:var(--ctl-r);padding:5px 8px 3px;box-shadow:0 6px 18px #1e1f2222;line-height:0;}
+  #map.leaflet-container{background:#9a9384;} #map.leaflet-container.nobase{background:#eef0f2;}   /* earth-toned, never a white flash */
+  .mini{width:200px;background:#fff;border:var(--ctl-bd);border-radius:var(--ctl-r);box-shadow:0 6px 18px #1e1f2222;overflow:hidden;}
+  .mini-h{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;height:28px;padding:0 10px;border:0;border-radius:0;background:#fff;font:700 13px var(--font);color:var(--ink);cursor:pointer;box-shadow:none;}
+  .mini-h svg{width:14px;height:14px;transition:transform .15s;} .mini.off .mini-h svg{transform:rotate(180deg);}
+  .mini-m{height:150px;border-top:1px solid var(--line2);background:#9a9384;cursor:pointer;} .mini.off{width:auto;} .mini.off .mini-m{display:none;}
   .areabtn{font-family:var(--font);font-size:var(--fb);font-weight:600;color:var(--text);background:#ffffffe8;backdrop-filter:blur(8px);border:1px solid var(--line2);border-radius:8px;padding:6px 9px;cursor:pointer;box-shadow:0 4px 14px #1e1f221f;white-space:nowrap;}
   .areabtn:hover{border-color:var(--accent);color:var(--accent);}
   .areabtn.active{background:var(--gold);color:var(--on-accent);border-color:var(--gold);}
@@ -780,7 +785,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-sym.hold{background:#fff;box-shadow:0 0 0 2.5px #F28C28;}
   .ma-sym.done{background:#6b7580;border:2px solid #fff;box-shadow:0 0 0 1.5px #3f4750;}
   .ma-mapwrap{flex:1;min-height:0;position:relative;}
-  .ma-map{position:absolute;inset:0;background:#e9ecef;}
+  .ma-map{position:absolute;inset:0;background:#9a9384;}   /* earth-toned under the imagery, never a white flash */
   .ma-nav{flex-shrink:0;display:flex;background:#fff;border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom));position:relative;z-index:700;}
   .ma-nav button{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 2px 9px;background:none;border:0;border-radius:0;font:inherit;font-size:calc(12px*var(--mt,1));font-weight:600;color:var(--muted);box-shadow:none;}
   .ma-nav button span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -796,8 +801,9 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-cs{font-size:calc(13px*var(--mt,1));color:var(--muted);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .ma-cs.warn{color:#9a5b00;}
   .ma-flt{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
-  .ma-mapwrap .ma-flt{position:absolute;z-index:600;top:12px;left:12px;right:72px;}
-  .ma-mapwrap .ma-flt{gap:6px;} .ma-mapwrap .ma-flt button{padding:0 9px;gap:5px;} .ma-mapwrap .ma-flt button span{padding-left:0;}   /* compact, so Open / On hold / Done share one row whenever the screen is wide enough (they wrap otherwise) */
+  .ma-mapwrap .ma-flt{position:absolute;z-index:600;top:12px;left:12px;right:12px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;}   /* one row across the top, in words */
+  .ma-mapwrap .ma-flt::-webkit-scrollbar{display:none;}
+  .ma-mapwrap .ma-flt{gap:6px;container-type:inline-size;} .ma-mapwrap .ma-flt button{flex:1 1 0;min-width:0;justify-content:center;padding:0 5px;gap:4px;font-size:min(calc(15px*var(--mt,1)),3.9cqw);} .ma-mapwrap .ma-flt button span{padding-left:0;}   /* three equal pills in one row: the words shrink a touch on a narrow screen rather than wrap */
   .ma-lwrap .ma-flt{padding:12px 16px 0;}
   .ma-flt button{height:40px;box-sizing:border-box;display:flex;align-items:center;gap:7px;padding:0 12px;border-radius:20px;background:#fff;border:1.5px solid var(--line);font:inherit;font-size:calc(15px*var(--mt,1));font-weight:600;color:var(--ink);white-space:nowrap;}
   .ma-mapwrap .ma-flt button{box-shadow:0 2px 8px #1d243020;}
@@ -1395,16 +1401,43 @@ let measuring=false, measurePts=[], measureLayer=null;
 
 /* map + layers */
 const DESK_FLY=1.2;   // every click that zooms / moves the desktop map glides this long (scroll-wheel zoom is separate)
+{ const z=L.Map.prototype._onZoomTransitionEnd; L.Map.prototype._onZoomTransitionEnd=function(){ if(!this._mapPane) return; return z.apply(this,arguments); }; }   // a map removed mid-zoom (the phone rebuilds its map) ignores the zoom's late finish
 const map=L.map("map",{zoomControl:false,boxZoom:false,attributionControl:false,worldCopyJump:true,maxZoom:24,minZoom:2,zoomSnap:0.25,wheelDebounceTime:35}).setView([20,0],3);
 const google=L.tileLayer("https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",{subdomains:["mt0","mt1","mt2","mt3"],maxZoom:24,maxNativeZoom:21,keepBuffer:6,attribution:"Imagery &copy; Google"}).addTo(map);   // keepBuffer: tiles just off screen stay loaded, so panning shows imagery at once
 google.on("loading",()=>{ tilesBusy=true; }).on("load",()=>{ tilesBusy=false; });
 const esri=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:24,maxNativeZoom:19,attribution:"Imagery &copy; Esri, Maxar, Earthstar Geographics"});
 const none=L.layerGroup();
-L.control.layers({ "Google":google, "Esri":esri, "None":none },null,{position:"topleft",collapsed:false}).addTo(map);
+/* No white flash: while the sharp tiles load (a zoom, a flight) a few blurry low-zoom ones fill in underneath,
+   over an earth-toned background instead of white. Imagery is picked in View → Map (no box on the map). */
+map.createPane("lowPane").style.zIndex=150;
+let miniMap=null, miniBox=null, miniTL=null;   // the minimap (below)
+const LO_URL={google:"https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",esri:"https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"};
+const loLayer=k=>L.tileLayer(LO_URL[k],{subdomains:["mt0","mt1","mt2","mt3"],pane:"lowPane",maxZoom:24,maxNativeZoom:12,keepBuffer:2,updateWhenZooming:false});   // zoom-12 tiles, on only once you're closer than that (no doubled downloads further out)
+const googleLo=loLayer("google"), esriLo=loLayer("esri");
+function syncUnder(){ const near=map.getZoom()>=13, g=map.hasLayer(google)&&near, e=map.hasLayer(esri)&&near;
+  if(g&&!map.hasLayer(googleLo)) googleLo.addTo(map); if(!g&&map.hasLayer(googleLo)) map.removeLayer(googleLo);
+  if(e&&!map.hasLayer(esriLo)) esriLo.addTo(map); if(!e&&map.hasLayer(esriLo)) map.removeLayer(esriLo);
+  map.getContainer().classList.toggle("nobase",!map.hasLayer(google)&&!map.hasLayer(esri)); if(typeof miniSync==="function") miniSync(true); }
+[google,esri].forEach(l=>l.on("add remove",()=>setTimeout(syncUnder,0))); map.on("zoomend",syncUnder); syncUnder();
 const NORTH_SVG=(w,h)=>'<svg viewBox="0 0 40 48" width="'+w+'" height="'+h+'"><path d="M20 4 30 34 20 28 10 34Z" fill="#1d2430"/><path d="M20 4 20 28 10 34Z" fill="#7a8591"/><text x="20" y="46" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="800" fill="#1d2430">N</text></svg>';   // desktop map + phone map
-{ const nc=L.control({position:"topright"}); nc.onAdd=()=>{ const d=L.DomUtil.create("div","north-arrow"); d.title="North is up";
+{ const nc=L.control({position:"topleft"}); nc.onAdd=()=>{ const d=L.DomUtil.create("div","north-arrow"); d.title="North is up";
     d.innerHTML=NORTH_SVG(34,41);
     L.DomEvent.disableClickPropagation(d); return d; }; nc.addTo(map); }
+/* Minimap (top right): the plain map zoomed well out with a gold box where you're looking; its header
+   bar folds it away (remembered). A click on it moves the map there. */
+function miniSync(base){ if(!miniMap) return; try{
+  if(base){ const k=map.hasLayer(esri)?"esri":"google"; if(!miniTL||miniTL._k!==k){ if(miniTL) miniMap.removeLayer(miniTL); miniTL=L.tileLayer(LO_URL[k],{subdomains:["mt0","mt1","mt2","mt3"],maxNativeZoom:19}); miniTL._k=k; miniTL.addTo(miniMap); } }
+  const b=map.getBounds(); miniMap.setView(map.getCenter(),Math.max(1,map.getZoom()-5),{animate:false}); miniBox.setBounds(b); }catch(e){} }
+{ const mc=L.control({position:"topright"}); mc.onAdd=()=>{ const d=L.DomUtil.create("div","mini"); let off=false; try{ off=localStorage.getItem("amMiniOff")==="1"; }catch(e){}
+    d.classList.toggle("off",off);
+    d.innerHTML='<button type="button" class="mini-h" title="Show / hide the minimap">Minimap<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button><div class="mini-m"></div>';
+    L.DomEvent.disableClickPropagation(d); L.DomEvent.disableScrollPropagation(d);
+    d.querySelector(".mini-h").addEventListener("click",()=>{ const o=!d.classList.contains("off"); d.classList.toggle("off",o); try{ localStorage.setItem("amMiniOff",o?"1":"0"); }catch(e){} if(!o&&miniMap){ miniMap.invalidateSize(); miniSync(); } });
+    setTimeout(()=>{ miniMap=L.map(d.querySelector(".mini-m"),{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false,touchZoom:false,zoomSnap:0,fadeAnimation:false});
+      miniBox=L.rectangle(map.getBounds(),{color:"#e8b44a",weight:2.5,fillColor:"#e8b44a",fillOpacity:0.12,interactive:false}).addTo(miniMap);
+      miniMap.on("click",e=>map.panTo(e.latlng)); miniSync(true); },0);
+    return d; }; mc.addTo(map);
+  map.on("moveend zoomend resize",()=>miniSync()); }
 /* Zoom to all (bottom right, where the scale was; key Z): every action on show, and you if your location is on. */
 { const zc=L.control({position:"bottomright"}); zc.onAdd=()=>{ const d=L.DomUtil.create("button","zoom-all"); d.type="button"; d.title="Zoom to all actions (Z)";
     d.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M4 4l5.5 5.5M20 9V4h-5M20 4l-5.5 5.5M4 15v5h5M4 20l5.5-5.5M20 15v5h-5M20 20l-5.5-5.5"/></svg><kbd>Z</kbd>';
@@ -2536,8 +2569,8 @@ function syncViewMenu(){
 document.querySelectorAll("#vmBase button").forEach(b=>b.addEventListener("click",e=>{ e.stopPropagation();
   [google,esri,none].forEach(l=>{ if(map.hasLayer(l)) map.removeLayer(l); }); ({google,esri,none})[b.dataset.v].addTo(map); persistState(); syncViewMenu(); }));
 document.getElementById("vmLoc").addEventListener("change",e=>setIgnoreLoc(!e.target.checked));
-setTimeout(()=>{ const vs=document.getElementById("vmSizes"); vs.innerHTML=sizeSlidersHtml(); ["mousedown","click"].forEach(ev=>vs.addEventListener(ev,e=>e.stopPropagation())); wireSizeSliders(vs); },0);
-setTimeout(()=>{ const vk=document.getElementById("vmLocKm"); vk.innerHTML=locKmHtml(); ["mousedown","click"].forEach(ev=>vk.addEventListener(ev,e=>e.stopPropagation())); wireSizeSliders(vk); },0);   // Include me within N km, under Show my location   // the size sliders sit right in the View menu
+setTimeout(()=>{ const vs=document.getElementById("vmSizes"); vs.innerHTML=sizeSlidersHtml(); ["mousedown","click"].forEach(ev=>vs.addEventListener(ev,e=>e.stopPropagation())); wireSizeSliders(vs); },0);   // the size sliders sit right in the View menu
+setTimeout(()=>{ const vk=document.getElementById("vmLocKm"); vk.innerHTML=locKmHtml(); ["mousedown","click"].forEach(ev=>vk.addEventListener(ev,e=>e.stopPropagation())); wireSizeSliders(vk); },0);   // Include me within N km, under Show my location
 
 /* ---- Mobile export: push the field pack to the PRIVATE data repo via the GitHub API ----
    Token + repo live ONLY in this browser's localStorage — never in the .json, never in the public repo. */
@@ -6540,8 +6573,9 @@ function mShowList(){
 /* the map card was tapped: zoom to that action's dot (ringed in gold), in the clear space above the card */
 let mFocusK=null, mTapK=null, mTapT=0;
 /* the cards list only the actions whose dots are on screen right now (re-checked whenever the map stops moving) */
-function mSyncCards(){   // the zoom-to-all button sits snug in the corner, just above the card
-  const row=document.getElementById("mPeeks"), fb=document.getElementById("mFitB"); if(fb) fb.style.bottom=(row?row.offsetHeight+20:12)+"px"; }
+function mSyncCards(){   // the zoom-to-all button sits snug in the corner, just above the card; north sits just under the filter row
+  const row=document.getElementById("mPeeks"), fb=document.getElementById("mFitB"); if(fb) fb.style.bottom=(row?row.offsetHeight+20:12)+"px";
+  const n=document.querySelector(".ma-mapwrap .ma-north"), f=document.querySelector(".ma-mapwrap .ma-flt"); if(n&&f) n.style.top=(f.offsetTop+f.offsetHeight+10)+"px"; }
 function mFlyTo(pts,z,landed,dur){   // glide to these points at zoom z, landing them in the clear space between the filters and the cards
   const m2=mHomeMap; const fb=L.latLngBounds(pts.map(p=>[p.lat,p.lng]));
   if(pts.length>1) z=Math.min(z,m2.getBoundsZoom(fb.pad(0.25),false));
@@ -6954,6 +6988,9 @@ function mBuildHomeMap(acts){
     const m2=L.map(hm,{zoomControl:false,attributionControl:false,zoomSnap:0.25});   // letting go of a pinch barely snaps (labels stay put)
     m2._tl=L.tileLayer(mTileUrl(),{subdomains:["mt0","mt1","mt2","mt3"],maxZoom:22,maxNativeZoom:21,keepBuffer:4,updateWhenIdle:false}).addTo(m2);   // tiles load while you pan, and a ring around the screen stays loaded
     m2._tl.on("loading",()=>{ tilesBusy=true; }).on("load",()=>{ tilesBusy=false; });
+    m2.createPane("lowPane").style.zIndex=150;   // no white flash: blurry zoom-12 tiles fill in under the sharp ones while they load
+    { const lo=L.tileLayer(mTileUrl(),{subdomains:["mt0","mt1","mt2","mt3"],pane:"lowPane",maxZoom:22,maxNativeZoom:12,keepBuffer:2,updateWhenZooming:false});
+      const gate=()=>{ const on=m2.getZoom()>=13; if(on&&!m2.hasLayer(lo)) lo.addTo(m2); else if(!on&&m2.hasLayer(lo)) m2.removeLayer(lo); }; m2.on("zoomend",gate); m2.whenReady(gate); }   // on only once closer than zoom 12
     const pts=[];
     const setPts=acts=>{ pts.length=0;
       acts.forEach(a=>{ const st=mStatus(a); if((st==="open"&&!mShowOpen)||(st==="hold"&&!mShowHold)||(st==="done"&&!mShowDone)) return; const k=mCardKey(a);
