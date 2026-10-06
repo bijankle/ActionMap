@@ -2404,6 +2404,27 @@ function fillCovers(){ document.querySelectorAll("#actList .act-row").forEach(r=
   const textBot=kids.reduce((m,e)=>Math.max(m,e.getBoundingClientRect().bottom),0), cb=c.getBoundingClientRect().bottom;
   if(cb>=textBot-1) c.classList.add("fill"); }); }
 try{ new ResizeObserver(()=>fillCovers()).observe(document.getElementById("actList")); }catch(e){}
+/* The Actions list scrolls one key area per wheel click: each tile's On hold / Done bar, its title, then
+   (when open) each sub-action and the "+ sub-action" box - the next one lands at the top of the list.
+   A trackpad steps once per wheel-click's worth of movement; dragging the scroll bar stays free. */
+{ const list=document.getElementById("actList"); let acc=0, tgt=null, tgtT=0, lastStep=0;
+  const stops=()=>{ const top=list.getBoundingClientRect().top-list.scrollTop, out=[];
+    list.querySelectorAll(".act-row").forEach(r=>{ r.querySelectorAll(".act-top,.bh,.act-tree .st-row,.act-tree .st-neww").forEach(e=>{ if(e.offsetParent) out.push(Math.round(e.getBoundingClientRect().top-top-4)); }); });
+    return [...new Set(out.map(v=>Math.max(0,v)))].sort((x,y)=>x-y); };
+  list.addEventListener("wheel",e=>{
+    if(e.ctrlKey||e.shiftKey||Math.abs(e.deltaX)>Math.abs(e.deltaY)||list.scrollHeight<=list.clientHeight+2) return;
+    e.preventDefault();
+    acc+=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?list.clientHeight:1);
+    if(Math.abs(acc)<50) return;
+    const dir=acc>0?1:-1; acc=0;
+    if(Date.now()-lastStep<60) return; lastStep=Date.now();   // a fast trackpad flick: one step at a time, not a pile-up
+    const cur=(tgt!=null&&Date.now()-tgtT<400)?tgt:list.scrollTop, max=list.scrollHeight-list.clientHeight, st=stops();
+    let next=dir>0?st.find(v=>v>cur+2):[...st].reverse().find(v=>v<cur-2);
+    if(next==null) next=dir>0?max:0; next=Math.max(0,Math.min(max,next));
+    if(Math.abs(next-cur)<1) return;
+    tgt=next; tgtT=Date.now(); list.scrollTo({top:next,behavior:"smooth"});
+  },{passive:false});
+  list.addEventListener("scroll",()=>{ if(tgt!=null&&Math.abs(list.scrollTop-tgt)<1) tgt=null; },{passive:true}); }
 function renderActions(){
   const list=document.getElementById("actList"); if(!list) return;
   warmCards();
