@@ -1836,7 +1836,7 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
   /* ONE label per action: at its first photo (gallery order); photos of it somewhere else are small dots in its colour */
   const members=[]; { const by=new Map(); for(const t of pts){ if(!by.has(t.a.id)) by.set(t.a.id,[]); by.get(t.a.id).push(t); } pts.length=0;
     for(const list of by.values()){ const ord=actPhotos(list[0].a); list.sort((x,y)=>ord.indexOf(x.p)-ord.indexOf(y.p)); const f=list[0].q;
-      for(const t of list){ if(Math.hypot(t.q.x-f.x,t.q.y-f.y)<6) pts.push(t); else members.push(t); } } }
+      for(const t of list){ if(Math.hypot(t.q.x-f.x,t.q.y-f.y)<24) pts.push(t); else members.push(t); } } }   // photos close to the action's first one share its dot (24 px: one dot, not a near-duplicate beside it)
   // photos on no action: grey dots (a number when several share a spot)
   const lg=[]; for(const t of loose){ const g=lg.find(g2=>Math.hypot(g2.x-t.q.x,g2.y-t.q.y)<14); if(g) g.items.push(t); else lg.push({x:t.q.x,y:t.q.y,items:[t]}); }
   // spots: label points within 46 px share a spot; one label per action per spot
@@ -7560,7 +7560,7 @@ function mBuildHomeMap(acts){
        round it (a spoke back to each one's own place), like the desktop. Wheels that would touch join. */
     const layout=z=>{ const groups=[], wheels=[], first=new Map(); wheels.members=[];
       for(const p of pts){ const q=m2.project([p.lat,p.lng],z), t=Object.assign({},p,{q});
-        const f=first.get(p.k); if(!f) first.set(p.k,q); else if(Math.hypot(f.x-q.x,f.y-q.y)>=6){ wheels.members.push(t); continue; }   // ONE label per action (at its first photo); its photos elsewhere are small dots
+        const f=first.get(p.k); if(!f) first.set(p.k,q); else if(Math.hypot(f.x-q.x,f.y-q.y)>=24){ if(!wheels.members.some(m=>m.k===p.k&&Math.hypot(m.q.x-q.x,m.q.y-q.y)<16)) wheels.members.push(t); continue; } else continue;   // ONE label per action (at its first photo); its photos elsewhere are small dots
         const g=groups.find(g2=>Math.hypot(g2.x-q.x,g2.y-q.y)<46);
         if(g) g.items.push(t); else groups.push({x:q.x,y:q.y,items:[t]}); }
       const settle=g=>{ const by=new Map(); for(const t of g.items) if(!by.has(t.k)) by.set(t.k,t); g.labs=[...by.values()];
