@@ -7635,9 +7635,10 @@ function mBuildHomeMap(acts){
       c.classList.add("ma-lift"); els.forEach(x=>x.classList.add("lift"));
       const mv=ev=>{ ev.preventDefault(); const dx=ev.clientX-x0, dy=ev.clientY-y0; els.forEach(x=>{ if(x.tagName.toLowerCase()==="svg") x.style.transform="translate("+dx+"px,"+dy+"px)"; else x.style.translate=dx+"px "+dy+"px"; }); lns.forEach(l=>l.setAttribute("transform","translate("+dx+" "+dy+")")); };
       const up=ev=>{ removeEventListener("pointermove",mv); removeEventListener("pointerup",up); removeEventListener("pointercancel",up);
-        c.classList.remove("ma-lift"); m2.dragging.enable(); m2._moving=false; mMoveEndT=Date.now();
+        c.classList.remove("ma-lift"); m2.dragging.enable(); m2._moving=false;
         const ll1=ev.type==="pointercancel"?ll0:m2.containerPointToLatLng([ev.clientX-r0.left,ev.clientY-r0.top]), dLat=ll1.lat-ll0.lat, dLng=ll1.lng-ll0.lng;
-        if(Math.hypot(ev.clientX-x0,ev.clientY-y0)<4){ els.forEach(x=>{ x.style.translate=""; x.style.transform=""; x.classList.remove("lift"); }); lns.forEach(l=>l.removeAttribute("transform")); return; }
+        if(Math.hypot(ev.clientX-x0,ev.clientY-y0)<4){ els.forEach(x=>{ x.style.translate=""; x.style.transform=""; x.classList.remove("lift"); }); lns.forEach(l=>{ if(l.tagName==="circle"&&!l.hasAttribute("data-ks")) l.remove(); else l.removeAttribute("transform"); }); return; }   // a tap, not a move: it picks the action (its card comes up) as usual
+        mMoveEndT=Date.now();   // (the click that ends a real move is swallowed)
         mMutate(()=>{ if(a._new){ const p=mPend(), x=(p.newActs||[])[a._ni]; if(x&&x.loc){ x.loc={lat:x.loc.lat+dLat,lng:x.loc.lng+dLng}; mPendSave(p); } return; }
           const pos=Object.assign({},mCh(a.id).pos||{}); for(const ph of mPhotos(a)) if(ph.lat!=null&&ph.k) pos[ph.k]=[+ph.lat+dLat,+ph.lng+dLng];
           const patch={pos}, L0=mLocOf(a); if(L0) patch.loc={lat:L0.lat+dLat,lng:L0.lng+dLng}; mSetCh(a.id,patch); });
