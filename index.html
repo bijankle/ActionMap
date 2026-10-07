@@ -957,7 +957,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-movedone[hidden]{display:none;} .ma-movedone svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;}
   body.mobile .ma-dot,body.mobile .ma-sphit{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}   /* a long press lifts the action - never the phone's copy / select menu */
   .ma-moving .ma-dot{cursor:move;} .ma-dot.lift,.ma-mem.lift{box-shadow:0 8px 18px #0007;} .ma-lift .ma-dot.lift{z-index:5;}
-  position:absolute;left:-14px;top:-14px;width:28px;height:28px;border-radius:50%;}   /* the tap area round a phone spot dot */
+  .ma-sphit{position:absolute;left:-14px;top:-14px;width:28px;height:28px;border-radius:50%;}   /* the tap area round a phone spot dot */
   .ma-fan{position:absolute;left:0;top:0;display:block;overflow:visible;pointer-events:none;}   /* pinned to the exact point (as an inline svg it sat on the text baseline, ~10 px low - lines ran past their dots) */ .ma-fan line{stroke:#fff;stroke-width:2.5;filter:drop-shadow(0 1px 1.5px #000a);} .ma-fan circle{fill:#1d2430;stroke:#fff;stroke-width:2;}   /* stacked actions, fanned out at full zoom */
   .ldot{position:absolute;left:0;top:0;transform:translate(-50%,-50%);width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:#9aa3ad;border:2px solid #fff;box-shadow:0 0 0 1px #6b7580,0 2px 4px #0005;cursor:pointer;}
   .ldot.n{width:auto;min-width:22px;height:22px;border-radius:11px;padding:0 5px;color:#fff;font:700 11px/18px var(--font);text-align:center;}   /* photos on no action, several on one spot */
