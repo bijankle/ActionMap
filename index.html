@@ -1969,6 +1969,7 @@ function linkedTo(ids){ const out=new Set(ids), keys=new Set(); for(const id of 
   for(const q of photos) if(q.lat!=null&&keys.has(q.lat+","+q.lng)&&!(q.acts||[]).some(id=>actById(id))) out.add(q.id); return [...out]; }   // (loose photos only: another action's photo on the same spot is never dragged along)
 map.on("mousemove",e=>{
   if(!dotDrag) return;
+  if(e.originalEvent){ const cp1=map.mouseEventToContainerPoint(e.originalEvent); e={originalEvent:e.originalEvent,containerPoint:cp1,latlng:map.containerPointToLatLng(cp1)}; }   // the real pointer: over a marker Leaflet reports the MARKER's spot - the dragged dot stuck, then jumped a label's width (coarse drops)
   if(!dotDrag.moved){ if(!dotDrag.cp0){ dotDrag.cp0=e.containerPoint; return; } if(e.containerPoint.distanceTo(dotDrag.cp0)<4) return; }   // a click that wobbles a pixel stays a click (now that every action drags at once)
   dotDrag.moved=true;
   const dLat=e.latlng.lat-dotDrag.start.lat, dLng=e.latlng.lng-dotDrag.start.lng;
@@ -1979,8 +1980,13 @@ map.on("mousemove",e=>{
   if(hlMarker&&dotDrag.viewerPhoto) hlMarker.setLatLng(e.latlng);
   /* dropping onto another dot groups them: the nearest other dot within reach gets a gold ring */
   const moving=new Set(dotDrag.group?dotDrag.group:(dotDrag.p?[dotDrag.p.id]:[])), cp=map.latLngToContainerPoint(e.latlng);
-  let best=null, bd=26;   // the nearest other label / grey dot within reach; an action's label wins over a loose dot (an action being moved just goes where it's dropped)
-  if(dotDrag.act==null) for(const h of mapHits){ if(h.pids.every(id=>moving.has(id))) continue; const d=map.latLngToContainerPoint(h.ll).distanceTo(cp); if(d<bd-0.5||(d<=bd+0.5&&best&&h.act!=null&&best.act==null)){ bd=d; best=h; } }
+  /* grouping only when it's meant: the pointer right on another dot (12 px) or over another action's label. Anywhere else
+     the drop lands exactly where it's let go - never pulled onto a nearby dot, nor back onto its own spot */
+  let best=null, bd=12; const mr=map.getContainer().getBoundingClientRect();
+  if(dotDrag.act==null) for(const h of mapHits){ if(h.pids.some(id=>moving.has(id))) continue;
+    const lab=h.act!=null&&h.m&&h.m.getElement()?h.m.getElement().querySelector(".ma-dot"):null;
+    if(lab){ const r=lab.getBoundingClientRect(), x=cp.x+mr.left, y=cp.y+mr.top; if(x>=r.left-2&&x<=r.right+2&&y>=r.top-2&&y<=r.bottom+2){ best=h; bd=0; break; } continue; }
+    const d=map.latLngToContainerPoint(h.ll).distanceTo(cp); if(d<bd){ bd=d; best=h; } }
   dotDrag.snap=best?best.rep:null; dotDrag.snapAct=best?best.act:null;
   if(best){ if(!snapMk) snapMk=L.marker(best.ll,{interactive:false,zIndexOffset:2000,icon:L.divIcon({className:"",html:'<div class="snap-ring"></div><div class="snap-tip">Drop to group with this '+(best.act!=null?'action':'photo')+'</div>',iconSize:[52,52],iconAnchor:[26,26]})}).addTo(map); else snapMk.setLatLng(best.ll); }
   else if(snapMk){ map.removeLayer(snapMk); snapMk=null; }
