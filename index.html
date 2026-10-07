@@ -1840,9 +1840,9 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
     const off=Math.hypot(x-lab.q.x,y-lab.q.y)>2, grab=canMove&&!off;   // a label away from its spot (a callout) never drags - the spot itself does (it's the real location)
     const m=L.marker(ll,{keyboard:false,zIndexOffset:hasOpen?900:st==="open"?300:st==="hold"?200:100,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(st==="open"?"":" "+st)+(selActs.has(a.id)||hasOpen||hl?' sel':'')+'" data-l="'+a.id+'"'+(grab?' style="cursor:move"':'')+'>'+actNo(a)+'</div>',iconSize:[0,0],iconAnchor:[0,0]})});
     let arrow=null; if(hl||hasOpen){ arrow=mkHlDot(ll.lat,ll.lng,14); arrow.setOpacity(0); markerLayer.addLayer(arrow); if(hasOpen) _openInArrowed=true; }   // the label's own red ring shows it (the hidden mark still moves with a drag)
-    wireMapHit(m,{ll,pids,rep:lab.rep,act:a.id,grab,arrow,noMenu:off,hover:actPhotos(a)[0]||lab.rep,
+    const mh={ll,pids,rep:lab.rep,act:a.id,grab,arrow,noMenu:off,hover:actPhotos(a)[0]||lab.rep,
       open:()=>{ if(!(selActs.size===1&&selActs.has(a.id))){ selActs=new Set([a.id]); lastActClick=a.id; rebuildActionFilter(); refreshActSelClasses(); drawActionRings(); updateGallery(); const row=document.querySelector('#actList .act-row[data-aid="'+a.id+'"]'); if(row) row.scrollIntoView({block:"nearest"}); }
-        openViewer(lab.rep); }});
+        openViewer(lab.rep); }}; wireMapHit(m,mh);
     markerLayer.addLayer(m);
     if(off){ const sl=llOf(lab.q.x,lab.q.y), sm=L.marker(sl,{keyboard:false,zIndexOffset:hasOpen?950:350,icon:L.divIcon({className:"",html:'<div class="ma-spot '+st+(canMove?' grab':'')+'"></div>',iconSize:[0,0],iconAnchor:[0,0]})});   // the spot: drag handle (when selected/open), a click opens the action like its label
       const hs={ll:sl,pids,rep:lab.rep,act:a.id,grab:canMove,arrow,hover:actPhotos(a)[0]||lab.rep};
@@ -1854,7 +1854,7 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
           else map.getContainer().querySelectorAll('.ma-fan line[data-l="'+a.id+'"]').forEach(l=>l.style.visibility="hidden"); } });   // (a wheel's shared spokes can't move: that one hides till the drop)
       sm.on("click",()=>{ uiClickT=Date.now(); if(Date.now()-dotDropT<450) return; m.fire("click",{originalEvent:{}}); });
       sm.on("contextmenu",e=>{ L.DomEvent.stop(e.originalEvent); uiClickT=Date.now(); openDotMenu(lab.rep,e.originalEvent); });   // right-click: on the dot, like the drag
-      markerLayer.addLayer(sm); } };
+      markerLayer.addLayer(sm); mh.extra=[sm].concat(lineMk?[lineMk]:[]); } };   // its spot and line come along when a selection is dragged
   /* 1) where each label goes: a lone action sits on its spot; several share a wheel round their spots */
   for(const g of groups){ const n=g.mem.length;
     if(n===1){ const lab=g.labs[0], k=lblZ(), dx=LBL_W0*k/2+9, dy=14*k+9;   // a lone action: its dot on the spot, the label up and to the right at 45 degrees, a short line between
@@ -1938,6 +1938,12 @@ function startMapDrag(m,h){
   const group=a?actPhotos(a).filter(p=>p.lat!=null).map(p=>p.id)   // an action's label: the whole action moves — its photos only, never another action's on the same spot
     :linkedTo(sel?[...new Set([...selSet,...h.pids])]:h.pids);   // a selection moves together; loose photos joined to it come too
   dotDrag={p:null,hit:m,dot:m,ring:h.arrow||null,start:m.getLatLng(),group,act:a?a.id:null,origs:new Map(),viewerPhoto:false,moved:false};
+  /* everything else on the map that is moving shows it: each other selected dot, label, spot and line glides with the pointer */
+  const gs=new Set(group), mv=new Set([m]), add=mk=>{ if(!mk||mv.has(mk)) return; mv.add(mk); dotDrag.origs.set("g"+L.stamp(mk),{ll:mk.getLatLng(),hit:mk,dot:mk}); };
+  if(hlMarker&&gs.has(hlMarker._pid)) add(hlMarker);
+  for(const o of mapHits){ if(!o.m||o===h||!o.pids.length||!o.pids.every(id=>gs.has(id))) continue;
+    add(o.m); add(o.arrow); (o.extra||[]).forEach(add);
+    if(o.act!=null&&!(o.extra||[]).some(x=>x.getElement&&x.getElement()&&x.getElement().querySelector(".ma-fan"))) map.getContainer().querySelectorAll('.ma-fan line[data-l="'+o.act+'"]').forEach(l=>l.style.visibility="hidden"); }   // a wheel's shared spokes can't move: that one hides till the drop
 }
 /* Reposition dots: open a photo (its dot gets the white ring) OR select dots with Select area —
    then hold and drag a selected dot. A multi-selection moves together, keeping relative positions.
@@ -1979,7 +1985,7 @@ window.addEventListener("mouseup",()=>{
   if(!dotDrag) return; const d=dotDrag; dotDrag=null;
   map.getContainer().style.cursor=""; if(!drawing&&!measuring){ try{ map.dragging.enable(); }catch(e){} }
   if(snapMk){ map.removeLayer(snapMk); snapMk=null; }
-  if(!d.moved) return;
+  if(!d.moved){ map.getContainer().querySelectorAll('.ma-fan line[data-l]').forEach(l=>l.style.visibility=""); return; }   // a press without a move: hidden spokes come back
   dotDropT=Date.now();   // swallow the click that follows the drop so it doesn't re-open the viewer
   if(d.snap&&dropSnap(d)) return;   // dropped on another dot: grouped there
   const ll=d.dot.getLatLng(), dLat=ll.lat-d.start.lat, dLng=ll.lng-d.start.lng;
