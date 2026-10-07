@@ -5603,11 +5603,18 @@ function copyWholePhoto(p){
   try{ navigator.clipboard.write([new ClipboardItem({"image/png":blobP})]).catch(()=>alert("The browser blocked clipboard access here. Use Save image as\u2026 instead.")); }   // promise form keeps the click's permission while the image renders
   catch(err){ alert("The browser blocked clipboard access here. Use Save image as\u2026 instead."); }
 }
-function saveWholePhoto(p){
-  renderHQ(p,4096,true).then(c=>c.toBlob(blob=>{ if(!blob){ alert("Could not render the image."); return; }
-    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=(p.name||"image").replace(/\.[^.]+$/,"")+((p.marks||[]).length?"-marked":"")+".jpg";
-    document.body.appendChild(a); a.click(); setTimeout(()=>{ a.remove(); URL.revokeObjectURL(a.href); },500);
-  },"image/jpeg",0.92)).catch(()=>alert("No image to save yet."));
+/* Save image as: asks where to save it (folder + name) first, then writes it there. Browsers without a save
+   dialog fall back to a normal download. */
+function saveWholePhoto(p){ if(!p) return;
+  const name=(p.name||"image").replace(/\.[^.]+$/,"")+((p.marks||[]).length?"-marked":"")+".jpg";
+  const blobOf=()=>renderHQ(p,4096,true).then(c=>new Promise((ok,no)=>c.toBlob(b=>b?ok(b):no(new Error("render")),"image/jpeg",0.92)));
+  if(window.showSaveFilePicker){
+    window.showSaveFilePicker({suggestedName:name,id:"am-img",types:[{description:"JPEG image",accept:{"image/jpeg":[".jpg",".jpeg"]}}]})   // opened straight from the click (the browser needs that)
+      .then(h=>blobOf().then(async b=>{ const w=await h.createWritable(); await w.write(b); await w.close(); }).catch(()=>alert("Could not save the image.")))
+      .catch(e=>{ if(e&&e.name!=="AbortError") alert("Could not save the image."); });   // Cancel: nothing happens
+    return; }
+  blobOf().then(blob=>{ const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name;
+    document.body.appendChild(a); a.click(); setTimeout(()=>{ a.remove(); URL.revokeObjectURL(a.href); },500); }).catch(()=>alert("No image to save yet."));
 }
 
 /* ---- file info popover ---- */
