@@ -45,10 +45,11 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
 <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <script>/* the app icon wears the theme colour: the browser-tab icon, and the icon a phone saves to its home screen from now on */
 function amIcon(){ try{ const c=(getComputedStyle(document.documentElement).getPropertyValue("--thb")||"#475569").trim()||"#475569";
-  const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="'+c+'"/><text x="50" y="71" font-size="58" font-family="system-ui,-apple-system,Segoe UI,Roboto,sans-serif" font-weight="800" text-anchor="middle" fill="#ffffff">A</text></svg>';
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="18" fill="'+c+'"/><rect x="6" y="6" width="52" height="52" rx="13" fill="none" stroke="#ffffff" stroke-width="2.5"/><text x="32" y="46" text-anchor="middle" font-family="system-ui,Segoe UI,Arial,sans-serif" font-weight="800" font-size="38" fill="#ffffff">A</text></svg>';   // exactly the logo in the app (the white inner line too)
   const fi=document.querySelector('link[rel="icon"]'); if(fi) fi.href="data:image/svg+xml,"+encodeURIComponent(svg);
-  const cv=document.createElement("canvas"); cv.width=cv.height=180; const g=cv.getContext("2d"); g.fillStyle=c; g.fillRect(0,0,180,180);
-  g.fillStyle="#fff"; g.font="800 104px system-ui,-apple-system,Segoe UI,Roboto,sans-serif"; g.textAlign="center"; g.textBaseline="alphabetic"; g.fillText("A",90,128);
+  const cv=document.createElement("canvas"); cv.width=cv.height=180; const g=cv.getContext("2d"), k=180/64; g.fillStyle=c; g.fillRect(0,0,180,180);   // (the phone rounds the corners itself)
+  g.strokeStyle="#fff"; g.lineWidth=2.5*k; g.beginPath(); g.roundRect(6*k,6*k,52*k,52*k,13*k); g.stroke();
+  g.fillStyle="#fff"; g.font="800 "+(38*k)+"px system-ui,Segoe UI,Arial,sans-serif"; g.textAlign="center"; g.textBaseline="alphabetic"; g.fillText("A",32*k,46*k);
   const ai=document.querySelector('link[rel="apple-touch-icon"]'); if(ai) ai.href=cv.toDataURL("image/png"); }catch(e){} }
 document.addEventListener("DOMContentLoaded",amIcon);</script>
 <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
