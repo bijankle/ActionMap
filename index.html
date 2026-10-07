@@ -1821,7 +1821,7 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
     const off=Math.hypot(x-lab.q.x,y-lab.q.y)>2, grab=canMove&&!off;   // a label away from its spot (a callout) never drags - the spot itself does (it's the real location)
     const m=L.marker(ll,{keyboard:false,zIndexOffset:hasOpen?900:st==="open"?300:st==="hold"?200:100,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(st==="open"?"":" "+st)+(selActs.has(a.id)||hasOpen||hl?' sel':'')+'" data-l="'+a.id+'"'+(grab?' style="cursor:move"':'')+'>'+actNo(a)+'</div>',iconSize:[0,0],iconAnchor:[0,0]})});
     let arrow=null; if(hl||hasOpen){ arrow=mkHlDot(ll.lat,ll.lng,14); arrow.setOpacity(0); markerLayer.addLayer(arrow); if(hasOpen) _openInArrowed=true; }   // the label's own red ring shows it (the hidden mark still moves with a drag)
-    wireMapHit(m,{ll,pids,rep:lab.rep,act:a.id,grab,arrow,hover:actPhotos(a)[0]||lab.rep,
+    wireMapHit(m,{ll,pids,rep:lab.rep,act:a.id,grab,arrow,noMenu:off,hover:actPhotos(a)[0]||lab.rep,
       open:()=>{ if(!(selActs.size===1&&selActs.has(a.id))){ selActs=new Set([a.id]); lastActClick=a.id; rebuildActionFilter(); refreshActSelClasses(); drawActionRings(); updateGallery(); const row=document.querySelector('#actList .act-row[data-aid="'+a.id+'"]'); if(row) row.scrollIntoView({block:"nearest"}); }
         openViewer(lab.rep); }});
     markerLayer.addLayer(m);
@@ -1834,6 +1834,7 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
           if(lineMk) dotDrag.origs.set("ln",{ll:lineMk.getLatLng(),hit:lineMk,dot:lineMk});
           else map.getContainer().querySelectorAll('.ma-fan line[data-l="'+a.id+'"]').forEach(l=>l.style.visibility="hidden"); } });   // (a wheel's shared spokes can't move: that one hides till the drop)
       sm.on("click",()=>{ uiClickT=Date.now(); if(Date.now()-dotDropT<450) return; m.fire("click",{originalEvent:{}}); });
+      sm.on("contextmenu",e=>{ L.DomEvent.stop(e.originalEvent); uiClickT=Date.now(); openDotMenu(lab.rep,e.originalEvent); });   // right-click: on the dot, like the drag
       markerLayer.addLayer(sm); } };
   /* 1) where each label goes: a lone action sits on its spot; several share a wheel round their spots */
   for(const g of groups){ const n=g.mem.length;
@@ -1909,7 +1910,7 @@ function wireMapHit(m,h){
       const all=h.pids.every(id=>selSet.has(id)); for(const id of h.pids){ if(all) selSet.delete(id); else selSet.add(id); } setAreaBtn(); renderClusters(); return; }
     if(selSet.size){ selSet=new Set(h.pids); setAreaBtn(); }   // plain click collapses the selection to just these
     h.open(); });
-  m.on("contextmenu",e=>{ L.DomEvent.stop(e.originalEvent); uiClickT=Date.now(); openDotMenu(h.rep,e.originalEvent); });
+  m.on("contextmenu",e=>{ L.DomEvent.stop(e.originalEvent); uiClickT=Date.now(); if(h.noMenu) return; openDotMenu(h.rep,e.originalEvent); });   // a callout's label: the dot has the menu (it's the location)
 }
 function startMapDrag(m,h){
   hideHover(); try{ map.dragging.disable(); }catch(e){}
