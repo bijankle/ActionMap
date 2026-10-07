@@ -424,9 +424,9 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .hoverview img{display:block;width:min(270px,40vh);height:min(270px,40vh);object-fit:cover;border-radius:6px;background:#ECEEF1;}
   .hoverview .cap{font-family:var(--font);font-size:var(--fl);color:var(--muted);margin-top:5px;text-align:center;max-width:min(270px,40vh);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
   @keyframes hlpulse{0%,100%{stroke-opacity:1;}50%{stroke-opacity:.25;}}
-  .sel-arrow{position:relative;width:0;height:0;pointer-events:none;}   /* selected dot / bubble: red arrow above it, the phone's arrow */
-  .sel-arrow i{position:absolute;left:-4px;top:calc(-1 * var(--r) - 33px);width:8px;height:14px;background:#E8281E;border-radius:2px;}
-  .sel-arrow b{position:absolute;left:-11px;top:calc(-1 * var(--r) - 21px);border-left:11px solid transparent;border-right:11px solid transparent;border-top:15px solid #E8281E;filter:drop-shadow(0 2px 2px #0005);}
+  .sel-arrow{position:relative;width:0;height:0;pointer-events:none;}   /* the selected photo dot: a red ring round it (labels wear their own red ring, .ma-dot.sel) */
+  .sel-arrow i{position:absolute;left:calc(-1 * var(--r) - 4px);top:calc(-1 * var(--r) - 4px);width:calc(2 * var(--r) + 8px);height:calc(2 * var(--r) + 8px);border-radius:50%;box-shadow:0 0 0 3px #E8281E,0 2px 6px #0006;}
+  .sel-arrow b{display:none;}
 
   .leaflet-control-layers,.leaflet-bar{background:#fff!important;border:1px solid var(--line2)!important;border-radius:9px!important;box-shadow:0 6px 18px #1e1f2222!important;color:var(--text)!important;}
   .leaflet-control-layers-expanded{padding:9px 12px!important;font-family:var(--font);font-size:var(--fb);}
@@ -888,10 +888,8 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-fit svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
   .ma-fit:active{background:var(--th-t);border-color:var(--gold);}
   /* the action you picked: a red arrow points down at its dot (or at the bubble it sits in), bobs twice and fades */
-  .ma-dot.flash::before{content:"";position:absolute;left:50%;top:-30px;width:8px;height:15px;margin-left:-4px;background:#E8281E;border-radius:2px;}
-  .ma-dot.flash::after{content:"";position:absolute;left:50%;top:-17px;margin-left:-12px;border-left:12px solid transparent;border-right:12px solid transparent;border-top:16px solid #E8281E;filter:drop-shadow(0 2px 2px #0005);}
-  .ma-dot.flash::before,.ma-dot.flash::after{animation:maarrow 1.5s ease-in-out forwards;}
-  @keyframes maarrow{0%,30%,60%{transform:translateY(0);opacity:1;}15%,45%{transform:translateY(-8px);}80%{opacity:1;}100%{transform:translateY(0);opacity:0;}}
+  .ma-dot.sel{box-shadow:0 0 0 3px #E8281E,0 3px 8px #0006;}   /* the selected action: a red ring outside its white border, its callout line red too */
+  .ma-fan line.sel{stroke:#E8281E;stroke-width:3;}
   .ma-dot{position:absolute;left:0;top:0;transform:translate(-50%,-50%);width:auto;padding:6px 7px 6px 25px;white-space:nowrap;box-sizing:border-box;border-radius:14px;background:#fff var(--ic-open) no-repeat 4px center/17px 17px;border:2px solid #fff;box-shadow:0 3px 8px #0006;color:#111;font:800 13px/1 var(--font);letter-spacing:.5px;text-box:trim-both cap alphabetic;}   /* a white pill: the status icon, then the number - black, centred, equal space all round */
   .ma-dot.hold{background-image:var(--ic-hold);}
   .ma-dot.done{background-image:var(--ic-done);}
@@ -1767,7 +1765,7 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
   // spots: label points within 46 px share a spot; one label per action per spot
   const groups=[];
   for(const t of pts){ const g=groups.find(g2=>Math.hypot(g2.x-t.q.x,g2.y-t.q.y)<46); if(g) g.items.push(t); else groups.push({x:t.q.x,y:t.q.y,items:[t],loose:[]}); }
-  for(const d of lg){ const g=groups.find(g2=>Math.hypot(g2.x-d.x,g2.y-d.y)<46); if(g){ g.loose.push(d); d.used=true; } }   // a grey dot on an action's spot joins its wheel (never hidden under a label)
+  // a grey dot (photo on no action) stays on its own spot - no line of its own; labels move off it (step 2 below)
   const settle=g=>{ const by=new Map(); for(const t of g.items){ if(!by.has(t.a.id)) by.set(t.a.id,{a:t.a,ps:[]}); by.get(t.a.id).ps.push(t); }
     g.labs=[...by.values()].map(lab=>{ const ord=actPhotos(lab.a); lab.ps.sort((x,y)=>ord.indexOf(x.p)-ord.indexOf(y.p)); lab.rep=lab.ps[0].p; lab.q=lab.ps[0].q; return lab; });   // rep = the action's first photo (gallery order) at this spot
     g.mem=g.labs.map(l=>({l,q:l.q})).concat(g.loose.map(d=>({d,q:{x:d.x,y:d.y}})));
@@ -1780,8 +1778,8 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
   const llOf=(x,y)=>map.unproject([x,y],z);
   const mkLabel=(lab,x,y)=>{ const a=lab.a, st=a.done?"done":a.hold?"hold":"open", pids=lab.ps.map(t=>t.p.id), ll=llOf(x,y);
     const hl=pids.some(id=>hlSet.has(id)), hasOpen=!!op&&pids.includes(op.id), grab=pids.some(id=>selSet.has(id))||hasOpen||selActs.has(a.id);
-    const m=L.marker(ll,{keyboard:false,zIndexOffset:hasOpen?900:st==="open"?300:st==="hold"?200:100,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(st==="open"?"":" "+st)+(selActs.has(a.id)||hasOpen?' sel':'')+'" data-l="'+a.id+'"'+(grab?' style="cursor:move"':'')+'>'+actNo(a)+'</div>',iconSize:[0,0],iconAnchor:[0,0]})});
-    let arrow=null; if(hl||hasOpen){ arrow=mkHlDot(ll.lat,ll.lng,14); markerLayer.addLayer(arrow); if(hasOpen) _openInArrowed=true; }
+    const m=L.marker(ll,{keyboard:false,zIndexOffset:hasOpen?900:st==="open"?300:st==="hold"?200:100,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(st==="open"?"":" "+st)+(selActs.has(a.id)||hasOpen||hl?' sel':'')+'" data-l="'+a.id+'"'+(grab?' style="cursor:move"':'')+'>'+actNo(a)+'</div>',iconSize:[0,0],iconAnchor:[0,0]})});
+    let arrow=null; if(hl||hasOpen){ arrow=mkHlDot(ll.lat,ll.lng,14); arrow.setOpacity(0); markerLayer.addLayer(arrow); if(hasOpen) _openInArrowed=true; }   // the label's own red ring shows it (the hidden mark still moves with a drag)
     wireMapHit(m,{ll,pids,rep:lab.rep,act:a.id,grab,arrow,hover:actPhotos(a)[0]||lab.rep,
       open:()=>{ if(!(selActs.size===1&&selActs.has(a.id))){ selActs=new Set([a.id]); lastActClick=a.id; rebuildActionFilter(); refreshActSelClasses(); drawActionRings(); updateGallery(); const row=document.querySelector('#actList .act-row[data-aid="'+a.id+'"]'); if(row) row.scrollIntoView({block:"nearest"}); }
         openViewer(lab.rep); }});
@@ -1813,10 +1811,10 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
   /* 3) draw: spokes and spot dots, then the labels */
   for(const g of groups){ const n=g.mem.length, ls=g.ls;
     if(n===1){ const o=ls[0];
-      if(o.moved) markerLayer.addLayer(L.marker(llOf(o.q.x,o.q.y),{interactive:false,keyboard:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1"><line data-l="'+o.l.a.id+'"'+((selActs.has(o.l.a.id)||(!!op&&o.l.ps.some(t=>t.p.id===op.id)))?' class="sel"':'')+' x1="0" y1="0" x2="'+(o.x-o.q.x).toFixed(1)+'" y2="'+(o.y-o.q.y).toFixed(1)+'"/><circle cx="0" cy="0" r="4"/></svg>',iconSize:[0,0],iconAnchor:[0,0]})}));
+      if(o.moved) markerLayer.addLayer(L.marker(llOf(o.q.x,o.q.y),{interactive:false,keyboard:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1"><line data-l="'+o.l.a.id+'"'+((selActs.has(o.l.a.id)||o.l.ps.some(t=>hlSet.has(t.p.id)||(!!op&&t.p.id===op.id)))?' class="sel"':'')+' x1="0" y1="0" x2="'+(o.x-o.q.x).toFixed(1)+'" y2="'+(o.y-o.q.y).toFixed(1)+'"/><circle cx="0" cy="0" r="4"/></svg>',iconSize:[0,0],iconAnchor:[0,0]})}));
       mkLabel(o.l,o.x,o.y); continue; }
     const spokes=[], spots=new Set();
-    ls.forEach(o=>{ spokes.push('<line'+(o.l?' data-l="'+o.l.a.id+'"'+((selActs.has(o.l.a.id)||(!!op&&o.l.ps.some(t=>t.p.id===op.id)))?' class="sel"':''):'')+' x1="'+(o.q.x-g.cx).toFixed(1)+'" y1="'+(o.q.y-g.cy).toFixed(1)+'" x2="'+(o.x-g.cx).toFixed(1)+'" y2="'+(o.y-g.cy).toFixed(1)+'"/>'); spots.add(Math.round(o.q.x-g.cx)+","+Math.round(o.q.y-g.cy)); });
+    ls.forEach(o=>{ spokes.push('<line'+(o.l?' data-l="'+o.l.a.id+'"'+((selActs.has(o.l.a.id)||o.l.ps.some(t=>hlSet.has(t.p.id)||(!!op&&t.p.id===op.id)))?' class="sel"':''):'')+' x1="'+(o.q.x-g.cx).toFixed(1)+'" y1="'+(o.q.y-g.cy).toFixed(1)+'" x2="'+(o.x-g.cx).toFixed(1)+'" y2="'+(o.y-g.cy).toFixed(1)+'"/>'); spots.add(Math.round(o.q.x-g.cx)+","+Math.round(o.q.y-g.cy)); });
     markerLayer.addLayer(L.marker(llOf(g.cx,g.cy),{interactive:false,keyboard:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1">'+spokes.join("")+[...spots].map(t=>{ const [x,y]=t.split(","); return '<circle cx="'+x+'" cy="'+y+'" r="4"/>'; }).join("")+'</svg>',iconSize:[0,0],iconAnchor:[0,0]})}));
     for(const o of ls){ if(o.l) mkLabel(o.l,o.x,o.y); else mkLoose(o.d,o.x,o.y); }
     const sp=new Map(); for(const o of ls){ const k=Math.round(o.q.x)+","+Math.round(o.q.y), ps=o.l?o.l.ps.map(t=>t.p):o.d.items.map(t=>t.p);   // each spot on a wheel is a drop target too
@@ -7430,6 +7428,12 @@ function mBuildHomeMap(acts){
             if(b-t0>sb.y1-sb.y0) dy=(sb.y0+sb.y1-t0-b)/2; else if(t0<sb.y0) dy=sb.y0-t0; else if(b>sb.y1) dy=sb.y1-b; }
           if(dx||dy) for(const t of ls){ t.lx+=dx; t.ly+=dy; } }
         wheels.push({cx:g.cx,cy:g.cy,ls}); }
+      { const LW=66*lz, LH=26*lz, dots=wheels.members.map(t=>t.q), labs=[];   // like the desktop: a lone label never covers a dot or another label - it steps off, a line back to its spot
+        for(const w of wheels){ if(w.one){ dots.push(w.one.q); w.one.lx=w.one.q.x; w.one.ly=w.one.q.y; labs.push(w.one); } else for(const t of w.ls){ dots.push(t.q); labs.push(t); } }
+        const covers=(o,x,y)=>dots.some(q=>q!==o.q&&Math.abs(q.x-x)<LW/2+7&&Math.abs(q.y-y)<LH/2+7), clash=(o,x,y)=>labs.some(r=>r!==o&&Math.abs(r.lx-x)<LW+4&&Math.abs(r.ly-y)<LH+4);
+        for(const w of wheels){ const o=w.one; if(!o||(!covers(o,o.lx,o.ly)&&!clash(o,o.lx,o.ly))) continue; let pick=null;
+          for(const r of [LH/2+16,LH/2+28,LH/2+42,LH/2+60,LH/2+82]){ for(let k=0;k<16&&!pick;k++){ const a2=-Math.PI/2+k*Math.PI/8, x=o.q.x+Math.cos(a2)*r*1.6, y=o.q.y+Math.sin(a2)*r; if(!covers(o,x,y)&&!clash(o,x,y)) pick=[x,y]; } if(pick) break; }
+          if(pick){ o.lx=pick[0]; o.ly=pick[1]; o.moved=true; } } }
       return wheels; };
     const dot=(k,a,ll)=>{ const st=mStatus(a);   // one action's label
       L.marker(ll,{zIndexOffset:k===mFocusK?800:st==="open"?300:st==="hold"?100:0,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(a._new?' new':st==="open"?'':' '+st)+(k===mFocusK?' focus sel':'')+(k===mFlashK?' flash':'')+'" data-l="'+k+'">'+(a._new?'•':actNo(a))+'</div>',iconSize:[0,0],iconAnchor:[0,0]})})
@@ -7438,7 +7442,10 @@ function mBuildHomeMap(acts){
       for(const t of wheels.members||[]){ const st=mStatus(t.a); L.marker([t.lat,t.lng],{zIndexOffset:-50,icon:L.divIcon({className:"",html:'<div class="ma-mem'+(st==="open"?"":" "+st)+'"></div>',iconSize:[0,0],iconAnchor:[0,0]})})
         .on("click",()=>{ if(!mAdding) mFocusCard(t.k); }).addTo(lay); }
       for(const w of wheels){
-        if(w.one){ dot(w.one.k,w.one.a,[w.one.lat,w.one.lng]); continue; }
+        if(w.one){ const o=w.one;
+          if(o.moved){ L.marker([o.lat,o.lng],{interactive:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1"><line data-l="'+o.k+'"'+(o.k===mFocusK?' class="sel"':'')+' x1="0" y1="0" x2="'+(o.lx-o.q.x).toFixed(1)+'" y2="'+(o.ly-o.q.y).toFixed(1)+'"/><circle cx="0" cy="0" r="4"/></svg>',iconSize:[0,0],iconAnchor:[0,0]})}).addTo(lay);
+            dot(o.k,o.a,m2.unproject([o.lx,o.ly],z)); }
+          else dot(o.k,o.a,[o.lat,o.lng]); continue; }
         const spots=new Set(); const svg=w.ls.map(t=>{ spots.add(Math.round(t.q.x-w.cx)+","+Math.round(t.q.y-w.cy)); return '<line data-l="'+t.k+'"'+(t.k===mFocusK?' class="sel"':'')+' x1="'+(t.q.x-w.cx).toFixed(1)+'" y1="'+(t.q.y-w.cy).toFixed(1)+'" x2="'+(t.lx-w.cx).toFixed(1)+'" y2="'+(t.ly-w.cy).toFixed(1)+'"/>'; }).join("")
           +[...spots].map(t=>{ const [x,y]=t.split(","); return '<circle cx="'+x+'" cy="'+y+'" r="4"/>'; }).join("");
         L.marker(m2.unproject([w.cx,w.cy],z),{interactive:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1">'+svg+'</svg>',iconSize:[0,0],iconAnchor:[0,0]})}).addTo(lay);
