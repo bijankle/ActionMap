@@ -7619,12 +7619,15 @@ function mBuildHomeMap(acts){
     const startMove=(e,k,a)=>{ m2.dragging.disable(); m2._moving=true; mTapK=null;
       const c=m2.getContainer(), r0=c.getBoundingClientRect(), x0=e.clientX, y0=e.clientY, ll0=m2.containerPointToLatLng([x0-r0.left,y0-r0.top]);
       const els=[...c.querySelectorAll('.ma-dot[data-l="'+k+'"],.ma-sphit[data-l="'+k+'"],.ma-mem[data-l="'+k+'"],svg.ma-fan[data-k="'+k+'"]')], lns=[...c.querySelectorAll('svg.ma-fan:not([data-k]) line[data-l="'+k+'"]')];
+      c.querySelectorAll('svg.ma-fan:not([data-k]) circle[data-ks~="'+k+'"]').forEach(ci=>{ if(ci.dataset.ks.trim().split(" ").length===1){ lns.push(ci); return; }   // its dot goes with it: a dot it shares stays for the others and a copy travels
+        const cp=ci.cloneNode(); cp.removeAttribute("data-ks"); ci.parentNode.appendChild(cp); lns.push(cp); });
+      { const st=mStatus(a); lns.forEach(x=>{ if(x.tagName==="circle") x.setAttribute("class",st); }); }
       c.classList.add("ma-lift"); els.forEach(x=>x.classList.add("lift"));
-      const mv=ev=>{ ev.preventDefault(); const dx=ev.clientX-x0, dy=ev.clientY-y0; els.forEach(x=>x.style.translate=dx+"px "+dy+"px"); lns.forEach(l=>l.setAttribute("transform","translate("+dx+" "+dy+")")); };
+      const mv=ev=>{ ev.preventDefault(); const dx=ev.clientX-x0, dy=ev.clientY-y0; els.forEach(x=>{ if(x.tagName.toLowerCase()==="svg") x.style.transform="translate("+dx+"px,"+dy+"px)"; else x.style.translate=dx+"px "+dy+"px"; }); lns.forEach(l=>l.setAttribute("transform","translate("+dx+" "+dy+")")); };
       const up=ev=>{ removeEventListener("pointermove",mv); removeEventListener("pointerup",up); removeEventListener("pointercancel",up);
         c.classList.remove("ma-lift"); m2.dragging.enable(); m2._moving=false; mMoveEndT=Date.now();
         const ll1=ev.type==="pointercancel"?ll0:m2.containerPointToLatLng([ev.clientX-r0.left,ev.clientY-r0.top]), dLat=ll1.lat-ll0.lat, dLng=ll1.lng-ll0.lng;
-        if(Math.hypot(ev.clientX-x0,ev.clientY-y0)<4){ els.forEach(x=>{ x.style.translate=""; x.classList.remove("lift"); }); lns.forEach(l=>l.removeAttribute("transform")); return; }
+        if(Math.hypot(ev.clientX-x0,ev.clientY-y0)<4){ els.forEach(x=>{ x.style.translate=""; x.style.transform=""; x.classList.remove("lift"); }); lns.forEach(l=>l.removeAttribute("transform")); return; }
         mMutate(()=>{ if(a._new){ const p=mPend(), x=(p.newActs||[])[a._ni]; if(x&&x.loc){ x.loc={lat:x.loc.lat+dLat,lng:x.loc.lng+dLng}; mPendSave(p); } return; }
           const pos=Object.assign({},mCh(a.id).pos||{}); for(const ph of mPhotos(a)) if(ph.lat!=null&&ph.k) pos[ph.k]=[+ph.lat+dLat,+ph.lng+dLng];
           const patch={pos}, L0=mLocOf(a); if(L0) patch.loc={lat:L0.lat+dLat,lng:L0.lng+dLng}; mSetCh(a.id,patch); });
@@ -7638,8 +7641,8 @@ function mBuildHomeMap(acts){
           if(o.moved){ L.marker([o.lat,o.lng],{interactive:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" data-k="'+o.k+'" width="1" height="1"><line data-l="'+o.k+'"'+(o.k===mFocusK?' class="sel"':'')+' x1="0" y1="0" x2="'+(o.lx-o.q.x).toFixed(1)+'" y2="'+(o.ly-o.q.y).toFixed(1)+'"/><circle class="'+mStatus(o.a)+'" cx="0" cy="0" r="4"/></svg>',iconSize:[0,0],iconAnchor:[0,0]})}).addTo(lay);
             dot(o.k,o.a,m2.unproject([o.lx,o.ly],z)); spotHit([o.lat,o.lng],o.k,o.a); }
           else dot(o.k,o.a,[o.lat,o.lng]); continue; }
-        const spots=new Set(), spSt={}; const svg=w.ls.map(t=>{ const sk=Math.round(t.q.x-w.cx)+","+Math.round(t.q.y-w.cy); spots.add(sk); if(!spSt[sk]) spSt[sk]=mStatus(t.a); return '<line data-l="'+t.k+'"'+(t.k===mFocusK?' class="sel"':'')+' x1="'+(t.q.x-w.cx).toFixed(1)+'" y1="'+(t.q.y-w.cy).toFixed(1)+'" x2="'+(t.lx-w.cx).toFixed(1)+'" y2="'+(t.ly-w.cy).toFixed(1)+'"/>'; }).join("")
-          +[...spots].map(t=>{ const [x,y]=t.split(","); return '<circle class="'+spSt[t]+'" cx="'+x+'" cy="'+y+'" r="4"/>'; }).join("");   // each spot in its status colour
+        const spots=new Set(), spSt={}, spK={}; const svg=w.ls.map(t=>{ const sk=Math.round(t.q.x-w.cx)+","+Math.round(t.q.y-w.cy); spots.add(sk); if(!spSt[sk]) spSt[sk]=mStatus(t.a); (spK[sk]=spK[sk]||[]).push(t.k); return '<line data-l="'+t.k+'"'+(t.k===mFocusK?' class="sel"':'')+' x1="'+(t.q.x-w.cx).toFixed(1)+'" y1="'+(t.q.y-w.cy).toFixed(1)+'" x2="'+(t.lx-w.cx).toFixed(1)+'" y2="'+(t.ly-w.cy).toFixed(1)+'"/>'; }).join("")
+          +[...spots].map(t=>{ const [x,y]=t.split(","); return '<circle class="'+spSt[t]+'" data-ks=" '+spK[t].join(" ")+' " cx="'+x+'" cy="'+y+'" r="4"/>'; }).join("");   // each spot in its status colour (data-ks: whose spot it is - it travels with a move)
         L.marker(m2.unproject([w.cx,w.cy],z),{interactive:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1">'+svg+'</svg>',iconSize:[0,0],iconAnchor:[0,0]})}).addTo(lay);
         for(const t of w.ls) dot(t.k,t.a,m2.unproject([t.lx,t.ly],z));
         { const seen=new Set(); for(const t of w.ls){ const sk=Math.round(t.q.x)+","+Math.round(t.q.y); if(seen.has(sk)) continue; seen.add(sk); spotHit(m2.unproject([t.q.x,t.q.y],z),t.k,t.a); } } }   // each spot on a wheel: its first action
