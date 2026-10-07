@@ -4210,14 +4210,7 @@ function deskCardBlob(a){
 var _warmT=null, _warmBusy=false;   // var: renderActions runs before this line during start-up
 var tilesBusy=false;   // the map is fetching tiles: background work waits so the map gets the connection first
 async function mapIdle(maxMs){ const t0=Date.now(); while(tilesBusy&&Date.now()-t0<(maxMs||20000)) await sleep(400); }
-function warmCards(soon){   // the selected action(s) first, then the top of the list — one at a time, when the app is idle
-  if(document.body.classList.contains("mobile")) return;
-  clearTimeout(_warmT); _warmT=setTimeout(async()=>{
-    if(_warmBusy||document.visibilityState!=="visible"||!actions.length||document.body.classList.contains("mobile")) return; _warmBusy=true;   // (the phone makes its own, see mWarmCards)
-    try{ const want=[...selActs].map(actById).filter(Boolean).concat(actsShown().filter(a=>!a.done).slice(0,4));
-      for(const a of [...new Set(want)]){ if(document.visibilityState!=="visible") break; await mapIdle(); try{ await deskCardBlob(a); }catch(e){} await sleep(300); } }
-    finally{ _warmBusy=false; } },soon?400:3000); }
-setInterval(()=>warmCards(true),20000);   // catches changes that don't redraw the list (a photo finishing its upload, markup, a moved dot); free when nothing changed
+function warmCards(){}   // (no longer builds Copy images in the background: each took seconds on the main thread and froze the app; Copy builds its image on the click, keeping the clipboard permission)
 function copyFlash(btn,k){ if(!btn) return; btn.classList.remove("ok","bad"); void btn.offsetWidth; btn.classList.add(k); clearTimeout(btn._ft); btn._ft=setTimeout(()=>btn.classList.remove(k),2200); }   // the Copy pill says how it went: "Copied ✓" (green) or "Saved instead" (red)
 async function copyActionForPhone(a,btn){
   if(btn) btn.classList.add("busy");
@@ -6959,10 +6952,8 @@ function mShowList(){
       let sx=null,sy=0; card.addEventListener("touchstart",e=>{ sx=e.touches[0].clientX; sy=e.touches[0].clientY; },{passive:true});
       card.addEventListener("touchend",e=>{ if(sx==null) return; const t=e.changedTouches[0], dx=t.clientX-sx, dy=t.clientY-sy; sx=null; if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)){ mCardSwipeT=Date.now(); step(dx<0?1:-1); } },{passive:true}); }
     mBuildHomeMap(acts); requestAnimationFrame(()=>mSyncCards());
-    mWarmCards(mMapCards(acts).slice(0,2));
   } else {
     mWirePull(document.getElementById("mList"),document.getElementById("mPtr"));
-    mWarmCards(acts.filter(a=>mStatus(a)==="open").slice(0,2));
     { const l=document.getElementById("mList"); if(mListScroll) l.scrollTop=mListScroll; l.addEventListener("scroll",()=>{ mListScroll=l.scrollTop; },{passive:true}); }   // a refresh or a trip into an action keeps your place
     document.querySelectorAll("#mList .m-card").forEach(el=>el.addEventListener("click",()=>{ if(Date.now()-mCardDropT<500) return; mOpenAct(el.dataset.k); }));
     mWireCardDrag();   // hold-press + drag sets priority
@@ -7028,7 +7019,7 @@ function mPaintCard(){   // the card shows the picked action (else the first on 
     +'<div class="tx"><div class="t">'+esc(mTitle(a))+'</div><div class="n">'+(i+1)+' of '+mOneKeys.length+'</div></div>'; }
 function mFocusCard(k){   // ‹ ›, a swipe on the card, or a label: that action on the card and its arrow on the map
   k=String(k); mFocusK=k; mPaintCard(); mFocusDot(k);
-  const a=mHomeActs().find(x=>mCardKey(x)===k); if(a) mWarmCards([a]); }
+  }   // (Share images are made only once the action is opened - building them while browsing the map froze the phone)
 
 /* + New action: a card that drops from the top — the title, its sub-actions, then Place / Photo / Gallery
    and the photos (several at once from the gallery) — with Create in its corner. Enter on the title goes straight on to a sub-action,
@@ -7505,7 +7496,8 @@ function mBuildHomeMap(acts){
       return wheels; };
     const dot=(k,a,ll)=>{ const st=mStatus(a);   // one action's label
       L.marker(ll,{zIndexOffset:k===mFocusK?800:st==="open"?300:st==="hold"?100:0,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(a._new?' new':st==="open"?'':' '+st)+(k===mFocusK?' focus sel':'')+(k===mFlashK?' flash':'')+'" data-l="'+k+'">'+(a._new?'•':actNo(a))+'</div>',iconSize:[0,0],iconAnchor:[0,0]})})
-        .on("click",()=>{ if(mAdding) return; if(k===mFocusK){ mTapK=null; mOpenAct(k); } else { mTapK=k; mTapT=Date.now(); mFocusCard(k); } }).addTo(lay); };   // a label brings its card up; tapping it again (or View) opens it
+        .on("click",()=>{ if(mAdding) return; if(mTapK!=null&&mTapK!==k&&Date.now()-mTapT<700){ const k0=mTapK; mTapK=null; mOpenAct(k0); return; }   // a quick second tap: the label tapped first slid away while the map glided - open that one
+          if(k===mFocusK){ mTapK=null; mOpenAct(k); } else { mTapK=k; mTapT=Date.now(); mFocusCard(k); } }).addTo(lay); };   // a label brings its card up; tapping it again (or View) opens it
     const render=(wheels,z)=>{ lay.clearLayers();
       for(const t of wheels.members||[]){ const st=mStatus(t.a); L.marker([t.lat,t.lng],{zIndexOffset:-50,icon:L.divIcon({className:"",html:'<div class="ma-mem'+(st==="open"?"":" "+st)+'"></div>',iconSize:[0,0],iconAnchor:[0,0]})})
         .on("click",()=>{ if(!mAdding) mFocusCard(t.k); }).addTo(lay); }
@@ -7539,7 +7531,8 @@ function mBuildHomeMap(acts){
       if(bb){ if(pts.length>1||(me&&meNear(me,pts))) m2.fitBounds(bb,{padding:[40,40],maxZoom:18}); else m2.setView(bb.getCenter(),17); }
       else if(me) m2.setView([me.lat,me.lng],16); else m2.setView([0,0],2); };
     fit(); draw();
-    m2.on("click dblclick",()=>{ if(mTapK!=null&&Date.now()-mTapT<700){ const k=mTapK; mTapK=null; mOpenAct(k); } });   // a quick second tap that lands where the label was before the map glided off: still opens it
+    { const again=e=>{ if(e&&e.target&&e.target.closest&&e.target.closest(".ma-dot,.ma-one,.ma-flt,.ma-fit,.ma-north")) return; if(mTapK!=null&&Date.now()-mTapT<700){ const k=mTapK; mTapK=null; mOpenAct(k); } };
+      m2.getContainer().addEventListener("click",again); m2.getContainer().addEventListener("touchend",e=>{ if(e.changedTouches&&e.changedTouches.length===1) again(e); },{passive:true}); }   // native events: Leaflet drops taps while the map is still gliding   // a quick second tap that lands where the label was before the map glided off: still opens it
     m2.on("moveend",()=>mSyncCards());
     m2.on("moveend",()=>{ if(!m2._pinchIn) draw(); });   // after a zoom or pan, wheels settle in the clear part of the screen again
     /* Leaflet ignores a pinch that starts while the last one is still settling (~¼ s after you let go):
