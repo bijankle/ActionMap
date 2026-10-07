@@ -927,7 +927,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .ma-dot.done{background-image:var(--ic-done);}
   .ma-zf .ma-dot,.ma-zf .ma-fan{opacity:0;transition:opacity .12s;}   /* a double-tap zoom: labels and spokes hide for its quarter second */
   .ma-zin .ma-dot,.ma-zin .ma-fan{animation:mazin .25s ease-out;} @keyframes mazin{from{opacity:0;}to{opacity:1;}}
-  .ma-fan{overflow:visible;pointer-events:none;} .ma-fan line{stroke:#fff;stroke-width:2.5;filter:drop-shadow(0 1px 1.5px #000a);} .ma-fan circle{fill:#1d2430;stroke:#fff;stroke-width:2;}   /* stacked actions, fanned out at full zoom */
+  .ma-fan{position:absolute;left:0;top:0;display:block;overflow:visible;pointer-events:none;}   /* pinned to the exact point (as an inline svg it sat on the text baseline, ~10 px low - lines ran past their dots) */ .ma-fan line{stroke:#fff;stroke-width:2.5;filter:drop-shadow(0 1px 1.5px #000a);} .ma-fan circle{fill:#1d2430;stroke:#fff;stroke-width:2;}   /* stacked actions, fanned out at full zoom */
   .ldot{position:absolute;left:0;top:0;transform:translate(-50%,-50%);width:14px;height:14px;box-sizing:border-box;border-radius:50%;background:#9aa3ad;border:2px solid #fff;box-shadow:0 0 0 1px #6b7580,0 2px 4px #0005;cursor:pointer;}
   .ldot.n{width:auto;min-width:22px;height:22px;border-radius:11px;padding:0 5px;color:#fff;font:700 11px/18px var(--font);text-align:center;}   /* photos on no action, several on one spot */
   .leaflet-container .ma-dot{cursor:pointer;}
@@ -1816,7 +1816,7 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
     for(let i=0;i<groups.length&&!again;i++) for(let j=i+1;j<groups.length&&!again;j++){ const a=groups[i], b=groups[j];
       if(Math.hypot(a.cx-b.cx,a.cy-b.cy)<occ(a)+occ(b)){ a.items=a.items.concat(b.items); a.loose=a.loose.concat(b.loose); settle(a); groups.splice(j,1); again=true; } } }
   const llOf=(x,y)=>map.unproject([x,y],z);
-  const mkLabel=(lab,x,y)=>{ const a=lab.a, st=a.done?"done":a.hold?"hold":"open", pids=lab.ps.map(t=>t.p.id), ll=llOf(x,y);
+  const mkLabel=(lab,x,y,lineMk)=>{ const a=lab.a, st=a.done?"done":a.hold?"hold":"open", pids=lab.ps.map(t=>t.p.id), ll=llOf(x,y);
     const hl=pids.some(id=>hlSet.has(id)), hasOpen=!!op&&pids.includes(op.id), canMove=pids.some(id=>selSet.has(id))||hasOpen||selActs.has(a.id);
     const off=Math.hypot(x-lab.q.x,y-lab.q.y)>2, grab=canMove&&!off;   // a label away from its spot (a callout) never drags - the spot itself does (it's the real location)
     const m=L.marker(ll,{keyboard:false,zIndexOffset:hasOpen?900:st==="open"?300:st==="hold"?200:100,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(st==="open"?"":" "+st)+(selActs.has(a.id)||hasOpen||hl?' sel':'')+'" data-l="'+a.id+'"'+(grab?' style="cursor:move"':'')+'>'+actNo(a)+'</div>',iconSize:[0,0],iconAnchor:[0,0]})});
@@ -1829,7 +1829,10 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
       const hs={ll:sl,pids,rep:lab.rep,act:a.id,grab:canMove,arrow,hover:actPhotos(a)[0]||lab.rep};
       sm.on("mouseover",e=>{ if(dotDrag||PLACE) return; if(canMove) map.getContainer().style.cursor="move"; showHover(hs.hover,e.originalEvent,sm.getElement()); });
       sm.on("mouseout",()=>{ if(!dotDrag) map.getContainer().style.cursor=""; hideHover(); });
-      sm.on("mousedown",e=>{ const oe=e.originalEvent; if(!oe||oe.button!==0||oe.ctrlKey||oe.metaKey||!canMove) return; L.DomEvent.stop(oe); startMapDrag(sm,hs); });
+      sm.on("mousedown",e=>{ const oe=e.originalEvent; if(!oe||oe.button!==0||oe.ctrlKey||oe.metaKey||!canMove) return; L.DomEvent.stop(oe); startMapDrag(sm,hs);
+        if(dotDrag){ dotDrag.origs.set("lab",{ll:m.getLatLng(),hit:m,dot:m});   // the label and its line come along with the dot
+          if(lineMk) dotDrag.origs.set("ln",{ll:lineMk.getLatLng(),hit:lineMk,dot:lineMk});
+          else map.getContainer().querySelectorAll('.ma-fan line[data-l="'+a.id+'"]').forEach(l=>l.style.visibility="hidden"); } });   // (a wheel's shared spokes can't move: that one hides till the drop)
       sm.on("click",()=>{ uiClickT=Date.now(); if(Date.now()-dotDropT<450) return; m.fire("click",{originalEvent:{}}); });
       markerLayer.addLayer(sm); } };
   /* 1) where each label goes: a lone action sits on its spot; several share a wheel round their spots */
@@ -1850,7 +1853,8 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
     const labs=[]; for(const g of groups) for(const o of g.ls) if(o.l) labs.push(o);
     const me=myLoc(), mp=me?map.project([me.lat,me.lng],z):null;   // the YOU ARE HERE pin (60 x 75 px above its point) is kept clear too
     const onMe=(x,y)=>!!mp&&Math.abs(x-mp.x)<LW/2+34&&y+LH/2>mp.y-79&&y-LH/2<mp.y+4;
-    const covers=(o,x,y)=>onMe(x,y)||dots.some(q=>Math.abs(q.x-x)<LW/2+12&&Math.abs(q.y-y)<LH/2+12);   // (its own dot too - a label never sits on a dot)   // a whole dot plus a gap stays clear of every label
+    const segHits=(o,x,y)=>{ if(!(o.single||o.lone)) return false; const ax=o.q.x, ay=o.q.y, dx=x-ax, dy=y-ay, L2=dx*dx+dy*dy||1; return dots.some(q=>{ if(q===o.q||(Math.abs(q.x-ax)<2&&Math.abs(q.y-ay)<2)) return false; const t=Math.max(0,Math.min(1,((q.x-ax)*dx+(q.y-ay)*dy)/L2)); return Math.hypot(ax+dx*t-q.x,ay+dy*t-q.y)<9; }); };   // its line must not run through another dot
+    const covers=(o,x,y)=>onMe(x,y)||dots.some(q=>Math.abs(q.x-x)<LW/2+12&&Math.abs(q.y-y)<LH/2+12)||segHits(o,x,y);   // (its own dot too - a label never sits on a dot)   // a whole dot plus a gap stays clear of every label
     const clash=(o,x,y,list)=>list.some(r=>r!==o&&Math.abs(r.x-x)<LW+4&&Math.abs(r.y-y)<LH+4);
     const done=labs.filter(o=>!covers(o,o.x,o.y));
     for(const o of labs){ if(done.includes(o)&&!clash(o,o.x,o.y,done.filter(r=>labs.indexOf(r)<labs.indexOf(o)))) continue;
@@ -1862,8 +1866,8 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
   /* 3) draw: spokes and spot dots, then the labels */
   for(const g of groups){ const n=g.mem.length, ls=g.ls;
     if(n===1){ const o=ls[0];
-      if(o.moved) markerLayer.addLayer(L.marker(llOf(o.q.x,o.q.y),{interactive:false,keyboard:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1"><line data-l="'+o.l.a.id+'"'+((selActs.has(o.l.a.id)||o.l.ps.some(t=>hlSet.has(t.p.id)||(!!op&&t.p.id===op.id)))?' class="sel"':'')+' x1="0" y1="0" x2="'+(o.x-o.q.x).toFixed(1)+'" y2="'+(o.y-o.q.y).toFixed(1)+'"/></svg>',iconSize:[0,0],iconAnchor:[0,0]})}));
-      mkLabel(o.l,o.x,o.y); continue; }
+      const lm=o.moved?L.marker(llOf(o.q.x,o.q.y),{interactive:false,keyboard:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1"><line data-l="'+o.l.a.id+'"'+((selActs.has(o.l.a.id)||o.l.ps.some(t=>hlSet.has(t.p.id)||(!!op&&t.p.id===op.id)))?' class="sel"':'')+' x1="0" y1="0" x2="'+(o.x-o.q.x).toFixed(1)+'" y2="'+(o.y-o.q.y).toFixed(1)+'"/></svg>',iconSize:[0,0],iconAnchor:[0,0]})}):null; if(lm) markerLayer.addLayer(lm);
+      mkLabel(o.l,o.x,o.y,lm); continue; }
     const spokes=[], spots=new Set();
     ls.forEach(o=>{ spokes.push('<line'+(o.l?' data-l="'+o.l.a.id+'"'+((selActs.has(o.l.a.id)||o.l.ps.some(t=>hlSet.has(t.p.id)||(!!op&&t.p.id===op.id)))?' class="sel"':''):'')+' x1="'+(o.q.x-g.cx).toFixed(1)+'" y1="'+(o.q.y-g.cy).toFixed(1)+'" x2="'+(o.x-g.cx).toFixed(1)+'" y2="'+(o.y-g.cy).toFixed(1)+'"/>'); spots.add(Math.round(o.q.x-g.cx)+","+Math.round(o.q.y-g.cy)); });
     markerLayer.addLayer(L.marker(llOf(g.cx,g.cy),{interactive:false,keyboard:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1">'+spokes.join("")+'</svg>',iconSize:[0,0],iconAnchor:[0,0]})}));   // (each spot is drawn once, as its own status-coloured handle)
@@ -7487,9 +7491,10 @@ function mBuildHomeMap(acts){
           if(dx||dy) for(const t of ls){ t.lx+=dx; t.ly+=dy; } }
         wheels.push({cx:g.cx,cy:g.cy,ls}); }
       { const LW=66*lz, LH=26*lz, dots=wheels.members.map(t=>t.q), labs=[];   // like the desktop: a lone label never covers a dot or another label - it steps off, a line back to its spot
-        for(const w of wheels){ if(w.one){ dots.push(w.one.q); w.one.lx=w.one.q.x+LW/2+9; w.one.ly=w.one.q.y-LH/2-9; w.one.moved=true; labs.push(w.one); } else for(const t of w.ls){ dots.push(t.q); labs.push(t); } }   // a lone label: up-right at 45 degrees from its dot (the dot always shows)
+        for(const w of wheels){ if(w.one){ dots.push(w.one.q); w.one.lx=w.one.q.x+LW/2+9; w.one.ly=w.one.q.y-LH/2-9; w.one.moved=true; w.one.lone=true; labs.push(w.one); } else for(const t of w.ls){ dots.push(t.q); labs.push(t); } }   // a lone label: up-right at 45 degrees from its dot (the dot always shows)
         const mp=(mGeo&&!ignoreLoc)?m2.project([mGeo.lat,mGeo.lng],z):null, onMe=(x,y)=>!!mp&&Math.abs(x-mp.x)<LW/2+19&&y+LH/2>mp.y-41&&y-LH/2<mp.y+4;   // keep clear of the YOU ARE HERE pin (30 x 37 px above its point)
-        const covers=(o,x,y)=>onMe(x,y)||dots.some(q=>Math.abs(q.x-x)<LW/2+12&&Math.abs(q.y-y)<LH/2+12), clash=(o,x,y)=>labs.some(r=>r!==o&&Math.abs(r.lx-x)<LW+4&&Math.abs(r.ly-y)<LH+4);
+        const segHits=(o,x,y)=>{ if(!(o.single||o.lone)) return false; const ax=o.q.x, ay=o.q.y, dx=x-ax, dy=y-ay, L2=dx*dx+dy*dy||1; return dots.some(q=>{ if(q===o.q||(Math.abs(q.x-ax)<2&&Math.abs(q.y-ay)<2)) return false; const t=Math.max(0,Math.min(1,((q.x-ax)*dx+(q.y-ay)*dy)/L2)); return Math.hypot(ax+dx*t-q.x,ay+dy*t-q.y)<9; }); };   // its line must not run through another dot
+        const covers=(o,x,y)=>onMe(x,y)||dots.some(q=>Math.abs(q.x-x)<LW/2+12&&Math.abs(q.y-y)<LH/2+12)||segHits(o,x,y), clash=(o,x,y)=>labs.some(r=>r!==o&&Math.abs(r.lx-x)<LW+4&&Math.abs(r.ly-y)<LH+4);
         for(const o of labs){ const one=!!wheels.find(w=>w.one===o); if(!covers(o,o.lx,o.ly)&&!(one&&clash(o,o.lx,o.ly))) continue; let pick=null;
           for(const r of [LH/2+16,LH/2+28,LH/2+42,LH/2+60,LH/2+82]){ for(let k=0;k<16&&!pick;k++){ const a2=-Math.PI/4+(k%2?1:-1)*Math.ceil(k/2)*Math.PI/8, x=o.q.x+Math.cos(a2)*r*1.6, y=o.q.y+Math.sin(a2)*r; if(!covers(o,x,y)&&!clash(o,x,y)) pick=[x,y]; } if(pick) break; }
           if(pick){ o.lx=pick[0]; o.ly=pick[1]; o.moved=true; } } }   // (a wheel label that moves keeps its spoke - it's drawn to wherever the label is)
