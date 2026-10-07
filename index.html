@@ -19,13 +19,18 @@ window.amViewport=function(z){ try{
 }catch(e){} };
 /* Sizes: six 5-step settings per device (index 0..4, 2 = Normal) — text, buttons, icons, map labels, photos, spacing.
    On a phone "buttons" zooms the whole app (the viewport), elsewhere it zooms the buttons. */
-window.AM_SZ={t:[.6,.8,1,1.2,1.4],b:[.8,.9,1,1.15,1.3],bm:[1,1.3,1.6,1.9,2.2],i:[.7,.85,1,1.2,1.4],l:[.7,.85,1,1.2,1.4],p:[.6,.8,1,1.3,1.6],s:[.5,.75,1,1.3,1.6]};
+window.AM_SZ={t:[.6,.8,1,1.2,1.4],b:[.8,.9,1,1.15,1.3],bm:[1,1.3,1.6,1.9,2.2],i:[.7,.85,1,1.2,1.4],l:[.7,.85,1,1.2,1.4],p:[.6,.8,1,1.3,1.6],s:[.5,.75,1,1.3,1.6],
+  di:[.84,1.02,1.2,1.44,1.68],dl:[.6,.72,.85,1.02,1.19]};   // desktop: Normal icons are the old "Larger", Normal map labels the old "Smaller" (the look settled on); the steps scale round them
 window.amSizes=function(){ var d={t:2,b:2,i:2,l:2,p:2,s:2}; try{ var j=JSON.parse(localStorage.getItem("amSizes")||"null"); if(j) for(var k in d) if(j[k]>=0&&j[k]<=4) d[k]=j[k]|0;
     if(!j){ var v=parseFloat(localStorage.getItem("amAppSize2")), t=parseFloat(localStorage.getItem("amTextSize")), near=function(arr,x){ var bi=2,bd=9; arr.forEach(function(y,i){ if(Math.abs(y-x)<bd){ bd=Math.abs(y-x); bi=i; } }); return bi; };   // older phones: carry over their App size / Text size
-      if(v>0) d.b=near(AM_SZ.bm,v); if(t>0) d.t=near(AM_SZ.t,t); } }catch(e){} return d; };
+      if(v>0) d.b=near(AM_SZ.bm,v); if(t>0) d.t=near(AM_SZ.t,t); }
+    if(!j&&!matchMedia("(pointer: coarse)").matches) localStorage.setItem("amSzD2","1");   // a fresh desktop starts on the new scale
+    if(j&&!matchMedia("(pointer: coarse)").matches&&!localStorage.getItem("amSzD2")){   // once, on a desktop: keep the same look on the new scale
+      var nr=function(arr,x){ var bi=2,bd=9; arr.forEach(function(y,i){ if(Math.abs(y-x)<bd-1e-9){ bd=Math.abs(y-x); bi=i; } }); return bi; };
+      d.i=nr(AM_SZ.di,AM_SZ.i[d.i]); d.l=nr(AM_SZ.dl,AM_SZ.l[d.l]); localStorage.setItem("amSizes",JSON.stringify(d)); localStorage.setItem("amSzD2","1"); } }catch(e){} return d; };
 window.amSize=function(){ return AM_SZ.bm[amSizes().b]; };   // the phone's whole-app zoom
 window.amApplySizes=function(){ try{ var d=amSizes(), r=document.documentElement.style, ph=matchMedia("(pointer: coarse)").matches;
-  r.setProperty("--mt",String(AM_SZ.t[d.t])); r.setProperty("--bz",ph?"1":String(AM_SZ.b[d.b])); r.setProperty("--iz",String(AM_SZ.i[d.i])); r.setProperty("--lz",String(AM_SZ.l[d.l])); r.setProperty("--pz","1"); r.setProperty("--sp","1"); }catch(e){} };
+  r.setProperty("--mt",String(AM_SZ.t[d.t])); r.setProperty("--bz",ph?"1":String(AM_SZ.b[d.b])); r.setProperty("--iz",String((ph?AM_SZ.i:AM_SZ.di)[d.i])); r.setProperty("--lz",String((ph?AM_SZ.l:AM_SZ.dl)[d.l])); r.setProperty("--pz","1"); r.setProperty("--sp","1"); }catch(e){} };
 amViewport(amSize()); amApplySizes();
 try{ (screen.orientation||window).addEventListener("change",function(){ amViewport(amSize()); }); }catch(e){}
 window._bip=null;
