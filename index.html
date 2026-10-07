@@ -1810,15 +1810,16 @@ function wheelR(n){ const z=lblZ(); return n<2?0:Math.max((n===2?38:n===3?42:48)
 /* Every callout line runs from its spot to the NEAREST point of its label (measured where the label really is on
    screen): the shortest line, always touching the label - no gap, never aimed through its middle. */
 function trimSpokes(root){ if(!root) return;
-  root.querySelectorAll(".ma-fan").forEach(svg=>{ const o=svg.getBoundingClientRect(), sc=o.width||1;
-    svg.querySelectorAll("line[data-l]").forEach(ln=>{ const lab=root.querySelector('.ma-dot[data-l="'+ln.dataset.l+'"]'); if(!lab) return;
-      const r=lab.getBoundingClientRect(); if(!r.width) return;
+  const labs=new Map(); root.querySelectorAll(".ma-dot[data-l]").forEach(e=>{ if(!labs.has(e.dataset.l)) labs.set(e.dataset.l,e.getBoundingClientRect()); });   // every rect read first, then every line written: one layout per frame (cheap enough for a pinch)
+  const job=[]; root.querySelectorAll(".ma-fan").forEach(svg=>{ const o=svg.getBoundingClientRect(); svg.querySelectorAll("line[data-l]").forEach(ln=>job.push([ln,o])); });
+  for(const [ln,o] of job){ const sc=o.width||1; {
+      const r=labs.get(ln.dataset.l); if(!r||!r.width) continue;
       const ax=o.left+(+ln.getAttribute("x1"))*sc, ay=o.top+(+ln.getAttribute("y1"))*sc, rad=Math.min(r.height/2,14);
       const L0=r.left+1.5, R0=r.right-1.5, T0=r.top+1.5, B0=r.bottom-1.5;
       let x=Math.max(L0,Math.min(R0,ax)), y=Math.max(T0,Math.min(B0,ay));   // the nearest point of the label to its spot: the shortest line
       const kx=x<L0+rad?L0+rad:x>R0-rad?R0-rad:null, ky=y<T0+rad?T0+rad:y>B0-rad?B0-rad:null;
       if(kx!=null&&ky!=null){ const dx=ax-kx, dy=ay-ky, d=Math.hypot(dx,dy)||1; x=kx+dx/d*(rad-1); y=ky+dy/d*(rad-1); }   // on a rounded end: the nearest point of the curve
-      ln.setAttribute("x2",((x-o.left)/sc).toFixed(1)); ln.setAttribute("y2",((y-o.top)/sc).toFixed(1)); }); }); }
+      ln.setAttribute("x2",((x-o.left)/sc).toFixed(1)); ln.setAttribute("y2",((y-o.top)/sc).toFixed(1)); } } }
 function renderClusters(anim){   // anim: a zoom animation just starting — lay the wheels out for where it lands
   markerLayer.clearLayers(); dotMarkers.clear(); mapHits=[]; _openInArrowed=false;
   const z=anim?anim.zoom:map.getZoom(), hlSet=hlPhotoSet(), op=sideShowsPhoto()?curPhoto():null;   // the open photo wears the arrow only while it shows (behind the Gallery it would point at an old action)
@@ -7595,7 +7596,7 @@ function mBuildHomeMap(acts){
           +[...spots].map(t=>{ const [x,y]=t.split(","); return '<circle class="'+spSt[t]+'" cx="'+x+'" cy="'+y+'" r="4"/>'; }).join("");   // each spot in its status colour
         L.marker(m2.unproject([w.cx,w.cy],z),{interactive:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1">'+svg+'</svg>',iconSize:[0,0],iconAnchor:[0,0]})}).addTo(lay);
         for(const t of w.ls) dot(t.k,t.a,m2.unproject([t.lx,t.ly],z)); }
-      if(!m2._flying&&!(m2.touchZoom&&m2.touchZoom._zooming)) trimSpokes(m2.getContainer()); };
+      trimSpokes(m2.getContainer()); };   // every frame of a pinch or glide too: no line pokes into a label's middle and back
     const draw=()=>{ const c=m2.getContainer(), was=c.classList.contains("ma-zf"); c.classList.remove("ma-zf"); const z=m2.getZoom(); render(layout(z),z);
       if(was){ c.classList.add("ma-zin"); clearTimeout(m2._zinT); m2._zinT=setTimeout(()=>c.classList.remove("ma-zin"),400); } };   // they fade back in, in their new places
     /* While a pinch (or a glide) is under way the map moves every frame, but a wheel is drawn in screen
