@@ -1738,16 +1738,18 @@ let mapHits=[];
 const LBL_W0=68;   // a label's width (3 spaced digits) at Normal map-label size
 function lblZ(){ return parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--lz"))||1; }   // Map labels size
 function wheelR(n){ const z=lblZ(); return n<2?0:Math.max((n===2?38:n===3?42:48)*z,n*(LBL_W0*z+8)/(2*Math.PI)); }
-/* Every callout line ends exactly on its label's edge (measured where the label really is on screen), so the
-   line and the label always meet - no gap, never through the middle of it. */
+/* Every callout line runs from its spot to the NEAREST point of its label (measured where the label really is on
+   screen): the shortest line, always touching the label - no gap, never aimed through its middle. */
 function trimSpokes(root){ if(!root) return;
   root.querySelectorAll(".ma-fan").forEach(svg=>{ const o=svg.getBoundingClientRect(), sc=o.width||1;
     svg.querySelectorAll("line[data-l]").forEach(ln=>{ const lab=root.querySelector('.ma-dot[data-l="'+ln.dataset.l+'"]'); if(!lab) return;
       const r=lab.getBoundingClientRect(); if(!r.width) return;
-      const ax=o.left+(+ln.getAttribute("x1"))*sc, ay=o.top+(+ln.getAttribute("y1"))*sc, cx=(r.left+r.right)/2, cy=(r.top+r.bottom)/2, dx=cx-ax, dy=cy-ay;
-      const L0=r.left+1.5, R0=r.right-1.5, T0=r.top+1.5, B0=r.bottom-1.5; let t0=0;   // where the line from the spot first enters the label (just under its border)
-      for(const [p,q] of [[-dx,ax-L0],[dx,R0-ax],[-dy,ay-T0],[dy,B0-ay]]){ if(p<0) t0=Math.max(t0,q/p); }
-      t0=Math.min(1,Math.max(0,t0)); ln.setAttribute("x2",((ax+dx*t0-o.left)/sc).toFixed(1)); ln.setAttribute("y2",((ay+dy*t0-o.top)/sc).toFixed(1)); }); }); }
+      const ax=o.left+(+ln.getAttribute("x1"))*sc, ay=o.top+(+ln.getAttribute("y1"))*sc, rad=Math.min(r.height/2,14);
+      const L0=r.left+1.5, R0=r.right-1.5, T0=r.top+1.5, B0=r.bottom-1.5;
+      let x=Math.max(L0,Math.min(R0,ax)), y=Math.max(T0,Math.min(B0,ay));   // the nearest point of the label to its spot: the shortest line
+      const kx=x<L0+rad?L0+rad:x>R0-rad?R0-rad:null, ky=y<T0+rad?T0+rad:y>B0-rad?B0-rad:null;
+      if(kx!=null&&ky!=null){ const dx=ax-kx, dy=ay-ky, d=Math.hypot(dx,dy)||1; x=kx+dx/d*(rad-1); y=ky+dy/d*(rad-1); }   // on a rounded end: the nearest point of the curve
+      ln.setAttribute("x2",((x-o.left)/sc).toFixed(1)); ln.setAttribute("y2",((y-o.top)/sc).toFixed(1)); }); }); }
 function renderClusters(anim){   // anim: a zoom animation just starting — lay the wheels out for where it lands
   markerLayer.clearLayers(); dotMarkers.clear(); mapHits=[]; _openInArrowed=false;
   const z=anim?anim.zoom:map.getZoom(), hlSet=hlPhotoSet(), op=sideShowsPhoto()?curPhoto():null;   // the open photo wears the arrow only while it shows (behind the Gallery it would point at an old action)
