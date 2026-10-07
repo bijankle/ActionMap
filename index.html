@@ -7678,7 +7678,7 @@ function mBuildHomeMap(acts){
       if(bb){ if(pts.length>1||(me&&meNear(me,pts))) m2.fitBounds(bb,{padding:[40,40],maxZoom:18}); else m2.setView(bb.getCenter(),17); }
       else if(me) m2.setView([me.lat,me.lng],16); else m2.setView([0,0],2); };
     fit(); draw();
-    { const again=e=>{ if(e&&e.target&&e.target.closest&&e.target.closest(".ma-dot,.ma-one,.ma-flt,.ma-fit,.ma-north")) return; if(mTapK!=null&&Date.now()-mTapT<700){ const k=mTapK; mTapK=null; mOpenAct(k); } };
+    { const again=e=>{ if(e&&e.target&&e.target.closest&&e.target.closest(".ma-dot,.ma-sphit,.ma-mem,.ma-one,.ma-flt,.ma-fit,.ma-north,.ma-movedone")) return; if(mTapK!=null&&Date.now()-mTapT<700){ const k=mTapK; mTapK=null; mOpenAct(k); } };
       m2.getContainer().addEventListener("click",again); m2.getContainer().addEventListener("touchend",e=>{ if(e.changedTouches&&e.changedTouches.length===1) again(e); },{passive:true}); }   // native events: Leaflet drops taps while the map is still gliding   // a quick second tap that lands where the label was before the map glided off: still opens it
     m2.on("moveend",()=>mSyncCards());
     m2.on("moveend",()=>{ if(!m2._pinchIn) draw(); });   // after a zoom or pan, wheels settle in the clear part of the screen again
