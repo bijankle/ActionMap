@@ -1738,6 +1738,16 @@ let mapHits=[];
 const LBL_W0=68;   // a label's width (3 spaced digits) at Normal map-label size
 function lblZ(){ return parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--lz"))||1; }   // Map labels size
 function wheelR(n){ const z=lblZ(); return n<2?0:Math.max((n===2?38:n===3?42:48)*z,n*(LBL_W0*z+8)/(2*Math.PI)); }
+/* Every callout line ends exactly on its label's edge (measured where the label really is on screen), so the
+   line and the label always meet - no gap, never through the middle of it. */
+function trimSpokes(root){ if(!root) return;
+  root.querySelectorAll(".ma-fan").forEach(svg=>{ const o=svg.getBoundingClientRect(), sc=o.width||1;
+    svg.querySelectorAll("line[data-l]").forEach(ln=>{ const lab=root.querySelector('.ma-dot[data-l="'+ln.dataset.l+'"]'); if(!lab) return;
+      const r=lab.getBoundingClientRect(); if(!r.width) return;
+      const ax=o.left+(+ln.getAttribute("x1"))*sc, ay=o.top+(+ln.getAttribute("y1"))*sc, cx=(r.left+r.right)/2, cy=(r.top+r.bottom)/2, dx=cx-ax, dy=cy-ay;
+      const L0=r.left+1.5, R0=r.right-1.5, T0=r.top+1.5, B0=r.bottom-1.5; let t0=0;   // where the line from the spot first enters the label (just under its border)
+      for(const [p,q] of [[-dx,ax-L0],[dx,R0-ax],[-dy,ay-T0],[dy,B0-ay]]){ if(p<0) t0=Math.max(t0,q/p); }
+      t0=Math.min(1,Math.max(0,t0)); ln.setAttribute("x2",((ax+dx*t0-o.left)/sc).toFixed(1)); ln.setAttribute("y2",((ay+dy*t0-o.top)/sc).toFixed(1)); }); }); }
 function renderClusters(anim){   // anim: a zoom animation just starting — lay the wheels out for where it lands
   markerLayer.clearLayers(); dotMarkers.clear(); mapHits=[]; _openInArrowed=false;
   const z=anim?anim.zoom:map.getZoom(), hlSet=hlPhotoSet(), op=sideShowsPhoto()?curPhoto():null;   // the open photo wears the arrow only while it shows (behind the Gallery it would point at an old action)
@@ -1768,7 +1778,7 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
   const llOf=(x,y)=>map.unproject([x,y],z);
   const mkLabel=(lab,x,y)=>{ const a=lab.a, st=a.done?"done":a.hold?"hold":"open", pids=lab.ps.map(t=>t.p.id), ll=llOf(x,y);
     const hl=pids.some(id=>hlSet.has(id)), hasOpen=!!op&&pids.includes(op.id), grab=pids.some(id=>selSet.has(id))||hasOpen||selActs.has(a.id);
-    const m=L.marker(ll,{keyboard:false,zIndexOffset:hasOpen?900:st==="open"?300:st==="hold"?200:100,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(st==="open"?"":" "+st)+'"'+(grab?' style="cursor:move"':'')+'>'+actNo(a)+'</div>',iconSize:[0,0],iconAnchor:[0,0]})});
+    const m=L.marker(ll,{keyboard:false,zIndexOffset:hasOpen?900:st==="open"?300:st==="hold"?200:100,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(st==="open"?"":" "+st)+(selActs.has(a.id)||hasOpen?' sel':'')+'" data-l="'+a.id+'"'+(grab?' style="cursor:move"':'')+'>'+actNo(a)+'</div>',iconSize:[0,0],iconAnchor:[0,0]})});
     let arrow=null; if(hl||hasOpen){ arrow=mkHlDot(ll.lat,ll.lng,14); markerLayer.addLayer(arrow); if(hasOpen) _openInArrowed=true; }
     wireMapHit(m,{ll,pids,rep:lab.rep,act:a.id,grab,arrow,hover:actPhotos(a)[0]||lab.rep,
       open:()=>{ if(!(selActs.size===1&&selActs.has(a.id))){ selActs=new Set([a.id]); lastActClick=a.id; rebuildActionFilter(); refreshActSelClasses(); drawActionRings(); updateGallery(); const row=document.querySelector('#actList .act-row[data-aid="'+a.id+'"]'); if(row) row.scrollIntoView({block:"nearest"}); }
@@ -1801,10 +1811,10 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
   /* 3) draw: spokes and spot dots, then the labels */
   for(const g of groups){ const n=g.mem.length, ls=g.ls;
     if(n===1){ const o=ls[0];
-      if(o.moved) markerLayer.addLayer(L.marker(llOf(o.q.x,o.q.y),{interactive:false,keyboard:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1"><line x1="0" y1="0" x2="'+(o.x-o.q.x).toFixed(1)+'" y2="'+(o.y-o.q.y).toFixed(1)+'"/><circle cx="0" cy="0" r="4"/></svg>',iconSize:[0,0],iconAnchor:[0,0]})}));
+      if(o.moved) markerLayer.addLayer(L.marker(llOf(o.q.x,o.q.y),{interactive:false,keyboard:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1"><line data-l="'+o.l.a.id+'"'+((selActs.has(o.l.a.id)||(!!op&&o.l.ps.some(t=>t.p.id===op.id)))?' class="sel"':'')+' x1="0" y1="0" x2="'+(o.x-o.q.x).toFixed(1)+'" y2="'+(o.y-o.q.y).toFixed(1)+'"/><circle cx="0" cy="0" r="4"/></svg>',iconSize:[0,0],iconAnchor:[0,0]})}));
       mkLabel(o.l,o.x,o.y); continue; }
     const spokes=[], spots=new Set();
-    ls.forEach(o=>{ spokes.push('<line x1="'+(o.q.x-g.cx).toFixed(1)+'" y1="'+(o.q.y-g.cy).toFixed(1)+'" x2="'+(o.x-g.cx).toFixed(1)+'" y2="'+(o.y-g.cy).toFixed(1)+'"/>'); spots.add(Math.round(o.q.x-g.cx)+","+Math.round(o.q.y-g.cy)); });
+    ls.forEach(o=>{ spokes.push('<line'+(o.l?' data-l="'+o.l.a.id+'"'+((selActs.has(o.l.a.id)||(!!op&&o.l.ps.some(t=>t.p.id===op.id)))?' class="sel"':''):'')+' x1="'+(o.q.x-g.cx).toFixed(1)+'" y1="'+(o.q.y-g.cy).toFixed(1)+'" x2="'+(o.x-g.cx).toFixed(1)+'" y2="'+(o.y-g.cy).toFixed(1)+'"/>'); spots.add(Math.round(o.q.x-g.cx)+","+Math.round(o.q.y-g.cy)); });
     markerLayer.addLayer(L.marker(llOf(g.cx,g.cy),{interactive:false,keyboard:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1">'+spokes.join("")+[...spots].map(t=>{ const [x,y]=t.split(","); return '<circle cx="'+x+'" cy="'+y+'" r="4"/>'; }).join("")+'</svg>',iconSize:[0,0],iconAnchor:[0,0]})}));
     for(const o of ls){ if(o.l) mkLabel(o.l,o.x,o.y); else mkLoose(o.d,o.x,o.y); }
     const sp=new Map(); for(const o of ls){ const k=Math.round(o.q.x)+","+Math.round(o.q.y), ps=o.l?o.l.ps.map(t=>t.p):o.d.items.map(t=>t.p);   // each spot on a wheel is a drop target too
@@ -1816,6 +1826,7 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
     wireMapHit(m,{ll,pids:[p.id],rep:p,act:a.id,grab:false,member:true,hover:p,open:()=>{ selectActionOf(p); openViewer(p); }});
     markerLayer.addLayer(m); }
   if(anim) markerLayer.eachLayer(l=>{ if(l._animateZoom) l._animateZoom(anim); });   // placed straight at the landing spot (no slide from the old layout)
+  else trimSpokes(map.getContainer());
   if(hlMarker){ const cp=lb.classList.contains("open")?curPhoto():null, mine=!!cp&&hlMarker._pid===cp.id;
     hlMarker.setOpacity(mine&&(!op||_openInArrowed)?0:1); }   // the open photo's label already wears the arrow — and a photo hidden behind the Gallery points at nothing
   function mkLoose(g,x,y){ const ps=g.items.map(t=>t.p), pids=ps.map(p=>p.id), n=ps.length, ll=llOf(x,y);
@@ -7419,17 +7430,18 @@ function mBuildHomeMap(acts){
         wheels.push({cx:g.cx,cy:g.cy,ls}); }
       return wheels; };
     const dot=(k,a,ll)=>{ const st=mStatus(a);   // one action's label
-      L.marker(ll,{zIndexOffset:k===mFocusK?800:st==="open"?300:st==="hold"?100:0,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(a._new?' new':st==="open"?'':' '+st)+(k===mFocusK?' focus':'')+(k===mFlashK?' flash':'')+'">'+(a._new?'•':actNo(a))+'</div>',iconSize:[0,0],iconAnchor:[0,0]})})
+      L.marker(ll,{zIndexOffset:k===mFocusK?800:st==="open"?300:st==="hold"?100:0,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(a._new?' new':st==="open"?'':' '+st)+(k===mFocusK?' focus sel':'')+(k===mFlashK?' flash':'')+'" data-l="'+k+'">'+(a._new?'•':actNo(a))+'</div>',iconSize:[0,0],iconAnchor:[0,0]})})
         .on("click",()=>{ if(mAdding) return; if(k===mFocusK){ mTapK=null; mOpenAct(k); } else { mTapK=k; mTapT=Date.now(); mFocusCard(k); } }).addTo(lay); };   // a label brings its card up; tapping it again (or View) opens it
     const render=(wheels,z)=>{ lay.clearLayers();
       for(const t of wheels.members||[]){ const st=mStatus(t.a); L.marker([t.lat,t.lng],{zIndexOffset:-50,icon:L.divIcon({className:"",html:'<div class="ma-mem'+(st==="open"?"":" "+st)+'"></div>',iconSize:[0,0],iconAnchor:[0,0]})})
         .on("click",()=>{ if(!mAdding) mFocusCard(t.k); }).addTo(lay); }
       for(const w of wheels){
         if(w.one){ dot(w.one.k,w.one.a,[w.one.lat,w.one.lng]); continue; }
-        const spots=new Set(); const svg=w.ls.map(t=>{ spots.add(Math.round(t.q.x-w.cx)+","+Math.round(t.q.y-w.cy)); return '<line x1="'+(t.q.x-w.cx).toFixed(1)+'" y1="'+(t.q.y-w.cy).toFixed(1)+'" x2="'+(t.lx-w.cx).toFixed(1)+'" y2="'+(t.ly-w.cy).toFixed(1)+'"/>'; }).join("")
+        const spots=new Set(); const svg=w.ls.map(t=>{ spots.add(Math.round(t.q.x-w.cx)+","+Math.round(t.q.y-w.cy)); return '<line data-l="'+t.k+'"'+(t.k===mFocusK?' class="sel"':'')+' x1="'+(t.q.x-w.cx).toFixed(1)+'" y1="'+(t.q.y-w.cy).toFixed(1)+'" x2="'+(t.lx-w.cx).toFixed(1)+'" y2="'+(t.ly-w.cy).toFixed(1)+'"/>'; }).join("")
           +[...spots].map(t=>{ const [x,y]=t.split(","); return '<circle cx="'+x+'" cy="'+y+'" r="4"/>'; }).join("");
         L.marker(m2.unproject([w.cx,w.cy],z),{interactive:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1">'+svg+'</svg>',iconSize:[0,0],iconAnchor:[0,0]})}).addTo(lay);
-        for(const t of w.ls) dot(t.k,t.a,m2.unproject([t.lx,t.ly],z)); } };
+        for(const t of w.ls) dot(t.k,t.a,m2.unproject([t.lx,t.ly],z)); }
+      if(!m2._flying&&!(m2.touchZoom&&m2.touchZoom._zooming)) trimSpokes(m2.getContainer()); };
     const draw=()=>{ const c=m2.getContainer(), was=c.classList.contains("ma-zf"); c.classList.remove("ma-zf"); const z=m2.getZoom(); render(layout(z),z);
       if(was){ c.classList.add("ma-zin"); clearTimeout(m2._zinT); m2._zinT=setTimeout(()=>c.classList.remove("ma-zin"),400); } };   // they fade back in, in their new places
     /* While a pinch (or a glide) is under way the map moves every frame, but a wheel is drawn in screen
