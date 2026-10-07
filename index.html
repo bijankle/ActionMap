@@ -20,11 +20,14 @@ window.amViewport=function(z){ try{
 /* Sizes: six 5-step settings per device (index 0..4, 2 = Normal) — text, buttons, icons, map labels, photos, spacing.
    On a phone "buttons" zooms the whole app (the viewport), elsewhere it zooms the buttons. */
 window.AM_SZ={t:[.6,.8,1,1.2,1.4],b:[.8,.9,1,1.15,1.3],bm:[1,1.3,1.6,1.9,2.2],i:[.7,.85,1,1.2,1.4],l:[.7,.85,1,1.2,1.4],p:[.6,.8,1,1.3,1.6],s:[.5,.75,1,1.3,1.6],
-  di:[.84,1.02,1.2,1.44,1.68],dl:[.6,.72,.85,1.02,1.19]};   // desktop: Normal icons are the old "Larger", Normal map labels the old "Smaller" (the look settled on); the steps scale round them
+  di:[.84,1.02,1.2,1.44,1.68],dl:[.72,.87,1.02,1.22,1.43]};   // desktop: Normal icons are the old "Larger", Normal map labels the old "Smaller" (the look settled on); the steps scale round them
 window.amSizes=function(){ var d={t:2,b:2,i:2,l:2,p:2,s:2}; try{ var j=JSON.parse(localStorage.getItem("amSizes")||"null"); if(j) for(var k in d) if(j[k]>=0&&j[k]<=4) d[k]=j[k]|0;
     if(!j){ var v=parseFloat(localStorage.getItem("amAppSize2")), t=parseFloat(localStorage.getItem("amTextSize")), near=function(arr,x){ var bi=2,bd=9; arr.forEach(function(y,i){ if(Math.abs(y-x)<bd){ bd=Math.abs(y-x); bi=i; } }); return bi; };   // older phones: carry over their App size / Text size
       if(v>0) d.b=near(AM_SZ.bm,v); if(t>0) d.t=near(AM_SZ.t,t); }
     if(!j&&!matchMedia("(pointer: coarse)").matches) localStorage.setItem("amSzD2","1");   // a fresh desktop starts on the new scale
+    if(j&&!matchMedia("(pointer: coarse)").matches&&localStorage.getItem("amSzD2")&&!localStorage.getItem("amSzD3")){   // once more: map labels' Normal moved up a step (the old "Larger")
+      var o2=[.6,.72,.85,1.02,1.19][d.l], b3=2, e3=9; AM_SZ.dl.forEach(function(y,i){ if(Math.abs(y-o2)<e3-1e-9){ e3=Math.abs(y-o2); b3=i; } }); d.l=b3; localStorage.setItem("amSizes",JSON.stringify(d)); }
+    if(!matchMedia("(pointer: coarse)").matches) localStorage.setItem("amSzD3","1");
     if(j&&!matchMedia("(pointer: coarse)").matches&&!localStorage.getItem("amSzD2")){   // once, on a desktop: keep the same look on the new scale
       var nr=function(arr,x){ var bi=2,bd=9; arr.forEach(function(y,i){ if(Math.abs(y-x)<bd-1e-9){ bd=Math.abs(y-x); bi=i; } }); return bi; };
       d.i=nr(AM_SZ.di,AM_SZ.i[d.i]); d.l=nr(AM_SZ.dl,AM_SZ.l[d.l]); localStorage.setItem("amSizes",JSON.stringify(d)); localStorage.setItem("amSzD2","1"); } }catch(e){} return d; };
@@ -1831,7 +1834,8 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
       markerLayer.addLayer(sm); } };
   /* 1) where each label goes: a lone action sits on its spot; several share a wheel round their spots */
   for(const g of groups){ const n=g.mem.length;
-    if(n===1){ const lab=g.labs[0]; g.ls=[{l:lab,q:lab.q,x:lab.q.x,y:lab.q.y,single:true}]; continue; }
+    if(n===1){ const lab=g.labs[0], k=lblZ(), dx=LBL_W0*k/2+9, dy=14*k+9;   // a lone action: its dot on the spot, the label up and to the right at 45 degrees, a short line between
+      g.ls=[{l:lab,q:lab.q,x:lab.q.x+dx,y:lab.q.y-dy,single:true,moved:true}]; continue; }
     const R=wheelR(n), ang=m=>{ const dx=m.q.x-g.cx, dy=m.q.y-g.cy; return Math.hypot(dx,dy)<3?null:Math.atan2(dy,dx); }, key=m=>m.l?String(actNo(m.l.a)):"~";
     const ls=g.mem.map(m=>({m,l:m.l,d:m.d,q:m.q,t:ang(m)})).sort((x,y)=>{ if(x.t==null||y.t==null||Math.abs(x.t-y.t)<1e-6) return (x.t==null?-9:x.t)-(y.t==null?-9:y.t)||key(x.m).localeCompare(key(y.m)); return x.t-y.t; });
     let best=null; for(let k=0;k<n*12;k++){ const off=-Math.PI/2+k*2*Math.PI/(n*12); let cost=0;   // turn the wheel so each label sits on its own spot's side (spokes don't cross)
@@ -1846,23 +1850,23 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
     const labs=[]; for(const g of groups) for(const o of g.ls) if(o.l) labs.push(o);
     const me=myLoc(), mp=me?map.project([me.lat,me.lng],z):null;   // the YOU ARE HERE pin (60 x 75 px above its point) is kept clear too
     const onMe=(x,y)=>!!mp&&Math.abs(x-mp.x)<LW/2+34&&y+LH/2>mp.y-79&&y-LH/2<mp.y+4;
-    const covers=(o,x,y)=>onMe(x,y)||dots.some(q=>!(o.single&&q===o.q)&&Math.abs(q.x-x)<LW/2+7&&Math.abs(q.y-y)<LH/2+7);
+    const covers=(o,x,y)=>onMe(x,y)||dots.some(q=>Math.abs(q.x-x)<LW/2+12&&Math.abs(q.y-y)<LH/2+12);   // (its own dot too - a label never sits on a dot)   // a whole dot plus a gap stays clear of every label
     const clash=(o,x,y,list)=>list.some(r=>r!==o&&Math.abs(r.x-x)<LW+4&&Math.abs(r.y-y)<LH+4);
     const done=labs.filter(o=>!covers(o,o.x,o.y));
     for(const o of labs){ if(done.includes(o)&&!clash(o,o.x,o.y,done.filter(r=>labs.indexOf(r)<labs.indexOf(o)))) continue;
       let pick=null;
-      for(const r of [LH/2+16,LH/2+28,LH/2+42,LH/2+60,LH/2+82,LH/2+108]){ for(let k=0;k<16&&!pick;k++){ const t=-Math.PI/2+k*Math.PI/8, x=o.q.x+Math.cos(t)*r*(LW/LH>1.8?1.6:1.2), y=o.q.y+Math.sin(t)*r;
+      for(const r of [LH/2+16,LH/2+28,LH/2+42,LH/2+60,LH/2+82,LH/2+108]){ for(let k=0;k<16&&!pick;k++){ const t=-Math.PI/4+(k%2?1:-1)*Math.ceil(k/2)*Math.PI/8, x=o.q.x+Math.cos(t)*r*(LW/LH>1.8?1.6:1.2), y=o.q.y+Math.sin(t)*r;
           if(!covers(o,x,y)&&!clash(o,x,y,done)) pick=[x,y]; } if(pick) break; }
       if(pick){ o.x=pick[0]; o.y=pick[1]; o.moved=true; }
       if(!done.includes(o)) done.push(o); } }
   /* 3) draw: spokes and spot dots, then the labels */
   for(const g of groups){ const n=g.mem.length, ls=g.ls;
     if(n===1){ const o=ls[0];
-      if(o.moved) markerLayer.addLayer(L.marker(llOf(o.q.x,o.q.y),{interactive:false,keyboard:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1"><line data-l="'+o.l.a.id+'"'+((selActs.has(o.l.a.id)||o.l.ps.some(t=>hlSet.has(t.p.id)||(!!op&&t.p.id===op.id)))?' class="sel"':'')+' x1="0" y1="0" x2="'+(o.x-o.q.x).toFixed(1)+'" y2="'+(o.y-o.q.y).toFixed(1)+'"/><circle cx="0" cy="0" r="4"/></svg>',iconSize:[0,0],iconAnchor:[0,0]})}));
+      if(o.moved) markerLayer.addLayer(L.marker(llOf(o.q.x,o.q.y),{interactive:false,keyboard:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1"><line data-l="'+o.l.a.id+'"'+((selActs.has(o.l.a.id)||o.l.ps.some(t=>hlSet.has(t.p.id)||(!!op&&t.p.id===op.id)))?' class="sel"':'')+' x1="0" y1="0" x2="'+(o.x-o.q.x).toFixed(1)+'" y2="'+(o.y-o.q.y).toFixed(1)+'"/></svg>',iconSize:[0,0],iconAnchor:[0,0]})}));
       mkLabel(o.l,o.x,o.y); continue; }
     const spokes=[], spots=new Set();
     ls.forEach(o=>{ spokes.push('<line'+(o.l?' data-l="'+o.l.a.id+'"'+((selActs.has(o.l.a.id)||o.l.ps.some(t=>hlSet.has(t.p.id)||(!!op&&t.p.id===op.id)))?' class="sel"':''):'')+' x1="'+(o.q.x-g.cx).toFixed(1)+'" y1="'+(o.q.y-g.cy).toFixed(1)+'" x2="'+(o.x-g.cx).toFixed(1)+'" y2="'+(o.y-g.cy).toFixed(1)+'"/>'); spots.add(Math.round(o.q.x-g.cx)+","+Math.round(o.q.y-g.cy)); });
-    markerLayer.addLayer(L.marker(llOf(g.cx,g.cy),{interactive:false,keyboard:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1">'+spokes.join("")+[...spots].map(t=>{ const [x,y]=t.split(","); return '<circle cx="'+x+'" cy="'+y+'" r="4"/>'; }).join("")+'</svg>',iconSize:[0,0],iconAnchor:[0,0]})}));
+    markerLayer.addLayer(L.marker(llOf(g.cx,g.cy),{interactive:false,keyboard:false,zIndexOffset:-100,icon:L.divIcon({className:"",html:'<svg class="ma-fan" width="1" height="1">'+spokes.join("")+'</svg>',iconSize:[0,0],iconAnchor:[0,0]})}));   // (each spot is drawn once, as its own status-coloured handle)
     for(const o of ls){ if(o.l) mkLabel(o.l,o.x,o.y); else mkLoose(o.d,o.x,o.y); }
     const sp=new Map(); for(const o of ls){ const k=Math.round(o.q.x)+","+Math.round(o.q.y), ps=o.l?o.l.ps.map(t=>t.p):o.d.items.map(t=>t.p);   // each spot on a wheel is a drop target too
       if(!sp.has(k)) sp.set(k,{ll:llOf(o.q.x,o.q.y),pids:[],rep:null,act:null,spot:true}); const h=sp.get(k); for(const p of ps) h.pids.push(p.id); if(!h.rep||(o.l&&!(h.rep.acts||[]).length)) h.rep=ps[0]; }
@@ -7492,11 +7496,11 @@ function mBuildHomeMap(acts){
           if(dx||dy) for(const t of ls){ t.lx+=dx; t.ly+=dy; } }
         wheels.push({cx:g.cx,cy:g.cy,ls}); }
       { const LW=66*lz, LH=26*lz, dots=wheels.members.map(t=>t.q), labs=[];   // like the desktop: a lone label never covers a dot or another label - it steps off, a line back to its spot
-        for(const w of wheels){ if(w.one){ dots.push(w.one.q); w.one.lx=w.one.q.x; w.one.ly=w.one.q.y; labs.push(w.one); } else for(const t of w.ls){ dots.push(t.q); labs.push(t); } }
+        for(const w of wheels){ if(w.one){ dots.push(w.one.q); w.one.lx=w.one.q.x+LW/2+9; w.one.ly=w.one.q.y-LH/2-9; w.one.moved=true; labs.push(w.one); } else for(const t of w.ls){ dots.push(t.q); labs.push(t); } }   // a lone label: up-right at 45 degrees from its dot (the dot always shows)
         const mp=(mGeo&&!ignoreLoc)?m2.project([mGeo.lat,mGeo.lng],z):null, onMe=(x,y)=>!!mp&&Math.abs(x-mp.x)<LW/2+19&&y+LH/2>mp.y-41&&y-LH/2<mp.y+4;   // keep clear of the YOU ARE HERE pin (30 x 37 px above its point)
-        const covers=(o,x,y)=>onMe(x,y)||dots.some(q=>q!==o.q&&Math.abs(q.x-x)<LW/2+7&&Math.abs(q.y-y)<LH/2+7), clash=(o,x,y)=>labs.some(r=>r!==o&&Math.abs(r.lx-x)<LW+4&&Math.abs(r.ly-y)<LH+4);
-        for(const o of labs){ const one=!!wheels.find(w=>w.one===o); if(one?(!covers(o,o.lx,o.ly)&&!clash(o,o.lx,o.ly)):!onMe(o.lx,o.ly)) continue; let pick=null;
-          for(const r of [LH/2+16,LH/2+28,LH/2+42,LH/2+60,LH/2+82]){ for(let k=0;k<16&&!pick;k++){ const a2=-Math.PI/2+k*Math.PI/8, x=o.q.x+Math.cos(a2)*r*1.6, y=o.q.y+Math.sin(a2)*r; if(!covers(o,x,y)&&!clash(o,x,y)) pick=[x,y]; } if(pick) break; }
+        const covers=(o,x,y)=>onMe(x,y)||dots.some(q=>Math.abs(q.x-x)<LW/2+12&&Math.abs(q.y-y)<LH/2+12), clash=(o,x,y)=>labs.some(r=>r!==o&&Math.abs(r.lx-x)<LW+4&&Math.abs(r.ly-y)<LH+4);
+        for(const o of labs){ const one=!!wheels.find(w=>w.one===o); if(!covers(o,o.lx,o.ly)&&!(one&&clash(o,o.lx,o.ly))) continue; let pick=null;
+          for(const r of [LH/2+16,LH/2+28,LH/2+42,LH/2+60,LH/2+82]){ for(let k=0;k<16&&!pick;k++){ const a2=-Math.PI/4+(k%2?1:-1)*Math.ceil(k/2)*Math.PI/8, x=o.q.x+Math.cos(a2)*r*1.6, y=o.q.y+Math.sin(a2)*r; if(!covers(o,x,y)&&!clash(o,x,y)) pick=[x,y]; } if(pick) break; }
           if(pick){ o.lx=pick[0]; o.ly=pick[1]; o.moved=true; } } }   // (a wheel label that moves keeps its spoke - it's drawn to wherever the label is)
       return wheels; };
     const dot=(k,a,ll)=>{ const st=mStatus(a);   // one action's label
@@ -7535,7 +7539,7 @@ function mBuildHomeMap(acts){
       if(bb){ if(pts.length>1||(me&&meNear(me,pts))) m2.fitBounds(bb,{padding:[40,40],maxZoom:18}); else m2.setView(bb.getCenter(),17); }
       else if(me) m2.setView([me.lat,me.lng],16); else m2.setView([0,0],2); };
     fit(); draw();
-    m2.on("click",()=>{ if(mTapK!=null&&Date.now()-mTapT<700){ const k=mTapK; mTapK=null; mOpenAct(k); } });   // a quick second tap that lands where the label was before the map glided off: still opens it
+    m2.on("click dblclick",()=>{ if(mTapK!=null&&Date.now()-mTapT<700){ const k=mTapK; mTapK=null; mOpenAct(k); } });   // a quick second tap that lands where the label was before the map glided off: still opens it
     m2.on("moveend",()=>mSyncCards());
     m2.on("moveend",()=>{ if(!m2._pinchIn) draw(); });   // after a zoom or pan, wheels settle in the clear part of the screen again
     /* Leaflet ignores a pinch that starts while the last one is still settling (~¼ s after you let go):
