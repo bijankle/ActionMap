@@ -2500,7 +2500,7 @@ try{ new ResizeObserver(()=>fillCovers()).observe(document.getElementById("actLi
 /* The Actions list scrolls one key area per wheel click: each tile's On hold / Done bar, its title, then
    (when open) each sub-action and the "+ sub-action" box - the next one lands at the top of the list.
    A trackpad steps once per wheel-click's worth of movement; dragging the scroll bar stays free. */
-{ const list=document.getElementById("actList"); let acc=0, tgt=null, tgtT=0, lastStep=0;
+{ const list=document.getElementById("actList"); let acc=0, tgt=null, tgtT=0;
   const stops=()=>{ const top=list.getBoundingClientRect().top-list.scrollTop, out=[];
     list.querySelectorAll(".act-row").forEach(r=>{ r.querySelectorAll(".act-top,.bh,.act-tree .st-row,.act-tree .st-neww").forEach(e=>{ if(e.offsetParent) out.push(Math.round(e.getBoundingClientRect().top-top-4)); }); });
     return [...new Set(out.map(v=>Math.max(0,v)))].sort((x,y)=>x-y); };
@@ -2509,11 +2509,10 @@ try{ new ResizeObserver(()=>fillCovers()).observe(document.getElementById("actLi
     e.preventDefault();
     acc+=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?list.clientHeight:1);
     if(Math.abs(acc)<50) return;
-    const dir=acc>0?1:-1; acc=0;
-    if(Date.now()-lastStep<60) return; lastStep=Date.now();   // a fast trackpad flick: one step at a time, not a pile-up
-    const cur=(tgt!=null&&Date.now()-tgtT<400)?tgt:list.scrollTop, max=list.scrollHeight-list.clientHeight, st=stops();
-    let next=dir>0?st.find(v=>v>cur+2):[...st].reverse().find(v=>v<cur-2);
-    if(next==null) next=dir>0?max:0; next=Math.max(0,Math.min(max,next));
+    const dir=acc>0?1:-1, n=Math.max(1,Math.round(Math.abs(acc)/100)); acc=0;   // every wheel click counts - a fast spin runs through as many areas as clicks (none are dropped)
+    const cur=(tgt!=null&&Date.now()-tgtT<700)?tgt:list.scrollTop, max=list.scrollHeight-list.clientHeight, st=stops();   // carry on from where the last step was heading
+    let next=cur; for(let i=0;i<n;i++){ const v=dir>0?st.find(v=>v>next+2):[...st].reverse().find(v=>v<next-2); if(v==null){ next=dir>0?max:0; break; } next=v; }
+    next=Math.max(0,Math.min(max,next));
     if(Math.abs(next-cur)<1) return;
     tgt=next; tgtT=Date.now(); list.scrollTo({top:next,behavior:"smooth"});
   },{passive:false});
