@@ -434,7 +434,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   .hoverview .cap{font-family:var(--font);font-size:var(--fl);color:var(--muted);margin-top:5px;text-align:center;max-width:min(270px,40vh);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
   @keyframes hlpulse{0%,100%{stroke-opacity:1;}50%{stroke-opacity:.25;}}
   .sel-arrow{position:relative;width:0;height:0;pointer-events:none;}   /* the selected photo dot: a red ring round it (labels wear their own red ring, .ma-dot.sel) */
-  .sel-arrow i{position:absolute;left:calc(-1 * var(--r) - 4px);top:calc(-1 * var(--r) - 4px);width:calc(2 * var(--r) + 8px);height:calc(2 * var(--r) + 8px);border-radius:50%;box-shadow:0 0 0 3px #E8281E,0 2px 6px #0006;}
+  .sel-arrow i{position:absolute;left:calc(-1 * var(--r));top:calc(-1 * var(--r));width:calc(2 * var(--r));height:calc(2 * var(--r));border-radius:50%;box-shadow:0 0 0 2px #E8281E;}
   .sel-arrow b{display:none;}
 
   .leaflet-control-layers,.leaflet-bar{background:#fff!important;border:1px solid var(--line2)!important;border-radius:9px!important;box-shadow:0 6px 18px #1e1f2222!important;color:var(--text)!important;}
@@ -903,6 +903,7 @@ if("serviceWorker" in navigator) addEventListener("load",function(){ navigator.s
   /* the action you picked: a red arrow points down at its dot (or at the bubble it sits in), bobs twice and fades */
   /* map callouts and map buttons wear the theme colour as a 2px edge - the same weight as the phone's action card */
   #map .north-arrow,#map .zoom-all,#map .mini,#toolstack .areabtn,.ma-mapwrap .ma-north,.ma-mapwrap .ma-fit,.ma-mapwrap .ma-flt button:not(.on){border:2px solid var(--gold)!important;}
+  .ma-spot{position:absolute;left:0;top:0;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:#1d2430;border:2px solid #fff;box-sizing:border-box;cursor:pointer;} .ma-spot.grab{cursor:move;}   /* a callout's spot: the real location, and the drag handle */
   .ma-fan line{stroke:var(--gold)!important;filter:none!important;stroke-width:2!important;}
   .ma-dot.sel{border-color:#E8281E;}   /* the selected action: its 2px edge turns red (same weight as the grey), its callout line red too */   /* the selected action: a red ring outside its white border, its callout line red too */
   .ma-fan line.sel{stroke:#E8281E!important;stroke-width:2!important;}
@@ -1720,7 +1721,9 @@ function mkHlDot(lat,lng,r){   // the one selection visual, used everywhere: a r
   r=r||10;                    // A marker, not a map shape — so it keeps its size while the map zooms (the old gold ring blew up mid-zoom).
   return L.marker([lat,lng],{interactive:false,keyboard:false,zIndexOffset:4000,icon:L.divIcon({className:"",html:'<div class="sel-arrow" style="--r:'+r+'px"><i></i><b></b></div>',iconSize:[0,0],iconAnchor:[0,0]})}); }
 let _openInArrowed=false;   // the open photo sits inside a bubble that already wears the arrow: one arrow, not two
-function highlightDot(p){ clearHighlight(); if(!p||p.lat==null)return; hlMarker=mkHlDot(p.lat,p.lng).addTo(highlightLayer); hlMarker._pid=p.id; if(_openInArrowed&&lb.classList.contains("open")&&curPhoto()===p) hlMarker.setOpacity(0); }
+function highlightDot(p){ clearHighlight(); if(!p||p.lat==null)return; hlMarker=mkHlDot(p.lat,p.lng,8).addTo(highlightLayer); hlMarker._pid=p.id;
+  if((p.acts||[]).some(id=>{ const a=actById(id); return a&&actVisible(a); })) hlMarker.setOpacity(0);   // a photo on an action: its label's red edge shows it (no extra circle)
+  if(highlightDot._last!==p.id){ highlightDot._last=p.id; clearTimeout(highlightDot._t); highlightDot._t=setTimeout(()=>{ if(!dotDrag) renderClusters(); },0); } }   // the labels re-mark which one is open now
 function clearHighlight(){ if(hlMarker){ highlightLayer.removeLayer(hlMarker); hlMarker=null; } }
 function highlightCurrent(){ if(sideShowsPhoto()&&lightboxList[lightboxIndex]) highlightDot(lightboxList[lightboxIndex]); else clearHighlight(); }
 // Dots re-cluster immediately when the map settles on a new view (responsive, as originally);
@@ -1796,13 +1799,21 @@ function renderClusters(anim){   // anim: a zoom animation just starting — lay
       if(Math.hypot(a.cx-b.cx,a.cy-b.cy)<occ(a)+occ(b)){ a.items=a.items.concat(b.items); a.loose=a.loose.concat(b.loose); settle(a); groups.splice(j,1); again=true; } } }
   const llOf=(x,y)=>map.unproject([x,y],z);
   const mkLabel=(lab,x,y)=>{ const a=lab.a, st=a.done?"done":a.hold?"hold":"open", pids=lab.ps.map(t=>t.p.id), ll=llOf(x,y);
-    const hl=pids.some(id=>hlSet.has(id)), hasOpen=!!op&&pids.includes(op.id), grab=pids.some(id=>selSet.has(id))||hasOpen||selActs.has(a.id);
+    const hl=pids.some(id=>hlSet.has(id)), hasOpen=!!op&&pids.includes(op.id), canMove=pids.some(id=>selSet.has(id))||hasOpen||selActs.has(a.id);
+    const off=Math.hypot(x-lab.q.x,y-lab.q.y)>2, grab=canMove&&!off;   // a label away from its spot (a callout) never drags - the spot itself does (it's the real location)
     const m=L.marker(ll,{keyboard:false,zIndexOffset:hasOpen?900:st==="open"?300:st==="hold"?200:100,icon:L.divIcon({className:"",html:'<div class="ma-dot'+(st==="open"?"":" "+st)+(selActs.has(a.id)||hasOpen||hl?' sel':'')+'" data-l="'+a.id+'"'+(grab?' style="cursor:move"':'')+'>'+actNo(a)+'</div>',iconSize:[0,0],iconAnchor:[0,0]})});
     let arrow=null; if(hl||hasOpen){ arrow=mkHlDot(ll.lat,ll.lng,14); arrow.setOpacity(0); markerLayer.addLayer(arrow); if(hasOpen) _openInArrowed=true; }   // the label's own red ring shows it (the hidden mark still moves with a drag)
     wireMapHit(m,{ll,pids,rep:lab.rep,act:a.id,grab,arrow,hover:actPhotos(a)[0]||lab.rep,
       open:()=>{ if(!(selActs.size===1&&selActs.has(a.id))){ selActs=new Set([a.id]); lastActClick=a.id; rebuildActionFilter(); refreshActSelClasses(); drawActionRings(); updateGallery(); const row=document.querySelector('#actList .act-row[data-aid="'+a.id+'"]'); if(row) row.scrollIntoView({block:"nearest"}); }
         openViewer(lab.rep); }});
-    markerLayer.addLayer(m); };
+    markerLayer.addLayer(m);
+    if(off){ const sl=llOf(lab.q.x,lab.q.y), sm=L.marker(sl,{keyboard:false,zIndexOffset:hasOpen?950:350,icon:L.divIcon({className:"",html:'<div class="ma-spot'+(canMove?' grab':'')+'"></div>',iconSize:[0,0],iconAnchor:[0,0]})});   // the spot: drag handle (when selected/open), a click opens the action like its label
+      const hs={ll:sl,pids,rep:lab.rep,act:a.id,grab:canMove,arrow,hover:actPhotos(a)[0]||lab.rep};
+      sm.on("mouseover",e=>{ if(dotDrag||PLACE) return; if(canMove) map.getContainer().style.cursor="move"; showHover(hs.hover,e.originalEvent,sm.getElement()); });
+      sm.on("mouseout",()=>{ if(!dotDrag) map.getContainer().style.cursor=""; hideHover(); });
+      sm.on("mousedown",e=>{ const oe=e.originalEvent; if(!oe||oe.button!==0||oe.ctrlKey||oe.metaKey||!canMove) return; L.DomEvent.stop(oe); startMapDrag(sm,hs); });
+      sm.on("click",()=>{ uiClickT=Date.now(); if(Date.now()-dotDropT<450) return; m.fire("click",{originalEvent:{}}); });
+      markerLayer.addLayer(sm); } };
   /* 1) where each label goes: a lone action sits on its spot; several share a wheel round their spots */
   for(const g of groups){ const n=g.mem.length;
     if(n===1){ const lab=g.labs[0]; g.ls=[{l:lab,q:lab.q,x:lab.q.x,y:lab.q.y,single:true}]; continue; }
