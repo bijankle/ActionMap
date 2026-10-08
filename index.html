@@ -3567,7 +3567,7 @@ async function restoreUploadQueue(){   // photos that were still uploading when 
 }
 
 /* ---- projects: the index, open / new / rename, share link ---- */
-async function readProjects(){ try{ const rd=await repoReadJson("projects.json"); const l=(rd.obj&&Array.isArray(rd.obj.projects))?rd.obj.projects:[]; _projList=l; return l; }catch(e){ return []; } }
+async function readProjects(){ try{ const rd=await repoReadJson("projects.json"); const l=(rd.obj&&Array.isArray(rd.obj.projects))?rd.obj.projects:[]; _projList=l; try{ localStorage.setItem(projListKey(),JSON.stringify(l.map(p=>({id:p.id,name:p.name||p.id})))); }catch(e){} return l; }catch(e){ return []; } }   // (kept for the instant dropdowns)
 async function updateProjects(mutate){
   for(let i=0;i<6;i++){ const rd=await repoReadJson("projects.json"); const cur=rd.obj&&Array.isArray(rd.obj.projects)?rd.obj:{v:1,projects:[]};
     const next=mutate(JSON.parse(JSON.stringify(cur))); if(!next) return;
@@ -4629,14 +4629,27 @@ async function toggleProjDrop(){
   ["mousedown","pointerdown","dblclick","wheel","contextmenu","click"].forEach(ev=>d.addEventListener(ev,e=>e.stopPropagation()));
   document.body.appendChild(d);
   const r=projHeadEl.getBoundingClientRect(); d.style.top=(r.bottom+6)+"px"; d.style.left=r.left+"px";
-  let list=[]; try{ list=onRepo()?await readProjects():[]; }catch(e){}
-  if(!document.getElementById("projDrop")) return;
-  const cur=ON.pid;
-  d.innerHTML=(list.length?list.map(p=>'<button type="button" class="pd-row'+(p.id===cur?' on':'')+'" data-id="'+esc(p.id)+'"><span class="pd-tick">'+(p.id===cur?'\u2713':'')+'</span>'+esc(p.name||p.id)+'</button>').join(""):'<div class="pd-note">No projects found.</div>')
-    +'<button type="button" class="pd-row pd-all"><span class="pd-tick"></span>All projects\u2026</button>';
-  d.querySelectorAll(".pd-row[data-id]").forEach(b=>b.addEventListener("click",()=>{ closeProjDrop(); if(b.dataset.id!==ON.pid) openProject(b.dataset.id); }));
-  d.querySelector(".pd-all").addEventListener("click",()=>{ closeProjDrop(); showProjectPicker(); });
+  const draw=list=>{ const cur=ON.pid;
+    d.innerHTML=(list.length?list.map(p=>'<button type="button" class="pd-row'+(p.id===cur?' on':'')+'" data-id="'+esc(p.id)+'"><span class="pd-tick">'+(p.id===cur?'\u2713':'')+'</span>'+esc(p.name||p.id)+'</button>').join(""):'<div class="pd-note">No projects found.</div>')
+      +'<button type="button" class="pd-row pd-all"><span class="pd-tick"></span>All projects\u2026</button>';
+    d.querySelectorAll(".pd-row[data-id]").forEach(b=>b.addEventListener("click",()=>{ closeProjDrop(); if(b.dataset.id!==ON.pid) openProject(b.dataset.id); }));
+    d.querySelector(".pd-all").addEventListener("click",()=>{ closeProjDrop(); showProjectPicker(); }); };
+  const cached=projListCached(); if(cached) draw(cached);   // at once, from the last list seen…
+  const fresh=await projListRefresh(); if(!document.getElementById("projDrop")) return;   // …then any new ones, fetched behind it
+  if(fresh&&JSON.stringify(fresh)!==JSON.stringify(cached)) draw(fresh); else if(!cached) draw(fresh||[]);
 }
+/* The project names are kept on this device, so the dropdowns open instantly; the list refreshes in the background. */
+function projListKey(){ const g=ghRaw(); return "amProjList:"+(g.repo||""); }
+function projListCached(){ try{ const j=JSON.parse(localStorage.getItem(projListKey())||"null"); return Array.isArray(j)?j:null; }catch(e){ return null; } }
+let _plBusy=null;
+function projListRefresh(){ if(_plBusy) return _plBusy;
+  _plBusy=(async()=>{ try{ let list=null;
+      if(document.body.classList.contains("mobile")||!onRepo()){ const g=ghRaw(); if(!g.repo) return projListCached(); const t=await ghGetRaw({token:g.token,repo:g.repo},"projects.json"); const j=t?JSON.parse(t):null; list=(j&&Array.isArray(j.projects))?j.projects:[]; }
+      else list=await readProjects();
+      list=(list||[]).map(p=>({id:p.id,name:p.name||p.id})); try{ localStorage.setItem(projListKey(),JSON.stringify(list)); }catch(e){} return list;
+    }catch(e){ return projListCached(); } finally{ setTimeout(()=>{ _plBusy=null; },0); } })();
+  return _plBusy; }
+setTimeout(()=>{ try{ if(ghRaw().repo) projListRefresh(); }catch(e){} },4000);   // warm it shortly after start
 document.addEventListener("mousedown",e=>{ if(!e.target.closest||(!e.target.closest("#projDrop")&&!e.target.closest(".projhead"))) closeProjDrop(); },true);
 document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeProjDrop(); });
 function loadNote(msg){ projLoadMsg=msg||""; clearTimeout(loadNoteTimer); renderProjHead(); }
@@ -7321,14 +7334,14 @@ function wireSizeSliders(root){ if(!root) return; paintSizeSliders(root);
 /* The project name (or Settings > Project) drops a short list of the projects: the one open has a tick, a tap on
    another switches to it there and then. No new pages, and no making projects on the phone (that's the desktop's job). */
 let mProjList=null;
-async function mProjFetch(){ const g=ghRaw(); try{ const t=await ghGetRaw({token:g.token,repo:g.repo},"projects.json"); const j=t?JSON.parse(t):null; mProjList=(j&&Array.isArray(j.projects))?j.projects:[]; }catch(e){} return mProjList||[]; }
+async function mProjFetch(){ const l=await projListRefresh(); if(l) mProjList=l; return mProjList||[]; }
 function mProjSwitch(id){ if(!id||id===mPid) return;
   mPid=id; try{ localStorage.setItem("pmProject",id); }catch(e){} mPack=null; mPackNext=null; mPackStale=false; _mpRaw=null; _mpObj=null; mUndoStack.length=0; mRedoStack.length=0; mLoadPack(); }
 function mProjDrop(anchor){ const old=document.getElementById("mPjDd"); if(old){ old.remove(); return; } if(!anchor) return;
   const host=anchor.closest(".ma-top2,.sg-page,.m-scr")||anchor.parentElement, dd=document.createElement("div"); dd.id="mPjDd"; dd.className="ma-pjdd";
   const draw=list=>{ if(!list.length&&mPid) list=[{id:mPid,name:(mPack&&mPack.project)||"Project"}];
     dd.innerHTML=list.length?list.map(p=>'<button type="button" data-id="'+esc(p.id)+'"'+(p.id===mPid?' class="on"':'')+'><span>'+esc(p.name||p.id)+'</span><i>'+(p.id===mPid?'\u2713':'')+'</i></button>').join(""):'<div class="pj-none">Loading\u2026</div>'; };
-  draw(mProjList||[]); if(getComputedStyle(host).position==="static") host.style.position="relative"; host.appendChild(dd);
+  draw(mProjList||projListCached()||[]); if(getComputedStyle(host).position==="static") host.style.position="relative"; host.appendChild(dd);
   const hr=host.getBoundingClientRect(), ar=anchor.getBoundingClientRect(), z=hr.width/(host.offsetWidth||hr.width)||1;   // (screen pixels back into the page's own, if it's zoomed)
   dd.style.left=Math.max(8,Math.min((ar.left-hr.left)/z,(host.offsetWidth||hr.width/z)-dd.offsetWidth-8))+"px"; dd.style.top=((ar.bottom-hr.top)/z+6)+"px";
   mProjFetch().then(l=>{ if(dd.isConnected) draw(l); });
