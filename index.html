@@ -6644,7 +6644,7 @@ let mPid=null;   // the project this phone is working in (from the shared link, 
 function mP(x){ return mPid?"projects/"+mPid+"/"+x:x; }
 function mFieldKey(){ return "pmField"+(mPid?":"+mPid:""); }
 function mRO(){ return !ghRaw().token; }
-function mRoBlock(){ if(!mRO()) return false; mToast("View only \u2014 add your access token (tap the project name \u2192 Settings) to make changes"); return true; }
+function mRoBlock(){ if(!mRO()) return false; mToast("View only \u2014 add your access token (Settings \u2192 Project \u2192 Access token) to make changes"); return true; }
 async function ghGetRaw(cfg,path){
   if(!cfg.token){ const r=await fetch("https://raw.githubusercontent.com/"+cfg.repo+"/HEAD/"+path+"?t="+Date.now(),{cache:"no-store"}); if(r.status===404) return null; if(!r.ok) throw new Error("Couldn't read the project ("+r.status+") \u2014 is the data repo public?"); return await r.text(); }   // viewing needs no token
   const r=await fetch("https://api.github.com/repos/"+cfg.repo+"/contents/"+path+"?t="+Date.now(),{headers:Object.assign(ghHeaders(cfg.token),{Accept:"application/vnd.github.raw+json"})});
