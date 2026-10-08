@@ -1743,7 +1743,7 @@ function miniSync(base){ if(!miniMap) return; try{
       miniBox=L.rectangle(map.getBounds(),{color:thColor(),weight:2.5,fillColor:thColor(),fillOpacity:0.12,interactive:false}).addTo(miniMap);
       miniMap.on("click",e=>map.panTo(e.latlng)); miniSync(true); },0);
     return d; }; mc.addTo(map);
-  map.on("moveend zoomend resize",()=>miniSync()); }
+  let miniRaf=0; map.on("move zoom moveend zoomend resize",()=>{ if(miniRaf) return; miniRaf=requestAnimationFrame(()=>{ miniRaf=0; miniSync(); }); }); }   // follows every frame of a drag, glide or zoom (once per frame), not just when it stops
 /* Zoom to all (bottom right, where the scale was; key Z): every action on show, and you if your location is on. */
 { const zc=L.control({position:"bottomright"}); zc.onAdd=()=>{ const d=L.DomUtil.create("button","zoom-all"); d.type="button"; d.title="Zoom to all actions (Z)";
     d.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M4 4l5.5 5.5M20 9V4h-5M20 4l-5.5 5.5M4 15v5h5M4 20l5.5-5.5M20 15v5h-5M20 20l-5.5-5.5"/></svg><kbd>Z</kbd>';
