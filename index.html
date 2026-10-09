@@ -6688,7 +6688,7 @@ function mScr(html){ if(mStepFlush){ const f=mStepFlush; mStepFlush=null; try{ f
   if(html.indexOf("Loading the latest pack")<0) bootDone(700); }   // the first real screen (map fitted by then) ends the loading page
 function mShowSetup(msg){
   const g=ghRaw(); mScrPush();
-  mScr('<div class="m-head">'+mScrBackHtml()+'<div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div></div>'
+  mScr('<div class="m-head">'+mScrBackHtml()+'<div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span></div></div></div>'
     +'<div class="m-body"><div class="m-sec"><div class="m-lab">DATA REPOSITORY</div><input class="m-in" id="mRepo" value="'+esc(g.repo||siteRepo())+'" placeholder="found automatically from the token" autocomplete="off" />'
     +'<div class="m-lab">ACCESS TOKEN (TO EDIT \u2014 LEAVE EMPTY TO JUST VIEW)</div><input class="m-in secret" id="mTok" type="text" autocomplete="off" data-lpignore="true" data-1p-ignore spellcheck="false" placeholder="github_pat_…" value="'+esc(g.token)+'" />'
     +'<div class="m-lab">YOUR NAME (FOR THE CHANGE HISTORY)</div><input class="m-in" id="mWhoIn" placeholder="e.g. Sam" value="'+esc(mUserName(true))+'" autocomplete="off" />'
@@ -6706,7 +6706,7 @@ async function mChooseProject(list){
   const g=ghRaw(), cfg={token:g.token,repo:g.repo};
   if(!list){ try{ const t=await ghGetRaw(cfg,"projects.json"); const j=t?JSON.parse(t):null; list=(j&&Array.isArray(j.projects))?j.projects:[]; }catch(e){ list=[]; } }
   mScrPush();
-  mScr('<div class="m-head">'+mScrBackHtml()+'<div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div></div>'
+  mScr('<div class="m-head">'+mScrBackHtml()+'<div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span></div></div></div>'
     +'<div class="m-body"><div class="m-lab">PROJECTS IN '+esc(cfg.repo||"")+'</div>'
     +(list.length?list.map(p=>'<button class="m-btn ghost m-pj" data-id="'+esc(p.id)+'" style="text-align:left;padding:0 16px;'+(p.id===mPid?'border-color:var(--accent);':'')+'">'+esc(p.name||p.id)+'</button>').join(''):'<div class="m-note" style="padding-top:20px">No projects found.</div>')
     +'</div><div class="m-foot"><button class="m-btn ghost" id="mPjSet">Settings</button></div>');
@@ -6730,7 +6730,7 @@ async function mLoadPack(silent){
         if(!localStorage.getItem(mFieldKey())&&localStorage.getItem("pmField")){ localStorage.setItem(mFieldKey(),localStorage.getItem("pmField")); localStorage.removeItem("pmField"); _mpRaw=null; _mpObj=null; } }catch(e){} }   // edits made before the project went online come along
     else if(list.length>1){ mChooseProject(list); return; } }
   const lst=document.getElementById("mList"), keepScroll=(silent&&lst)?lst.scrollTop:null;
-  if(!silent) mScr('<div class="m-head"><div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span> Field</div></div></div><div class="m-body"><div class="m-note" style="padding-top:40px">Loading the latest pack…</div></div>');
+  if(!silent) mScr('<div class="m-head"><div class="m-brand">'+PM_MARK(26)+'<div>Action<span>Map</span></div></div></div><div class="m-body"><div class="m-note" style="padding-top:40px">Loading the latest pack…</div></div>');
   try{
     let text, offline=false;
     try{ text=await ghGetRaw(cfg,mP("pack.json")); if(text) idbSet("mPackTxt:"+mPid,text).catch(()=>{}); }   // the last copy stays on the phone…
