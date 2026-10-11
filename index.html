@@ -1725,10 +1725,6 @@ function syncUnder(){ const near=map.getZoom()>=13, g=map.hasLayer(google)&&near
   if(e&&!map.hasLayer(esriLo)) esriLo.addTo(map); if(!e&&map.hasLayer(esriLo)) map.removeLayer(esriLo);
   map.getContainer().classList.toggle("nobase",!map.hasLayer(google)&&!map.hasLayer(esri)); if(typeof miniSync==="function") miniSync(true); }
 [google,esri].forEach(l=>l.on("add remove",()=>setTimeout(syncUnder,0))); map.on("zoomend",syncUnder); syncUnder();
-const NORTH_SVG=(w,h)=>'<svg viewBox="0 0 40 48" width="'+w+'" height="'+h+'"><path d="M20 4 30 34 20 28 10 34Z" fill="#1d2430"/><path d="M20 4 20 28 10 34Z" fill="#7a8591"/><text x="20" y="46" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" font-weight="800" fill="#1d2430">N</text></svg>';   // desktop map + phone map
-{ const nc=L.control({position:"topleft"}); nc.onAdd=()=>{ const d=L.DomUtil.create("div","north-arrow"); d.title="North is up";
-    d.innerHTML=NORTH_SVG(34,41);
-    L.DomEvent.disableClickPropagation(d); return d; }; nc.addTo(map); }
 /* Minimap (top right): the plain map zoomed well out with a gold box where you're looking; its header
    bar folds it away (remembered). A click on it moves the map there. */
 function miniSync(base){ if(!miniMap) return; try{
@@ -7051,7 +7047,6 @@ function mShowList(){
   if(mTab==="map"){
     const pks=mMapCards(acts);
     mScr(mTopStrip()+'<div class="ma-mapwrap" id="mList"><div class="ma-map" id="mHomeMap"></div>'+mFltHtml()
-      +'<div class="ma-north" title="North is up">'+NORTH_SVG(30,36)+'</div>'
       +'<button type="button" class="ma-movedone" id="mMoveDone"'+(mMoveMode?'':' hidden')+'><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Done moving</button>'
       +'<button type="button" class="ma-fit" id="mFitB" title="Zoom out to every action" aria-label="Zoom out to every action"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M4 4l5.5 5.5M20 9V4h-5M20 4l-5.5 5.5M4 15v5h5M4 20l5.5-5.5M20 15v5h-5M20 20l-5.5-5.5"/></svg></button>'
       +(pks.length?'<div class="ma-one" id="mPeeks"><button type="button" class="ma-ar l" id="mPrevA" aria-label="Previous action"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>'
@@ -7100,13 +7095,10 @@ function mShowList(){
 /* the map card was tapped: zoom to that action's dot (ringed in gold), in the clear space above the card */
 let mFocusK=null, mTapK=null, mTapT=0, mMoveMode=false, mMoveEndT=0;   // mMoveMode: hold an action to move actions about; Done moving ends it
 /* the cards list only the actions whose dots are on screen right now (re-checked whenever the map stops moving) */
-function mTopBar(){   // what the map must keep clear at its top: the filter row, or the north arrow just under it
-  const f=document.querySelector(".ma-mapwrap .ma-flt"), n=document.querySelector(".ma-mapwrap .ma-north");
-  return (f&&n&&n.getBoundingClientRect().bottom>f.getBoundingClientRect().bottom)?n:f; }
-function mSyncCards(){   // the zoom-to-all button sits snug in the corner, just above the card; north sits just under the filter row
+function mTopBar(){ return document.querySelector(".ma-mapwrap .ma-flt"); }   // what the map must keep clear at its top: the filter row
+function mSyncCards(){   // the zoom-to-all button sits snug in the corner, just above the card
   const row=document.getElementById("mPeeks"), fb=document.getElementById("mFitB"); if(fb) fb.style.bottom=(row?row.offsetHeight+20:12)+"px";
-  { const md=document.getElementById("mMoveDone"); if(md) md.style.bottom=(row?row.offsetHeight+20:12)+"px"; }   // Done moving sits level with the zoom-out button
-  const n=document.querySelector(".ma-mapwrap .ma-north"), f=document.querySelector(".ma-mapwrap .ma-flt"); if(n&&f) n.style.top=(f.offsetTop+f.offsetHeight+10)+"px"; }
+  { const md=document.getElementById("mMoveDone"); if(md) md.style.bottom=(row?row.offsetHeight+20:12)+"px"; } }   // Done moving sits level with the zoom-out button
 function mFlyTo(pts,z,landed,dur){   // glide to these points at zoom z, landing them in the clear space between the filters and the cards
   const m2=mHomeMap; const fb=L.latLngBounds(pts.map(p=>[p.lat,p.lng]));
   if(pts.length>1) z=Math.min(z,m2.getBoundsZoom(fb.pad(0.25),false));
