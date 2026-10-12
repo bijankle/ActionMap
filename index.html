@@ -2303,7 +2303,7 @@ function stepLetter(i){ let t=""; do{ t=String.fromCharCode(97+(i%26))+t; i=Math
 function actNo(a){ return String(a&&a.id!=null?a.id:a).padStart(3,"0"); }   /* the action NUMBER: creation-sequential id, 001-style */
 function actsShown(){ return actions.filter(a=>(a.done?actShowDone:a.hold?actShowHold:actShowOpen)&&actInDates(a)).sort((x,y)=>actRank(x)-actRank(y)); }   // the list as rendered: open, plus on hold / done when their pill is on
 function actRank(a){ return a.done?2:(a.hold?1:0); }   // list order: open, then on hold, then completed (display only — stored order unchanged)
-function setActionDone(a,done){ const before=actState(a); a.done=!!done; a.doneAt=a.done?Date.now():null; if(a.done) a.hold=false; /* done and on hold never both: ticking one clears the other (one undo step) */ recordActEdit(a,before); afterFolderChange(); dropIfHidden(a,"done"); }
+function setActionDone(a,done){ const before=actState(a); a.done=!!done; a.doneAt=a.done?Date.now():null; if(a.done){ a.hold=false; (a.steps||[]).forEach(st=>{ st.d=true; }); }   /* done ticks every sub-action too (one undo step) */ /* done and on hold never both: ticking one clears the other (one undo step) */ recordActEdit(a,before); afterFolderChange(); dropIfHidden(a,"done"); }
 function setActionHold(a,hold){ const before=actState(a); a.hold=!!hold; if(a.hold&&a.done){ a.done=false; a.doneAt=null; } recordActEdit(a,before); afterFolderChange(); dropIfHidden(a,"on hold"); }
 function dropIfHidden(a,what){   // its card just left the list (that filter is off): let go of it everywhere else too, and say where it went
   if(a.done?actShowDone:a.hold?actShowHold:actShowOpen) return;
@@ -7897,10 +7897,13 @@ function mSetState(a,s){
   const d0=mDone(a), h0=mHold(a), wd=s==="done", wh=s==="hold";
   if(d0===wd&&h0===wh) return;
   mMutate(()=>{ const p=mPend();
-    if(a._new){ const x=(p.newActs||[])[a._ni]; if(x){ if(d0!==wd){ x.done=wd; x.doneAt=Date.now(); } x.hold=wh; } }
+    if(a._new){ const x=(p.newActs||[])[a._ni]; if(x){ if(d0!==wd){ x.done=wd; x.doneAt=Date.now(); if(wd) (x.steps||[]).forEach(t=>{ t.d=true; }); } x.hold=wh; } }
     else { const c=(p.changes=p.changes||{})[a.id]||(p.changes[a.id]={});
       if(d0!==wd){ c.done=wd; c.doneAt=Date.now(); }
-      if(h0!==wh) c.hold=wh; }
+      if(h0!==wh) c.hold=wh;
+      if(wd&&!d0){ const st={}; (a.steps||[]).forEach((x,i)=>{ st[String(i)]=true; }); c.steps=Object.assign({},c.steps||{},st);   // Done ticks every sub-action too
+        if(Array.isArray(c.newSteps)) c.newSteps=c.newSteps.map(x=>Object.assign({},x,{d:true}));
+        if(!c.sids){ const pa=((mPack&&mPack.actions)||[]).find(x=>String(x.id)===String(a.id)); if(pa&&(pa.steps||[]).every(st=>st.id)) c.sids=(pa.steps||[]).map(st=>st.id); } } }
     mPendSave(p); });
 }
 function mShowDetail(ai,keepScroll){
@@ -8340,7 +8343,7 @@ async function checkFieldChanges(){
         if(mv.length) pushUndo({items:mv}); }
       if(c.loc&&typeof c.loc=="object"){ const la=c.loc.lat!=null?+c.loc.lat:(a.loc&&a.loc.lat), ln=c.loc.lng!=null?+c.loc.lng:(a.loc&&a.loc.lng); if(isFinite(la)&&isFinite(ln)) a.loc={lat:la,lng:ln}; }   // (a resend carries only the part that changed)
       if(typeof c.hold==="boolean") a.hold=c.hold;
-      if(c.done===true&&!a.done){ a.done=true; a.doneAt=c.doneAt||Date.now(); }
+      if(c.done===true&&!a.done){ a.done=true; a.doneAt=c.doneAt||Date.now(); a.steps.forEach(st=>{ st.d=true; }); }   // done on the phone: every sub-action ticked too
       if(c.done===false&&a.done){ a.done=false; a.doneAt=null; }
       if(a.done&&a.hold){ if(c.hold===true&&c.done!==true){ a.done=false; a.doneAt=null; } else a.hold=false; }   // never both: what the phone just set wins
       recordActEdit(a,before);
