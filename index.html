@@ -1721,7 +1721,7 @@ let measuring=false, measurePts=[], measureLayer=null;
 /* map + layers */
 const DESK_FLY=1.2;   // every click that zooms / moves the desktop map glides this long (scroll-wheel zoom is separate)
 { const z=L.Map.prototype._onZoomTransitionEnd; L.Map.prototype._onZoomTransitionEnd=function(){ if(!this._mapPane) return; return z.apply(this,arguments); }; }   // a map removed mid-zoom (the phone rebuilds its map) ignores the zoom's late finish
-const map=L.map("map",{zoomControl:false,boxZoom:false,attributionControl:false,worldCopyJump:true,maxZoom:24,minZoom:2,zoomSnap:0.25,wheelDebounceTime:35,wheelPxPerZoomLevel:150}).setView([20,0],3);
+const map=L.map("map",{zoomControl:false,boxZoom:false,attributionControl:false,worldCopyJump:true,maxZoom:24,minZoom:2,zoomSnap:0.25,wheelDebounceTime:35,wheelPxPerZoomLevel:150,zoomAnimationThreshold:12}).setView([20,0],3);
 const google=L.tileLayer("https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}",{subdomains:["mt0","mt1","mt2","mt3"],maxZoom:24,maxNativeZoom:21,keepBuffer:6,attribution:"Imagery &copy; Google"}).addTo(map);   // keepBuffer: tiles just off screen stay loaded, so panning shows imagery at once
 google.on("loading",()=>{ tilesBusy=true; }).on("load",()=>{ tilesBusy=false; });
 const esri=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:24,maxNativeZoom:19,attribution:"Imagery &copy; Esri, Maxar, Earthstar Geographics"});
@@ -3672,8 +3672,21 @@ function zoomAll(anim){ const ll=[];
   if(!ll.length){ fitToPhotos(); return; }
   const me=myLoc(); if(me&&meNear(me,ll)) ll.push([me.lat,me.lng]);   // you, when you're within N km of the work
   try{ map.invalidateSize(); }catch(e){}
-  const b=L.latLngBounds(ll), o={padding:[60,60],maxZoom:19};
-  if(anim) map.flyToBounds(b,Object.assign({duration:DESK_FLY},o)); else map.fitBounds(b,o); }
+  const b=L.latLngBounds(ll), o=fitWithLabels(b,{paddingTopLeft:L.point(60,60),paddingBottomRight:L.point(60,60),maxZoom:19});
+  if(anim) map.fitBounds(b,Object.assign({animate:true},o)); else map.fitBounds(b,o); }   // one quick, smooth zoom (not a slow glide re-drawing every frame)
+/* Zoom to all keeps the callouts in view too: lay the labels out where the view will land, see how far past the edge
+   they reach, widen that side's margin, and check again (labels are screen-sized, so the margins settle in a couple of goes). */
+function fitWithLabels(b,o){ const S=map.getSize(), mx=Math.floor(S.x/3), my=Math.floor(S.y/3);
+  try{ for(let k=0;k<3;k++){ const t=map._getBoundsCenterZoom(b,o), z=t.zoom; renderClusters({zoom:z,center:t.center});
+      const c=map.project(t.center,z), x0=c.x-S.x/2, y0=c.y-S.y/2, x1=c.x+S.x/2, y1=c.y+S.y/2; let l=0,r=0,u=0,d=0;
+      for(const h of mapHits){ const el=h.m&&h.m.getElement&&h.m.getElement(), lab=el&&el.querySelector(".ma-dot"); if(!lab) continue;
+        const q=map.project(h.ll,z), w=lab.offsetWidth/2+8, hh=lab.offsetHeight/2+8;
+        l=Math.max(l,x0-(q.x-w)); r=Math.max(r,(q.x+w)-x1); u=Math.max(u,y0-(q.y-hh)); d=Math.max(d,(q.y+hh)-y1); }
+      if(l<=0&&r<=0&&u<=0&&d<=0) break;
+      const tl=o.paddingTopLeft, br=o.paddingBottomRight;
+      o.paddingTopLeft=L.point(Math.min(mx,tl.x+Math.max(0,l)),Math.min(my,tl.y+Math.max(0,u))); o.paddingBottomRight=L.point(Math.min(mx,br.x+Math.max(0,r)),Math.min(my,br.y+Math.max(0,d))); }
+  }catch(e){}
+  renderClusters(); return o; }
 let _topShownFor=null;
 
 /* ---- the project picker ---- */
